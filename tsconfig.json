@@ -1,0 +1,37 @@
+{
+    "compilerOptions": {
+        "target": "ES6",
+        "module": "commonjs",
+        "sourceMap": true,
+        "allowJs": true,
+        "moduleResolution": "node",
+        "rootDir": ".",
+        "forceConsistentCasingInFileNames": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "noImplicitAny": false,
+        "strictNullChecks": false,
+        "suppressImplicitAnyIndexErrors": true,
+        "noUnusedLocals": false,
+        "noUnusedParameters": false,
+        "experimentalDecorators": true,
+        "allowSyntheticDefaultImports": true,
+        "outDir": "./build",
+        "baseUrl": ".",
+        "paths": {
+            "*": [
+                "test_server/*"
+            ]
+        },
+        "types": [
+            "node"
+        ],
+        "typeRoots": [
+        	"./node_modules/@types",
+        	"./@types"
+      	]
+    },
+    "include": [
+        "src/**/*", "@types/m.d.ts"
+    ]
+}

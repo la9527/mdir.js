@@ -1,0 +1,25 @@
+{
+  "name": "mdir.js",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "tsc -p tsconfig.json && node --inspect ./build/src/main.js"
+  },
+  "author": "Byoungyoung La(la9527@daum.net)",
+  "license": "MIT",
+  "dependencies": {
+    "@types/node": "^11.10.4",
+    "@types/sprintf-js": "^1.1.2",
+    "blessed": "^0.1.81",
+    "moment": "^2.24.0",
+    "sprintf-js": "^1.1.2",
+    "winston": "^3.2.1",
+    "winston-daily-rotate-file": "^3.8.0"
+  },
+  "devDependencies": {
+    "@types/blessed": "^0.1.10",
+    "typescript": "^3.3.3333"
+  }
+}
