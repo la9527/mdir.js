@@ -22,24 +22,40 @@ export abstract class Panel extends AbstractPanel {
 
         try {
             const file = this.reader.convertFile( path );
+            log.info( "Panel: %s", path );
             this.dirFiles = await this.reader.readdir( file );
-            if ( previousDir ) {
-                // search directory
-            }
+            
             this._currentDir = file;
             file.name = ".";
 
-            const parentFile = this.reader.convertFile("..");
-            parentFile.name = "..";
-            this.dirFiles.unshift( parentFile );
-            // this.dirFiles.unshift( file );
-            log.info( this.dirFiles );
+            try {
+                const parentFile = this.reader.convertFile("..");
+                if ( parentFile.fullname !== file.fullname ) {                
+                    parentFile.name = "..";
+                    this.dirFiles.unshift( parentFile );
+                }
+            } catch( e ) {
+                log.error( "PARENT DIR READ FAILED %j", e );
+            }
+            log.info( JSON.stringify(this.dirFiles.map((item) => `${item.fullname} - ${item.name}`), null, 4) );
+
+            if ( previousDir ) {
+                // search directory
+                let befPos = this.dirFiles.findIndex( (file: File) => {
+                    log.debug( "file.fullname: [%s]", file.fullname );
+                    return file.fullname === previousDir.fullname;
+                });
+                log.debug( "BEFORE DIR: %s, befPos: %d", previousDir.fullname, befPos );
+                if ( befPos > -1 ) {
+                    this.currentPos = befPos;
+                }
+            }
+
+            this.sort();
         } catch ( e ) {
             // TODO: Messgae Box
-            log.error( e );
+            log.error( "READ ERROR %j", e );
         }
-
-        this.sort();
     }
 
     refresh() {
@@ -57,7 +73,16 @@ export abstract class Panel extends AbstractPanel {
         }
     }
 
-    keyEnter() {
-
+    async keyEnterPromise() {
+        let currentFile: File = this.dirFiles[this.currentPos];
+        if ( currentFile.dir ) {
+            try {
+                await this.read( currentFile.fullname );
+            } catch( e ) {
+                log.error( "keyEnterPromise exception : %j", e );
+            }
+            
+        }
+        log.debug( "keyEnterPromise !!!" );
     }
 }

@@ -72,6 +72,9 @@ export abstract class AbstractPanel {
     }
 
     set currentPos(pos: number) {
+        if ( pos >= this.dirFiles.length ) {
+            pos = this.dirFiles.length - 1;
+        }
         this._currentPos = pos;
         log.warn( "set currentPos: %d", pos );
         if ( this.column && this.row ) {
@@ -85,34 +88,54 @@ export abstract class AbstractPanel {
     abstract refresh(): void;
 
     sort() {
-        this.dirFiles = this.dirFiles.sort( (a, b): number => {
-            if ( this.sortType === SortType.COLOR ) {
-                log.debug( "SORT COLOR : %d %d", a.color.number, b.color.number );
-                return a.color.number - b.color.number;
+        let fileSort = (isType: SortType, a: File, b: File): number => {
+            if ( isType === SortType.COLOR ) {
+                // log.debug( "SORT COLOR : %d %d", a.color.number, b.color.number );
+                return b.color.number - a.color.number;
             }
-            if ( this.sortType === SortType.NAME ) {
-                log.debug( "SORT NAME : " );
+            if ( isType === SortType.NAME ) {
+                // log.debug( "SORT NAME : " );
+                /* tslint:disable */
+                if ( a.name > b.name ) return 1;
+                if ( b.name > a.name ) return -1;
+                /* tslint:enable */
+                return 0;
+            }
+            if ( isType === SortType.EXT ) {
+                // log.debug( "SORT EXT : " );
                 /* tslint:disable */
                 if ( a.name > b.name ) return -1;
                 if ( b.name > a.name ) return 1;
                 /* tslint:enable */
                 return 0;
             }
-            if ( this.sortType === SortType.EXT ) {
-                log.debug( "SORT EXT : " );
-                /* tslint:disable */
-                if ( a.name > b.name ) return -1;
-                if ( b.name > a.name ) return 1;
-                /* tslint:enable */
-                return 0;
-            }
-            if ( this.sortType === SortType.SIZE ) {
-                log.debug( "SORT SIZE : " );
+            if ( isType === SortType.SIZE ) {
+                // log.debug( "SORT SIZE : " );
                 return a.size - b.size;
             }
-            if ( this.sortType === SortType.TIME ) {
-                log.debug( "SORT TIME : " );
+            if ( isType === SortType.TIME ) {
+                // log.debug( "SORT TIME : " );
                 return a.mtime.getTime() - b.mtime.getTime();
+            }
+            return 0;
+        };
+
+
+        this.dirFiles = this.dirFiles.sort( (a,b): number => {
+            if ( a.dir && a.name === ".." ) {
+                return -1;
+            } else if ( a.dir && !b.dir ) {
+                return -1;
+            } else if ( !a.dir && b.dir ) {
+                return 1;
+            }
+
+            let sortOrder = [SortType.COLOR, SortType.NAME, SortType.EXT, SortType.SIZE];
+            for ( let i = 0; i < sortOrder.length; i++ ) {
+                let sortNum = fileSort(sortOrder[i], a,b);
+                if ( sortNum !== 0 ) {
+                    return sortNum;
+                }
             }
             return 0;
         });

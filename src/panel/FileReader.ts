@@ -35,40 +35,66 @@ export class FileReader extends Reader {
     convertFile( filePath: string ): File {
         const file = new File();
         file.fstype = this._readerFsType;
-        const stat = fs.lstatSync( filePath );
-        file.fullname = fs.realpathSync( filePath );
-        file.name = path.basename( file.fullname );
-        file.size = stat.size;
-        file.attr = convertAttr( stat );
-        file.dir = stat.isDirectory();
-        if ( stat.isSymbolicLink() ) {
-            const linkname = fs.readlinkSync( file.fullname );
-            file.link = { name: path.basename( linkname ), file: null };
+        try {
+            file.fullname = fs.realpathSync( filePath );
+            file.name = path.basename( file.fullname );
 
-            const linkStat = fs.lstatSync( linkname );
-            if ( linkStat && !linkStat.isSymbolicLink() ) {
-                file.link.file = this.convertFile( linkname );
+            const stat = fs.lstatSync( filePath );
+            file.size = stat.size;
+            file.attr = convertAttr( stat );
+            file.dir = stat.isDirectory();
+            if ( stat.isSymbolicLink() ) {
+                try {
+                    const linkname = fs.readlinkSync( file.fullname );
+                    file.link = { name: path.basename( linkname ), file: null };
+
+                    const linkStat = fs.lstatSync( linkname );
+                    if ( linkStat && !linkStat.isSymbolicLink() ) {
+                        file.link.file = this.convertFile( linkname );
+                    }
+                } catch( e ) {
+                    log.error( "FAIL - 2: %j", e);
+                    file.link = { name: null, file: null };
+                }
             }
+            file.ctime = stat.ctime;
+            file.mtime = stat.mtime;
+        } catch ( e ) {
+            if ( filePath === ".." ) {
+                file.fullname = filePath;
+                file.name = path.basename( file.fullname );
+            }
+            file.size = 0;
+            file.error = e;
+            file.ctime = new Date();
+            file.mtime = new Date();
+            log.error( "FAIL - 3: %j", e);
         }
-        file.ctime = stat.ctime;
-        file.mtime = stat.mtime;
         file.color = ColorConfig.instance().getFileColor( file );
         return file;
     }
 
-    readdir( dir: File ): Promise<File[]> {
+    readdir( dirFile: File ): Promise<File[]> {
         return new Promise<File[]>( (resolve, reject ) => {
-            try {
-                const fileItem: File[] = [];
-                const fileList: any[] = fs.readdirSync( dir.fullname, { encoding: "utf-8" } );
-                fileList.map( (file) => {
-                    fileItem.push( this.convertFile( file ) );
-                });
-                this.curDir = dir;
-                resolve( fileItem );
-            } catch ( e ) {
-                reject( e );
+            if ( !dirFile.dir ) {
+                reject(`Not directory. ${dirFile.name}`);
+                return;
             }
+
+            const fileItem: File[] = [];
+            try {
+                const fileList: any[] = fs.readdirSync( dirFile.fullname, { encoding: "utf-8" } );
+                log.info( "convertFile: %j", fileList );
+                fileList.map( (file) => {
+                    fileItem.push( this.convertFile( dirFile.fullname + path.sep + file ) );
+                });
+                process.chdir(dirFile.fullname);
+                this.curDir = dirFile;
+            } catch ( e ) {
+                log.error( "READDIR () - ERROR %j", e );
+            }
+            resolve( fileItem );
+            // reject( e );
         });
     }
 }

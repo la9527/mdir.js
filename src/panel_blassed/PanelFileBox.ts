@@ -57,16 +57,15 @@ export class PanelFileBox extends Widget {
 
         if ( this._viewFocus ) {
             const item = sprintf(`%10s %10s %5s %-${width}s %10s`, this._file.attr, date, time, this._file.name, tailview);
-            log.info( item );
+            log.info( "view position : filebox [%s]", this._file.name );
             this.box.setContent(item);
         } else {
             const item = sprintf(`%10s %10s %5s {${fontHex}-fg}%-${width}s %10s{/${fontHex}-fg}`, this._file.attr, date, time, this._file.name, tailview);
             this.box.setContent(item);
         }
 
-        /*
-        const item = (this.box as any)._clines;
-        log.debug( "data %j, %d, %d", item, item.width, this.box.width );
-        */
+        // const item = (this.box as any)._clines;
+        // log.debug( "data %j, %d, %d", item, item.width, this.box.width );
+        // log.debug( "filebox [%s]", this._file.name);
     }
 }

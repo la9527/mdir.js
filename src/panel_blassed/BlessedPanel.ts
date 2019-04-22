@@ -28,8 +28,8 @@ export class BlessedPanel extends Panel {
     initRender() {
         log.info( "initRender : fileBox.size : %d", this.fileBox.length );
 
-        this.panel.on( "keypress", (ch, keyInfo) => {
-            log.info( "keypress %j", keyInfo );
+        this.panel.on( "keypress", async (ch, keyInfo) => {
+            log.info( "keypress 1 %j", keyInfo );
             const runningFunc = {
                 down: "keyDown",
                 up: "keyUp",
@@ -39,13 +39,17 @@ export class BlessedPanel extends Panel {
                 pagedown: "keyPageDown",
                 home: "keyHome",
                 end: "keyEnd",
-                enter: "keyEnter",
+                enter: "keyEnterPromise",
                 return: "keyReturn"
             };
             if ( runningFunc[keyInfo.name] && this[ runningFunc[keyInfo.name] ] ) {
                 const runFuncName = runningFunc[keyInfo.name];
-                log.warn( "%s", runFuncName );
-                this[ runningFunc[keyInfo.name] ]();
+                log.warn( "%s", runFuncName );                
+                if ( /(p|P)romise/.exec(runFuncName) ) {
+                    await this[runFuncName]();
+                } else {
+                    this[runFuncName]();
+                }
                 this.panel.parent.screen.render();
             }
         });
@@ -53,6 +57,9 @@ export class BlessedPanel extends Panel {
             log.debug( "BlessedPanel prerender !!!");
             this.resize();
             this.beforeRender();
+        });
+        this.panel.on( "render", () => {
+            this.afterRender();
         });
     }
 
@@ -102,7 +109,7 @@ export class BlessedPanel extends Panel {
     }
 
     beforeRender() {
-        log.info( "BlessedPanel beforeRender() - %d, %d", this.column, this.row );
+        log.info( "BlessedPanel beforeRender() - COL: %d, ROW: %d", this.column, this.row );
 
         if ( this.column !== 0 && this.row !== 0 ) {
             this.page = Math.floor(this.currentPos / (this.column * this.row));
@@ -119,7 +126,7 @@ export class BlessedPanel extends Panel {
                 fileBox.top = row;
                 fileBox.left = col * (fileBox.width + 1);
                 if ( curPos < this.dirFiles.length ) {
-                    log.debug( "SET_POS: %d, CUR_POS: %d", curPos, this.currentPos );
+                    // log.debug( "SET_POS: %d, CUR_POS: %d", curPos, this.currentPos );
                     fileBox.setFile( this.dirFiles[curPos], (curPos === this.currentPos && this.panel.hasFocus()), curPos );
                 } else {
                     fileBox.setFile( null, false, -1 );
@@ -127,15 +134,16 @@ export class BlessedPanel extends Panel {
                 curPos++;
             }
         }
-        log.info( "fileBox: %d %d", this.currentPos, this.fileBox.length );
+        log.info( "FileBox: CUR: %d SIZE: %d", this.currentPos, this.fileBox.length );
     }
 
     render() {
-        log.info( "render()" );
+        log.info( "BlessedPanel.render()" );
         this.panel.render();
+        log.info( "BlessedPanel.render() end..." );
     }
 
     afterRender() {
-        log.info( "afterRender()" );
+        log.info( "BlessedPanel.afterRender()" );
     }
 }

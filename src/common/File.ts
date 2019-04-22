@@ -24,6 +24,8 @@ export class File {
     color:      Color = new Color();
     link:       FileLink = null;
 
+    error:      any = null; // reading fail.
+
     get extname() {
         return path.extname(this.fullname);
     }

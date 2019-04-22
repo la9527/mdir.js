@@ -40,8 +40,8 @@ export function Logger( labelName: string ): Logger {
     });
 
     /*
-    const buildType = process.env.BUILD_TYPE || "local";
-    if ( buildType === "local" ) {
+    const buildType = process.env.BUILD_TYPE || "release";
+    if ( buildType === "release" ) {
         logger.add( new transports.Console( { level: "debug", handleExceptions: true, debugStdout: true }) );
     }
     */
