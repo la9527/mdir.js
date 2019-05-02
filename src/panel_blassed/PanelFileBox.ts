@@ -1,4 +1,5 @@
 import { BlessedProgram, Widgets, box, text, colors } from "blessed";
+import { strWidth } from "blessed/lib/unicode";
 import { Widget } from "./Widget";
 import { File } from "../common/File";
 import { sprintf } from "sprintf-js";
@@ -47,7 +48,6 @@ export class PanelFileBox extends Widget {
                 tailview = sprintf("%10s", StringUtils.toregular(this._file.size));
             }
         }
-        const width = this.width as number - 39;
         const { font, back, fontHex, backHex } = this._file.color;
 
         if ( this._viewFocus ) {
@@ -55,14 +55,20 @@ export class PanelFileBox extends Widget {
             this.box.style.fg = back === -1 ? 0 : back;
         }
 
-        if ( this._viewFocus ) {
-            const item = sprintf(`%10s %10s %5s %-${width}s %10s`, this._file.attr, date, time, this._file.name, tailview);
-            log.info( "view position : filebox [%s]", this._file.name );
-            this.box.setContent(item);
-        } else {
-            const item = sprintf(`%10s %10s %5s {${fontHex}-fg}%-${width}s %10s{/${fontHex}-fg}`, this._file.attr, date, time, this._file.name, tailview);
-            this.box.setContent(item);
+        const width = this.width as number - 39;
+        let fileName = this._file.name;
+        if ( this._file.link ) {
+            fileName = this._file.name + " -> " + (this._file.link.file ? this._file.link.file.fullname : this._file.link.name);
         }
+        let textFileName = fileName + " ".repeat(width - strWidth(fileName));
+        let viewText = null;
+        if ( this._viewFocus ) {
+            viewText = sprintf(`%10s %10s %5s %s %10s`, this._file.attr, date, time, textFileName, tailview);
+            log.info( "view position : filebox [%d] [%s]", textFileName.length, fileName );
+        } else {
+            viewText = sprintf(`%10s %10s %5s {${fontHex}-fg}%s %10s{/${fontHex}-fg}`, this._file.attr, date, time, textFileName, tailview);
+        }
+        this.box.setContent(viewText);
 
         // const item = (this.box as any)._clines;
         // log.debug( "data %j, %d, %d", item, item.width, this.box.width );

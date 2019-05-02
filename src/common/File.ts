@@ -8,6 +8,7 @@ export interface FileLink {
 
 export class File {
     fstype:     string;
+    root:       string;
     fullname:   string;
     name:       string;
     size:       number;

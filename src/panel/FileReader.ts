@@ -29,46 +29,51 @@ export class FileReader extends Reader {
     protected _readerFsType = "file";
 
     homeDir(): File {
-        return this.convertFile(os.homedir());
+        return this.convertFile( os.homedir());
     }
 
     convertFile( filePath: string ): File {
         const file = new File();
         file.fstype = this._readerFsType;
-        try {
-            file.fullname = fs.realpathSync( filePath );
-            file.name = path.basename( file.fullname );
 
+        try {
+            if ( filePath === "." || filePath === ".." ) {
+                file.fullname = fs.realpathSync( filePath );
+            } else {
+                file.fullname = filePath;
+            }
+            // log.debug( "FILE [%s]", file.fullname );
             const stat = fs.lstatSync( filePath );
+            const pathInfo = path.parse( file.fullname );
+            file.root = pathInfo.root;
+            file.name = pathInfo.base;
             file.size = stat.size;
-            file.attr = convertAttr( stat );
+            if ( process.platform === 'win32' ) {
+                file.attr = convertAttr( stat );
+            } else {
+                
+            }
             file.dir = stat.isDirectory();
             if ( stat.isSymbolicLink() ) {
                 try {
-                    const linkname = fs.readlinkSync( file.fullname );
-                    file.link = { name: path.basename( linkname ), file: null };
+                    const linkOrgName = fs.readlinkSync( file.fullname );
+                    file.link = { name: path.basename( linkOrgName ), file: null };
 
-                    const linkStat = fs.lstatSync( linkname );
+                    const linkStat = fs.lstatSync( linkOrgName );
                     if ( linkStat && !linkStat.isSymbolicLink() ) {
-                        file.link.file = this.convertFile( linkname );
+                        file.link.file = this.convertFile( linkOrgName );
                     }
                 } catch( e ) {
                     log.error( "FAIL - 2: %j", e);
-                    file.link = { name: null, file: null };
                 }
+            } else {
+                file.fullname = fs.realpathSync( filePath );
             }
             file.ctime = stat.ctime;
             file.mtime = stat.mtime;
         } catch ( e ) {
-            if ( filePath === ".." ) {
-                file.fullname = filePath;
-                file.name = path.basename( file.fullname );
-            }
-            file.size = 0;
-            file.error = e;
-            file.ctime = new Date();
-            file.mtime = new Date();
-            log.error( "FAIL - 3: %j", e);
+            log.error( "FAIL - 3: [%s] %j", filePath, e);
+            return null;
         }
         file.color = ColorConfig.instance().getFileColor( file );
         return file;
@@ -83,12 +88,16 @@ export class FileReader extends Reader {
 
             const fileItem: File[] = [];
             try {
-                const fileList: any[] = fs.readdirSync( dirFile.fullname, { encoding: "utf-8" } );
-                log.info( "convertFile: %j", fileList );
-                fileList.map( (file) => {
-                    fileItem.push( this.convertFile( dirFile.fullname + path.sep + file ) );
-                });
                 process.chdir(dirFile.fullname);
+
+                const fileList: any[] = fs.readdirSync( dirFile.fullname, { encoding: "utf-8" } );
+                log.info( "READDIR: PATH: [%s], FILES: %j", dirFile.fullname, fileList );
+                fileList.map( (file) => {
+                    let item = this.convertFile( dirFile.fullname + path.sep + file );
+                    if ( item ) {
+                        fileItem.push( item );
+                    }
+                });
                 this.curDir = dirFile;
             } catch ( e ) {
                 log.error( "READDIR () - ERROR %j", e );

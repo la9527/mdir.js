@@ -37,7 +37,7 @@ export abstract class Panel extends AbstractPanel {
             } catch( e ) {
                 log.error( "PARENT DIR READ FAILED %j", e );
             }
-            log.info( JSON.stringify(this.dirFiles.map((item) => `${item.fullname} - ${item.name}`), null, 4) );
+            log.info( "FIND LIST: %s", JSON.stringify(this.dirFiles.map((item) => `${item.fullname} - ${item.name}`), null, 4) );
 
             if ( previousDir ) {
                 // search directory
