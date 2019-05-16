@@ -5,22 +5,27 @@ import { File } from "../common/File";
 import { sprintf } from "sprintf-js";
 import { StringUtils } from "../common/StringUtils";
 import { Logger } from "../common/Logger";
+import { BlessedPanel } from "./BlessedPanel";
+import { scrstrncpy } from "./ScreenUtils";
 
 const log = Logger("filebox");
 
+
 export class PanelFileBox extends Widget {
     public fileViewType: number = 0;
-    public drawType: number = 0;
 
     private _viewFocus: boolean = false;
     private _file: File = null;
     private _positionNo: number = -1;
+    private _parentPanel: BlessedPanel = null;
 
-    constructor( opts: Widgets.BoxOptions ) {
+    constructor( opts: Widgets.BoxOptions, parentPanel: BlessedPanel, fileViewType: number ) {
         super({
             ...opts,
             wrap: false
         });
+        this._parentPanel = parentPanel;
+        this.fileViewType = fileViewType;
     }
 
     setFile( file: File, focus: boolean, position: number ) {
@@ -29,15 +34,23 @@ export class PanelFileBox extends Widget {
         this._positionNo = position;
     }
 
-    draw() {
-        if ( !this._file ) {
-            return;
+    convertFilename(filenameMaxSize: number) {
+        let fileName = this._file.name;
+        if ( this._file.link ) {
+            fileName = this._file.name + " -> " + (this._file.link.file ? this._file.link.file.fullname : this._file.link.name);
         }
 
-        const d = this._file.mtime;
-        const date = [d.getFullYear(), ("0" + (d.getMonth() + 1)).slice(-2), ("0" + d.getDate()).slice(-2)].join("-");
-        const time = [("0" + (d.getHours() + 1)).slice(-2), ("0" + (d.getMinutes() + 1)).slice(-2)].join(":");
+        const repeatSize = filenameMaxSize - strWidth(fileName);
+        let textFileName = fileName;
+        if ( repeatSize > 0 ) {
+            textFileName = fileName + " ".repeat(repeatSize);
+        } else if ( repeatSize < 0 ) {
+            textFileName = scrstrncpy( fileName, 0, filenameMaxSize - 1) + "~";
+        }
+        return textFileName;
+    }
 
+    convertFileSize() {
         let tailview = "[ SubDir ]";
         if ( !this._file.dir ) {
             if ( this._file.size >= 1000000000) {
@@ -48,30 +61,91 @@ export class PanelFileBox extends Widget {
                 tailview = sprintf("%10s", StringUtils.toregular(this._file.size));
             }
         }
-        const { font, back, fontHex, backHex } = this._file.color;
+        return tailview;
+    }
 
+    drawTypeOne() {
+        const d = this._file.mtime;
+        const date = [d.getFullYear(), ("0" + (d.getMonth() + 1)).slice(-2), ("0" + d.getDate()).slice(-2)].join("-");
+        const time = [("0" + (d.getHours() + 1)).slice(-2), ("0" + (d.getMinutes() + 1)).slice(-2)].join(":");
+
+        const tailview = this.convertFileSize();
+        const { fontHex, backHex } = this._file.color;
+
+        const textFileName = this.convertFilename(this.width as number - 39);
+
+        let viewText = null;
+        if ( this._viewFocus ) {
+            viewText = sprintf(`%10s %10s %5s %s %10s`, this._file.attr, date, time, textFileName, tailview);
+            // log.info( "view position : filebox [%d] [%s]", textFileName.length, this._file.name );
+        } else {
+            viewText = sprintf(`%10s %10s %5s {${fontHex}-fg}%s %10s{/${fontHex}-fg}`, this._file.attr, date, time, textFileName, tailview);
+        }
+        this.box.setContent(viewText);
+    }
+
+    drawTypeTwo() {
+        const { fontHex, backHex } = this._file.color;
+
+        const textFileName = this.convertFilename(this.width as number - 12);
+        const tailview = this.convertFileSize();
+
+        let viewText = null;
+        if ( this._viewFocus ) {
+            viewText = sprintf(`%s %10s`, textFileName, tailview);
+            // log.info( "view position : filebox [%d] [%s]", textFileName.length, this._file.name );
+        } else {
+            viewText = sprintf(`{${fontHex}-fg}%s %10s{/${fontHex}-fg}`, textFileName, tailview);
+        }
+        this.box.setContent(viewText);
+    }
+
+    drawTypeThree() {
+        const { fontHex, backHex } = this._file.color;
+
+        const textFileName = this.convertFilename(this.width as number);
+
+        let viewText = null;
+        if ( this._viewFocus ) {
+            viewText = sprintf(` %s`, textFileName);
+        } else {
+            viewText = sprintf(` {${fontHex}-fg}%s{/${fontHex}-fg}`, textFileName);
+        }
+        this.box.setContent(viewText);
+    }
+
+    draw() {
+        if ( !this._file ) {
+            return;
+        }
+
+        const { font, back } = this._file.color;
         if ( this._viewFocus ) {
             this.box.style.bg = font;
             this.box.style.fg = back === -1 ? 0 : back;
         }
 
-        const width = this.width as number - 39;
-        let fileName = this._file.name;
-        if ( this._file.link ) {
-            fileName = this._file.name + " -> " + (this._file.link.file ? this._file.link.file.fullname : this._file.link.name);
+        switch ( this.fileViewType ) {
+            case 0: {
+                if ( this.width > 50 ) {
+                    this.drawTypeOne();
+                } else if ( this.width > 30 ) {
+                    this.drawTypeTwo();
+                } else {
+                    this.drawTypeThree();
+                }
+                break;
+            }
+            case 1:
+                this.drawTypeOne();
+                break;
+            case 2:
+                this.drawTypeTwo();
+                break;
+            case 3:
+            default:
+                this.drawTypeThree();
+                break;
         }
-        let textFileName = fileName + " ".repeat(width - strWidth(fileName));
-        let viewText = null;
-        if ( this._viewFocus ) {
-            viewText = sprintf(`%10s %10s %5s %s %10s`, this._file.attr, date, time, textFileName, tailview);
-            log.info( "view position : filebox [%d] [%s]", textFileName.length, fileName );
-        } else {
-            viewText = sprintf(`%10s %10s %5s {${fontHex}-fg}%s %10s{/${fontHex}-fg}`, this._file.attr, date, time, textFileName, tailview);
-        }
-        this.box.setContent(viewText);
-
-        // const item = (this.box as any)._clines;
-        // log.debug( "data %j, %d, %d", item, item.width, this.box.width );
-        // log.debug( "filebox [%s]", this._file.name);
     }
 }

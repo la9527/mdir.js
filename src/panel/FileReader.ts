@@ -48,10 +48,10 @@ export class FileReader extends Reader {
             file.root = pathInfo.root;
             file.name = pathInfo.base;
             file.size = stat.size;
-            if ( process.platform === 'win32' ) {
+            if ( process.platform === "win32" ) {
                 file.attr = convertAttr( stat );
             } else {
-                
+                file.attr = convertAttr( stat );
             }
             file.dir = stat.isDirectory();
             if ( stat.isSymbolicLink() ) {
@@ -63,7 +63,7 @@ export class FileReader extends Reader {
                     if ( linkStat && !linkStat.isSymbolicLink() ) {
                         file.link.file = this.convertFile( linkOrgName );
                     }
-                } catch( e ) {
+                } catch ( e ) {
                     log.error( "FAIL - 2: %j", e);
                 }
             } else {
@@ -93,7 +93,7 @@ export class FileReader extends Reader {
                 const fileList: any[] = fs.readdirSync( dirFile.fullname, { encoding: "utf-8" } );
                 log.info( "READDIR: PATH: [%s], FILES: %j", dirFile.fullname, fileList );
                 fileList.map( (file) => {
-                    let item = this.convertFile( dirFile.fullname + path.sep + file );
+                    const item = this.convertFile( dirFile.fullname + path.sep + file );
                     if ( item ) {
                         fileItem.push( item );
                     }

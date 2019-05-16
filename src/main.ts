@@ -3,11 +3,13 @@ import { BlessedProgram, Widgets, box, text, colors } from "blessed";
 import { Logger } from "./common/Logger";
 import { Colorizer } from "logform";
 import { BlessedPanel } from "./panel_blassed/BlessedPanel";
+import { FuncKeyBox } from './panel_blassed/FuncKeyBox';
 
 const log = Logger("main");
-// const program: BlessedProgram = blessed.program();
 
 /*
+const program: BlessedProgram = blessed.program();
+
 program.alternateBuffer();
 program.enableMouse();
 program.hideCursor();
@@ -44,6 +46,8 @@ const screen = blessed.screen({
     });
 
     await testPanel.read( "." );
+
+    new FuncKeyBox( screen );
 
     screen.render();
 })();

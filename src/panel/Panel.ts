@@ -24,24 +24,24 @@ export abstract class Panel extends AbstractPanel {
             const file = this.reader.convertFile( path );
             log.info( "Panel: %s", path );
             this.dirFiles = await this.reader.readdir( file );
-            
+
             this._currentDir = file;
             file.name = ".";
 
             try {
                 const parentFile = this.reader.convertFile("..");
-                if ( parentFile.fullname !== file.fullname ) {                
+                if ( parentFile.fullname !== file.fullname ) {
                     parentFile.name = "..";
                     this.dirFiles.unshift( parentFile );
                 }
-            } catch( e ) {
+            } catch ( e ) {
                 log.error( "PARENT DIR READ FAILED %j", e );
             }
             log.info( "FIND LIST: %s", JSON.stringify(this.dirFiles.map((item) => `${item.fullname} - ${item.name}`), null, 4) );
 
             if ( previousDir ) {
                 // search directory
-                let befPos = this.dirFiles.findIndex( (file: File) => {
+                const befPos = this.dirFiles.findIndex( (file: File) => {
                     log.debug( "file.fullname: [%s]", file.fullname );
                     return file.fullname === previousDir.fullname;
                 });
@@ -74,14 +74,13 @@ export abstract class Panel extends AbstractPanel {
     }
 
     async keyEnterPromise() {
-        let currentFile: File = this.dirFiles[this.currentPos];
+        const currentFile: File = this.dirFiles[this.currentPos];
         if ( currentFile.dir ) {
             try {
                 await this.read( currentFile.fullname );
             } catch( e ) {
                 log.error( "keyEnterPromise exception : %j", e );
             }
-            
         }
         log.debug( "keyEnterPromise !!!" );
     }

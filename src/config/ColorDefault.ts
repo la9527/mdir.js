@@ -17,7 +17,7 @@ export const ColorDefault = {
         drive: "3",
         line: "6",
         func: "15,6",
-        funca: "11,6",
+        funca: "3,6", // 11
         stat: "0,7",
         statA: "14,7",
         help: "15,4",
