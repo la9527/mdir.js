@@ -1,4 +1,4 @@
-import * as blessed from "blessed";
+import * as blessed from "neo-blessed";
 
 import { Panel } from "../panel/Panel";
 import { Widget } from "./Widget";

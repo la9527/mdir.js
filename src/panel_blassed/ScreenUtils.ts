@@ -1,5 +1,5 @@
-import { text } from "blessed";
-import { charWidth } from "blessed/lib/unicode";
+import { text } from "neo-blessed";
+import { charWidth } from "neo-blessed/lib/unicode";
 import { sprintf } from "sprintf-js";
 
 export function screenPrintf( parent, y, x ) {

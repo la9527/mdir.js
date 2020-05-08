@@ -42,8 +42,10 @@ export class FileReader extends Reader {
             } else {
                 file.fullname = filePath;
             }
+
             // log.debug( "FILE [%s]", file.fullname );
             const stat = fs.lstatSync( filePath );
+
             const pathInfo = path.parse( file.fullname );
             file.root = pathInfo.root;
             file.name = pathInfo.base;

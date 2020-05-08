@@ -1,4 +1,4 @@
-import { BlessedProgram, Widgets, box, text, colors } from "blessed";
+import { BlessedProgram, Widgets, box, text, colors } from "neo-blessed";
 import { Logger } from "../common/Logger";
 
 const log = Logger("main");

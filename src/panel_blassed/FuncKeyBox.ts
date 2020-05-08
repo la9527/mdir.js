@@ -1,4 +1,4 @@
-import { BlessedProgram, Widgets, box, text, line } from "blessed";
+import { BlessedProgram, Widgets, box, text, line } from "neo-blessed";
 
 import { Widget } from "./Widget";
 import { ColorConfig } from "../config/ColorConfig";

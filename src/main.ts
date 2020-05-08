@@ -1,5 +1,5 @@
-import * as blessed from "blessed";
-import { BlessedProgram, Widgets, box, text, colors } from "blessed";
+import * as blessed from "neo-blessed";
+import { BlessedProgram, Widgets, box, text, colors } from "neo-blessed";
 import { Logger } from "./common/Logger";
 import { Colorizer } from "logform";
 import { BlessedPanel } from "./panel_blassed/BlessedPanel";
@@ -34,6 +34,7 @@ const screen = blessed.screen({
     smartCSR: true,
     fullUnicode: true,
     dockBorders: true,
+    useBCE: true,
     ignoreDockContrast: true
 });
 
@@ -48,6 +49,5 @@ const screen = blessed.screen({
     await testPanel.read( "." );
 
     new FuncKeyBox( screen );
-
     screen.render();
 })();

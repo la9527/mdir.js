@@ -1,5 +1,5 @@
-import { BlessedProgram, Widgets, box, text, colors } from "blessed";
-import { strWidth } from "blessed/lib/unicode";
+import { BlessedProgram, Widgets, box, text, colors } from "neo-blessed";
+import { strWidth } from "neo-blessed/lib/unicode";
 import { Widget } from "./Widget";
 import { File } from "../common/File";
 import { sprintf } from "sprintf-js";
@@ -39,6 +39,8 @@ export class PanelFileBox extends Widget {
         if ( this._file.link ) {
             fileName = this._file.name + " -> " + (this._file.link.file ? this._file.link.file.fullname : this._file.link.name);
         }
+        // 맥에서 한글자모 분리 오류 수정(Unicode 정규화 방식)
+        fileName = fileName.normalize();
 
         const repeatSize = filenameMaxSize - strWidth(fileName);
         let textFileName = fileName;
@@ -73,14 +75,17 @@ export class PanelFileBox extends Widget {
         const { fontHex, backHex } = this._file.color;
 
         const textFileName = this.convertFilename(this.width as number - 39);
-
+        log.info( textFileName );
+        
         let viewText = null;
         if ( this._viewFocus ) {
             viewText = sprintf(`%10s %10s %5s %s %10s`, this._file.attr, date, time, textFileName, tailview);
             // log.info( "view position : filebox [%d] [%s]", textFileName.length, this._file.name );
         } else {
+            // viewText = sprintf(`%10s %10s %5s %s %10s`, this._file.attr, date, time, textFileName, tailview);
             viewText = sprintf(`%10s %10s %5s {${fontHex}-fg}%s %10s{/${fontHex}-fg}`, this._file.attr, date, time, textFileName, tailview);
         }
+        log.info( viewText );
         this.box.setContent(viewText);
     }
 
@@ -97,6 +102,7 @@ export class PanelFileBox extends Widget {
         } else {
             viewText = sprintf(`{${fontHex}-fg}%s %10s{/${fontHex}-fg}`, textFileName, tailview);
         }
+        log.info( viewText );
         this.box.setContent(viewText);
     }
 
@@ -111,6 +117,7 @@ export class PanelFileBox extends Widget {
         } else {
             viewText = sprintf(` {${fontHex}-fg}%s{/${fontHex}-fg}`, textFileName);
         }
+        log.info( viewText );
         this.box.setContent(viewText);
     }
 
