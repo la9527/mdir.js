@@ -1,32 +1,79 @@
 import * as blessed from "neo-blessed";
+import { Widgets } from "neo-blessed";
+import { sprintf } from "sprintf-js";
 
 import { Panel } from "../panel/Panel";
 import { Widget } from "./Widget";
 import { Logger } from "../common/Logger";
+import { StringUtils } from "../common/StringUtils";
 import { PanelFileBox } from "./PanelFileBox";
+import { ColorConfig } from "../config/ColorConfig";
+import { Color } from "../common/Color";
+
 
 const log = Logger("blessedpanel");
 
 export class BlessedPanel extends Panel {
     public fileBox: PanelFileBox[] = [];
+    public baseWidget: Widget = null;
     public panel: Widget = null;
-
+    public header: Widget = null;
+    public tailer: Widget = null;
+    
     private _fileViewType = 0;
     private _lines = [];
 
-    constructor( parentElement: any, widgetOption: any = {} ) {
+    constructor( opts: Widgets.BoxOptions | any, widgetOption: any = {} ) {
         super();
+        const statColor = ColorConfig.instance().getBaseColor("stat");
+
+        this.baseWidget = new Widget(opts);
+
         this.panel = new Widget({
-            parent: parentElement,
+            parent: this.baseWidget,
             border: "line",
             left: 0,
-            top: 2,
+            top: 1,
             width: "100%",
-            height: "100%-4",
+            height: "100%-1",
+            ...widgetOption
+        });
+        
+        this.header = new Widget({
+            parent: this.baseWidget,
+            left: 0,
+            top: 0,
+            width: "100%",
+            height: 1,
+            style: {
+                bg: statColor.back,
+                fg: statColor.font
+            },
+            ...widgetOption
+        });
+
+        this.tailer = new Widget({
+            parent: this.baseWidget,
+            left: 0,
+            top: "100%",
+            width: "100%",
+            height: 1,
+            style: {
+                bg: statColor.back,
+                fg: statColor.font
+            },
             ...widgetOption
         });
 
         this.initRender();
+    }
+
+    setFocus() {
+        this.panel.setFocus();
+    }
+
+    hasFocus(): boolean {
+        return this.panel.hasFocus();
     }
 
     initRender() {
@@ -57,6 +104,7 @@ export class BlessedPanel extends Panel {
                 this.panel.parent.screen.render();
             }
         });
+
         this.panel.on( "prerender", () => {
             log.debug( "BlessedPanel prerender !!!");
 
@@ -110,7 +158,7 @@ export class BlessedPanel extends Panel {
         });
         this.fileBox = [];
         for ( let n = 0; n < this.column * this.row; n++ ) {
-            this.fileBox.push( new PanelFileBox( { parent: this.panel as any, focusable: true }, this, this._fileViewType ) );
+            this.fileBox.push( new PanelFileBox( { parent: this.panel as any, focusable: true }, this._fileViewType ) );
         }
         log.info( "init Render : COL:%d, ROW:%d, PAGE:%d, currentPos:%d fileBoxLen: %d", this.column, this.row, this.page, this.currentPos, this.fileBox.length );
     }
@@ -160,10 +208,19 @@ export class BlessedPanel extends Panel {
             }
         }
         log.info( "FileBox: CUR: %d SIZE: %d", this.currentPos, this.fileBox.length );
-    }
+
+        const dirSize = this.dirFiles.filter( i => i.dir ).length;
+        const fileSize = this.dirFiles.filter( i => !i.dir ).length;
+        const allFileSize = this.dirFiles.filter( i => !i.dir ).reduce((v, t) => v + t.size, 0);
+
+        this.header.box.setContent( this._currentDir.fullname );
+        this.tailer.box.setContent( sprintf( "{bold}%5s{/bold} Files {bold}%5s{/bold} Dir {bold}%20s{/bold} Byte", StringUtils.toregular(fileSize), StringUtils.toregular(dirSize), StringUtils.toregular(allFileSize) ) );
+    }   
 
     render() {
         log.info( "BlessedPanel.render()" );
+        this.header.render();
+        this.tailer.render();
         this.panel.render();
         log.info( "BlessedPanel.render() end..." );
     }

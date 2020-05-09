@@ -73,6 +73,15 @@ export abstract class Panel extends AbstractPanel {
         }
     }
 
+    currentFile(): File {
+        try {
+            return this.dirFiles[this.currentPos];
+        } catch ( e ) {
+            log.error( e );
+        }
+        return null;
+    }
+
     async keyEnterPromise() {
         const currentFile: File = this.dirFiles[this.currentPos];
         if ( currentFile.dir ) {

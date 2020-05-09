@@ -1,5 +1,6 @@
 import { BlessedProgram, Widgets, box, text, colors } from "neo-blessed";
 import { Logger } from "../common/Logger";
+import { Color } from "../common/Color";
 
 const log = Logger("main");
 
@@ -41,6 +42,10 @@ export class Widget {
         this._box.render();
     }
 
+    setColor( color: Color ) {
+        this._box.style = { bg: color.back, fg: color.font };
+    }
+
     get top() {
         return this._box.top;
     }
@@ -71,7 +76,7 @@ export class Widget {
     get parent() {
         return this._box.parent;
     }
-    get box() {
+    get box(): Widgets.BoxElement {
         return this._box;
     }
 }

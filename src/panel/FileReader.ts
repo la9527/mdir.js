@@ -54,6 +54,8 @@ export class FileReader extends Reader {
                 file.attr = convertAttr( stat );
             } else {
                 file.attr = convertAttr( stat );
+                file.owner = "" + stat.uid;
+                file.group = "" + stat.gid;
             }
             file.dir = stat.isDirectory();
             if ( stat.isSymbolicLink() ) {

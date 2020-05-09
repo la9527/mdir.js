@@ -17,14 +17,12 @@ export class PanelFileBox extends Widget {
     private _viewFocus: boolean = false;
     private _file: File = null;
     private _positionNo: number = -1;
-    private _parentPanel: BlessedPanel = null;
-
-    constructor( opts: Widgets.BoxOptions, parentPanel: BlessedPanel, fileViewType: number ) {
+    
+    constructor( opts: Widgets.BoxOptions, fileViewType: number ) {
         super({
             ...opts,
             wrap: false
         });
-        this._parentPanel = parentPanel;
         this.fileViewType = fileViewType;
     }
 
@@ -75,7 +73,7 @@ export class PanelFileBox extends Widget {
         const { fontHex, backHex } = this._file.color;
 
         const textFileName = this.convertFilename(this.width as number - 39);
-        log.info( textFileName );
+        // log.info( textFileName );
         
         let viewText = null;
         if ( this._viewFocus ) {
@@ -85,7 +83,7 @@ export class PanelFileBox extends Widget {
             // viewText = sprintf(`%10s %10s %5s %s %10s`, this._file.attr, date, time, textFileName, tailview);
             viewText = sprintf(`%10s %10s %5s {${fontHex}-fg}%s %10s{/${fontHex}-fg}`, this._file.attr, date, time, textFileName, tailview);
         }
-        log.info( viewText );
+        //log.info( viewText );
         this.box.setContent(viewText);
     }
 
