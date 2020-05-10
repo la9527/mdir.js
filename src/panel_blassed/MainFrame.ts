@@ -53,6 +53,12 @@ export class MainFrame {
             this.changePanel();
         });
 
+        this.screen.key("f5", () => {
+            log.debug( "F5 !!!" );
+            this.screen.realloc();
+            this.screen.render();
+        });
+
         this.blessedPanels[0].setFocus();
         this.screen.render();
     }
