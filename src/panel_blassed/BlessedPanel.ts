@@ -27,7 +27,7 @@ export class BlessedPanel extends Panel {
         super();
         const statColor = ColorConfig.instance().getBaseColor("stat");
 
-        this.baseWidget = new Widget(opts);
+        this.baseWidget = new Widget( { ...opts } );
 
         this.panel = new Widget({
             parent: this.baseWidget,
@@ -213,8 +213,8 @@ export class BlessedPanel extends Panel {
         const fileSize = this.dirFiles.filter( i => !i.dir ).length;
         const allFileSize = this.dirFiles.filter( i => !i.dir ).reduce((v, t) => v + t.size, 0);
 
-        this.header.box.setContent( this._currentDir.fullname );
-        this.tailer.box.setContent( sprintf( "{bold}%5s{/bold} Files {bold}%5s{/bold} Dir {bold}%20s{/bold} Byte", StringUtils.toregular(fileSize), StringUtils.toregular(dirSize), StringUtils.toregular(allFileSize) ) );
+        this.header.setContent( this._currentDir.fullname );
+        this.tailer.setContentFormat( "{bold}%5s{/bold} Files {bold}%5s{/bold} Dir {bold}%20s{/bold} Byte", StringUtils.toregular(fileSize), StringUtils.toregular(dirSize), StringUtils.toregular(allFileSize) );
     }   
 
     render() {

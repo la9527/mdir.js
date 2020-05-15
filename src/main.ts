@@ -2,12 +2,38 @@ import * as blessed from "neo-blessed";
 import { BlessedProgram, Widgets, box, text, colors } from "neo-blessed";
 import { Logger } from "./common/Logger";
 import { Colorizer } from "logform";
-import { BlessedPanel } from "./panel_blassed/BlessedPanel";
+import { BlessedPanel } from './panel_blassed/BlessedPanel';
 import { FuncKeyBox } from './panel_blassed/FuncKeyBox';
 import { Widget } from "./panel_blassed/Widget";
 import mainFrame, { MainFrame } from "./panel_blassed/MainFrame";
+import { BlessedMcd } from "./panel_blassed/BlessedMcd";
 
 const log = Logger("main");
+
+const screen = blessed.screen({
+    smartCSR: true,
+    fullUnicode: true,
+    dockBorders: true,
+    useBCE: true,
+    ignoreDockContrast: true,
+    // debug: true,
+    //dump: true,
+    log: process.env.HOME + "/.m/m2.log"
+});
+
+console.log( "TEST !!!" );
+(async () => {
+    const mcd = new BlessedMcd({ parent: screen, top: 1, left: 0, width: "100%", height: "100%-1" });
+    mcd.initReader();
+    await mcd.rescan(5);
+    // log.warn("TEST !!!");
+
+    screen.key("q", () => {
+        process.exit(0);
+    });
+
+    screen.render();
+})();
 
 /*
 const program: BlessedProgram = blessed.program();
@@ -33,16 +59,7 @@ program.move(10, 10);
 */
 
 /*
-const screen = blessed.screen({
-    smartCSR: true,
-    fullUnicode: true,
-    dockBorders: true,
-    useBCE: true,
-    ignoreDockContrast: true,
-    debug: true,
-    //dump: true,
-    log: process.env.HOME + "/.m/m2.log"
-});
+
 
 (async () => {
     let blessedPanels = [
@@ -76,7 +93,10 @@ const screen = blessed.screen({
 })();
 */
 
+/*
 (async () => {
     const frame = mainFrame();
     await frame.start();
 })();
+*/
+

@@ -1,6 +1,7 @@
 import { BlessedProgram, Widgets, box, text, colors } from "neo-blessed";
 import { Logger } from "../common/Logger";
 import { Color } from "../common/Color";
+import { sprintf } from "sprintf-js";
 
 const log = Logger("main");
 
@@ -42,6 +43,14 @@ export class Widget {
         this._box.render();
     }
 
+    setContentFormat( ...args ) {
+        this.setContent( sprintf.apply( null, args ) );
+    }
+
+    setContent( ...args ) {
+        this.box.apply( this.box, args );
+    }
+
     setColor( color: Color ) {
         this._box.style = { bg: color.back, fg: color.font };
     }
@@ -58,7 +67,7 @@ export class Widget {
     set left( num ) {
         this._box.left = num;
     }
-    get width() {
+    get width(): string | number {
         return this._box.width;
     }
     set width(num: string | number) {

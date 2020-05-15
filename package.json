@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "start": "tsc -p tsconfig.json && node ./build/src/main.js",
-    "debug": "tsc -p tsconfig.json && node --inspect ./build/src/main.js"
+    "debug": "tsc -p tsconfig.json && node --inspect-brk ./build/src/main.js"
   },
   "author": "Byoungyoung La(la9527@daum.net)",
   "license": "MIT",

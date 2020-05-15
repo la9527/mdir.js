@@ -28,8 +28,12 @@ const convertAttr = ( stats: fs.Stats ): string => {
 export class FileReader extends Reader {
     protected _readerFsType = "file";
 
+    rootDir(): File {
+        return this.convertFile( path.sep );
+    }
+
     homeDir(): File {
-        return this.convertFile( os.homedir());
+        return this.convertFile( os.homedir() );
     }
 
     convertFile( filePath: string ): File {

@@ -8,6 +8,8 @@ export abstract class Reader {
     abstract readdir( dir: File ): Promise<File[]>;
     abstract homeDir(): File;
 
+    abstract rootDir(): File;
+
     get readerName() {
         return this.readerName;
     }

@@ -108,4 +108,18 @@ export class Color {
     get number() {
         return (this.font * 16) + this.back;
     }
+
+    get blessed() {
+        return {
+            fg: this.fontColorName,
+            bg: this.backColorName
+        };
+    }
+
+    get blessedReverse() {
+        return {
+            bg: this.fontColorName,
+            fg: this.backColorName
+        };
+    }
 }

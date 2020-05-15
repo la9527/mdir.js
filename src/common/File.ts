@@ -27,6 +27,10 @@ export class File {
 
     error:      any = null; // reading fail.
 
+    get dirname() {
+        return path.dirname(this.fullname);
+    }
+
     get extname() {
         return path.extname(this.fullname);
     }
