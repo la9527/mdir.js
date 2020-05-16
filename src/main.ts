@@ -21,15 +21,18 @@ const screen = blessed.screen({
     log: process.env.HOME + "/.m/m2.log"
 });
 
-console.log( "TEST !!!" );
 (async () => {
     const mcd = new BlessedMcd({ parent: screen, top: 1, left: 0, width: "100%", height: "100%-1" });
     mcd.initReader();
-    await mcd.rescan(5);
-    // log.warn("TEST !!!");
-
+    await mcd.rescan(1);
+    mcd.setFocus();
+    
     screen.key("q", () => {
         process.exit(0);
+    });
+
+    screen.key("r", () => {
+        screen.render();
     });
 
     screen.render();

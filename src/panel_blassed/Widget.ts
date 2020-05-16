@@ -48,7 +48,7 @@ export class Widget {
     }
 
     setContent( ...args ) {
-        this.box.apply( this.box, args );
+        this.box.setContent.apply( this.box, args );
     }
 
     setColor( color: Color ) {

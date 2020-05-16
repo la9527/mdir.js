@@ -6,7 +6,9 @@ import { Dir } from "../common/Dir";
 import { Reader } from "../common/Reader";
 import { File } from "../common/File";
 import { readerControl } from "./readerControl";
-import { log } from "winston";
+import { Logger } from "../common/Logger";
+
+const log = Logger("blessed-mcd");
 
 export class Mcd {
     protected sortType: SortType = SortType.COLOR;
@@ -93,7 +95,7 @@ export class Mcd {
         while( temp.length != 0 ) {
             dirNode = temp.pop();
 
-            if ( dirNode.depth <= -1 ) {
+            if ( dirNode.depth <= orgDepth ) {
                 row++;
             }
             orgDepth = dirNode.depth;
@@ -200,14 +202,16 @@ export class Mcd {
 
     keyUp() {
         if ( this.currentDir().parentDir ) {
-            if ( this.currentDir().depth !== this.currentDir(-1).depth ) {
+            if ( this.curDirInx - 1 > -1 && this.currentDir().depth !== this.currentDir(-1).depth ) {
                 let i = 0;
-                for ( i = this.curDirInx - 1; i >= -1; --i ) {
+                for ( i = this.curDirInx - 1; i > 0; --i ) {
                     if ( this.arrOrder[i].depth === this.currentDir().depth ) {
                         break;
                     }
                 }
-                i === 0 ? this.keyLeft() : this.curDirInx--;
+                i === 0 ? this.keyLeft() : this.curDirInx = i;
+            } else {
+                this.curDirInx--;
             }
         } else {
             this.keyLeft();
@@ -220,17 +224,39 @@ export class Mcd {
         }
     }
 
-    keyRight() {
+    async keyRightPromise() {
         if ( this.currentDir().subDir.length ) {
             this.curDirInx = this.currentDir().subDir[0].index;
         } else {
-            this.scan( this.currentDir(), 1 );
+            const name = this.currentDir().file.fullname;
+            await this.scan( this.currentDir(), 1 );
+            this.setCurrentDir(name);
             if ( !this.currentDir().subDir.length ) {
                 this.currentDir(1, true);
             } else {
                 if ( this.currentDir().subDir.length && this.currentDir().depth - this.scrollCol == 5 ) {
                     this.scrollCol++;
                 }
+            }
+        }
+    }
+
+    async keyDownPromise() {
+        if ( this.currentDir().parentDir ) {
+            if ( this.curDirInx + 1 >= this.arrOrder.length || this.currentDir().depth !== this.currentDir(1).depth ) {
+                let i = 0;
+                for ( i = this.curDirInx + 1; i <= this.arrOrder.length - 1; i++ ) {
+                    if ( this.arrOrder[i].depth === this.currentDir().depth ) {
+                        break;
+                    }
+                }
+                if ( i <= this.arrOrder.length - 1) {
+                    this.curDirInx = i;
+                } else {
+                    await this.keyRightPromise();
+                }
+            } else {
+                this.curDirInx++;
             }
         }
     }

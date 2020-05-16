@@ -32,6 +32,8 @@ class McdDirButton extends Widget {
         this.lineColor = ColorConfig.instance().getBaseColor("mcd_line");
 
         this.node = node;
+        this.select = false;
+        this.showCheck = false;
     }
 
     draw() {
@@ -56,9 +58,10 @@ class McdDirButton extends Widget {
         this.box.setContent(content);
     }
 
-    setDir( node: Dir, showCheck: boolean ) {
+    setDir( node: Dir, select: boolean ) {
         this.node = node;
-        this.showCheck = showCheck;
+        this.select = select;
+        this.showCheck = true;
     }
 }
 
@@ -85,9 +88,9 @@ export class BlessedMcd extends Mcd {
 
         this.baseWidget = new Widget( { ...opts, border: "line" } );
 
-        this.searchWidget = new Widget( { parent: this.baseWidget, top: 1, left: "100%-25", width: 25, style: this.mcdColor.blessed } );
-        this.pathWidget = new Widget( { parent: this.baseWidget, top: "100%-1", left: 2, style: this.mcdColor.blessed } );
-        this.initReader();
+        // this.searchWidget = new Widget( { parent: this.baseWidget, top: 0, left: "100%-30", width: 24, height: 1, style: this.mcdColor.blessed } );
+        this.pathWidget = new Widget( { parent: this.baseWidget, top: "100%-1", left: 2, width: "40%", height: 1, style: this.mcdColor.blessed } );
+        this.initRender();
     }
 
     setFocus() {
@@ -99,8 +102,34 @@ export class BlessedMcd extends Mcd {
     }
 
     initRender() {
+        this.baseWidget.on( "keypress", async (ch, keyInfo) => {
+            log.info( "keypress 1 %j", keyInfo );
+            const runningFunc = {
+                down: "keyDownPromise",
+                up: "keyUp",
+                left: "keyLeft",
+                right: "keyRightPromise",
+                pageup: "keyPageUp",
+                pagedown: "keyPageDown",
+                home: "keyHome",
+                end: "keyEnd",
+                //enter: "keyEnterPromise",
+                //return: "keyReturn"
+            };
+            if ( runningFunc[keyInfo.name] && this[ runningFunc[keyInfo.name] ] ) {
+                const runFuncName = runningFunc[keyInfo.name];
+                log.warn( "%s", runFuncName );
+                if ( /(p|P)romise/.exec(runFuncName) ) {
+                    await this[runFuncName]();
+                } else {
+                    this[runFuncName]();
+                }
+                this.baseWidget.parent.screen.render();
+            }
+        });
+
         this.baseWidget.on( "prerender", () => {
-            log.debug( "BlessedPanel prerender !!!");
+            log.debug( "BlessedMcd prerender !!!");
 
             this.resize();
             this.beforeRender();
@@ -108,7 +137,6 @@ export class BlessedMcd extends Mcd {
         this.baseWidget.on( "render", () => {
             this.afterRender();
         });
-        this.render();
     }
 
     beforeRender() {
@@ -121,13 +149,10 @@ export class BlessedMcd extends Mcd {
 
         this.lines.map( item => item.destroy() );
         this.lines = [];
-        
-        if (this.arrOrder.length != this.buttonList.length) {
+
+        if (this.buttonList.length) {
             this.buttonList.map( i => i.destroy() );
             this.buttonList = [];
-            this.arrOrder.map( item => {
-                this.buttonList.push( new McdDirButton( { width: 12, heigh: 1 }, item ) );
-            });
         }
 
         let arrayLineCh = [];
@@ -155,9 +180,8 @@ export class BlessedMcd extends Mcd {
             mvwprintw(pWin, 0, width-25, "Search : [%-10s]", _sStrSearch.c_str());
         }
         */       
-        this.pathWidget.setContentFormat( "Path [ %s ]", curDir.file.fullname );        
+        this.pathWidget.setContentFormat( "Path [ %s ]", curDir.file.fullname );
        
-        let buttonCount = 0;
         for ( var i = 0; i < this.arrOrder.length; i++ ) {
             let node: Dir = this.arrOrder[i];
 
@@ -174,7 +198,10 @@ export class BlessedMcd extends Mcd {
             col = node.depth;
             row = node.row;
 
-            if ( node.depth !== 0 && node.parentDir.subDir[node.parentDir.subDir.length - 1] === node ) {
+            //log.info("nODep [%d] col [%d] row [%d] scrollRow [%d] scrollCol [%d]", nODep, col, row, this.scrollRow, this.scrollCol);
+		    // log.info("NCurses::Draw pNode->nDepth [%d]", node.depth);
+
+            if ( node.index !== 0 && node.parentDir && node.parentDir.subDir[node.parentDir.subDir.length - 1].index === node.index ) {
                 arrayLineCh[col - 1] = ' ';
             }
 
@@ -183,10 +210,10 @@ export class BlessedMcd extends Mcd {
             }
             if ( row - this.scrollRow < 0 ) continue;
 
-            if ( node === this.rootDir && node.parentDir.subDir[0] !== node ) {
+            if ( node.index !== this.rootDir.index && node.parentDir && node.parentDir.subDir[0].index !== node.index ) {
                 for ( let t = this.scrollCol; t < col && t < this.scrollCol + this.rowSize; t++ ) {
                     this.lines.push(
-                        blessed.box( { parent: this.baseWidget.box, left: row - this.scrollRow + 1, top: MCD_BASE_COL_POS[t - this.scrollCol + 1], width: 1, height : 1, content: arrayLineCh[t], style: this.lineColor.blessed } )
+                        blessed.box( { parent: this.baseWidget.box, top: row - this.scrollRow, left: MCD_BASE_COL_POS[t - this.scrollCol + 1], width: 1, height : 1, content: arrayLineCh[t], style: this.lineColor.blessed } )
                     );
                 }
             }
@@ -194,50 +221,52 @@ export class BlessedMcd extends Mcd {
             if ( col - this.scrollCol > this.rowSize ) continue;
             if ( this.scrollCol !== 0 && col - this.scrollCol < 1 ) continue;
 
-            let dirButton: McdDirButton = this.buttonList[buttonCount];
-            dirButton.height = 1;
-            dirButton.width = 12;
-
-            if ( node.depth === 0 ) {                
+            let dirButton: McdDirButton = new McdDirButton( { parent: this.baseWidget, width: 12, height: 1 }, node );
+            if ( node.depth === 0 ) {
                 dirButton.left = row - this.scrollRow + 1;
-                dirButton.top = 1;
+                dirButton.top = 0;
             } else {
-                const opts = { parent: this.baseWidget.box, top: row - this.scrollRow, left: MCD_BASE_COL_POS[col-this.scrollCol], width: 1, height : 1, style: this.lineColor.blessed };                 
+                const opts = { 
+                    parent: this.baseWidget.box, 
+                    top: row - this.scrollRow, 
+                    left: MCD_BASE_COL_POS[col-this.scrollCol], 
+                    width: 1, 
+                    height : 1, style: this.lineColor.blessed };
                 if ( node.parentDir.subDir.length > 1 ) {
-                    if ( node.parentDir.subDir[0] === node ) {
+                    if ( node.parentDir.subDir[0].index === node.index ) {
                         this.lines.push(
-                            blessed.box( { ...opts, top: opts.top + 1, content: '┬' } )
+                            blessed.box( { ...opts, content: '┬' } )
                         );
                     } else {
                         let content = node.parentDir.subDir[ node.parentDir.subDir.length - 1].index === node.index ? "└" : "├";
                         this.lines.push(
-                            blessed.box( { ...opts, top: opts.top + 1, content } )
+                            blessed.box( { ...opts, content } )
                         );
                     }
                 } else {
                     this.lines.push(
-                        blessed.box( { ...opts, top: opts.top + 1, content: '─' } )
+                        blessed.box( { ...opts, content: '─' } )
                     );
                 }
 
                 this.lines.push(
-                    blessed.box( { ...opts, top: opts.top + 2, content: node.check ? '+' : '─', style: this.mcdHighlightColor.blessed } )
+                    blessed.box( { ...opts, left: opts.left + 1, content: node.check ? '─' : '+', style: node.check ? this.lineColor.blessed : this.mcdHighlightColor.blessed  } )
                 );
 
                 dirButton.left = opts.left + 2;
-                dirButton.top = opts.top + 1;
+                dirButton.top = opts.top;
             }
-            dirButton.setDir( node, node === curDir ? this.hasFocus() : false );
-            dirButton.render();
+            dirButton.setDir( node, node.index === curDir.index ? this.hasFocus() : false );
+            //log.debug("dirButton : [%20s] row [%d] left [%d] top [%d]", dirButton.node.file.name, node.row, dirButton.left, dirButton.top );
 
-            buttonCount++;
+            this.buttonList.push( dirButton );
         }
 
         log.info( "beforeRender !!!" );
     }
 
     afterRender() {
-
+        log.info("afterRender !!!");
     }
 
     resize() {
