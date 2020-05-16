@@ -34,12 +34,19 @@ export class Mcd {
         this.reader = readerControl(type);
     }
 
+    async scanCurrentDir() {
+        const dir: File = this.reader.currentDir();
+        let scanDepth = dir.fullname.split(path.sep).length + 2;
+        log.debug( "scanDepth %d", scanDepth);
+        await this.rescan(scanDepth || 1);
+        this.setCurrentDir(dir.fullname);
+    }
+
     async rescan( depth: number = 0): Promise<Boolean> {
         this.arrOrder = [];
 
         this.rootDir = new Dir(this.reader.rootDir(), null, false);
         const result = await this.scan( this.rootDir, depth );
-        console.log( this.rootDir );
         return result;
     }
 
@@ -51,7 +58,6 @@ export class Mcd {
             return false;
         } 
 
-        const beforeDir: File = this.reader.currentDir();
         arrDir.push( dir );
 
         while( arrDir.length != 0 ) {
@@ -108,8 +114,6 @@ export class Mcd {
                 temp.push( dirNode.subDir[i] );
             }
         }
-
-        this.curDirInx = 0;
     }
 
     setCurrentDir(path: string = "") {
@@ -120,12 +124,14 @@ export class Mcd {
 
         if ( path === this.rootDir.file.fullname ) {
             this.curDirInx = 0;
+        } else {
+            const findDir = this.arrOrder.findIndex( item => {
+                log.debug( "[%s] [%s]", item.file.fullname, path );
+                return item.file.fullname === path;
+            });
+            this.curDirInx = findDir > -1 ? findDir : 0;
+            log.debug( "findIndex: [%s] %d [%d/%d]", path, findDir, this.curDirInx, this.arrOrder.length);
         }
-
-        const findDir = this.arrOrder.findIndex( item => {
-            return item.file.fullname === path;
-        });
-        this.curDirInx = findDir > -1 ? findDir : 0;
     }
 
     getDirRowArea( findRow: number, depth: number ): Dir {

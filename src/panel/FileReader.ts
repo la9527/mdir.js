@@ -87,6 +87,10 @@ export class FileReader extends Reader {
         return file;
     }
 
+    currentDir(): File {
+        return this.convertFile(process.cwd());
+    }
+
     readdir( dirFile: File ): Promise<File[]> {
         return new Promise<File[]>( (resolve, reject ) => {
             if ( !dirFile.dir ) {
@@ -106,7 +110,6 @@ export class FileReader extends Reader {
                         fileItem.push( item );
                     }
                 });
-                this.curDir = dirFile;
             } catch ( e ) {
                 log.error( "READDIR () - ERROR %j", e );
             }

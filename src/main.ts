@@ -24,7 +24,7 @@ const screen = blessed.screen({
 (async () => {
     const mcd = new BlessedMcd({ parent: screen, top: 1, left: 0, width: "100%", height: "100%-1" });
     mcd.initReader();
-    await mcd.rescan(1);
+    await mcd.scanCurrentDir();
     mcd.setFocus();
     
     screen.key("q", () => {

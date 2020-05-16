@@ -47,8 +47,9 @@ export class Widget {
         this.setContent( sprintf.apply( null, args ) );
     }
 
-    setContent( ...args ) {
-        this.box.setContent.apply( this.box, args );
+    setContent( text ) {
+        // 맥에서 한글자모 분리 오류 수정(Unicode 정규화 방식)
+        this.box.setContent( text.normalize() );
     }
 
     setColor( color: Color ) {

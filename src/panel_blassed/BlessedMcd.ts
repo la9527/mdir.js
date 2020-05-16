@@ -55,7 +55,7 @@ class McdDirButton extends Widget {
                 content = sprintf( "%-11.11s~", name );
             }
         }
-        this.box.setContent(content);
+        this.setContent(content);
     }
 
     setDir( node: Dir, select: boolean ) {
@@ -275,5 +275,19 @@ export class BlessedMcd extends Mcd {
 
     render() {
         this.baseWidget.render();
+    }
+
+    keyPageDown() {
+        const node = this.getDirRowArea( this.currentDir().row + this.baseWidget.box.height - 3, this.currentDir().depth );
+        if ( node ) {
+            this.curDirInx = node.index;
+        }
+    }
+
+    keyPageUp() {
+        const node = this.getDirRowArea( this.currentDir().row - this.baseWidget.box.height + 3, this.currentDir().depth );
+        if ( node ) {
+            this.curDirInx = node.index;
+        }
     }
 }

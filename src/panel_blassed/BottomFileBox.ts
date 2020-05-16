@@ -25,9 +25,6 @@ export default class BottomFilesBox extends Widget {
         if ( file.link ) {
             fileName = file.name + " -> " + (file.link.file ? file.link.file.fullname : file.link.name);
         }
-        // 맥에서 한글자모 분리 오류 수정(Unicode 정규화 방식)
-        fileName = fileName.normalize();
-
         const repeatSize = filenameMaxSize - strWidth(fileName);
         let textFileName = fileName;
         if ( repeatSize > 0 ) {
