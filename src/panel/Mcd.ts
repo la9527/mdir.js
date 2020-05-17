@@ -36,9 +36,8 @@ export class Mcd {
 
     async scanCurrentDir() {
         const dir: File = this.reader.currentDir();
-        let scanDepth = dir.fullname.split(path.sep).length + 2;
-        log.debug( "scanDepth %d", scanDepth);
-        await this.rescan(scanDepth || 1);
+        await this.rescan(2);
+        await this.addDirectory(dir.fullname);
         this.setCurrentDir(dir.fullname);
     }
 
@@ -64,6 +63,7 @@ export class Mcd {
             pTree = arrDir.pop();
 
             let dirInfo: File[] = await this.reader.readdir( pTree.file );
+            pTree.subDir = [];
             dirInfo.map( item => {
                 if ( item.dir && !item.link ) {
                     if ( pTree.subDir.findIndex( s => s.file.equal(item) ) == -1 ) {
@@ -126,31 +126,39 @@ export class Mcd {
             this.curDirInx = 0;
         } else {
             const findDir = this.arrOrder.findIndex( item => {
-                log.debug( "[%s] [%s]", item.file.fullname, path );
+                // log.debug( "[%s] [%s]", item.file.fullname, path );
                 return item.file.fullname === path;
             });
             this.curDirInx = findDir > -1 ? findDir : 0;
-            log.debug( "findIndex: [%s] %d [%d/%d]", path, findDir, this.curDirInx, this.arrOrder.length);
+            // log.debug( "findIndex: [%s] %d [%d/%d]", path, findDir, this.curDirInx, this.arrOrder.length);
         }
     }
 
-    getDirRowArea( findRow: number, depth: number ): Dir {
+    getDirRowArea( findRow: number, depth: number, curDir: Dir = null ): Dir {
         let tempNodeOver = [];
         let tempNodeUnder = [];
         
-        this.arrOrder.map( (item) => {
-            if ( item.depth === depth ) {
-                if ( item.row <= findRow ) {
-                    tempNodeOver.push( item );
-                } else if ( item.row > findRow ) {
-                    tempNodeUnder.push( item ); 
-                }
+        this.arrOrder.filter(item => item.depth === depth ).map( (item) => {
+            if ( item.row <= findRow ) {
+                tempNodeUnder.push( item );
+            }
+            if ( item.row > findRow ) {
+                tempNodeOver.push( item ); 
             }
         });
 
+        log.debug( "tempNodeOver : [%d], tempNodeUnder [%d]", tempNodeOver.length, tempNodeUnder.length );
+
         let overDir: Dir = tempNodeOver.length > 0 ? tempNodeOver[0] : null;
         let underDir: Dir = tempNodeUnder.length > 0 ? tempNodeUnder[tempNodeUnder.length - 1] : null;
+
         if ( overDir && underDir ) {
+            log.debug( "findRow: [%d] overDir : [%s][%d], underDir [%s][%d]", findRow, overDir.file.name, overDir.row, underDir.file.name, underDir.row );
+            if ( curDir && curDir.row === underDir.row ) {
+                return overDir;
+            } else if ( curDir && curDir.row === overDir.row ) {
+                return underDir;
+            }
             if ( overDir.row - findRow < findRow - underDir.row ) {
                 return underDir;
             } else {
@@ -169,27 +177,34 @@ export class Mcd {
             return null;
         }
 
-        const findSubDir = (baseDir: Dir, subPath) => {
-            let pathArr = subPath.split(path.sep);
+        const findSubDir = (baseDir: Dir, pathArr) => {
             const lastPathname = pathArr.shift();
             const findDir = baseDir.subDir.find(i => i.file.name === lastPathname);
+            log.debug( "baseDir [%s] [%s]", baseDir.file.name, pathArr );
             if ( !findDir ) {
                 return baseDir;
             }
             return findSubDir( findDir, pathArr );
         };
         if ( dirPath[0] === path.sep ) {
-            dirPath = dirPath.substr(0,1);
+            dirPath = dirPath.substr(1);
         }
-        return findSubDir( this.rootDir, dirPath );
+        let pathArr = dirPath.split(path.sep);
+        return findSubDir( this.rootDir, pathArr );
     }
 
     async addDirectory( dirPath: string ): Promise<Boolean> {
-        const dir: Dir = this.searchDir( dirPath );
-        if ( !dir ) {
-            return false;
-        }
-        return await this.scan( dir );
+        log.debug( "addDirectory : %s", dirPath );
+        let dir: Dir = null;
+        do {
+            dir = this.searchDir( dirPath );
+            if ( !dir ) {
+                break;
+            }
+            log.debug( "addDirectory: searchDir: [%s]", dir.file.fullname );
+            await this.scan( dir, 1 );
+        } while( dir.file.fullname !== dirPath );
+        return true;
     }
 
     currentDir(num: number = undefined, isChange = false ): Dir {
@@ -199,9 +214,9 @@ export class Mcd {
         }
         if ( x <= -1 || x >= this.arrOrder.length ) {
             x = this.curDirInx;
-            if ( isChange ) {
-                this.curDirInx = x;
-            }
+        }
+        if ( isChange ) {
+            this.curDirInx = x;
         }
         return this.arrOrder[ x ];
     }
@@ -234,9 +249,9 @@ export class Mcd {
         if ( this.currentDir().subDir.length ) {
             this.curDirInx = this.currentDir().subDir[0].index;
         } else {
-            const name = this.currentDir().file.fullname;
+            const fullname = this.currentDir().file.fullname;
             await this.scan( this.currentDir(), 1 );
-            this.setCurrentDir(name);
+            this.setCurrentDir(fullname);
             if ( !this.currentDir().subDir.length ) {
                 this.currentDir(1, true);
             } else {

@@ -40,8 +40,6 @@ class McdDirButton extends Widget {
         if ( !this.node ) {
             return;
         }
-
-        // let viewText = sprintf(`%10s %10s %5s {${fontHex}-fg}%s %10s{/${fontHex}-fg}`, this._file.attr, date, time, textFileName, tailview);
         this.box.style = this.select ? this.mcdColor.blessedReverse : this.mcdColor.blessed;
         let content = "";
         if ( this.node.file.fullname === "/" ) {
@@ -49,8 +47,11 @@ class McdDirButton extends Widget {
         } else {
             let name = this.node.file.name;
             let nameSize = this.box.strWidth(name);
-            if ( nameSize <= 12 ) {            
-                content = name + " " + (this.node.subDir.length ? "─".repeat( 12 - nameSize ) : "" );
+            if ( nameSize < 12 ) {
+                content = name;
+                if ( this.node.subDir.length ) {
+                    blessed.box( { parent: this.box, top: 0, left: nameSize, width: 12 - nameSize, height: 1, content: "─".repeat( 12 - nameSize ), style: this.lineColor.blessed } )
+                }
             } else {
                 content = sprintf( "%-11.11s~", name );
             }
@@ -87,8 +88,6 @@ export class BlessedMcd extends Mcd {
         this.mcdHighlightColor = ColorConfig.instance().getBaseColor("mcd_highlight");
 
         this.baseWidget = new Widget( { ...opts, border: "line" } );
-
-        // this.searchWidget = new Widget( { parent: this.baseWidget, top: 0, left: "100%-30", width: 24, height: 1, style: this.mcdColor.blessed } );
         this.pathWidget = new Widget( { parent: this.baseWidget, top: "100%-1", left: 2, width: "40%", height: 1, style: this.mcdColor.blessed } );
         this.initRender();
     }
@@ -278,14 +277,14 @@ export class BlessedMcd extends Mcd {
     }
 
     keyPageDown() {
-        const node = this.getDirRowArea( this.currentDir().row + this.baseWidget.box.height - 3, this.currentDir().depth );
+        const node = this.getDirRowArea( this.currentDir().row + (this.baseWidget.box.height - 3), this.currentDir().depth, this.currentDir() );
         if ( node ) {
             this.curDirInx = node.index;
         }
     }
 
     keyPageUp() {
-        const node = this.getDirRowArea( this.currentDir().row - this.baseWidget.box.height + 3, this.currentDir().depth );
+        const node = this.getDirRowArea( this.currentDir().row - (this.baseWidget.box.height + 3), this.currentDir().depth, this.currentDir() );
         if ( node ) {
             this.curDirInx = node.index;
         }
