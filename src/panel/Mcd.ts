@@ -72,9 +72,12 @@ export class Mcd {
                 }
             });
 
-            pTree.check = true;
-            // TODO: sort 기능 적용 필요
-            // sort(pTree->vNode.begin(), pTree->vNode.end(), McdSort());
+            pTree.check = true;            
+            pTree.subDir = pTree.subDir.sort( (a: Dir, b: Dir) => {
+                if ( a.file.name > b.file.name ) return 1;
+                if ( b.file.name > a.file.name ) return -1;
+                return 0;
+            });
 
             if (depth != depthCount) {
                 depthCount++;
@@ -86,6 +89,21 @@ export class Mcd {
 
         this.updateOrder();
         return true;
+    }
+
+    removeSubDir( node: Dir ) {
+        if ( !node ) return;
+        if ( !this.arrOrder.length ) return;
+
+        let j = 0;
+        for ( let i = node.index; i < this.arrOrder.length; i++ ) {
+            if ( this.arrOrder[i].depth <= node.depth ) break;
+            j++;
+        }
+        this.arrOrder.splice( node.index, j );
+        node.subDir = [];
+        node.check = false;
+        this.updateOrder();
     }
 
     updateOrder() {
@@ -126,11 +144,9 @@ export class Mcd {
             this.curDirInx = 0;
         } else {
             const findDir = this.arrOrder.findIndex( item => {
-                // log.debug( "[%s] [%s]", item.file.fullname, path );
                 return item.file.fullname === path;
             });
             this.curDirInx = findDir > -1 ? findDir : 0;
-            // log.debug( "findIndex: [%s] %d [%d/%d]", path, findDir, this.curDirInx, this.arrOrder.length);
         }
     }
 
@@ -147,13 +163,10 @@ export class Mcd {
             }
         });
 
-        log.debug( "tempNodeOver : [%d], tempNodeUnder [%d]", tempNodeOver.length, tempNodeUnder.length );
-
         let overDir: Dir = tempNodeOver.length > 0 ? tempNodeOver[0] : null;
         let underDir: Dir = tempNodeUnder.length > 0 ? tempNodeUnder[tempNodeUnder.length - 1] : null;
 
         if ( overDir && underDir ) {
-            log.debug( "findRow: [%d] overDir : [%s][%d], underDir [%s][%d]", findRow, overDir.file.name, overDir.row, underDir.file.name, underDir.row );
             if ( curDir && curDir.row === underDir.row ) {
                 return overDir;
             } else if ( curDir && curDir.row === overDir.row ) {
@@ -290,5 +303,16 @@ export class Mcd {
         while(!this.currentDir().subDir.length) {
             this.curDirInx = this.currentDir().subDir[0].index;
         }
+    }
+
+    async subDirScanPromise( depth: number = 1 ) {
+        let node = this.currentDir();
+        this.removeSubDir( node );
+        await this.scan( node, depth );
+    }
+
+    subDirRemove() {
+        let node = this.currentDir();
+        this.removeSubDir( node );
     }
 }

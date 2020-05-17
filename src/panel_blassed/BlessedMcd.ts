@@ -15,8 +15,6 @@ import { Logger } from "../common/Logger";
 
 const log = Logger("blessed-mcd");
 
-const MCD_BASE_COL_POS = [ 0, 4, 18, 32, 46, 60, 74, 88, 102, 116, 130, 144, 158 ];
-
 class McdDirButton extends Widget {
     node: Dir;
     select: boolean;
@@ -40,6 +38,7 @@ class McdDirButton extends Widget {
         if ( !this.node ) {
             return;
         }
+        let width = this.width as number;
         this.box.style = this.select ? this.mcdColor.blessedReverse : this.mcdColor.blessed;
         let content = "";
         if ( this.node.file.fullname === "/" ) {
@@ -47,13 +46,13 @@ class McdDirButton extends Widget {
         } else {
             let name = this.node.file.name;
             let nameSize = this.box.strWidth(name);
-            if ( nameSize < 12 ) {
+            if ( nameSize < this.width ) {
                 content = name;
                 if ( this.node.subDir.length ) {
-                    blessed.box( { parent: this.box, top: 0, left: nameSize, width: 12 - nameSize, height: 1, content: "─".repeat( 12 - nameSize ), style: this.lineColor.blessed } )
+                    blessed.box( { parent: this.box, top: 0, left: nameSize, width: width - nameSize, height: 1, content: "─".repeat( width - nameSize ), bold: true, style: this.lineColor.blessed } )
                 }
             } else {
-                content = sprintf( "%-11.11s~", name );
+                content = sprintf( `%-${width-1}.${width-1}s~`, name );
             }
         }
         this.setContent(content);
@@ -78,7 +77,7 @@ export class BlessedMcd extends Mcd {
     searchWidget: Widget = null;
     pathWidget: Widget = null;
 
-    rowSize: number = 0;
+    viewDepthSize: number = 0;
 
     constructor(  opts: Widgets.BoxOptions | any ) {
         super();
@@ -87,8 +86,8 @@ export class BlessedMcd extends Mcd {
         this.lineColor = ColorConfig.instance().getBaseColor("mcd_line");
         this.mcdHighlightColor = ColorConfig.instance().getBaseColor("mcd_highlight");
 
-        this.baseWidget = new Widget( { ...opts, border: "line" } );
-        this.pathWidget = new Widget( { parent: this.baseWidget, top: "100%-1", left: 2, width: "40%", height: 1, style: this.mcdColor.blessed } );
+        this.baseWidget = new Widget( { ...opts, border: "line", style: { ...this.mcdColor.blessed, border: this.lineColor.blessed } } );
+        this.pathWidget = new Widget( { parent: this.baseWidget, top: "100%-1", left: 2, width: "40%", height: 1, style: { ...this.mcdColor.blessed, border: this.lineColor.blessed } } );
         this.initRender();
     }
 
@@ -102,7 +101,6 @@ export class BlessedMcd extends Mcd {
 
     initRender() {
         this.baseWidget.on( "keypress", async (ch, keyInfo) => {
-            log.info( "keypress 1 %j", keyInfo );
             const runningFunc = {
                 down: "keyDownPromise",
                 up: "keyUp",
@@ -112,24 +110,40 @@ export class BlessedMcd extends Mcd {
                 pagedown: "keyPageDown",
                 home: "keyHome",
                 end: "keyEnd",
+                "=": { method: "subDirScanPromise", param: [ 0 ] },
+                "+": { method: "subDirScanPromise", param: [ 1 ] },
+                "-": "subDirRemove"
                 //enter: "keyEnterPromise",
                 //return: "keyReturn"
             };
-            if ( runningFunc[keyInfo.name] && this[ runningFunc[keyInfo.name] ] ) {
-                const runFuncName = runningFunc[keyInfo.name];
-                log.warn( "%s", runFuncName );
-                if ( /(p|P)romise/.exec(runFuncName) ) {
-                    await this[runFuncName]();
-                } else {
-                    this[runFuncName]();
+
+            const keyName = keyInfo.name || keyInfo.full;
+            const obj = runningFunc[keyName];            
+            if ( obj ) {
+                let method = obj;
+                let param = null;
+                if ( typeof( obj ) === "object" ) {
+                    method = obj.method;
+                    param = obj.param;
+                }
+
+                log.info( "keypress [%s] - method: %s(%s)", keyName, method, param ? param.join(",") : "" );
+
+                if ( this[ method ] ) {
+                    if ( /(p|P)romise/.exec(method) ) {
+                        await this[method].apply(this, param);
+                    } else {
+                        this[method].apply(this, param);
+                    }
                 }
                 this.baseWidget.parent.screen.render();
+            } else {
+                log.info( "keypress [%s] %j", keyName, keyInfo );
             }
         });
 
         this.baseWidget.on( "prerender", () => {
             log.debug( "BlessedMcd prerender !!!");
-
             this.resize();
             this.beforeRender();
         });
@@ -139,12 +153,38 @@ export class BlessedMcd extends Mcd {
     }
 
     beforeRender() {
-        this.rowSize = MCD_BASE_COL_POS.reduce( (rowNum: number, col: number, i: number) => {
-            if ( (this.baseWidget.width as number) - 30 > col ) {
-                rowNum = i;
+        let MCD_TEXT_SIZE = 12;
+        let MAX_MCD_TEXT_SIZE = 40;
+        let MIN_TEXT_SIZE_OF_WIDTH = 120;
+
+        let MCD_BASE_COL_POS = [ 0, 4 ];
+        
+        let width: number = this.baseWidget.width as number;
+        if ( width <= MIN_TEXT_SIZE_OF_WIDTH ) {
+            MCD_TEXT_SIZE = 12;
+        } else {
+            MCD_TEXT_SIZE = MCD_TEXT_SIZE + Math.round( (width - MIN_TEXT_SIZE_OF_WIDTH) / (width / (MAX_MCD_TEXT_SIZE - MCD_TEXT_SIZE)) );
+            if ( MCD_TEXT_SIZE > MAX_MCD_TEXT_SIZE ) {
+                MCD_TEXT_SIZE = MAX_MCD_TEXT_SIZE;
             }
-            return rowNum;
+        }
+
+        {
+            let i = 4;
+            do {
+                i = i + (MCD_TEXT_SIZE + 2);
+                MCD_BASE_COL_POS.push( i );
+            } while( width >= i );
+        }
+
+        this.viewDepthSize = MCD_BASE_COL_POS.reduce( (viewDepthSize: number, col: number, i: number) => {
+            if ( (this.baseWidget.width as number) - (MCD_TEXT_SIZE + 6) < col ) {
+                viewDepthSize = i - 2;
+            }
+            return viewDepthSize;
         }, 0);
+
+        log.debug( "MCD_TEXT_SIZE: %d, viewDepthSize: [%s], [%d]", MCD_TEXT_SIZE, MCD_BASE_COL_POS, this.viewDepthSize);
 
         this.lines.map( item => item.destroy() );
         this.lines = [];
@@ -162,15 +202,20 @@ export class BlessedMcd extends Mcd {
         if ( curDir.row - this.scrollRow > height - 3 ) {
             this.scrollRow = curDir.row - height + 3;
         }
-        if ( curDir.depth - this.scrollCol > this.rowSize ) {
-            this.scrollCol = curDir.depth - this.rowSize;
+        if ( curDir.depth - this.scrollCol > this.viewDepthSize ) {
+            this.scrollCol = curDir.depth - this.viewDepthSize;
         }
         if ( curDir.row - this.scrollRow < 0 ) {
             this.scrollRow = curDir.row;
         }
-        if ( curDir.depth - this.scrollCol < 1 && curDir.depth - 1 > -1 ) {
+        if ( curDir.depth - this.scrollCol < 1 ) {
             this.scrollCol = curDir.depth - 1;
+            if ( this.scrollCol <= -1) {
+                this.scrollCol = 0;
+            }
         }
+
+        log.debug( "%d, viewDepthSize: %d, scrollCol: %d", MCD_BASE_COL_POS.length, this.viewDepthSize, this.scrollCol );
 
         /*
         if (!_sStrSearch.empty())
@@ -178,10 +223,8 @@ export class BlessedMcd extends Mcd {
             setcol(_tMCDColor, pWin);
             mvwprintw(pWin, 0, width-25, "Search : [%-10s]", _sStrSearch.c_str());
         }
-        */       
-        this.pathWidget.setContentFormat( "Path [ %s ]", curDir.file.fullname );
-       
-        for ( var i = 0; i < this.arrOrder.length; i++ ) {
+        */
+        for ( let i = 0; i < this.arrOrder.length; i++ ) {
             let node: Dir = this.arrOrder[i];
 
             if ( nODep < node.depth ) {
@@ -210,17 +253,17 @@ export class BlessedMcd extends Mcd {
             if ( row - this.scrollRow < 0 ) continue;
 
             if ( node.index !== this.rootDir.index && node.parentDir && node.parentDir.subDir[0].index !== node.index ) {
-                for ( let t = this.scrollCol; t < col && t < this.scrollCol + this.rowSize; t++ ) {
+                for ( let t = this.scrollCol; t < col && t < this.scrollCol + this.viewDepthSize; t++ ) {
                     this.lines.push(
                         blessed.box( { parent: this.baseWidget.box, top: row - this.scrollRow, left: MCD_BASE_COL_POS[t - this.scrollCol + 1], width: 1, height : 1, content: arrayLineCh[t], style: this.lineColor.blessed } )
                     );
                 }
             }
 
-            if ( col - this.scrollCol > this.rowSize ) continue;
+            if ( col - this.scrollCol > this.viewDepthSize ) continue;
             if ( this.scrollCol !== 0 && col - this.scrollCol < 1 ) continue;
 
-            let dirButton: McdDirButton = new McdDirButton( { parent: this.baseWidget, width: 12, height: 1 }, node );
+            let dirButton: McdDirButton = new McdDirButton( { parent: this.baseWidget, width: MCD_TEXT_SIZE, height: 1 }, node );
             if ( node.depth === 0 ) {
                 dirButton.left = row - this.scrollRow + 1;
                 dirButton.top = 0;
@@ -257,15 +300,17 @@ export class BlessedMcd extends Mcd {
             }
             dirButton.setDir( node, node.index === curDir.index ? this.hasFocus() : false );
             //log.debug("dirButton : [%20s] row [%d] left [%d] top [%d]", dirButton.node.file.name, node.row, dirButton.left, dirButton.top );
-
             this.buttonList.push( dirButton );
         }
 
-        log.info( "beforeRender !!!" );
+        this.pathWidget.top = this.baseWidget.height as number - 2;
+        this.pathWidget.left = 2;
+        this.pathWidget.width = curDir.file.fullname.length + 9;
+        this.pathWidget.setContentFormat( "Path [ %s ]", curDir.file.fullname );
     }
 
     afterRender() {
-        log.info("afterRender !!!");
+        log.debug("afterRender !!!");
     }
 
     resize() {
