@@ -10,7 +10,7 @@ import { Mcd } from "../panel/Mcd";
 import { Widget } from './Widget';
 import { Dir } from "../common/Dir";
 import { Color } from '../common/Color';
-import { ColorConfig } from "../config/ColorConfig";
+import { ColorConfig } from '../config/ColorConfig';
 import { Logger } from "../common/Logger";
 
 const log = Logger("blessed-mcd");
@@ -49,12 +49,13 @@ class McdDirButton extends Widget {
             if ( nameSize < this.width ) {
                 content = name;
                 if ( this.node.subDir.length ) {
-                    blessed.box( { parent: this.box, top: 0, left: nameSize, width: width - nameSize, height: 1, content: "─".repeat( width - nameSize ), bold: true, style: this.lineColor.blessed } )
+                    blessed.box( { parent: this.box, top: 0, left: nameSize, width: width - nameSize, height: 1, content: "─".repeat( width - nameSize ), style: this.lineColor.blessed } )
                 }
             } else {
                 content = sprintf( `%-${width-1}.${width-1}s~`, name );
             }
         }
+        content = "{bold}" + content + "{/bold}";
         this.setContent(content);
     }
 
@@ -72,8 +73,10 @@ export class BlessedMcd extends Mcd {
     mcdColor: Color;
     lineColor: Color;
     mcdHighlightColor: Color;
-
+    
     baseWidget: Widget = null;
+    mcdWidget: Widget = null;
+    header: Widget = null;
     searchWidget: Widget = null;
     pathWidget: Widget = null;
 
@@ -82,13 +85,39 @@ export class BlessedMcd extends Mcd {
     constructor(  opts: Widgets.BoxOptions | any ) {
         super();
 
-        this.mcdColor = ColorConfig.instance().getBaseColor("mcd");
-        this.lineColor = ColorConfig.instance().getBaseColor("mcd_line");
-        this.mcdHighlightColor = ColorConfig.instance().getBaseColor("mcd_highlight");
+        const colorConfig = ColorConfig.instance();
 
-        this.baseWidget = new Widget( { ...opts, border: "line", style: { ...this.mcdColor.blessed, border: this.lineColor.blessed } } );
-        this.pathWidget = new Widget( { parent: this.baseWidget, top: "100%-1", left: 2, width: "40%", height: 1, style: { ...this.mcdColor.blessed, border: this.lineColor.blessed } } );
+        this.mcdColor = colorConfig.getBaseColor("mcd");
+        this.lineColor = colorConfig.getBaseColor("mcd_line");
+        this.lineColor = colorConfig.getBaseColor("mcd_line");
+        this.mcdHighlightColor = colorConfig.getBaseColor("mcd_highlight");
+        let statColor = colorConfig.getBaseColor("stat");
+
+        this.baseWidget = new Widget( { ...opts } );
+        this.mcdWidget = new Widget( { parent: this.baseWidget, top: 1, left: 0, height: "100%", width: "100%", border: "line", style: { ...this.mcdColor.blessed, border: this.lineColor.blessed } } );
+        this.pathWidget = new Widget( { parent: this.baseWidget, top: "100%", left: 2, height: 1, style: { ...this.mcdColor.blessed, border: this.lineColor.blessed } } );
+        this.header = new Widget({
+            parent: this.baseWidget,
+            left: 0,
+            top: 0,
+            type: "bg",
+            width: "100%",
+            height: 1,
+            bg: statColor.backHex,
+            style: {
+                bg: statColor.back,
+                fg: statColor.font
+            }
+        });
         this.initRender();
+    }
+
+    initReader( reader: Reader ) {
+        super.initReader( reader );
+    }
+
+    getWidget() {
+        return this.baseWidget;
     }
 
     setFocus() {
@@ -137,9 +166,11 @@ export class BlessedMcd extends Mcd {
                     }
                 }
                 this.baseWidget.parent.screen.render();
+                return false;
             } else {
                 log.info( "keypress [%s] %j", keyName, keyInfo );
             }
+            return true;
         });
 
         this.baseWidget.on( "prerender", () => {
@@ -159,7 +190,9 @@ export class BlessedMcd extends Mcd {
 
         let MCD_BASE_COL_POS = [ 0, 4 ];
         
-        let width: number = this.baseWidget.width as number;
+        this.mcdWidget.height = this.baseWidget.height as number - 1;
+        
+        let width: number = this.mcdWidget.width as number;
         if ( width <= MIN_TEXT_SIZE_OF_WIDTH ) {
             MCD_TEXT_SIZE = 12;
         } else {
@@ -178,13 +211,13 @@ export class BlessedMcd extends Mcd {
         }
 
         this.viewDepthSize = MCD_BASE_COL_POS.reduce( (viewDepthSize: number, col: number, i: number) => {
-            if ( (this.baseWidget.width as number) - (MCD_TEXT_SIZE + 6) < col ) {
+            if ( (this.mcdWidget.width as number) - (MCD_TEXT_SIZE + 6) < col ) {
                 viewDepthSize = i - 2;
             }
             return viewDepthSize;
         }, 0);
 
-        log.debug( "MCD_TEXT_SIZE: %d, viewDepthSize: [%s], [%d]", MCD_TEXT_SIZE, MCD_BASE_COL_POS, this.viewDepthSize);
+        log.debug( "MCD_TEXT_SIZE: %d, [%d]", MCD_TEXT_SIZE, this.viewDepthSize);
 
         this.lines.map( item => item.destroy() );
         this.lines = [];
@@ -196,7 +229,7 @@ export class BlessedMcd extends Mcd {
 
         let arrayLineCh = [];
         let row = 0, col = 0, nODep = 0, j = 0;
-        let height = (this.baseWidget.height as number);
+        let height = (this.mcdWidget.height as number);
         let curDir: Dir = this.currentDir();
         
         if ( curDir.row - this.scrollRow > height - 3 ) {
@@ -215,15 +248,12 @@ export class BlessedMcd extends Mcd {
             }
         }
 
-        log.debug( "%d, viewDepthSize: %d, scrollCol: %d", MCD_BASE_COL_POS.length, this.viewDepthSize, this.scrollCol );
+        // if (!_sStrSearch.empty())
+        // {
+        //    setcol(_tMCDColor, pWin);
+        //    mvwprintw(pWin, 0, width-25, "Search : [%-10s]", _sStrSearch.c_str());
+        // }
 
-        /*
-        if (!_sStrSearch.empty())
-        {
-            setcol(_tMCDColor, pWin);
-            mvwprintw(pWin, 0, width-25, "Search : [%-10s]", _sStrSearch.c_str());
-        }
-        */
         for ( let i = 0; i < this.arrOrder.length; i++ ) {
             let node: Dir = this.arrOrder[i];
 
@@ -255,7 +285,7 @@ export class BlessedMcd extends Mcd {
             if ( node.index !== this.rootDir.index && node.parentDir && node.parentDir.subDir[0].index !== node.index ) {
                 for ( let t = this.scrollCol; t < col && t < this.scrollCol + this.viewDepthSize; t++ ) {
                     this.lines.push(
-                        blessed.box( { parent: this.baseWidget.box, top: row - this.scrollRow, left: MCD_BASE_COL_POS[t - this.scrollCol + 1], width: 1, height : 1, content: arrayLineCh[t], style: this.lineColor.blessed } )
+                        blessed.box( { parent: this.mcdWidget.box, top: row - this.scrollRow, left: MCD_BASE_COL_POS[t - this.scrollCol + 1], width: 1, height : 1, content: arrayLineCh[t], style: this.lineColor.blessed } )
                     );
                 }
             }
@@ -263,13 +293,13 @@ export class BlessedMcd extends Mcd {
             if ( col - this.scrollCol > this.viewDepthSize ) continue;
             if ( this.scrollCol !== 0 && col - this.scrollCol < 1 ) continue;
 
-            let dirButton: McdDirButton = new McdDirButton( { parent: this.baseWidget, width: MCD_TEXT_SIZE, height: 1 }, node );
+            let dirButton: McdDirButton = new McdDirButton( { parent: this.mcdWidget, width: MCD_TEXT_SIZE, height: 1 }, node );
             if ( node.depth === 0 ) {
                 dirButton.left = row - this.scrollRow + 1;
                 dirButton.top = 0;
             } else {
                 const opts = { 
-                    parent: this.baseWidget.box, 
+                    parent: this.mcdWidget.box, 
                     top: row - this.scrollRow, 
                     left: MCD_BASE_COL_POS[col-this.scrollCol], 
                     width: 1, 
@@ -303,10 +333,14 @@ export class BlessedMcd extends Mcd {
             this.buttonList.push( dirButton );
         }
 
-        this.pathWidget.top = this.baseWidget.height as number - 2;
+        this.header.width = this.baseWidget.width;
+        log.debug("header : %d, %j", this.header.width, this.header.box.style );
+        this.header.setContent( curDir.file.fullname );
+
+        this.pathWidget.top = this.baseWidget.height as number - 1;
         this.pathWidget.left = 2;
         this.pathWidget.width = curDir.file.fullname.length + 9;
-        this.pathWidget.setContentFormat( "Path [ %s ]", curDir.file.fullname );
+        this.pathWidget.setContentFormat( "Path [ {bold}%s{/bold} ]", curDir.file.fullname );
     }
 
     afterRender() {
@@ -322,14 +356,14 @@ export class BlessedMcd extends Mcd {
     }
 
     keyPageDown() {
-        const node = this.getDirRowArea( this.currentDir().row + (this.baseWidget.box.height - 3), this.currentDir().depth, this.currentDir() );
+        const node = this.getDirRowArea( this.currentDir().row + (this.mcdWidget.box.height - 3), this.currentDir().depth, this.currentDir() );
         if ( node ) {
             this.curDirInx = node.index;
         }
     }
 
     keyPageUp() {
-        const node = this.getDirRowArea( this.currentDir().row - (this.baseWidget.box.height + 3), this.currentDir().depth, this.currentDir() );
+        const node = this.getDirRowArea( this.currentDir().row - (this.mcdWidget.box.height + 3), this.currentDir().depth, this.currentDir() );
         if ( node ) {
             this.curDirInx = node.index;
         }

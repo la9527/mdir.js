@@ -9,7 +9,7 @@ import { StringUtils } from "../common/StringUtils";
 import { PanelFileBox } from "./PanelFileBox";
 import { ColorConfig } from "../config/ColorConfig";
 import { Color } from "../common/Color";
-
+import { Reader } from "../common/Reader";
 
 const log = Logger("blessedpanel");
 
@@ -66,6 +66,14 @@ export class BlessedPanel extends Panel {
         });
 
         this.initRender();
+    }
+
+    initReader( reader: Reader ) {
+        super.initReader( reader );
+    }
+
+    getWidget() {
+        return this.baseWidget;
     }
 
     setFocus() {
@@ -217,15 +225,11 @@ export class BlessedPanel extends Panel {
         this.tailer.setContentFormat( "{bold}%5s{/bold} Files {bold}%5s{/bold} Dir {bold}%20s{/bold} Byte", StringUtils.toregular(fileSize), StringUtils.toregular(dirSize), StringUtils.toregular(allFileSize) );
     }   
 
-    render() {
-        log.info( "BlessedPanel.render()" );
-        this.header.render();
-        this.tailer.render();
-        this.panel.render();
-        log.info( "BlessedPanel.render() end..." );
-    }
-
     afterRender() {
         log.info( "BlessedPanel.afterRender()" );
+    }
+
+    render() {
+        this.baseWidget.render();
     }
 }

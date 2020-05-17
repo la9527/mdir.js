@@ -1,5 +1,4 @@
 import { AbstractPanel } from "./AbstractPanel";
-import { readerControl } from "./readerControl";
 import { Reader } from "../common/Reader";
 import { Logger } from "../common/Logger";
 import { File } from "../common/File";
@@ -13,8 +12,8 @@ export abstract class Panel extends AbstractPanel {
         super();
     }
 
-    initReader( type: string = "file" ) {
-        this.reader = readerControl(type);
+    initReader( reader: Reader ) {
+        this.reader = reader;
     }
 
     async read( path: string ) {

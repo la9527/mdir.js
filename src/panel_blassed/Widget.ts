@@ -31,7 +31,7 @@ export class Widget {
     }
 
     hasFocus(): boolean {
-        log.info( "hasFocus: %d", (this._box as any).focused );
+        // log.info( "hasFocus: %d", (this._box as any).focused );
         return (this._box as any).focused;
     }
 

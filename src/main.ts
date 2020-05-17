@@ -7,9 +7,11 @@ import { FuncKeyBox } from './panel_blassed/FuncKeyBox';
 import { Widget } from "./panel_blassed/Widget";
 import mainFrame, { MainFrame } from "./panel_blassed/MainFrame";
 import { BlessedMcd } from "./panel_blassed/BlessedMcd";
+import { readerControl } from './panel/readerControl';
 
 const log = Logger("main");
 
+/*
 const screen = blessed.screen({
     smartCSR: true,
     fullUnicode: true,
@@ -22,7 +24,7 @@ const screen = blessed.screen({
 });
 
 (async () => {
-    const mcd = new BlessedMcd({ parent: screen, top: 1, left: 0, width: "100%", height: "100%-1" });
+    const mcd = new BlessedMcd({ parent: screen, top: 1, left: 0, width: "100%", height: "100%-2" });
     mcd.initReader();
     await mcd.scanCurrentDir();
     mcd.setFocus();
@@ -37,6 +39,7 @@ const screen = blessed.screen({
 
     screen.render();
 })();
+*/
 
 /*
 const program: BlessedProgram = blessed.program();
@@ -60,46 +63,7 @@ program.move(5, 5);
 program.write("Hello world");
 program.move(10, 10);
 */
-
-/*
-
-
-(async () => {
-    let blessedPanels = [
-        new BlessedPanel( { parent: screen, top: 1, left: 0, width: "50%", height: "100%-4", style: {bg: 'yellow'} } ),
-        new BlessedPanel( { parent: screen, top: 1, left: "50%", width: "50%", height: "100%-4", style: {bg: 'yellow'} } )
-    ];
-
-    for ( var i = 0; i < blessedPanels.length; i++ ) {
-        try {
-            blessedPanels[i].initReader("file");
-            await blessedPanels[i].read( "." );
-        } catch ( e ) {
-            log.error( e );
-        }
-    }
-
-    new FuncKeyBox( screen );
-
-    blessedPanels[0].setFocus();
-
-    screen.key("q", () => {
-        process.exit(0);
-    });
-
-    screen.key("tab", () => {
-        const panel = blessedPanels.filter((item) => !item.hasFocus())[0];
-        panel.setFocus();
-        screen.render();
-    });
-    screen.render();
-})();
-*/
-
-/*
 (async () => {
     const frame = mainFrame();
     await frame.start();
 })();
-*/
-

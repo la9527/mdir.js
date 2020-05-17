@@ -3,7 +3,7 @@ import * as path from "path";
 
 import { SortType } from "../common/Sort";
 import { Dir } from "../common/Dir";
-import { Reader } from "../common/Reader";
+import { Reader } from '../common/Reader';
 import { File } from "../common/File";
 import { readerControl } from "./readerControl";
 import { Logger } from "../common/Logger";
@@ -30,8 +30,8 @@ export class Mcd {
         return this.reader;
     }
     
-    initReader( type: string = "file" ) {
-        this.reader = readerControl(type);
+    initReader( reader: Reader ) {
+        this.reader = this.reader;
     }
 
     async scanCurrentDir() {
