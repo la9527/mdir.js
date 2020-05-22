@@ -89,6 +89,26 @@ export class Color {
         }
     }
 
+    hexBlessFormat(text) {
+        return `{${this.fontHex}-fg}{${this.backHex}-bg}${text}{/}{/}`;
+    }
+
+    fontHexBlessFormat(text) {
+        return `{${this.fontHex}-fg}${text}{/}`;
+    }
+
+    backHexBlessFormat(text) {
+        return `{${this.fontHex}-bg}${text}{/}`;
+    }
+
+    reverse() {
+        return new Color( this.back, this.font );
+    }
+
+    get backHexBlesssed() {
+        return "#" + (this._colorHex[ this.back ] || "normal") + "-bg";
+    }
+
     get fontHex() {
         return this._colorHex[ this.font ] || "normal";
     }

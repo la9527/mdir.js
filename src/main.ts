@@ -1,28 +1,51 @@
 import * as blessed from "neo-blessed";
 import { BlessedProgram, Widgets, box, text, colors } from "neo-blessed";
 import { Logger } from "./common/Logger";
-import { Colorizer } from "logform";
+import { BlessedMenu } from "./panel_blassed/BlessedMenu";
 import { BlessedPanel } from './panel_blassed/BlessedPanel';
 import { FuncKeyBox } from './panel_blassed/FuncKeyBox';
 import { Widget } from "./panel_blassed/Widget";
 import mainFrame, { MainFrame } from "./panel_blassed/MainFrame";
 import { BlessedMcd } from "./panel_blassed/BlessedMcd";
 import { readerControl } from './panel/readerControl';
+import { keyMappingExec } from "./config/KeyMapConfig";
+import { menuConfig } from "./config/MenuConfig";
 
 const log = Logger("main");
 
-/*
 const screen = blessed.screen({
     smartCSR: true,
     fullUnicode: true,
     dockBorders: true,
     useBCE: true,
     ignoreDockContrast: true,
-    // debug: true,
+    debug: true,
     //dump: true,
     log: process.env.HOME + "/.m/m2.log"
 });
 
+(async () => {
+    let blessedMenu = new BlessedMenu({ parent: screen });
+    blessedMenu.setMainMenuConfig( menuConfig.Panel );
+
+    screen.on('keypress', async (ch, keyInfo) => {
+        if ( await keyMappingExec( blessedMenu, keyInfo ) ) {
+            screen.render();
+        }
+    });
+
+    screen.key("q", () => {
+        process.exit(0);
+    });
+
+    screen.key("r", () => {
+        screen.render();
+    });
+
+    screen.render();
+})();
+
+/*
 (async () => {
     const mcd = new BlessedMcd({ parent: screen, top: 1, left: 0, width: "100%", height: "100%-2" });
     mcd.initReader();
@@ -63,7 +86,9 @@ program.move(5, 5);
 program.write("Hello world");
 program.move(10, 10);
 */
+/*
 (async () => {
     const frame = mainFrame();
     await frame.start();
 })();
+*/

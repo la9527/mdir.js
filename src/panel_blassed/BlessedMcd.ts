@@ -1,5 +1,5 @@
 import * as blessed from "neo-blessed";
-import { BlessedProgram, Widgets, box, text, colors, line } from 'neo-blessed';
+import { BlessedProgram, Widgets, box, text, colors, line } from "neo-blessed";
 import { strWidth } from "neo-blessed/lib/unicode";
 import { sprintf } from "sprintf-js";
 
@@ -12,6 +12,8 @@ import { Dir } from "../common/Dir";
 import { Color } from '../common/Color';
 import { ColorConfig } from '../config/ColorConfig';
 import { Logger } from "../common/Logger";
+import { KeyMapping } from "../config/KeyMapConfig";
+import { KeyMappingInfo } from "../config/KeyMapConfig";
 
 const log = Logger("blessed-mcd");
 
@@ -45,7 +47,7 @@ class McdDirButton extends Widget {
             content = "/";
         } else {
             let name = this.node.file.name;
-            let nameSize = this.box.strWidth(name);
+            let nameSize: any = this.box.strWidth(name);
             if ( nameSize < this.width ) {
                 content = name;
                 if ( this.node.subDir.length ) {
@@ -66,9 +68,10 @@ class McdDirButton extends Widget {
     }
 }
 
+@KeyMapping( KeyMappingInfo.Mcd )
 export class BlessedMcd extends Mcd {
     buttonList: McdDirButton[] = [];
-    lines: box[] = [];
+    lines: Widgets.BoxElement[] = [];
 
     mcdColor: Color;
     lineColor: Color;
@@ -129,50 +132,6 @@ export class BlessedMcd extends Mcd {
     }
 
     initRender() {
-        this.baseWidget.on( "keypress", async (ch, keyInfo) => {
-            const runningFunc = {
-                down: "keyDownPromise",
-                up: "keyUp",
-                left: "keyLeft",
-                right: "keyRightPromise",
-                pageup: "keyPageUp",
-                pagedown: "keyPageDown",
-                home: "keyHome",
-                end: "keyEnd",
-                "=": { method: "subDirScanPromise", param: [ 0 ] },
-                "+": { method: "subDirScanPromise", param: [ 1 ] },
-                "-": "subDirRemove"
-                //enter: "keyEnterPromise",
-                //return: "keyReturn"
-            };
-
-            const keyName = keyInfo.name || keyInfo.full;
-            const obj = runningFunc[keyName];            
-            if ( obj ) {
-                let method = obj;
-                let param = null;
-                if ( typeof( obj ) === "object" ) {
-                    method = obj.method;
-                    param = obj.param;
-                }
-
-                log.info( "keypress [%s] - method: %s(%s)", keyName, method, param ? param.join(",") : "" );
-
-                if ( this[ method ] ) {
-                    if ( /(p|P)romise/.exec(method) ) {
-                        await this[method].apply(this, param);
-                    } else {
-                        this[method].apply(this, param);
-                    }
-                }
-                this.baseWidget.parent.screen.render();
-                return false;
-            } else {
-                log.info( "keypress [%s] %j", keyName, keyInfo );
-            }
-            return true;
-        });
-
         this.baseWidget.on( "prerender", () => {
             log.debug( "BlessedMcd prerender !!!");
             this.resize();
@@ -356,14 +315,14 @@ export class BlessedMcd extends Mcd {
     }
 
     keyPageDown() {
-        const node = this.getDirRowArea( this.currentDir().row + (this.mcdWidget.box.height - 3), this.currentDir().depth, this.currentDir() );
+        const node = this.getDirRowArea( this.currentDir().row + (this.mcdWidget.box.height as number - 3), this.currentDir().depth, this.currentDir() );
         if ( node ) {
             this.curDirInx = node.index;
         }
     }
 
     keyPageUp() {
-        const node = this.getDirRowArea( this.currentDir().row - (this.mcdWidget.box.height + 3), this.currentDir().depth, this.currentDir() );
+        const node = this.getDirRowArea( this.currentDir().row - (this.mcdWidget.box.height as number + 3), this.currentDir().depth, this.currentDir() );
         if ( node ) {
             this.curDirInx = node.index;
         }

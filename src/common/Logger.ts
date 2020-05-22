@@ -1,9 +1,9 @@
-import { createLogger, format, transports, Logger } from "winston";
+// import { createLogger, format, transports, Logger } from "winston";
 import path from "path";
 import * as moment from "moment";
-import winston = require("winston");
+import * as winston from "winston";
 
-const { combine, timestamp, label, printf, prettyPrint } = format;
+const { combine, timestamp, label, printf, prettyPrint } = winston.format;
 
 const myFormat = printf( (info) => {
     const level = {
@@ -24,11 +24,11 @@ const myFormat = printf( (info) => {
     return `${moment().format("YY-MM-DD hh:mm:ss")} ${level[info.level] || ""}: ${info.message}`;
   });
 
-export function Logger( labelName: string ): Logger {
-    const logger = createLogger({
+export function Logger( labelName: string ): winston.Logger {
+    const logger = winston.createLogger({
         format: combine(
             label({ label: labelName }),
-            format.splat(),
+            winston.format.splat(),
             myFormat
         ),
         transports: [

@@ -10,9 +10,12 @@ import { PanelFileBox } from "./PanelFileBox";
 import { ColorConfig } from "../config/ColorConfig";
 import { Color } from "../common/Color";
 import { Reader } from "../common/Reader";
+import { KeyMapping } from "../config/KeyMapConfig";
+import { KeyMappingInfo } from "../config/KeyMapConfig";
 
 const log = Logger("blessedpanel");
 
+@KeyMapping( KeyMappingInfo.Panel )
 export class BlessedPanel extends Panel {
     public fileBox: PanelFileBox[] = [];
     public baseWidget: Widget = null;
@@ -86,33 +89,6 @@ export class BlessedPanel extends Panel {
 
     initRender() {
         log.info( "initRender : fileBox.size : %d", this.fileBox.length );
-
-        this.panel.on( "keypress", async (ch, keyInfo) => {
-            log.info( "keypress 1 %j", keyInfo );
-            const runningFunc = {
-                down: "keyDown",
-                up: "keyUp",
-                left: "keyLeft",
-                right: "keyRight",
-                pageup: "keyPageUp",
-                pagedown: "keyPageDown",
-                home: "keyHome",
-                end: "keyEnd",
-                enter: "keyEnterPromise",
-                return: "keyReturn"
-            };
-            if ( runningFunc[keyInfo.name] && this[ runningFunc[keyInfo.name] ] ) {
-                const runFuncName = runningFunc[keyInfo.name];
-                log.warn( "%s", runFuncName );
-                if ( /(p|P)romise/.exec(runFuncName) ) {
-                    await this[runFuncName]();
-                } else {
-                    this[runFuncName]();
-                }
-                this.panel.parent.screen.render();
-            }
-        });
-
         this.panel.on( "prerender", () => {
             log.debug( "BlessedPanel prerender !!!");
 

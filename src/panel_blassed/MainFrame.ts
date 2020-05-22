@@ -6,6 +6,7 @@ import { FuncKeyBox } from './FuncKeyBox';
 import BottomFilesBox from "./BottomFileBox";
 import { readerControl } from '../panel/readerControl';
 import { Widget } from "./Widget";
+import { keyMappingExec } from "../config/KeyMapConfig";
 
 const log = Logger("MainFrame");
 
@@ -29,7 +30,7 @@ export class MainFrame {
             dockBorders: true,
             useBCE: true,
             ignoreDockContrast: true,
-            debug: true,
+            debug: false,
             //dump: true,
             log: process.env.HOME + "/.m/m2.log"
         });
@@ -76,6 +77,12 @@ export class MainFrame {
 
         new FuncKeyBox( this.screen );
         new BottomFilesBox( { parent: this.screen } );
+
+        this.screen.on('keypress', async (ch, keyInfo) => {
+            if ( await keyMappingExec( this.activePanel(), keyInfo ) ) {
+                this.screen.render();
+            }
+        });
 
         this.screen.key(['C-w'], () => {
             log.debug( "split !!!" );

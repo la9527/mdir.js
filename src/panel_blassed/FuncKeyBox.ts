@@ -73,7 +73,7 @@ export class FuncKeyBox {
         });
 
         this.textElement.map( (item, index) => {
-            item.on( "prerender", () => {
+            item.on( [ "prerender", "resize" ], () => {
                 const width = (parentElement as Screen).width / 12;
                 item.width = width;
 

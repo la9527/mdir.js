@@ -10,7 +10,6 @@ import { scrstrncpy } from "./ScreenUtils";
 
 const log = Logger("filebox");
 
-
 export class PanelFileBox extends Widget {
     public fileViewType: number = 0;
 
