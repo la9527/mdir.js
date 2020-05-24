@@ -22,8 +22,27 @@ class BlassedMenuBox extends Widget {
         this.selectPos = 0;
     }
 
-    convertKeyName() {
+    convertKeyName(keyInfo: string | ISubMenuConfig) {
+        let keyName: string = null;
+        if ( typeof( keyInfo ) === "string" ) {
+            keyName = keyInfo as string;
+        } else if ( (keyInfo as ISubMenuConfig).key ) {
+            let key = (keyInfo as ISubMenuConfig).key;
+            keyName = (Array.isArray( key ) ? key[0] : key) as string;
+        } else {
+            return "";
+        }
 
+        if ( keyName.match( /^C\-/ ) ) {
+            return keyName.replace( /^C\-/, "Ctrl+" );
+        }
+        if ( keyName.match( /^A\-/ ) ) {
+            return keyName.replace( /^A\-/, "Alt+" );
+        }
+        if ( keyName === "pagedown" ) return "PgDn";
+        if ( keyName === "pageup" ) return "PgUp";
+        if ( keyName === "insert" ) return "Ins";
+        return keyName;
     }
 
     setMenu( menuItem: (ISubMenuConfig | string)[]) {
@@ -46,7 +65,7 @@ class BlassedMenuBox extends Widget {
             if ( item === "-" ) {
                 lineBox = line( { ...opt, type: "line", top: i, orientation: "horizontal", style: this.menuColor.blessed } );
             } else if ( (item as ISubMenuConfig).name ) {
-                let content = sprintf("%s{|}%s", (item as ISubMenuConfig).name, (item as ISubMenuConfig).key || "" );
+                let content = sprintf("%s{|}%s", (item as ISubMenuConfig).name, this.convertKeyName(item) );
                 let style = i === this.selectPos ? this.menuColor.blessedReverse : this.menuColor.blessed;
                 lineBox = text( { ...opt, top: i, content, style, tags: true } );
             }
@@ -82,15 +101,17 @@ export class BlessedMenu {
     topMenu: Widget = null;
     menuColor: Color = null;
     menuAColor: Color = null;
+    menuSelColor: Color = null;
     menuBox:BlassedMenuBox = null;
     menuConfig: IMainMenuConfig = null;
 
     constructor( opt: Widgets.BoxOptions | any ) {
         this.menuColor = ColorConfig.instance().getBaseColor("func");
         this.menuAColor = ColorConfig.instance().getBaseColor("funcA");
+        this.menuSelColor = ColorConfig.instance().getBaseColor("funcSel");
 
-        this.topMenu = new Widget(opt);
-        this.menuBox = new BlassedMenuBox( { ...opt, width: 30, style: this.menuColor.blessed });
+        this.topMenu = new Widget( { ...opt, style: this.menuColor.blessed } );
+        this.menuBox = new BlassedMenuBox( { ...opt, top: 1, width: 30, style: this.menuColor.blessed });
 
         this.topMenu.box.on("prerender", () => {
             this.draw();
@@ -119,15 +140,17 @@ export class BlessedMenu {
         let menuBoxPos = 4;
         let prefix = Array(menuBoxPos).join(" ");
         let viewText = Object.keys(this.menuConfig).map( (name, i) => {
-            let color = i !== this.menuPos ? this.menuAColor : this.menuAColor.reverse();
             if ( i < this.menuPos )  {
-                menuBoxPos += name.length + 1;
+                menuBoxPos += name.length + 2;
             }
-            return color.fontHexBlessFormat(name.substr(0, 1)) + color.fontHexBlessFormat(name.substr(1));
-        }).join(" ");
+            if ( i === this.menuPos ) {
+                return " " + this.menuSelColor.hexBlessFormat(name) + " ";
+            }
+            return " " + this.menuAColor.fontHexBlessFormat(name.substr(0, 1)) + this.menuColor.fontHexBlessFormat(name.substr(1)) + " ";
+        }).join("");
 
+        log.debug( "%s", prefix + viewText );
         this.topMenu.setContentFormat( prefix + viewText );
-
         this.menuBox.left = menuBoxPos;
     }
 
