@@ -4,7 +4,7 @@ import { ColorConfig } from '../config/ColorConfig';
 import { ISubMenuConfig, menuConfig, IMainMenuConfig } from '../config/MenuConfig';
 import { Widget } from './Widget';
 import { sprintf } from "sprintf-js";
-import { KeyMapping, KeyMappingInfo } from "../config/KeyMapConfig";
+import { KeyMapping, KeyMappingInfo, keyHumanReadable } from "../config/KeyMapConfig";
 import { Logger } from "../common/Logger";
 
 const log = Logger("blessed-menu");
@@ -20,29 +20,6 @@ class BlassedMenuBox extends Widget {
     constructor( opts: Widgets.BoxOptions | any ) {
         super( { ...opts, border: "line" } );
         this.selectPos = 0;
-    }
-
-    convertKeyName(keyInfo: string | ISubMenuConfig) {
-        let keyName: string = null;
-        if ( typeof( keyInfo ) === "string" ) {
-            keyName = keyInfo as string;
-        } else if ( (keyInfo as ISubMenuConfig).key ) {
-            let key = (keyInfo as ISubMenuConfig).key;
-            keyName = (Array.isArray( key ) ? key[0] : key) as string;
-        } else {
-            return "";
-        }
-
-        if ( keyName.match( /^C\-/ ) ) {
-            return keyName.replace( /^C\-/, "Ctrl+" );
-        }
-        if ( keyName.match( /^A\-/ ) ) {
-            return keyName.replace( /^A\-/, "Alt+" );
-        }
-        if ( keyName === "pagedown" ) return "PgDn";
-        if ( keyName === "pageup" ) return "PgUp";
-        if ( keyName === "insert" ) return "Ins";
-        return keyName;
     }
 
     setMenu( menuItem: (ISubMenuConfig | string)[]) {
@@ -65,9 +42,13 @@ class BlassedMenuBox extends Widget {
             if ( item === "-" ) {
                 lineBox = line( { ...opt, type: "line", top: i, orientation: "horizontal", style: this.menuColor.blessed } );
             } else if ( (item as ISubMenuConfig).name ) {
-                let content = sprintf("%s{|}%s", (item as ISubMenuConfig).name, this.convertKeyName(item) );
+                let content = null;
+                let keyName = i !== this.selectPos ? 
+                    this.menuAColor.fontHexBlessFormat(keyHumanReadable((item as ISubMenuConfig).key || "")) : 
+                    keyHumanReadable((item as ISubMenuConfig).key || "");
+
                 let style = i === this.selectPos ? this.menuColor.blessedReverse : this.menuColor.blessed;
-                lineBox = text( { ...opt, top: i, content, style, tags: true } );
+                lineBox = text( { ...opt, top: i, content: (item as ISubMenuConfig).name + "{|}" + keyName, style, tags: true } );
             }
             this.menuBox.push( lineBox );
         });

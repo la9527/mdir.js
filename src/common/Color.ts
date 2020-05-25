@@ -90,15 +90,15 @@ export class Color {
     }
 
     hexBlessFormat(text) {
-        return `{${this.fontHex}-fg}{${this.backHex}-bg}${text}{/}{/}`;
+        return text ? `{${this.fontHex}-fg}{${this.backHex}-bg}${text}{/}{/}` : text;
     }
 
     fontHexBlessFormat(text) {
-        return `{${this.fontHex}-fg}${text}{/}`;
+        return text ? `{${this.fontHex}-fg}${text}{/}` : text;
     }
 
     backHexBlessFormat(text) {
-        return `{${this.fontHex}-bg}${text}{/}`;
+        return text ? `{${this.fontHex}-bg}${text}{/}` : text;
     }
 
     reverse() {

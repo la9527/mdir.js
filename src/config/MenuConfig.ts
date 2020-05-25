@@ -3,29 +3,29 @@ export interface ISubMenuConfig {
     name: string;
     method ?: string;
     funcParam ?: any[];
-    key ?: string | string[];
+    key ?: string;
 }
 
 export interface IMainMenuConfig {
     [mainMenu: string]: (ISubMenuConfig | string)[]
 }
 
-interface IFrameMenuConfig {
+export interface IFrameMenuConfig {
     [frame: string]: IMainMenuConfig;
 }
 
 export const menuConfig: IFrameMenuConfig = {
     Panel: {
         LinM: [ 
-            { name: "About", method: "common.about" },
-            { name: "Help", method: "panel.help" },
+            { name: "About", method: "Common.about" },
+            { name: "Help", method: "Panel.help" },
             "-",
             { name: "Settings" },
             "-",
-            { name: "Quit LinM", method: "common.quit" }
+            { name: "Quit LinM", method: "Common.quit" }
         ],
         Run: [
-            { name: "Run", method: "panel.keyEnterPromise" },
+            { name: "Run", method: "Panel.keyEnterPromise" },
             { name: "Run(select)" },
             "-",
             { name: "View Console" }
@@ -41,7 +41,7 @@ export const menuConfig: IFrameMenuConfig = {
             { name: "Diff" }
         ],
         Directory: [
-            { name: "Mcd", method: "common.runMcd" },
+            { name: "Mcd", method: "Common.runMcd" },
             { name: "Qcd" },
             "-",
             { name: "Mkdir" },
@@ -53,7 +53,7 @@ export const menuConfig: IFrameMenuConfig = {
             { name: "Forward" }
         ],
         View: [
-            { name: "Refresh", method: "panel.refresh" },
+            { name: "Refresh", method: "Panel.refresh" },
             { name: "Column AUTO" },
             "-",
             { name: "Column 1" },
@@ -66,8 +66,8 @@ export const menuConfig: IFrameMenuConfig = {
             { name: "Sort change" },
             { name: "Sort Asc/Descend" },
             "-",
-            { name: "Split", method: "common.split" },
-            { name: "Next Window", method: "common.nextWindow" }
+            { name: "Split", method: "Common.split" },
+            { name: "Next Window", method: "Common.nextWindow" }
         ]
     }
 };

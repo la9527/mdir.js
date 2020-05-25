@@ -8,7 +8,7 @@ import { Widget } from "./panel_blassed/Widget";
 import mainFrame, { MainFrame } from "./panel_blassed/MainFrame";
 import { BlessedMcd } from "./panel_blassed/BlessedMcd";
 import { readerControl } from './panel/readerControl';
-import { keyMappingExec } from "./config/KeyMapConfig";
+import { keyMappingExec, menuKeyMapping, KeyMappingInfo, keyHumanReadable } from "./config/KeyMapConfig";
 import { menuConfig } from "./config/MenuConfig";
 
 const log = Logger("main");
@@ -25,6 +25,8 @@ const screen = blessed.screen({
 });
 
 (async () => {
+    menuKeyMapping( KeyMappingInfo, menuConfig );
+    
     let blessedMenu = new BlessedMenu({ parent: screen });
     blessedMenu.setMainMenuConfig( menuConfig.Panel );
 

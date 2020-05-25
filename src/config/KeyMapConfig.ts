@@ -1,4 +1,6 @@
 import { Logger } from "../common/Logger";
+import { IFrameMenuConfig, ISubMenuConfig } from "./MenuConfig";
+import { pbkdf2 } from "crypto";
 
 const log = Logger("MainFrame");
 
@@ -159,4 +161,65 @@ export async function keyMappingExec( baseObject, keyInfo ): Promise<Boolean> {
         log.info( "keypress [%s] %j", keyName, keyInfo );
     }
     return false;
+}
+
+export function keyHumanReadable(key: string): string {
+    if ( !key ) return key;
+    if ( key.match( /^C\-/ ) ) {
+        return key.replace( /^(C\-)(.+)/, (a, p1, p2) => {
+            return "Ctrl+" + p2.toUpperCase();
+        });
+    }
+    if ( key.match( /^A\-/ ) ) {
+        return key.replace( /^(A\-)(.+)/, (a, p1, p2) => {
+            return "Alt+" + p2.toUpperCase();
+        });
+    }
+    if ( key.match( /^S\-/ ) ) {
+        return key.replace( /^(S\-)(.+)/, (a, p1, p2) => {
+            return "Shift+" + p2.toUpperCase();
+        });
+    }
+    if ( key === "pagedown" ) return "PgDn";
+    if ( key === "pageup" ) return "PgUp";
+    if ( key === "insert" ) return "Ins";
+    if ( key === "delete" ) return "Del";
+    if ( key === "home" ) return "Home";
+    return key.toUpperCase();
+}
+
+export function menuKeyMapping( allkeyMappingInfo: IAllKeyMappingInfo, menuObject: IFrameMenuConfig ) {
+    const getKeyName = (method, funcParam): string => {
+        try {
+            let methodInfo = method.split(".");
+            let keyInfo = allkeyMappingInfo[ methodInfo[0] ][ methodInfo[1] ];
+            if ( Array.isArray( keyInfo ) ) {
+                if ( typeof(keyInfo[0]) === "string" ) {
+                    return keyInfo[0];
+                } else if ( funcParam ) {
+                    const key = (keyInfo as IFuncParam[]).find( fP => fP.funcParam === funcParam );
+                    return Array.isArray(key) ? key[0] : key;
+                }
+            } else {
+                return keyInfo as string;
+            }
+        } catch( e ) {
+            log.error( e );
+            return null;
+        }
+        return null;
+    };
+
+    Object.keys(menuObject).forEach( i => {
+        Object.keys(menuObject[i]).forEach( j => {            
+            menuObject[i][j].map( (item: ISubMenuConfig | string ) => {
+                if ( typeof(item) === "object" ) {
+                    let key = getKeyName(item.method, item.funcParam);
+                    if ( key ) {
+                        item.key = key;
+                    }
+                }
+            });
+        });
+    });
 }
