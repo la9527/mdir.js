@@ -30,7 +30,8 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
     Common: {
         refresh: "f5",
         split: [ "C-w" ],
-        nextWindow: [ "tab", "C-e" ]
+        nextWindow: [ "tab", "C-e" ],
+        menu: "f10"
     },
     Menu: {
         keyUp: "up",
@@ -117,12 +118,13 @@ const convertFunctionToKey = ( keyFrame: IKeyMapping ): IFuncMapping => {
     return result;
 }
 
-export function KeyMapping( keyFrame: IKeyMapping ) {
+export function KeyMapping( keyFrame: IKeyMapping, name: string = null ) {
     const keyInfo = convertFunctionToKey(keyFrame);
     log.debug( keyInfo );
     return function <T extends { new(...args: any[]): {} }>(constructor: T) {
         return class extends constructor {
             keyInfo = keyInfo;
+            viewName = name;
         };
     };
 }
@@ -133,7 +135,7 @@ export async function keyMappingExec( baseObject, keyInfo ): Promise<Boolean> {
         return false;
     }
 
-    log.debug( "keyInfo: %j", keyInfo );
+    log.debug( "[%s] - keyInfo: %j", baseObject.viewName, keyInfo );
 
     const keyFrame = baseObject.keyInfo as IFuncMapping;
     const keyName = keyInfo.name || keyInfo.full;

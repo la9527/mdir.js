@@ -16,6 +16,7 @@ export const ColorDefault = {
         dir: "9",
         drive: "3",
         line: "6",
+        menuLine: "0,6",
         func: "15,6",
         funcA: "3,6", // 11
         funcSel: "7, 0",

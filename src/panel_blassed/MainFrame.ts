@@ -6,7 +6,9 @@ import { FuncKeyBox } from './FuncKeyBox';
 import BottomFilesBox from "./BottomFileBox";
 import { readerControl } from '../panel/readerControl';
 import { Widget } from "./Widget";
-import { keyMappingExec } from "../config/KeyMapConfig";
+import { keyMappingExec, menuKeyMapping, KeyMappingInfo, KeyMapping } from "../config/KeyMapConfig";
+import { menuConfig } from "../config/MenuConfig";
+import { BlessedMenu } from "./BlessedMenu";
 
 const log = Logger("MainFrame");
 
@@ -18,10 +20,13 @@ enum VIEW_TYPE {
     HORIZONTAL_SPLIT = 2
 }
 
+@KeyMapping( KeyMappingInfo.Common, "Common" )
 export class MainFrame {
     private screen = null;
     private viewType: VIEW_TYPE = VIEW_TYPE.NORMAL;
+    private baseWidget = null;
     private blessedFrames = [];
+    private blessedMenu = null;
 
     constructor() {
         this.screen = blessed.screen({
@@ -34,6 +39,8 @@ export class MainFrame {
             //dump: true,
             log: process.env.HOME + "/.m/m2.log"
         });
+
+        this.baseWidget = new Widget( { parent: this.screen, left: 0, top: 0, width: "100%", height: "100%" } );
     }
 
     async viewRender() {
@@ -59,9 +66,11 @@ export class MainFrame {
     }
 
     async start() {
+        menuKeyMapping( KeyMappingInfo, menuConfig );
+
         this.blessedFrames = [
-            new BlessedPanel( { parent: this.screen } ),
-            new BlessedPanel( { parent: this.screen } )
+            new BlessedPanel( { parent: this.baseWidget } ),
+            new BlessedPanel( { parent: this.baseWidget } )
         ];
 
         for ( var i = 0; i < this.blessedFrames.length; i++ ) {
@@ -75,44 +84,48 @@ export class MainFrame {
 
         this.viewRender();
 
-        new FuncKeyBox( this.screen );
-        new BottomFilesBox( { parent: this.screen } );
+        new FuncKeyBox( this.baseWidget.box );
+        new BottomFilesBox( { parent: this.baseWidget } );
 
         this.screen.on('keypress', async (ch, keyInfo) => {
-            if ( await keyMappingExec( this.activePanel(), keyInfo ) ) {
+            if ( await keyMappingExec( this.activeFocusObj(), keyInfo ) ) {
+                this.baseWidget.render();
                 this.screen.render();
+            } else {
+                if ( await keyMappingExec( this, keyInfo ) ) {
+                    this.baseWidget.render();
+                    this.screen.render();
+                }
             }
-        });
-
-        this.screen.key(['C-w'], () => {
-            log.debug( "split !!!" );
-            this.viewType++;
-            if ( this.viewType > 2 ) {
-                this.viewType = 0;
-            }
-            this.viewRender();
-            this.screen.render();
         });
 
         this.screen.key("q", () => {
             process.exit(0);
         });
     
-        this.screen.key("tab", () => {
-            this.changePanel();
-        });
-
-        this.screen.key("f5", () => {
-            log.debug( "F5 !!!" );
-            this.screen.realloc();
-            this.screen.render();
-        });
-
         this.blessedFrames[0].setFocus();
         this.screen.render();
     }
 
-    changePanel() {
+    refresh() {
+        this.screen.realloc();
+        this.screen.render();
+    }
+
+    split() {
+        this.viewType++;
+        if ( this.viewType > 2 ) {
+            this.viewType = 0;
+        }
+        this.viewRender();
+        this.screen.render();
+    }
+
+    quit() {
+        process.exit(0);
+    }
+
+    nextWindow() {
         const panel = this.blessedFrames.filter((item) => !item.hasFocus());
         if ( panel && panel.length > 0 ) {
             panel[0].setFocus();
@@ -121,7 +134,24 @@ export class MainFrame {
     }
 
     activePanel(): BlessedPanel {
-        return this.blessedFrames.filter( i => i.hasFocus() )[0];
+        let activePanel = this.blessedFrames.filter( i => i.hasFocus() );
+        return activePanel.length === 0 ? this.blessedFrames[0] : activePanel[0];
+    }
+
+    activeFocusObj(): any {
+        if ( this.blessedMenu && this.blessedMenu.hasFocus() ) {
+            return this.blessedMenu;
+        }
+        return this.activePanel();
+    }
+
+    menu() {
+        let viewName = this.activeFocusObj().viewName || "Common";
+        log.debug( "menuConfig[ viewName ] !!!", viewName, menuConfig[ viewName ] );
+
+        this.blessedMenu = new BlessedMenu({ parent: this.baseWidget });
+        this.blessedMenu.setMainMenuConfig( menuConfig[ viewName ] );
+        this.blessedMenu.setFocus();
     }
 
     static instance() {

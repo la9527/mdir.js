@@ -13,7 +13,7 @@ class BlassedMenuBox extends Widget {
     private menuBox = [];
     private menuColor: Color = ColorConfig.instance().getBaseColor("func");
     private menuAColor: Color = ColorConfig.instance().getBaseColor("funcA");
-    private lineColor: Color = ColorConfig.instance().getBaseColor("line");
+    private lineColor: Color = ColorConfig.instance().getBaseColor("menuLine");
     private menuItem = null;
     private selectPos = 0;
 
@@ -25,6 +25,9 @@ class BlassedMenuBox extends Widget {
     setMenu( menuItem: (ISubMenuConfig | string)[]) {
         this.menuItem = menuItem;
         this.selectPos = 0;
+
+        this.menuBox.forEach( i => i.destroy() );
+        this.menuBox = [];
     }
 
     draw() {
@@ -35,12 +38,12 @@ class BlassedMenuBox extends Widget {
             return;
         }
 
-        this.box.style = { ...this.menuColor.blessed, border: this.lineColor.blessedReverse };
+        this.box.style = { ...this.menuColor.blessed, border: this.menuColor.blessed };
         let opt = { parent: this.box, left: 0, width: (this.width as number) - 2, height: 1 };
         this.menuItem.forEach( (item: string | ISubMenuConfig, i: number) => {
             let lineBox = null;
             if ( item === "-" ) {
-                lineBox = line( { ...opt, type: "line", top: i, orientation: "horizontal", style: this.menuColor.blessed } );
+                lineBox = line( { ...opt, type: "line", top: i, orientation: "horizontal", style: this.lineColor.blessed } );
             } else if ( (item as ISubMenuConfig).name ) {
                 let content = null;
                 let keyName = i !== this.selectPos ? 
@@ -54,7 +57,7 @@ class BlassedMenuBox extends Widget {
         });
         this.box.width = 30;
         this.box.height = this.menuBox.length + 2;
-        log.debug( "draw: %d", this.selectPos );
+        log.debug( "menu draw: T:%d,L:%d,W:%d,H:%d", this.box.top, this.box.left, this.box.width, this.box.height );
     }
 
     keyUp() {
@@ -76,7 +79,7 @@ class BlassedMenuBox extends Widget {
     }
 }
 
-@KeyMapping( KeyMappingInfo.Menu )
+@KeyMapping( KeyMappingInfo.Menu, "Menu" )
 export class BlessedMenu {
     menuPos: number = 0;
     topMenu: Widget = null;
@@ -96,6 +99,7 @@ export class BlessedMenu {
 
         this.topMenu.box.on("prerender", () => {
             this.draw();
+            this.menuBox.draw();
         });
     }
 
@@ -110,6 +114,17 @@ export class BlessedMenu {
     setMainMenuConfig( menuConfig: IMainMenuConfig ) {
         this.menuConfig = menuConfig;
         this.updateSubMenu();
+
+        this.topMenu.setFront();
+        this.menuBox.setFront();
+    }
+
+    setFocus() {
+        this.topMenu.setFocus();
+    }
+
+    hasFocus(): boolean {
+        return this.topMenu.hasFocus();
     }
 
     draw() {
@@ -133,6 +148,7 @@ export class BlessedMenu {
         log.debug( "%s", prefix + viewText );
         this.topMenu.setContentFormat( prefix + viewText );
         this.menuBox.left = menuBoxPos;
+        this.menuBox.draw();
     }
 
     keyLeft() {

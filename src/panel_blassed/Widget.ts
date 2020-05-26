@@ -20,6 +20,14 @@ export class Widget {
         });
     }
 
+    setFront() {
+        this._box.setFront();
+    }
+
+    setBack() {
+        this._box.setBack();
+    }
+
     draw(): void {}
 
     on(event: string, listener: (...args: any[]) => void) {

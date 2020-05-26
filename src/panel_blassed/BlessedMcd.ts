@@ -68,7 +68,7 @@ class McdDirButton extends Widget {
     }
 }
 
-@KeyMapping( KeyMappingInfo.Mcd )
+@KeyMapping( KeyMappingInfo.Mcd, "Mcd" )
 export class BlessedMcd extends Mcd {
     buttonList: McdDirButton[] = [];
     lines: Widgets.BoxElement[] = [];

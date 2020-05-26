@@ -13,6 +13,7 @@ import { menuConfig } from "./config/MenuConfig";
 
 const log = Logger("main");
 
+/*
 const screen = blessed.screen({
     smartCSR: true,
     fullUnicode: true,
@@ -46,6 +47,7 @@ const screen = blessed.screen({
 
     screen.render();
 })();
+*/
 
 /*
 (async () => {
@@ -88,9 +90,8 @@ program.move(5, 5);
 program.write("Hello world");
 program.move(10, 10);
 */
-/*
+
 (async () => {
     const frame = mainFrame();
     await frame.start();
 })();
-*/

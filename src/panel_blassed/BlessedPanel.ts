@@ -15,7 +15,7 @@ import { KeyMappingInfo } from "../config/KeyMapConfig";
 
 const log = Logger("blessedpanel");
 
-@KeyMapping( KeyMappingInfo.Panel )
+@KeyMapping( KeyMappingInfo.Panel, "Panel" )
 export class BlessedPanel extends Panel {
     public fileBox: PanelFileBox[] = [];
     public baseWidget: Widget = null;
@@ -90,10 +90,10 @@ export class BlessedPanel extends Panel {
     initRender() {
         log.info( "initRender : fileBox.size : %d", this.fileBox.length );
         this.panel.on( "prerender", () => {
-            log.debug( "BlessedPanel prerender !!!");
-
+            log.debug( "BlessedPanel prerender !!! - Start");
             this.resize();
             this.beforeRender();
+            log.debug( "BlessedPanel prerender !!! - End");
         });
         this.panel.on( "render", () => {
             this.afterRender();
