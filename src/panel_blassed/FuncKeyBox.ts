@@ -1,4 +1,4 @@
-import { BlessedProgram, Widgets, box, text, line } from "neo-blessed";
+import { BlessedProgram, Widgets, box, text, line, widget } from "neo-blessed";
 
 import { Widget } from "./Widget";
 import { ColorConfig } from "../config/ColorConfig";
@@ -8,20 +8,18 @@ import { Logger } from "../common/Logger";
 
 const log = Logger("FuncKeyBox");
 
-export class FuncKeyBox {
-    private textElement: Widgets.TextElement[] = [];
+export class FuncKeyBox extends Widget {
+    private textElement: Widget[] = [];
     private colorFunca: Color = null;
     private colorFunc: Color = null;
+    private funcList = {};
 
-    constructor( parentElement: any, widgetOption: any = {} ) {
-
-        this.colorFunca = ColorConfig.instance().getBaseColor("funca");
+    constructor( opt: Widgets.BoxOptions ) {
+        super( { left: 0, top: 0, width: "100%", height: 1, ...opt } );
+        this.colorFunca = ColorConfig.instance().getBaseColor("funcA");
         this.colorFunc = ColorConfig.instance().getBaseColor("func");
 
-        const width = Math.round((parentElement as Screen).width / 12);
-        let pos = 0;
-
-        const funcList = {
+        this.funcList = {
             F1: "Help",
             F2: "Rename",
             F3: "Editor",
@@ -35,50 +33,36 @@ export class FuncKeyBox {
             F11: "QCD",
             F12: "Menu",
         };
+    }
 
-        const { fontHex: colorFuncaFontHex, backHex: colorFuncaBackHex } = this.colorFunca;
-        const { fontHex, backHex } = this.colorFunc;
+    setFuncList( funcList ) {
+        this.funcList = funcList;
+    }
 
-        line({
-            parent: parentElement,
-            orientation: "horizontal",
-            tags: true,
-            type: "bg",
-            left: 0,
-            top: 0,
-            height: 1,
-            width: "100%",
-            bg: this.colorFunc.backHex
-        });
+    draw() {
+        const width = Math.round( (this.box.width as number) / 12);
+        
+        this.box.style = this.colorFunc.blessed;
+        this.textElement.forEach( i => i.destroy() );
+        this.textElement = [];
 
-        Object.keys(funcList).map( (key, i) => {
-            let content = sprintf(`{bold}{%s-fg}{%s-bg}%s%d{/%s-fg}{%s-bg}%s{/bold}`, 
-                            colorFuncaFontHex, colorFuncaBackHex, i === 0 ? "F" : "", i + 1, colorFuncaFontHex, colorFuncaBackHex, funcList[key] );
+        let pos = 0;
+        Object.keys(this.funcList).map( (key, i) => {
+            let content = sprintf( "{bold}%s%s%s{/bold}", this.colorFunca.hexBlessFormat( i === 0 ? "F" : ""), key.substr(1), this.funcList[key] );
             // '\u2502'; // '│'
             content = (i > 0 ? "{black-fg}\u2502{/black-fg}" : "") + content;
-
-            log.warn( content );
-            this.textElement.push( text({
-                parent: parentElement,
-                tags: true,
+            // log.warn( content );
+            let widget = new Widget({
+                parent: this,
                 left: pos,
                 top: 0,
                 height: 1,
                 width,
-                fg: fontHex,
-                bg: backHex,
-                content
-            }));
-            pos += width;
-        });
-
-        this.textElement.map( (item, index) => {
-            item.on( "prerender", () => {
-                const width = (parentElement as Screen).width / 12;
-                item.width = width;
-
-                log.warn( "INDEX: %d - LEFT : %d, %d", index, item.left, item.width );
+                style: this.colorFunc.blessed
             });
+            widget.setContent( content );
+            this.textElement.push( widget );
+            pos += width;
         });
     }
 }

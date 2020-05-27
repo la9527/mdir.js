@@ -92,6 +92,5 @@ program.move(10, 10);
 */
 
 (async () => {
-    const frame = mainFrame();
-    await frame.start();
+    await mainFrame().start();
 })();

@@ -101,7 +101,6 @@ export class BlessedPanel extends Panel {
     }
 
     resize() {
-        log.info("resize !!!");
         const MAX_COLUMN = 6;
 
         this.viewColumn = 0;

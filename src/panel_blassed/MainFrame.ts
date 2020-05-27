@@ -27,6 +27,8 @@ export class MainFrame {
     private baseWidget = null;
     private blessedFrames = [];
     private blessedMenu = null;
+    private funcKeyBox = null;
+    private bottomFilesBox = null;
 
     constructor() {
         this.screen = blessed.screen({
@@ -41,6 +43,7 @@ export class MainFrame {
         });
 
         this.baseWidget = new Widget( { parent: this.screen, left: 0, top: 0, width: "100%", height: "100%" } );
+        this.blessedMenu = new BlessedMenu({ parent: this.baseWidget });
     }
 
     async viewRender() {
@@ -68,6 +71,9 @@ export class MainFrame {
     async start() {
         menuKeyMapping( KeyMappingInfo, menuConfig );
 
+        this.funcKeyBox = new FuncKeyBox( { parent: this.baseWidget }  );
+        this.bottomFilesBox = new BottomFilesBox( { parent: this.baseWidget } );
+
         this.blessedFrames = [
             new BlessedPanel( { parent: this.baseWidget } ),
             new BlessedPanel( { parent: this.baseWidget } )
@@ -84,16 +90,11 @@ export class MainFrame {
 
         this.viewRender();
 
-        new FuncKeyBox( this.baseWidget.box );
-        new BottomFilesBox( { parent: this.baseWidget } );
-
         this.screen.on('keypress', async (ch, keyInfo) => {
             if ( await keyMappingExec( this.activeFocusObj(), keyInfo ) ) {
-                this.baseWidget.render();
                 this.screen.render();
             } else {
                 if ( await keyMappingExec( this, keyInfo ) ) {
-                    this.baseWidget.render();
                     this.screen.render();
                 }
             }
@@ -109,6 +110,7 @@ export class MainFrame {
 
     refresh() {
         this.screen.realloc();
+        this.baseWidget.render();
         this.screen.render();
     }
 
@@ -118,7 +120,6 @@ export class MainFrame {
             this.viewType = 0;
         }
         this.viewRender();
-        this.screen.render();
     }
 
     quit() {
@@ -146,12 +147,17 @@ export class MainFrame {
     }
 
     menu() {
+        this.menuClose();
+
         let viewName = this.activeFocusObj().viewName || "Common";
         log.debug( "menuConfig[ viewName ] !!!", viewName, menuConfig[ viewName ] );
-
-        this.blessedMenu = new BlessedMenu({ parent: this.baseWidget });
+        this.blessedMenu.init();
         this.blessedMenu.setMainMenuConfig( menuConfig[ viewName ] );
         this.blessedMenu.setFocus();
+    }
+
+    menuClose() {
+        this.blessedMenu.close();
     }
 
     static instance() {

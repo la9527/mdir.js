@@ -37,7 +37,8 @@ export abstract class Panel extends AbstractPanel {
                 log.error( "PARENT DIR READ FAILED %j", e );
             }
             log.info( "FIND LIST: %s", JSON.stringify(this.dirFiles.map((item) => `${item.fullname} - ${item.name}`), null, 4) );
-
+            this.sort();
+            
             if ( previousDir ) {
                 // search directory
                 const befPos = this.dirFiles.findIndex( (file: File) => {
@@ -49,8 +50,6 @@ export abstract class Panel extends AbstractPanel {
                     this.currentPos = befPos;
                 }
             }
-
-            this.sort();
         } catch ( e ) {
             // TODO: Messgae Box
             log.error( "READ ERROR %j", e );

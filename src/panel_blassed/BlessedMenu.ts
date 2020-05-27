@@ -88,14 +88,20 @@ export class BlessedMenu {
     menuSelColor: Color = null;
     menuBox:BlassedMenuBox = null;
     menuConfig: IMainMenuConfig = null;
+    opt = null;
 
     constructor( opt: Widgets.BoxOptions | any ) {
         this.menuColor = ColorConfig.instance().getBaseColor("func");
         this.menuAColor = ColorConfig.instance().getBaseColor("funcA");
         this.menuSelColor = ColorConfig.instance().getBaseColor("funcSel");
+        this.opt = opt;
+    }
 
-        this.topMenu = new Widget( { ...opt, style: this.menuColor.blessed } );
-        this.menuBox = new BlassedMenuBox( { ...opt, top: 1, width: 30, style: this.menuColor.blessed });
+    init() {
+        this.close();
+
+        this.topMenu = new Widget( { ...this.opt, style: this.menuColor.blessed } );
+        this.menuBox = new BlassedMenuBox( { ...this.opt, top: 1, width: 30, style: this.menuColor.blessed });
 
         this.topMenu.box.on("prerender", () => {
             this.draw();
@@ -115,19 +121,24 @@ export class BlessedMenu {
         this.menuConfig = menuConfig;
         this.updateSubMenu();
 
+        this.draw();
         this.topMenu.setFront();
         this.menuBox.setFront();
     }
 
     setFocus() {
-        this.topMenu.setFocus();
+        this.topMenu?.setFocus();
     }
 
     hasFocus(): boolean {
-        return this.topMenu.hasFocus();
+        return this.topMenu?.hasFocus();
     }
 
     draw() {
+        if ( !this.topMenu ) {
+            return;
+        }
+
         this.topMenu.top = 0;
         this.topMenu.left = 0;
         this.topMenu.width = "100%";
@@ -144,11 +155,23 @@ export class BlessedMenu {
             }
             return " " + this.menuAColor.fontHexBlessFormat(name.substr(0, 1)) + this.menuColor.fontHexBlessFormat(name.substr(1)) + " ";
         }).join("");
+        this.menuBox.left = menuBoxPos;
+        this.menuBox.draw();
 
         log.debug( "%s", prefix + viewText );
         this.topMenu.setContentFormat( prefix + viewText );
-        this.menuBox.left = menuBoxPos;
-        this.menuBox.draw();
+    }
+
+    close() {
+        if ( this.topMenu ) {
+            this.topMenu.destroy();
+            this.topMenu = null;
+        }
+
+        if ( this.menuBox ) {
+            this.menuBox.destroy();
+            this.menuBox = null;
+        }
     }
 
     keyLeft() {
@@ -157,6 +180,7 @@ export class BlessedMenu {
             this.menuPos = Object.keys(this.menuConfig).length - 1;
         }
         this.updateSubMenu();
+        (this.menuBox.parent as any).render();
     }
 
     keyRight() {
@@ -165,6 +189,7 @@ export class BlessedMenu {
             this.menuPos = 0;
         }
         this.updateSubMenu();
+        (this.menuBox.parent as any).render();
     }
 
     keyUp() {

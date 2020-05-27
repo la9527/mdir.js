@@ -42,6 +42,7 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         keyPageDown: "pagedown",
         keyHome: "home",
         keyEnd: "end",
+        close: "escape"
     },
     Panel: {
         keyUp: "up",
@@ -164,7 +165,7 @@ export async function keyMappingExec( baseObject, keyInfo ): Promise<Boolean> {
     log.debug( "[%s] - keyInfo: %j", baseObject.viewName, keyInfo );
 
     const keyFrame = baseObject.keyInfo as IFuncMapping;
-    const keyName = keyInfo.name || keyInfo.full;
+    const keyName = keyInfo.full || keyInfo.name;
     const obj = keyFrame[keyName];
     if ( obj ) {
         let method = obj;
