@@ -15,7 +15,7 @@ export class Widget {
             this._box = box( { ...opts, tags: true } );
         }
 
-        this._box.on("prerender", () => {
+        this._box.on( "prerender", () => {
             this.draw();
         });
     }

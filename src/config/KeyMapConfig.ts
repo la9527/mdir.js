@@ -75,6 +75,32 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
     }
 };
 
+export const FuncKeyMappingInfo = {
+    Panel: {
+        F1: { name: "Help", func: "Common.help" },
+        F2: { name: "Rename", func: "Panel.rename" },
+        F3: { name: "Editor", func: "Common.editor" },
+        F4: { name: "Vim", func: "Command.vim" },
+        F5: { name: "Refresh", func: "Common.refresh" },
+        F6: { name: "Remote", func: "Common.remote" },
+        F7: { name: "Mkdir", func: "Panel.mkdir", },
+        F8: { name: "Remove", func: "Panel.remove" },
+        F9: { name: "Size", func: "Panel.size" },
+        F10: { name: "MCD", func: "" },
+        F11: { name: "QCD", func: "" },
+        F12: { name: "Menu", func: "Common.menu" }
+    },
+    Mcd: {
+        F1: { name: "Help", func: "Common.help" },
+        F2: { name: "Rename", func: "Mcd.rename" },
+        F5: { name: "Refresh", func: "Common.refresh" },
+        F7: { name: "Mkdir", func: "Mcd.mkdir", },
+        F8: { name: "Remove", func: "Mcd.rename" },
+        F9: { name: "Size", func: "Mcd.size" },
+        F12: { name: "Menu", func: "Common.menu" }
+    }
+}
+
 interface IFuncMapping {
     [keyName: string]: MethodName | MethodName[] | IMethodParam | IMethodParam[]
 }
