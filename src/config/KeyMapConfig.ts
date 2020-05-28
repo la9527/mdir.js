@@ -31,7 +31,7 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         refresh: "f5",
         split: [ "C-w" ],
         nextWindow: [ "tab", "C-e" ],
-        menu: "f10"
+        menu: "f12"
     },
     Menu: {
         keyUp: "up",
@@ -233,7 +233,7 @@ export function menuKeyMapping( allkeyMappingInfo: IAllKeyMappingInfo, menuObjec
                 return keyInfo as string;
             }
         } catch( e ) {
-            log.error( e );
+            log.error( "menuKeyMapping: ", e );
             return null;
         }
         return null;
@@ -242,7 +242,7 @@ export function menuKeyMapping( allkeyMappingInfo: IAllKeyMappingInfo, menuObjec
     Object.keys(menuObject).forEach( i => {
         Object.keys(menuObject[i]).forEach( j => {            
             menuObject[i][j].map( (item: ISubMenuConfig | string ) => {
-                if ( typeof(item) === "object" ) {
+                if ( typeof(item) === "object" && item.method ) {
                     let key = getKeyName(item.method, item.funcParam);
                     if ( key ) {
                         item.key = key;
