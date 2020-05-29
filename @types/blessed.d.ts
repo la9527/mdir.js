@@ -6,10 +6,28 @@
 
 /// <reference types="node" />
 
-import { EventEmitter } from "events";
 import { Writable, Readable } from "stream";
 import * as stream from "stream";
 import * as child_process from "child_process";
+
+export class EventEmitter {
+    addListener(event: string | symbol, listener: (...args: any[]) => void): this;
+    on(event: string | symbol, listener: (...args: any[]) => void): this;
+    once(event: string | symbol, listener: (...args: any[]) => void): this;
+    removeListener(event: string | symbol, listener: (...args: any[]) => void): this;
+    off(event?: string | symbol): void;
+    removeAllListeners(event?: string | symbol): this;
+    setMaxListeners(n: number): this;
+    getMaxListeners(): number;
+    listeners(event: string | symbol): Function[];
+    rawListeners(event: string | symbol): Function[];
+    emit(event: string | symbol, ...args: any[]): boolean;
+    listenerCount(type: string | symbol): number;
+    // Added in Node 6...
+    prependListener(event: string | symbol, listener: (...args: any[]) => void): this;
+    prependOnceListener(event: string | symbol, listener: (...args: any[]) => void): this;
+    eventNames(): Array<string | symbol>;
+}
 
 export interface IBlessedProgramOptions {
   input?: Readable;

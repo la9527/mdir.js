@@ -7,6 +7,7 @@ const log = Logger("main");
 
 export class Widget {
     private _box: Widgets.BoxElement;
+    _viewCount: number = -1;
 
     constructor( opts: Widgets.BoxOptions | any ) {
         if ( opts.parent && (opts.parent as any).box ) {
@@ -14,7 +15,7 @@ export class Widget {
         } else {
             this._box = box( { ...opts, tags: true } );
         }
-
+        this._viewCount = opts?.viewCount;
         this._box.on( "prerender", () => {
             this.draw();
         });
@@ -30,6 +31,10 @@ export class Widget {
 
     draw(): void {}
 
+    off() {
+        this._box.off();
+    }
+
     on(event: string, listener: (...args: any[]) => void) {
         this._box.on( event, listener );
     }
@@ -39,16 +44,25 @@ export class Widget {
     }
 
     hasFocus(): boolean {
-        // log.info( "hasFocus: %d", (this._box as any).focused );
+        log.info( "hasFocus: %d", (this._box as any).focused );
         return (this._box as any).focused;
     }
 
     destroy() {
+        this._box.off();
         this._box.destroy();
     }
 
     render() {
         this._box.render();
+    }
+
+    show() {
+        this._box.show();
+    }
+
+    hide() {
+        this._box.hide();
     }
 
     setContentFormat( ...args ) {

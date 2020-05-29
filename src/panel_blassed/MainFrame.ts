@@ -15,6 +15,8 @@ const log = Logger("MainFrame");
 
 let gMainFrame = null;
 
+let viewCount = 0;
+
 enum VIEW_TYPE {
     NORMAL = 0,
     VERTICAL_SPLIT = 1,
@@ -30,6 +32,7 @@ export class MainFrame {
     private blessedMenu = null;
     private funcKeyBox = null;
     private bottomFilesBox = null;
+    private activeFrameNum = 0;
 
     constructor() {
         this.screen = blessed.screen({
@@ -39,8 +42,8 @@ export class MainFrame {
             useBCE: true,
             ignoreDockContrast: true,
             debug: false,
-            //dump: true,
-            log: process.env.HOME + "/.m/m2.log"
+            // dump: true,
+            // log: process.env.HOME + "/.m/m2.log"
         });
 
         this.baseWidget = new Widget( { parent: this.screen, left: 0, top: 0, width: "100%", height: "100%" } );
@@ -48,25 +51,25 @@ export class MainFrame {
     }
 
     async mcdPromise() {
-        for ( let i in this.blessedFrames ) {
-            let view: BlessedPanel | BlessedMcd = this.blessedFrames[i];
-            if ( !view.hasFocus() ) {
-                continue;
-            } else if ( view instanceof BlessedPanel ) {
-                const newView = new BlessedMcd( { parent: this.baseWidget }, view.getReader() );
-                await newView.scanDir( view.currentPath() );
-                this.blessedFrames[i] = newView;
+        let view: BlessedPanel | BlessedMcd = this.blessedFrames[this.activeFrameNum];
+        if ( view instanceof BlessedPanel ) {
+            view.destroy();
 
-                view.destroy();
-            } else if ( view instanceof BlessedMcd ) {
-                const newView = new BlessedPanel( { parent: this.baseWidget }, view.getReader() );
-                await newView.read( view.currentPathFile() );
-                this.blessedFrames[i] = newView;
+            const newView = new BlessedMcd( { parent: this.baseWidget, viewCount: viewCount++ }, view.getReader() );
+            await newView.scanDir( view.currentPath() );
+            this.blessedFrames[this.activeFrameNum] = newView;
+            newView.setFocus();
+        } else if ( view instanceof BlessedMcd ) {
+            view.destroy();
 
-                view.destroy();
-            }
+            const newView = new BlessedPanel( { parent: this.baseWidget, viewCount: viewCount++ }, view.getReader() );
+            await newView.read( view.currentPathFile() );
+            this.blessedFrames[this.activeFrameNum] = newView;
+            newView.setFocus();
         }
+
         this.viewRender();
+        this.baseWidget.render();
     }
 
     viewRender() {
@@ -75,12 +78,12 @@ export class MainFrame {
             widget.left = opt.left;
             widget.height = opt.height;
             widget.width = opt.width;
-            widget.box.show();
+            widget.show();
         };
 
         if ( this.viewType === VIEW_TYPE.NORMAL ) {
             updateWidget( this.blessedFrames[0].getWidget(), { top: 1, left: 0, width: "100%", height: "100%-4" } );
-            this.blessedFrames[1].getWidget().box.hide();
+            this.blessedFrames[1].hide();
             this.blessedFrames[0].setFocus();
         } else if ( this.viewType === VIEW_TYPE.VERTICAL_SPLIT ) {
             updateWidget( this.blessedFrames[0].getWidget(), { top: 1, left: 0, width: "50%", height: "100%-4" } );
@@ -98,8 +101,8 @@ export class MainFrame {
         this.bottomFilesBox = new BottomFilesBox( { parent: this.baseWidget } );
 
         this.blessedFrames = [
-            new BlessedPanel( { parent: this.baseWidget } ),
-            new BlessedPanel( { parent: this.baseWidget } )
+            new BlessedPanel( { parent: this.baseWidget, viewCount: viewCount++ } ),
+            new BlessedPanel( { parent: this.baseWidget, viewCount: viewCount++ } )
         ];
 
         for ( var i = 0; i < this.blessedFrames.length; i++ ) {
@@ -142,6 +145,7 @@ export class MainFrame {
         if ( this.viewType > 2 ) {
             this.viewType = 0;
         }
+        log.debug( "split: viewNumber [%d]", (this.viewType as number) );
         this.viewRender();
     }
 
@@ -150,16 +154,18 @@ export class MainFrame {
     }
 
     nextWindow() {
-        const panel = this.blessedFrames.filter((item) => !item.hasFocus());
-        if ( panel && panel.length > 0 ) {
-            panel[0].setFocus();
+        this.activeFrameNum++;
+        if ( this.blessedFrames.length <= this.activeFrameNum ) {
+            this.activeFrameNum = 0;
         }
+        log.debug( "this.activeFrameNum %d", this.activeFrameNum );
+        this.blessedFrames[ this.activeFrameNum ].setFocus();
         this.screen.render();
     }
 
     activePanel(): BlessedPanel {
-        let activePanel = this.blessedFrames.filter( i => i.hasFocus() );
-        return activePanel.length === 0 ? this.blessedFrames[0] : activePanel[0];
+        log.debug( "activePanel %d", this.activeFrameNum );
+        return this.blessedFrames[ this.activeFrameNum ];
     }
 
     activeFocusObj(): any {

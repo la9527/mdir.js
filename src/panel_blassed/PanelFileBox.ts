@@ -78,7 +78,7 @@ export class PanelFileBox extends Widget {
         } else {
             viewText = sprintf(`%10s %10s %5s {${fontHex}-fg}%s %10s{/}`, this._file.attr, date, time, textFileName, tailview);
         }
-        log.debug( viewText );
+        // log.debug( viewText );
         this.box.setContent(viewText);
     }
 

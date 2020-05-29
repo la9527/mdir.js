@@ -103,7 +103,7 @@ export class BlessedMenu {
         this.topMenu = new Widget( { ...this.opt, style: this.menuColor.blessed } );
         this.menuBox = new BlassedMenuBox( { ...this.opt, top: 1, width: 30, style: this.menuColor.blessed });
 
-        this.topMenu.box.on("prerender", () => {
+        this.topMenu.on("prerender", () => {
             this.draw();
             this.menuBox.draw();
         });

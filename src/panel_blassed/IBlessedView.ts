@@ -11,5 +11,8 @@ export interface IBlessedView {
     setFocus();
     hasFocus(): boolean;
     
+    hide();
+    show();
+
     render();
 }

@@ -117,7 +117,16 @@ export class BlessedMcd extends Mcd implements IBlessedView {
         this.initRender();
     }
 
+    hide() {
+        this.baseWidget.hide();
+    }
+
+    show() {
+        this.baseWidget.show();
+    }
+
     destroy() {
+        log.debug( "MCD - destroy()" );
         this.baseWidget.destroy();
     }
 
@@ -139,13 +148,16 @@ export class BlessedMcd extends Mcd implements IBlessedView {
 
     initRender() {
         this.baseWidget.on( "prerender", () => {
-            log.debug( "BlessedMcd prerender !!!");
+            log.debug( "BlessedMcd prerender - %d", this.baseWidget._viewCount );
             this.resize();
             this.beforeRender();
         });
         this.baseWidget.on( "render", () => {
             this.afterRender();
         });
+        this.baseWidget.on("detach", () => {
+            log.debug( "mcd detach !!! - %d", this.baseWidget._viewCount );
+        })
     }
 
     beforeRender() {
