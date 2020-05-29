@@ -42,7 +42,7 @@ export function Logger( labelName: string ): winston.Logger {
     /*
     const buildType = process.env.BUILD_TYPE || "release";
     if ( buildType === "release" ) {
-        logger.add( new transports.Console( { level: "debug", handleExceptions: true, debugStdout: true }) );
+        logger.add( new winston.transports.Console( { level: "debug", handleExceptions: true, debugStdout: true }) );
     }
     */
     return logger;

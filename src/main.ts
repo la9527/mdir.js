@@ -10,6 +10,7 @@ import { BlessedMcd } from "./panel_blassed/BlessedMcd";
 import { readerControl } from './panel/readerControl';
 import { keyMappingExec, menuKeyMapping, KeyMappingInfo, keyHumanReadable } from "./config/KeyMapConfig";
 import { menuConfig } from "./config/MenuConfig";
+import { Mcd } from "./panel/Mcd";
 
 const log = Logger("main");
 
@@ -51,8 +52,9 @@ const screen = blessed.screen({
 
 /*
 (async () => {
+
     const mcd = new BlessedMcd({ parent: screen, top: 1, left: 0, width: "100%", height: "100%-2" });
-    mcd.setReader();
+    mcd.setReader(readerControl("file"));
     await mcd.scanCurrentDir();
     mcd.setFocus();
     
@@ -94,3 +96,4 @@ program.move(10, 10);
 (async () => {
     await mainFrame().start();
 })();
+

@@ -40,7 +40,6 @@ export class Mcd {
 
     async scanDir( dir: File ) {
         if ( dir ) {
-            await this.rescan(2);
             await this.addDirectory(dir.fullname);
             this.setCurrentDir(dir.fullname);
         }
@@ -48,7 +47,7 @@ export class Mcd {
 
     async scanCurrentDir() {
         const dir: File = this.reader.currentDir();
-        this.scanDir( dir );
+        await this.scanDir( dir );
     }
 
     async rescan( depth: number = 0): Promise<Boolean> {
@@ -195,7 +194,7 @@ export class Mcd {
         return null;
     }
 
-    searchDir( dirPath: string ): Dir {
+    searchDir( dirPath: string, similar: boolean = true ): Dir {
         if ( !dirPath || this.rootDir == null ) {
             return null;
         }
@@ -205,25 +204,24 @@ export class Mcd {
             const findDir = baseDir.subDir.find(i => i.file.name === lastPathname);
             log.debug( "baseDir [%s] [%s]", baseDir.file.name, pathArr );
             if ( !findDir ) {
-                return baseDir;
+                return similar ? baseDir : null;
             }
             return findSubDir( findDir, pathArr );
         };
-        if ( dirPath[0] === path.sep ) {
-            dirPath = dirPath.substr(1);
-        }
-        let pathArr = dirPath.split(path.sep);
+
+        let pathOnly = dirPath.substr(path.parse(dirPath).root.length);
+        let pathArr = pathOnly.split(path.sep);
         return findSubDir( this.rootDir, pathArr );
     }
 
     async addDirectory( dirPath: string ): Promise<Boolean> {
+        if ( this.rootDir == null ) {
+            await this.rescan( 1 );
+        }
         log.debug( "addDirectory : %s", dirPath );
         let dir: Dir = null;
         do {
-            dir = this.searchDir( dirPath );
-            if ( !dir ) {
-                break;
-            }
+            dir = this.searchDir( dirPath, true );
             log.debug( "addDirectory: searchDir: [%s]", dir.file.fullname );
             await this.scan( dir, 1 );
         } while( dir.file.fullname !== dirPath );
