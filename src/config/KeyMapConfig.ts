@@ -44,7 +44,7 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         keyHome: "home",
         keyEnd: "end",
         close: "escape",
-        keyEnterPromise: [ "enter" , "return" ]
+        keyEnterPromise: [ "return" ]
     },
     Panel: {
         keyUp: "up",
@@ -55,7 +55,7 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         keyPageDown: "pagedown",
         keyHome: "home",
         keyEnd: "end",
-        keyEnterPromise: [ "enter" , "return" ]
+        keyEnterPromise: [ "return" ]
     },
     Mcd: {
         keyUp: "up",
@@ -64,7 +64,7 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         keyLeft: "left",
         keyHome: "home",
         keyEnd: "end",
-        keyEnterPromise: [ "enter" , "return" ],
+        keyEnterPromise: [ "return" ],
         subDirScanPromise: [
             {
                 key: "=",

@@ -48,26 +48,30 @@ export class MainFrame {
 
         this.baseWidget = new Widget( { parent: this.screen, left: 0, top: 0, width: "100%", height: "100%" } );
         this.blessedMenu = new BlessedMenu({ parent: this.baseWidget });
+
+        this.baseWidget.on("remove", (element) => {
+            log.debug( "remove element: %s - %d", element.options.name, element.options.viewCount );
+        });
     }
 
     async mcdPromise() {
+        log.debug( "mcdPromise !!!!");
         let view: BlessedPanel | BlessedMcd = this.blessedFrames[this.activeFrameNum];
         if ( view instanceof BlessedPanel ) {
             view.destroy();
 
             const newView = new BlessedMcd( { parent: this.baseWidget, viewCount: viewCount++ }, view.getReader() );
             await newView.scanDir( view.currentPath() );
-            this.blessedFrames[this.activeFrameNum] = newView;
             newView.setFocus();
+            this.blessedFrames[this.activeFrameNum] = newView;
         } else if ( view instanceof BlessedMcd ) {
             view.destroy();
 
             const newView = new BlessedPanel( { parent: this.baseWidget, viewCount: viewCount++ }, view.getReader() );
             await newView.read( view.currentPathFile() );
-            this.blessedFrames[this.activeFrameNum] = newView;
             newView.setFocus();
+            this.blessedFrames[this.activeFrameNum] = newView;
         }
-
         this.viewRender();
         this.baseWidget.render();
     }
@@ -81,7 +85,12 @@ export class MainFrame {
             widget.show();
         };
 
+        let { width, height } = this.baseWidget.width;
+
+        log.debug( "mainFrame: width [%d] height [%d]", width, height );
+
         if ( this.viewType === VIEW_TYPE.NORMAL ) {
+            this.activeFrameNum = 0;
             updateWidget( this.blessedFrames[0].getWidget(), { top: 1, left: 0, width: "100%", height: "100%-4" } );
             this.blessedFrames[1].hide();
             this.blessedFrames[0].setFocus();
@@ -131,6 +140,7 @@ export class MainFrame {
         });
     
         this.blessedFrames[0].setFocus();
+        // this.baseWidget.render();
         this.screen.render();
     }
 
@@ -147,6 +157,7 @@ export class MainFrame {
         }
         log.debug( "split: viewNumber [%d]", (this.viewType as number) );
         this.viewRender();
+        this.baseWidget.render();
     }
 
     quit() {
@@ -154,13 +165,17 @@ export class MainFrame {
     }
 
     nextWindow() {
-        this.activeFrameNum++;
-        if ( this.blessedFrames.length <= this.activeFrameNum ) {
+        if ( this.viewType !== VIEW_TYPE.NORMAL ) {
+            this.activeFrameNum++;
+            if ( this.blessedFrames.length <= this.activeFrameNum ) {
+                this.activeFrameNum = 0;
+            }
+        } else {
             this.activeFrameNum = 0;
         }
         log.debug( "this.activeFrameNum %d", this.activeFrameNum );
         this.blessedFrames[ this.activeFrameNum ].setFocus();
-        this.screen.render();
+        this.baseWidget.render();
     }
 
     activePanel(): BlessedPanel {

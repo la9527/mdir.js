@@ -114,7 +114,6 @@ export class FileReader extends Reader {
                 log.error( "READDIR () - ERROR %j", e );
             }
             resolve( fileItem );
-            // reject( e );
         });
     }
 }

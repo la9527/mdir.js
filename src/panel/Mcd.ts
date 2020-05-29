@@ -202,7 +202,6 @@ export class Mcd {
         const findSubDir = (baseDir: Dir, pathArr) => {
             const lastPathname = pathArr.shift();
             const findDir = baseDir.subDir.find(i => i.file.name === lastPathname);
-            log.debug( "baseDir [%s] [%s]", baseDir.file.name, pathArr );
             if ( !findDir ) {
                 return similar ? baseDir : null;
             }
@@ -222,7 +221,7 @@ export class Mcd {
         let dir: Dir = null;
         do {
             dir = this.searchDir( dirPath, true );
-            log.debug( "addDirectory: searchDir: [%s]", dir.file.fullname );
+            // log.debug( "addDirectory: searchDir: [%s]", dir.file.fullname );
             await this.scan( dir, 1 );
         } while( dir.file.fullname !== dirPath );
         return true;
