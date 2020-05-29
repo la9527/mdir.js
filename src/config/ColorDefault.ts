@@ -37,7 +37,8 @@ export const ColorDefault = {
     file: {
         name: {
             14: "Makefile;makefile",
-            12: "README;NEWS;COPYING;AUTHORS;INSTALL;TODO;ChangeLog;Doxyfile;"
+            12: "README;NEWS;COPYING;AUTHORS;INSTALL;TODO;ChangeLog;Doxyfile;",
+            3: "package.json"
         },
         ext: {
             5: "a;so;la;so.1;so.0;",
@@ -46,7 +47,8 @@ export const ColorDefault = {
                 "doc;dot;rtf;sdw;vor;pdb;odt;psw;sdw;pwd;jtd;jtt;",
                 "wps;dif;dbf;odt;ott;sxw;odg;odp;ppt;",
                 "txt;md;me;ini;cfg;log;am;in;conf;m4;po;spec;",
-                "html;htm;xml;css;jsp;php;php3;asp;js;ts;jsx;sh;",
+                "html;htm;xml;css;jsp;php;php3;asp;",
+                "js;jsx;ts;tsx;sh;",
                 "c;cpp;cc;h;hh;pl;java;py;",
                 "diff;diff3;",
                 "pem;cer;p7b;der;",

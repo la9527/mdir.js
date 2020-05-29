@@ -26,19 +26,29 @@ export class Mcd {
 
     protected curDirInx: number = -1;
 
+    constructor( reader: Reader = null ) {
+        this.setReader( reader );
+    }
+
     getReader(): Reader {
         return this.reader;
     }
     
-    initReader( reader: Reader ) {
-        this.reader = this.reader;
+    setReader( reader: Reader ) {
+        this.reader = reader;
+    }
+
+    async scanDir( dir: File ) {
+        if ( dir ) {
+            await this.rescan(2);
+            await this.addDirectory(dir.fullname);
+            this.setCurrentDir(dir.fullname);
+        }
     }
 
     async scanCurrentDir() {
         const dir: File = this.reader.currentDir();
-        await this.rescan(2);
-        await this.addDirectory(dir.fullname);
-        this.setCurrentDir(dir.fullname);
+        this.scanDir( dir );
     }
 
     async rescan( depth: number = 0): Promise<Boolean> {
@@ -232,6 +242,10 @@ export class Mcd {
             this.curDirInx = x;
         }
         return this.arrOrder[ x ];
+    }
+
+    currentPathFile() {
+        return this.currentDir()?.file;
     }
 
     keyUp() {

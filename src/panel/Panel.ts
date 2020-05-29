@@ -8,20 +8,25 @@ const log = Logger("main");
 export abstract class Panel extends AbstractPanel {
     protected reader: Reader = null;
 
-    constructor() {
+    constructor( reader: Reader = null ) {
         super();
+        this.setReader( reader );
     }
 
-    initReader( reader: Reader ) {
+    setReader( reader: Reader ) {
         this.reader = reader;
     }
 
-    async read( path: string ) {
+    getReader(): Reader {
+        return this.reader;
+    }
+
+    async read( path: string | File ) {
         const previousDir: File = this._currentDir;
 
         try {
-            const file = this.reader.convertFile( path );
-            log.info( "Panel: %s", path );
+            const file = (path instanceof File) ? path : this.reader.convertFile( path );
+            log.info( "Panel: %s", file.fullname );
             this.dirFiles = await this.reader.readdir( file );
 
             this._currentDir = file;
@@ -69,6 +74,10 @@ export abstract class Panel extends AbstractPanel {
             this.dirFiles[this.currentPos].select = !this.dirFiles[ this.currentPos ].select;
             this.keyDown();
         }
+    }
+
+    currentPath(): File {
+        return this._currentDir;
     }
 
     currentFile(): File {

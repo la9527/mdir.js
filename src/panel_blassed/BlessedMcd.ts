@@ -14,6 +14,8 @@ import { ColorConfig } from '../config/ColorConfig';
 import { Logger } from "../common/Logger";
 import { KeyMapping } from "../config/KeyMapConfig";
 import { KeyMappingInfo } from "../config/KeyMapConfig";
+import { IBlessedView } from "./IBlessedView";
+import mainFrame from './MainFrame';
 
 const log = Logger("blessed-mcd");
 
@@ -69,7 +71,7 @@ class McdDirButton extends Widget {
 }
 
 @KeyMapping( KeyMappingInfo.Mcd, "Mcd" )
-export class BlessedMcd extends Mcd {
+export class BlessedMcd extends Mcd implements IBlessedView {
     buttonList: McdDirButton[] = [];
     lines: Widgets.BoxElement[] = [];
 
@@ -85,8 +87,8 @@ export class BlessedMcd extends Mcd {
 
     viewDepthSize: number = 0;
 
-    constructor(  opts: Widgets.BoxOptions | any ) {
-        super();
+    constructor(  opts: Widgets.BoxOptions | any, reader: Reader = null ) {
+        super( reader );
 
         const colorConfig = ColorConfig.instance();
 
@@ -115,8 +117,12 @@ export class BlessedMcd extends Mcd {
         this.initRender();
     }
 
-    initReader( reader: Reader ) {
-        super.initReader( reader );
+    destroy() {
+        this.baseWidget.destroy();
+    }
+
+    setReader( reader: Reader ) {
+        super.setReader( reader );
     }
 
     getWidget() {
@@ -326,5 +332,9 @@ export class BlessedMcd extends Mcd {
         if ( node ) {
             this.curDirInx = node.index;
         }
+    }
+
+    async keyEnterPromise() {
+        await mainFrame().mcdPromise();
     }
 }

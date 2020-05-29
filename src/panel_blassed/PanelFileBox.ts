@@ -72,17 +72,13 @@ export class PanelFileBox extends Widget {
         const { fontHex, backHex } = this._file.color;
 
         const textFileName = this.convertFilename(this.width as number - 39);
-        // log.info( textFileName );
-        
         let viewText = null;
         if ( this._viewFocus ) {
             viewText = sprintf(`%10s %10s %5s %s %10s`, this._file.attr, date, time, textFileName, tailview);
-            // log.info( "view position : filebox [%d] [%s]", textFileName.length, this._file.name );
         } else {
-            // viewText = sprintf(`%10s %10s %5s %s %10s`, this._file.attr, date, time, textFileName, tailview);
-            viewText = sprintf(`%10s %10s %5s {${fontHex}-fg}%s %10s{/${fontHex}-fg}`, this._file.attr, date, time, textFileName, tailview);
+            viewText = sprintf(`%10s %10s %5s {${fontHex}-fg}%s %10s{/}`, this._file.attr, date, time, textFileName, tailview);
         }
-        //log.info( viewText );
+        log.debug( viewText );
         this.box.setContent(viewText);
     }
 
@@ -95,11 +91,9 @@ export class PanelFileBox extends Widget {
         let viewText = null;
         if ( this._viewFocus ) {
             viewText = sprintf(`%s %10s`, textFileName, tailview);
-            // log.info( "view position : filebox [%d] [%s]", textFileName.length, this._file.name );
         } else {
             viewText = sprintf(`{${fontHex}-fg}%s %10s{/${fontHex}-fg}`, textFileName, tailview);
         }
-        log.info( viewText );
         this.box.setContent(viewText);
     }
 
@@ -114,7 +108,6 @@ export class PanelFileBox extends Widget {
         } else {
             viewText = sprintf(` {${fontHex}-fg}%s{/${fontHex}-fg}`, textFileName);
         }
-        log.info( viewText );
         this.box.setContent(viewText);
     }
 

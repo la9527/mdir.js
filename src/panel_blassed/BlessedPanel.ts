@@ -12,11 +12,12 @@ import { Color } from "../common/Color";
 import { Reader } from "../common/Reader";
 import { KeyMapping } from "../config/KeyMapConfig";
 import { KeyMappingInfo } from "../config/KeyMapConfig";
+import { IBlessedView } from "./IBlessedView";
 
 const log = Logger("blessedpanel");
 
 @KeyMapping( KeyMappingInfo.Panel, "Panel" )
-export class BlessedPanel extends Panel {
+export class BlessedPanel extends Panel implements IBlessedView {
     public fileBox: PanelFileBox[] = [];
     public baseWidget: Widget = null;
     public panel: Widget = null;
@@ -26,8 +27,8 @@ export class BlessedPanel extends Panel {
     private _fileViewType = 0;
     private _lines = [];
 
-    constructor( opts: Widgets.BoxOptions | any, widgetOption: any = {} ) {
-        super();
+    constructor( opts: Widgets.BoxOptions | any, reader: Reader = null ) {
+        super( reader );
         const statColor = ColorConfig.instance().getBaseColor("stat");
 
         this.baseWidget = new Widget( { ...opts } );
@@ -38,8 +39,7 @@ export class BlessedPanel extends Panel {
             left: 0,
             top: 1,
             width: "100%",
-            height: "100%-1",
-            ...widgetOption
+            height: "100%-1"
         });
         
         this.header = new Widget({
@@ -51,8 +51,7 @@ export class BlessedPanel extends Panel {
             style: {
                 bg: statColor.back,
                 fg: statColor.font
-            },
-            ...widgetOption
+            }
         });
 
         this.tailer = new Widget({
@@ -64,15 +63,22 @@ export class BlessedPanel extends Panel {
             style: {
                 bg: statColor.back,
                 fg: statColor.font
-            },
-            ...widgetOption
+            }
         });
 
         this.initRender();
     }
 
-    initReader( reader: Reader ) {
-        super.initReader( reader );
+    getReader(): Reader {
+        return this.reader;
+    }
+
+    setReader( reader: Reader ) {
+        super.setReader( reader );
+    }
+
+    destroy() {
+        this.baseWidget.destroy();
     }
 
     getWidget() {

@@ -1,7 +1,7 @@
 import * as blessed from "neo-blessed";
 import { BlessedProgram, Widgets, box, text, colors } from "neo-blessed";
 import { Logger } from "../common/Logger";
-import { BlessedPanel } from "./BlessedPanel";
+import { BlessedPanel } from './BlessedPanel';
 import { FuncKeyBox } from './FuncKeyBox';
 import BottomFilesBox from "./BottomFileBox";
 import { readerControl } from '../panel/readerControl';
@@ -9,6 +9,7 @@ import { Widget } from "./Widget";
 import { keyMappingExec, menuKeyMapping, KeyMappingInfo, KeyMapping } from "../config/KeyMapConfig";
 import { menuConfig } from "../config/MenuConfig";
 import { BlessedMenu } from "./BlessedMenu";
+import { BlessedMcd } from './BlessedMcd';
 
 const log = Logger("MainFrame");
 
@@ -46,7 +47,29 @@ export class MainFrame {
         this.blessedMenu = new BlessedMenu({ parent: this.baseWidget });
     }
 
-    async viewRender() {
+    async mcdPromise() {
+        for ( let i in this.blessedFrames ) {
+            let view: BlessedPanel | BlessedMcd = this.blessedFrames[i];
+            if ( !view.hasFocus() ) {
+                continue;
+            } else if ( view instanceof BlessedPanel ) {
+                const newView = new BlessedMcd( { parent: this.baseWidget }, view.getReader() );
+                await newView.scanDir( view.currentPath() );
+                this.blessedFrames[i] = newView;
+
+                view.destroy();
+            } else if ( view instanceof BlessedMcd ) {
+                const newView = new BlessedPanel( { parent: this.baseWidget }, view.getReader() );
+                await newView.read( view.currentPathFile() );
+                this.blessedFrames[i] = newView;
+
+                view.destroy();
+            }
+        }
+        this.viewRender();
+    }
+
+    viewRender() {
         const updateWidget = ( widget: Widget, opt ) => {
             widget.top = opt.top;
             widget.left = opt.left;
@@ -81,7 +104,7 @@ export class MainFrame {
 
         for ( var i = 0; i < this.blessedFrames.length; i++ ) {
             try {
-                this.blessedFrames[i].initReader(readerControl("file"));
+                this.blessedFrames[i].setReader(readerControl("file"));
                 await this.blessedFrames[i].read( "." );
             } catch ( e ) {
                 log.error( e );

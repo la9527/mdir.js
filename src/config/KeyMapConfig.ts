@@ -31,6 +31,7 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         refresh: "f5",
         split: [ "C-w" ],
         nextWindow: [ "tab", "C-e" ],
+        mcdPromise: "f10",
         menu: "f12"
     },
     Menu: {
@@ -42,7 +43,8 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         keyPageDown: "pagedown",
         keyHome: "home",
         keyEnd: "end",
-        close: "escape"
+        close: "escape",
+        keyEnterPromise: [ "enter" , "return" ]
     },
     Panel: {
         keyUp: "up",
@@ -62,6 +64,7 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         keyLeft: "left",
         keyHome: "home",
         keyEnd: "end",
+        keyEnterPromise: [ "enter" , "return" ],
         subDirScanPromise: [
             {
                 key: "=",
@@ -87,7 +90,7 @@ export const FuncKeyMappingInfo = {
         F7: { name: "Mkdir", func: "Panel.mkdir", },
         F8: { name: "Remove", func: "Panel.remove" },
         F9: { name: "Size", func: "Panel.size" },
-        F10: { name: "MCD", func: "" },
+        F10: { name: "MCD", func: "Common.mcdPromise" },
         F11: { name: "QCD", func: "" },
         F12: { name: "Menu", func: "Common.menu" }
     },

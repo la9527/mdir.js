@@ -52,7 +52,7 @@ const screen = blessed.screen({
 /*
 (async () => {
     const mcd = new BlessedMcd({ parent: screen, top: 1, left: 0, width: "100%", height: "100%-2" });
-    mcd.initReader();
+    mcd.setReader();
     await mcd.scanCurrentDir();
     mcd.setFocus();
     

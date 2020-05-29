@@ -1,6 +1,9 @@
 import { ColorDefault } from "./ColorDefault";
 import { Color } from "../common/Color";
 import { File } from "../common/File";
+import { Logger } from "../common/Logger";
+
+const log = Logger("ColorConfig");
 
 export class ColorConfig {
     static instance(): ColorConfig {
@@ -43,6 +46,7 @@ export class ColorConfig {
         });
 
         this._colorConfig.file.ext = extColor;
+        log.debug( extColor );
     }
 
     getBaseColor( name: string ): Color {
@@ -55,7 +59,7 @@ export class ColorConfig {
         if ( file.dir ) {
             color = this._colorConfig.base.dir;
         } else {
-            color = this._colorConfig.file.ext[extname] || this._colorConfig.file.ext[file.name] || color;
+            color = this._colorConfig.file.ext[extname] || this._colorConfig.file.name[file.name] || color;
             if ( !color || (color[0] === 0 && color[1] === 0) ) {
                 color = this._colorConfig.base.default;
             }
