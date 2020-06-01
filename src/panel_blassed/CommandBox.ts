@@ -1,5 +1,5 @@
 import { Widget } from './Widget';
-import { Widgets } from 'neo-blessed';
+import { Widgets, screen } from 'neo-blessed';
 import unicode from "neo-blessed/lib/unicode";
 import * as os from "os";
 import * as path from "path";
@@ -15,6 +15,17 @@ export class CommandBox extends Widget {
 
     constructor( opts: Widgets.BoxOptions ) {
         super( { ...opts, top: "100%", left: 0, width: '100%', height: 1, input: true } );
+
+        this.on("keypress", async (ch, keyinfo) => {
+            await this.listener(ch, keyinfo);
+        });
+
+        this.on('resize', (get) => { 
+            this._updateCursor(get) 
+        });
+        this.on('move', (get) => {
+            this._updateCursor(get) 
+        });
     }
 
     setReader( reader ) {
@@ -51,12 +62,68 @@ export class CommandBox extends Widget {
     }
 
     draw() {
-
         this.setContent( "" );
     }
 
+    _updateCursor(get) {
+        const screen: Widgets.Screen = this.box.screen;
+        if (screen.focused !== this.box) {
+          return;
+        }
+        const box: any = this.box;
+        const lpos = get ? box.lpos : box._getCoords();
+        if (!lpos) return;
+      
+        let last = box._clines[box._clines.length - 1]
+          , program = screen.program
+          , line
+          , cx
+          , cy;
+      
+        // Stop a situation where the textarea begins scrolling
+        // and the last cline appears to always be empty from the
+        // _typeScroll `+ '\n'` thing.
+        // Maybe not necessary anymore?
+        if (last === '' && this.value[this.value.length - 1] !== '\n') {
+            last = box._clines[box._clines.length - 2] || '';
+        }
+      
+        line = Math.min(
+            box._clines.length - 1 - (box.childBase || 0),
+            (lpos.yl - lpos.yi) - box.iheight - 1);
+      
+        // When calling clearValue() on a full textarea with a border, the first
+        // argument in the above Math.min call ends up being -2. Make sure we stay
+        // positive.
+        line = Math.max(0, line);
+      
+        cy = lpos.yi + box.itop + line;
+        cx = lpos.xi + box.ileft + box.strWidth(last);
+      
+        // XXX Not sure, but this may still sometimes
+        // cause problems when leaving editor.
+        if (cy === program.y && cx === program.x) {
+            return;
+        }
+      
+        if (cy === program.y) {
+            if (cx > program.x) {
+                program.cuf(cx - program.x);
+            } else if (cx < program.x) {
+                program.cub(program.x - cx);
+            }
+        } else if (cx === program.x) {
+            if (cy > program.y) {
+                program.cud(cy - program.y);
+            } else if (cy < program.y) {
+                program.cuu(program.y - cy);
+            }
+        } else {
+            program.cup(cy, cx);
+        }
+    }
+
     listener(ch, key) {
-        let done; // = this._done;
         let value = this.value;
       
         if (key.name === 'return') return;
@@ -71,7 +138,7 @@ export class CommandBox extends Widget {
         }
       
         if (key.name === 'escape') {
-          done(null, null);
+            this.box.emit("done", null, null);
         } else if (key.name === 'backspace') {
             if (this.value.length) {
                 if (this.box.screen.fullUnicode) {
@@ -84,6 +151,8 @@ export class CommandBox extends Widget {
                     this.value = this.value.slice(0, -1);
                 }
             }
+        } else if ( key.name === "tab" ) {
+            
         } else if (ch) {
           if (!/^[\x00-\x08\x0b-\x0c\x0e-\x1f\x7f]$/.test(ch)) {
             this.value += ch;
