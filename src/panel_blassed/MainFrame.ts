@@ -38,7 +38,7 @@ export class MainFrame {
         this.screen = blessed.screen({
             smartCSR: true,
             fullUnicode: true,
-            dockBorders: true,
+            dockBorders: false,
             useBCE: true,
             ignoreDockContrast: true,
             debug: false,

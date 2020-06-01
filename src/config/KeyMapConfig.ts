@@ -32,7 +32,8 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         split: [ "C-w" ],
         nextWindow: [ "tab", "C-e" ],
         mcdPromise: "f10",
-        menu: "f12"
+        menu: "f12",
+        quit: "C-q"
     },
     Menu: {
         keyUp: "up",
