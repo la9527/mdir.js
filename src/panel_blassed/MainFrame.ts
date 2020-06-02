@@ -1,5 +1,5 @@
 import * as blessed from "neo-blessed";
-import { BlessedProgram, Widgets, box, text, colors, screen } from "neo-blessed";
+import { BlessedProgram, Widgets, box, text, screen } from "neo-blessed";
 import { Logger } from "../common/Logger";
 import { BlessedPanel } from './BlessedPanel';
 import { FuncKeyBox } from './FuncKeyBox';
@@ -12,7 +12,7 @@ import { BlessedMenu } from "./BlessedMenu";
 import { BlessedMcd } from './BlessedMcd';
 import { CommandBox } from './CommandBox';
 import { exec } from "child_process";
-import { program } from '../../@types/blessed';
+import * as colors from "colors";
 
 const log = Logger("MainFrame");
 
@@ -123,12 +123,6 @@ export class MainFrame {
             }
         }
 
-        let program = this.screen.program;
-        program.alternateBuffer();
-        program.enableMouse();
-        program.hideCursor();
-        program.clear();
-
         this.viewRender();
 
         this.screen.key("q", () => {
@@ -175,11 +169,6 @@ export class MainFrame {
     }
 
     quit() {
-        const program = this.screen.program;
-        program.clear();
-        program.disableMouse();
-        program.showCursor();
-        program.normalBuffer();
         process.exit(0);
     }
 
@@ -243,6 +232,18 @@ export class MainFrame {
         this.baseWidget.render();
     }
 
+    consoleView(): Promise<void> {
+        return new Promise( (resolve, reject) => {
+            let program = this.screen.program;
+            this.screen.leave();
+            program.once( 'keypress', () => {
+                this.screen.enter();
+                this.refresh();
+                resolve();
+            });
+        });
+    }
+
     commandRun(cmd): Promise<void> {
         log.debug( "commandRun : %s", cmd );
         return new Promise( (resolve, reject) => {
@@ -252,47 +253,28 @@ export class MainFrame {
                 return;
             }
 
-            program.clear();
-            program.disableMouse();
-            program.showCursor();
-            program.normalBuffer();
+            if ( cmd === "quit" || cmd === "exit" ) {
+                process.exit(0);
+            }
+
+            this.screen.leave();
             
-            console.log( cmd );
+            console.log( colors.white("m.js $ ") + cmd );
+
             exec(cmd, (error, stdout, stderr) => {
                 if (error) {
-                    console.error(error);
-                    return;
+                    console.error(error.message);
+                } else {
+                    stderr && console.error(stderr);
+                    stdout && console.log(stdout);
                 }
-                stdout && console.log(stdout);
-                stderr && console.error(stderr);
-                
-                console.log( "Press any key to return M" );
+                console.log( colors.white("Press any key to return m.js") );
                 program.once( 'keypress', () => {
-                    // program.enableMouse();
-                    // program.hideCursor();
-                    
+                    this.screen.enter();
                     this.refresh();
                     resolve();
                 });
             });
-            /*
-            let result = this.screen.exec(cmd, []);
-            result.stdout.on('data', (data) => {
-                console.log(`stdout: ${data}`);
-            });
-            
-            result.stderr.on('data', (data) => {
-                console.error(`stderr: ${data}`);
-            });
-
-            result.on('error', (err) => {
-                console.log( "program error !!! - %s", err );
-            });
-
-            result.on('close', () => {
-                console.log( "program close" );
-            });
-            */
         });
     }
 

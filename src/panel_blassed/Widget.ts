@@ -100,11 +100,15 @@ export class Widget {
     moveCursor( x, y ) {
         const screen: Widgets.Screen = this.box.screen;
         if (screen.focused !== this.box) {
-          return;
+            log.debug( "moveCursor : screen.focused !== this.box" );
+            return;
         }
         const box: any = this.box;
         const lpos = box.lpos;
-        if (!lpos) return;
+        if (!lpos) {
+            log.debug( "moveCursor : !lpo" );
+            return;
+        }
       
         let program = screen.program
           , line
@@ -120,9 +124,11 @@ export class Widget {
         // XXX Not sure, but this may still sometimes
         // cause problems when leaving editor.
         if (cy === program.y && cx === program.x) {
+            log.debug( "moveCursor : cy === program.y && cx === program.x - (%d, %d)", cx, cy );
             return;
         }
       
+        log.debug( "moveCursor: (%d, %d)", cx, cy );
         if (cy === program.y) {
             if (cx > program.x) {
                 program.cuf(cx - program.x);

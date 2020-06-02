@@ -68,6 +68,7 @@ export class BlessedProgram extends EventEmitter {
     isXterm: boolean;
     tmux: boolean;
     tmuxVersion: number;
+    cursorHidden: boolean;
 
     constructor(options?: IBlessedProgramOptions);
 
@@ -1511,6 +1512,9 @@ export namespace Widgets {
          * Reset the terminal to term. Reloads terminfo.
          */
         setTerminal(term: string): void;
+
+        leave(): void;
+        enter(): void;
     }
 
     interface Padding {

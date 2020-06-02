@@ -236,4 +236,8 @@ export class BlessedPanel extends Panel implements IBlessedView {
     commandBoxShow() {
         mainFrame().commandBoxShow();
     }
+
+    async consoleViewPromise() {
+        await mainFrame().consoleView();
+    }
 }

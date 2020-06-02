@@ -74,10 +74,17 @@ export class CommandBox extends Widget {
             log.debug( "commandbox text - [%s]", this.commandValue );
         });
         this.on("detach", () => {
-            log.debug( "detach" );
+            log.debug( "detach !!!" );
             this.box.screen.program.hideCursor();
         });
+        this.on("render", () => {
+            if ( this.box.screen.program.cursorHidden ) {
+                log.debug( "command render - showCursor !!!");
+                this.box.screen.program.showCursor();
+            }
+        });
         this.box.screen.program.showCursor();
+        this.render();
     }
 
     setPanelView( panelView: IBlessedView ) {
@@ -155,6 +162,7 @@ export class CommandBox extends Widget {
         gCmdHistory.push( this.commandValue );
         await mainFrame().commandRun( this.commandValue );
         this.updateValue( "" );
+        this.box.screen.program.showCursor();
     }
 
     keyEscape() {
