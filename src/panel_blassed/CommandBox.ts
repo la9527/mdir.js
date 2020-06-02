@@ -21,8 +21,24 @@ class CmdHistory {
         this.curPos = Math.min( this.cmdHistory.length, this.curPos);
     }
 
+    backend() {
+        if ( this.cmdHistory.length === 0 || this.curPos < 0 ) {
+            return null;
+        }
+        this.curPos = this.cmdHistory.length;
+        return this.cmdHistory[this.curPos-1];
+    }
+
+    front() {
+        if ( this.cmdHistory.length === 0 || this.curPos < 0 ) {
+            return null;
+        }
+        this.curPos = 1;
+        return this.cmdHistory[this.curPos-1];
+    }
+
     down() {
-        if ( this.cmdHistory.length === 0 || this.curPos <= 0 ) {
+        if ( this.cmdHistory.length === 0 || this.curPos < 0 ) {
             return null;
         }
 
@@ -34,7 +50,7 @@ class CmdHistory {
     }
 
     up() {
-        if ( this.cmdHistory.length === 0 || this.curPos <= 0 ) {
+        if ( this.cmdHistory.length === 0 || this.curPos < 0 ) {
             return null;
         }
         
@@ -79,7 +95,6 @@ export class CommandBox extends Widget {
         });
         this.on("render", () => {
             if ( this.box.screen.program.cursorHidden ) {
-                log.debug( "command render - showCursor !!!");
                 this.box.screen.program.showCursor();
             }
         });
@@ -173,6 +188,19 @@ export class CommandBox extends Widget {
         log.debug( "BS - pos:%d", this.cursorPos );
         this.commandValue = this.commandValue.substr(0, this.cursorPos - 1) + this.commandValue.substr(this.cursorPos);
         this.keyLeft();
+    }
+
+    keyDelete() {
+        log.debug( "DEL - pos:%d", this.cursorPos );
+        this.commandValue = this.commandValue.substr(0, this.cursorPos) + this.commandValue.substr(this.cursorPos+1);
+    }
+
+    keyHome() {
+        this.cursorPos = 0;
+    }
+
+    keyEnd() {
+        this.cursorPos = this.commandValue.length;
     }
 
     keyTab() {
