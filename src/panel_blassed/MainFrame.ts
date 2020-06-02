@@ -1,5 +1,5 @@
 import * as blessed from "neo-blessed";
-import { BlessedProgram, Widgets, box, text, colors } from "neo-blessed";
+import { BlessedProgram, Widgets, box, text, colors, screen } from "neo-blessed";
 import { Logger } from "../common/Logger";
 import { BlessedPanel } from './BlessedPanel';
 import { FuncKeyBox } from './FuncKeyBox';
@@ -11,6 +11,8 @@ import { menuConfig } from "../config/MenuConfig";
 import { BlessedMenu } from "./BlessedMenu";
 import { BlessedMcd } from './BlessedMcd';
 import { CommandBox } from './CommandBox';
+import { exec } from "child_process";
+import { program } from '../../@types/blessed';
 
 const log = Logger("MainFrame");
 
@@ -26,7 +28,7 @@ enum VIEW_TYPE {
 
 @KeyMapping( KeyMappingInfo.Common, "Common" )
 export class MainFrame {
-    private screen = null;
+    private screen: Widgets.Screen = null;
     private viewType: VIEW_TYPE = VIEW_TYPE.NORMAL;
     private baseWidget = null;
     private blessedFrames = [];
@@ -48,12 +50,7 @@ export class MainFrame {
             // log: process.env.HOME + "/.m/m2.log"
         });
 
-        this.baseWidget = new Widget( { parent: this.screen, left: 0, top: 0, width: "100%", height: "100%" } );
-        this.blessedMenu = new BlessedMenu({ parent: this.baseWidget });
-
-        this.baseWidget.on("remove", (element) => {
-            log.debug( "remove element: %s - %d", element.options.name, element.options.viewCount );
-        });
+        menuKeyMapping( KeyMappingInfo, menuConfig );
     }
 
     async mcdPromise() {
@@ -106,7 +103,8 @@ export class MainFrame {
     }
 
     async start() {
-        menuKeyMapping( KeyMappingInfo, menuConfig );
+        this.baseWidget = new Widget( { parent: this.screen, left: 0, top: 0, width: "100%", height: "100%" } );
+        this.blessedMenu = new BlessedMenu({ parent: this.baseWidget });
 
         this.funcKeyBox = new FuncKeyBox( { parent: this.baseWidget }  );
         this.bottomFilesBox = new BottomFilesBox( { parent: this.baseWidget } );
@@ -125,8 +123,26 @@ export class MainFrame {
             }
         }
 
+        let program = this.screen.program;
+        program.alternateBuffer();
+        program.enableMouse();
+        program.hideCursor();
+        program.clear();
+
         this.viewRender();
 
+        this.screen.key("q", () => {
+            process.exit(0);
+        });
+
+        this.eventStart();
+        this.blessedFrames[0].setFocus();
+        // this.baseWidget.render();
+        this.screen.render();
+    }
+
+    eventStart() {
+        this.screen.off('keypress');
         this.screen.on('keypress', async (ch, keyInfo) => {
             if ( this.commandBox ) {
                 log.debug( "CommandBox running !!!" );
@@ -140,14 +156,6 @@ export class MainFrame {
                 }
             }
         });
-
-        this.screen.key("q", () => {
-            process.exit(0);
-        });
-    
-        this.blessedFrames[0].setFocus();
-        // this.baseWidget.render();
-        this.screen.render();
     }
 
     refresh() {
@@ -167,6 +175,11 @@ export class MainFrame {
     }
 
     quit() {
+        const program = this.screen.program;
+        program.clear();
+        program.disableMouse();
+        program.showCursor();
+        program.normalBuffer();
         process.exit(0);
     }
 
@@ -230,9 +243,57 @@ export class MainFrame {
         this.baseWidget.render();
     }
 
-    commandRun(cmd) {
+    commandRun(cmd): Promise<void> {
         log.debug( "commandRun : %s", cmd );
-        // this.screen.exec( cmd );
+        return new Promise( (resolve, reject) => {
+            let program = this.screen.program;
+            if ( !cmd ) {
+                resolve();
+                return;
+            }
+
+            program.clear();
+            program.disableMouse();
+            program.showCursor();
+            program.normalBuffer();
+            
+            console.log( cmd );
+            exec(cmd, (error, stdout, stderr) => {
+                if (error) {
+                    console.error(error);
+                    return;
+                }
+                stdout && console.log(stdout);
+                stderr && console.error(stderr);
+                
+                console.log( "Press any key to return M" );
+                program.once( 'keypress', () => {
+                    // program.enableMouse();
+                    // program.hideCursor();
+                    
+                    this.refresh();
+                    resolve();
+                });
+            });
+            /*
+            let result = this.screen.exec(cmd, []);
+            result.stdout.on('data', (data) => {
+                console.log(`stdout: ${data}`);
+            });
+            
+            result.stderr.on('data', (data) => {
+                console.error(`stderr: ${data}`);
+            });
+
+            result.on('error', (err) => {
+                console.log( "program error !!! - %s", err );
+            });
+
+            result.on('close', () => {
+                console.log( "program close" );
+            });
+            */
+        });
     }
 
     static instance() {

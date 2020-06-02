@@ -60,6 +60,7 @@ export class CommandBox extends Widget {
     private panelView: IBlessedView = null;
     private commandValue: string = "";
     private cursorPos = 0;
+    private keylock = false;
 
     constructor( opts: Widgets.BoxOptions ) {
         super( { left: 0, top: "100%-1", width: "100%", height: 1, input: true, ...opts } );
@@ -150,9 +151,9 @@ export class CommandBox extends Widget {
         this.cursorPos = Math.min( this.commandValue.length, ++this.cursorPos );
     }
 
-    keyReturn() {
+    async keyReturnPromise() {
         gCmdHistory.push( this.commandValue );
-        mainFrame().commandRun( this.commandValue );
+        await mainFrame().commandRun( this.commandValue );
         this.updateValue( "" );
     }
 
@@ -170,7 +171,12 @@ export class CommandBox extends Widget {
 
     }
 
-    listener(ch, key) {
+    async listener(ch, key) {
+        if ( this.keylock ) {
+            return;
+        }
+        this.keylock = true;
+
         let camelize = (str) => {
             return str.replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) => {
                 return index === 0 ? word.toLowerCase() : word.toUpperCase();
@@ -183,12 +189,19 @@ export class CommandBox extends Widget {
             if ( this[methodName] ) {
                 this[methodName]();
                 this.box.screen.render();
+                this.keylock = false;
+                return;
+            } else if ( this[methodName + "Promise"] ) {
+                await this[methodName + "Promise"]();
+                this.box.screen.render();
+                this.keylock = false;
                 return;
             }
         }
 
         if ( ["return", "enter"].indexOf(key.name) > -1 ) {
             // Fix for Windows OS (\r\n)
+            this.keylock = false;
             return;
         }
 
@@ -200,5 +213,6 @@ export class CommandBox extends Widget {
         if (this.commandValue !== value) {
             this.box.screen.render();
         }
+        this.keylock = false;
     }
 }

@@ -1409,9 +1409,9 @@ export namespace Widgets {
          */
         exec(
             file: string,
-            args: string[],
-            options: NodeChildProcessExecOptions,
-            callback: (...args: any[]) => void
+            args ?: string[],
+            options ?: NodeChildProcessExecOptions,
+            callback ?: (...args: any[]) => void
         ): child_process.ChildProcess;
 
         /**
