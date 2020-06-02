@@ -100,7 +100,7 @@ export class FileReader extends Reader {
 
             const fileItem: File[] = [];
             try {
-                // process.chdir(dirFile.fullname);
+                process.chdir(dirFile.fullname);
 
                 const fileList: any[] = fs.readdirSync( dirFile.fullname, { encoding: "utf-8" } );
                 // log.info( "READDIR: PATH: [%s], FILES: %j", dirFile.fullname, fileList );

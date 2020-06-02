@@ -1,35 +1,86 @@
 import { Widget } from './Widget';
 import { Widgets, screen } from 'neo-blessed';
-import unicode from "neo-blessed/lib/unicode";
+import * as unicode from "neo-blessed/lib/unicode";
 import * as os from "os";
 import * as path from "path";
 import { Reader } from "../common/Reader";
 import { File } from "../common/File";
 import { Logger } from "../common/Logger";
+import { IBlessedView } from './IBlessedView';
+import mainFrame from './MainFrame';
+import { ColorConfig } from '../config/ColorConfig';
 
 const log = Logger("BottomFilesBox");
 
-export class CommandBox extends Widget {
-    private reader: Reader = null;
-    private value: string = "";
+class CmdHistory {
+    private cmdHistory: string[] = [];
+    private curPos = -1;
 
-    constructor( opts: Widgets.BoxOptions ) {
-        super( { ...opts, top: "100%", left: 0, width: '100%', height: 1, input: true } );
-
-        this.on("keypress", async (ch, keyinfo) => {
-            await this.listener(ch, keyinfo);
-        });
-
-        this.on('resize', (get) => { 
-            this._updateCursor(get) 
-        });
-        this.on('move', (get) => {
-            this._updateCursor(get) 
-        });
+    updatePos() {
+        this.curPos = Math.max( this.curPos, 0);
+        this.curPos = Math.min( this.cmdHistory.length, this.curPos);
     }
 
-    setReader( reader ) {
-        this.reader = reader;
+    down() {
+        if ( this.cmdHistory.length === 0 || this.curPos <= 0 ) {
+            return null;
+        }
+
+        const result = this.cmdHistory[this.curPos-1];
+        this.curPos++;
+        this.updatePos();
+        log.debug( "history down : %d/%d", this.curPos, this.cmdHistory.length );
+        return result;
+    }
+
+    up() {
+        if ( this.cmdHistory.length === 0 || this.curPos <= 0 ) {
+            return null;
+        }
+        
+        const result = this.cmdHistory[this.curPos-1];
+        this.curPos--;
+        this.updatePos();
+        log.debug( "history up : %d/%d", this.curPos, this.cmdHistory.length );
+        return result;
+    }
+
+    push( cmd ) {
+        if ( this.cmdHistory.length > 0 ) {
+            this.cmdHistory = this.cmdHistory.slice(0, this.curPos);
+        }
+        this.cmdHistory.push( cmd );
+        this.curPos = this.cmdHistory.length;
+    }
+}
+
+const gCmdHistory = new CmdHistory();
+
+export class CommandBox extends Widget {
+    private panelView: IBlessedView = null;
+    private commandValue: string = "";
+    private cursorPos = 0;
+
+    constructor( opts: Widgets.BoxOptions ) {
+        super( { left: 0, top: "100%-1", width: "100%", height: 1, input: true, ...opts } );
+
+        const defaultColor = ColorConfig.instance().getBaseColor("mcd");
+        this.box.style = defaultColor.blessed;
+
+        this.on("keypress", async (ch, keyinfo) => {
+            log.debug( "commandbox [%s] [%j]", ch, keyinfo );
+            await this.listener(ch, keyinfo);
+            log.debug( "commandbox text - [%s]", this.commandValue );
+        });
+        this.on("detach", () => {
+            log.debug( "detach" );
+            this.box.screen.program.hideCursor();
+        });
+        this.box.screen.program.showCursor();
+    }
+
+    setPanelView( panelView: IBlessedView ) {
+        this.panelView = panelView;
     }
 
     prompt( pathStr ) {
@@ -45,10 +96,14 @@ export class CommandBox extends Widget {
 
     async pathComplatePromise( pathStr ): Promise<File[]> {
         try {
+            let reader = this.panelView?.getReader();
+
             let pathInfo = path.parse(pathStr);
-            let pathFile = this.reader.convertFile( pathInfo.dir );
-            
-            let pathFiles = await this.reader.readdir( pathFile );
+            let pathFile = reader?.convertFile( pathInfo.dir );            
+            if ( !pathFile ) {
+                return [];
+            }
+            let pathFiles = await reader.readdir( pathFile );
             return pathFiles.filter( (item) => {
                 if ( item.name.indexOf(pathInfo.name) > -1 ) {
                     return true;
@@ -62,105 +117,88 @@ export class CommandBox extends Widget {
     }
 
     draw() {
-        this.setContent( "" );
+        let reader = this.panelView?.getReader();
+        let dir: File = reader?.currentDir();
+
+        let promptText = this.prompt( dir?.dirname );
+        this.setContentFormat( promptText + this.commandValue );
+
+        this.moveCursor( unicode.strWidth(promptText) + this.cursorPos, 0 );
     }
 
-    _updateCursor(get) {
-        const screen: Widgets.Screen = this.box.screen;
-        if (screen.focused !== this.box) {
-          return;
+    updateValue( value ) {
+        if ( value !== null ) {
+            this.commandValue = value;
+            this.cursorPos = Math.max( 0, this.cursorPos );
+            this.cursorPos = Math.min( this.commandValue.length, this.cursorPos );
         }
-        const box: any = this.box;
-        const lpos = get ? box.lpos : box._getCoords();
-        if (!lpos) return;
-      
-        let last = box._clines[box._clines.length - 1]
-          , program = screen.program
-          , line
-          , cx
-          , cy;
-      
-        // Stop a situation where the textarea begins scrolling
-        // and the last cline appears to always be empty from the
-        // _typeScroll `+ '\n'` thing.
-        // Maybe not necessary anymore?
-        if (last === '' && this.value[this.value.length - 1] !== '\n') {
-            last = box._clines[box._clines.length - 2] || '';
-        }
-      
-        line = Math.min(
-            box._clines.length - 1 - (box.childBase || 0),
-            (lpos.yl - lpos.yi) - box.iheight - 1);
-      
-        // When calling clearValue() on a full textarea with a border, the first
-        // argument in the above Math.min call ends up being -2. Make sure we stay
-        // positive.
-        line = Math.max(0, line);
-      
-        cy = lpos.yi + box.itop + line;
-        cx = lpos.xi + box.ileft + box.strWidth(last);
-      
-        // XXX Not sure, but this may still sometimes
-        // cause problems when leaving editor.
-        if (cy === program.y && cx === program.x) {
-            return;
-        }
-      
-        if (cy === program.y) {
-            if (cx > program.x) {
-                program.cuf(cx - program.x);
-            } else if (cx < program.x) {
-                program.cub(program.x - cx);
-            }
-        } else if (cx === program.x) {
-            if (cy > program.y) {
-                program.cud(cy - program.y);
-            } else if (cy < program.y) {
-                program.cuu(program.y - cy);
-            }
-        } else {
-            program.cup(cy, cx);
-        }
+    }
+
+    keyDown() {
+        this.updateValue(gCmdHistory.down());
+    }
+
+    keyUp() {
+        this.updateValue(gCmdHistory.up());
+    }
+
+    keyLeft() {
+        this.cursorPos = Math.max( 0, --this.cursorPos );
+    }
+
+    keyRight() {
+        this.cursorPos = Math.min( this.commandValue.length, ++this.cursorPos );
+    }
+
+    keyReturn() {
+        gCmdHistory.push( this.commandValue );
+        mainFrame().commandRun( this.commandValue );
+        this.updateValue( "" );
+    }
+
+    keyEscape() {
+        mainFrame().commandBoxClose();
+    }
+
+    keyBackspace() {
+        log.debug( "BS - pos:%d", this.cursorPos );
+        this.commandValue = this.commandValue.substr(0, this.cursorPos - 1) + this.commandValue.substr(this.cursorPos);
+        this.keyLeft();
+    }
+
+    keyTab() {
+
     }
 
     listener(ch, key) {
-        let value = this.value;
-      
-        if (key.name === 'return') return;
-        if (key.name === 'enter') {
-          ch = '\n';
-        }
-      
-        // TODO: Handle directional keys.
-        if (key.name === 'left' || key.name === 'right'
-            || key.name === 'up' || key.name === 'down') {
-          ;
-        }
-      
-        if (key.name === 'escape') {
-            this.box.emit("done", null, null);
-        } else if (key.name === 'backspace') {
-            if (this.value.length) {
-                if (this.box.screen.fullUnicode) {
-                    if (unicode.isSurrogate(this.value, this.value.length - 2)) {
-                        this.value = this.value.slice(0, -2);
-                    } else {
-                        this.value = this.value.slice(0, -1);
-                    }
-                } else {
-                    this.value = this.value.slice(0, -1);
-                }
+        let camelize = (str) => {
+            return str.replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) => {
+                return index === 0 ? word.toLowerCase() : word.toUpperCase();
+            }).replace(/\s+/g, "");
+        };
+
+        if ( key?.name ) {
+            let methodName = camelize("key " + key.name);
+            log.debug( "CommandBox.%s()", methodName );
+            if ( this[methodName] ) {
+                this[methodName]();
+                this.box.screen.render();
+                return;
             }
-        } else if ( key.name === "tab" ) {
-            
-        } else if (ch) {
-          if (!/^[\x00-\x08\x0b-\x0c\x0e-\x1f\x7f]$/.test(ch)) {
-            this.value += ch;
-          }
         }
-      
-        if (this.value !== value) {
-          this.box.screen.render();
+
+        if ( ["return", "enter"].indexOf(key.name) > -1 ) {
+            // Fix for Windows OS (\r\n)
+            return;
+        }
+
+        let value = this.commandValue;
+        if ( ch && !/^[\x00-\x08\x0b-\x0c\x0e-\x1f\x7f]$/.test(ch)) {
+            this.commandValue = this.commandValue.substr(0, this.cursorPos) + ch + this.commandValue.substr(this.cursorPos);
+            this.cursorPos += unicode.strWidth(ch);
+        }
+        if (this.commandValue !== value) {
+            this.box.screen.render();
         }
     }
 }

@@ -32,11 +32,17 @@ export class Widget {
     draw(): void {}
 
     off() {
-        this._box.off();
+        this._box.removeAllListeners();
     }
 
-    on(event: string, listener: (...args: any[]) => void) {
-        this._box.on( event, listener );
+    on(event: string | string[], listener: (...args: any[]) => void) {
+        if ( Array.isArray( event ) ) {
+            event.forEach( item => {
+                this._box.on( item, listener );
+            });
+        } else {
+            this._box.on( event, listener );
+        }
     }
 
     setFocus() {
@@ -70,12 +76,68 @@ export class Widget {
     }
 
     setContent( text ) {
-        // 맥에서 한글자모 분리 오류 수정(Unicode 정규화 방식)
+        // fixed korean(Hangle) alphabet separation (Unicode normalize)
         this.box.setContent( text.normalize() );
     }
 
     setColor( color: Color ) {
         this._box.style = { bg: color.back, fg: color.font };
+    }
+
+    getCursor() {
+        const screen: Widgets.Screen = this.box.screen;
+        const box: any = this.box;
+        const program = screen.program;
+        const lpos = box.lpos;
+        if (!lpos) return null;
+
+        let y = program.y - (lpos.yi + box.itop);
+        let x = program.x - (lpos.xi + box.ileft);
+
+        return { x, y };
+    }
+
+    moveCursor( x, y ) {
+        const screen: Widgets.Screen = this.box.screen;
+        if (screen.focused !== this.box) {
+          return;
+        }
+        const box: any = this.box;
+        const lpos = box.lpos;
+        if (!lpos) return;
+      
+        let program = screen.program
+          , line
+          , cx
+          , cy;
+      
+        line = Math.min(y, (lpos.yl - lpos.yi) - box.iheight - 1);      
+        line = Math.max(0, line);
+      
+        cy = lpos.yi + box.itop + line;
+        cx = lpos.xi + box.ileft + x;
+      
+        // XXX Not sure, but this may still sometimes
+        // cause problems when leaving editor.
+        if (cy === program.y && cx === program.x) {
+            return;
+        }
+      
+        if (cy === program.y) {
+            if (cx > program.x) {
+                program.cuf(cx - program.x);
+            } else if (cx < program.x) {
+                program.cub(program.x - cx);
+            }
+        } else if (cx === program.x) {
+            if (cy > program.y) {
+                program.cud(cy - program.y);
+            } else if (cy < program.y) {
+                program.cuu(program.y - cy);
+            }
+        } else {
+            program.cup(cy, cx);
+        }
     }
 
     get top() {

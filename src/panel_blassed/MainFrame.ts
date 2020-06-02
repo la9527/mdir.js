@@ -10,6 +10,7 @@ import { keyMappingExec, menuKeyMapping, KeyMappingInfo, KeyMapping } from "../c
 import { menuConfig } from "../config/MenuConfig";
 import { BlessedMenu } from "./BlessedMenu";
 import { BlessedMcd } from './BlessedMcd';
+import { CommandBox } from './CommandBox';
 
 const log = Logger("MainFrame");
 
@@ -31,8 +32,9 @@ export class MainFrame {
     private blessedFrames = [];
     private blessedMenu = null;
     private funcKeyBox = null;
-    private bottomFilesBox = null;
+    private bottomFilesBox: BottomFilesBox = null;
     private activeFrameNum = 0;
+    private commandBox: CommandBox = null;
 
     constructor() {
         this.screen = blessed.screen({
@@ -126,6 +128,10 @@ export class MainFrame {
         this.viewRender();
 
         this.screen.on('keypress', async (ch, keyInfo) => {
+            if ( this.commandBox ) {
+                log.debug( "CommandBox running !!!" );
+                return;
+            }
             if ( await keyMappingExec( this.activeFocusObj(), keyInfo ) ) {
                 this.screen.render();
             } else {
@@ -202,6 +208,31 @@ export class MainFrame {
 
     menuClose() {
         this.blessedMenu.close();
+    }
+
+    commandBoxShow() {
+        if ( this.bottomFilesBox ) {
+            this.bottomFilesBox.destroy();
+            this.bottomFilesBox = null;
+        }
+
+        this.commandBox = new CommandBox( { parent: this.baseWidget } );
+        this.commandBox.setPanelView( this.activePanel() );
+        this.commandBox.setFocus();
+    }
+
+    commandBoxClose() {
+        if ( this.commandBox ) {
+            this.commandBox.destroy();
+            this.commandBox = null;
+        }
+        this.bottomFilesBox = new BottomFilesBox( { parent: this.baseWidget } );
+        this.baseWidget.render();
+    }
+
+    commandRun(cmd) {
+        log.debug( "commandRun : %s", cmd );
+        // this.screen.exec( cmd );
     }
 
     static instance() {

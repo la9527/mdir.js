@@ -56,7 +56,8 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         keyPageDown: "pagedown",
         keyHome: "home",
         keyEnd: "end",
-        keyEnterPromise: [ "return" ]
+        keyEnterPromise: [ "return" ],
+        commandBoxShow: "/"
     },
     Mcd: {
         keyUp: "up",

@@ -13,6 +13,7 @@ import { Reader } from "../common/Reader";
 import { KeyMapping } from "../config/KeyMapConfig";
 import { KeyMappingInfo } from "../config/KeyMapConfig";
 import { IBlessedView } from "./IBlessedView";
+import mainFrame from './MainFrame';
 
 const log = Logger("blessedpanel");
 
@@ -230,5 +231,9 @@ export class BlessedPanel extends Panel implements IBlessedView {
 
     render() {
         this.baseWidget.render();
+    }
+
+    commandBoxShow() {
+        mainFrame().commandBoxShow();
     }
 }
