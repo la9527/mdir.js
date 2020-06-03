@@ -53,13 +53,13 @@ export class MainFrame {
         menuKeyMapping( KeyMappingInfo, menuConfig );
     }
 
-    async mcdPromise() {
+    async mcdPromise(isEscape = false) {
         log.debug( "mcdPromise !!!!");
         let view: BlessedPanel | BlessedMcd = this.blessedFrames[this.activeFrameNum];
         if ( view instanceof BlessedPanel ) {
             view.destroy();
 
-            const newView = new BlessedMcd( { parent: this.baseWidget, viewCount: viewCount++ }, view.getReader() );
+            const newView = new BlessedMcd( { parent: this.baseWidget, viewCount: viewCount++ }, view.getReader(), view.currentPath() );
             await newView.scanDir( view.currentPath() );
             newView.setFocus();
             this.blessedFrames[this.activeFrameNum] = newView;
@@ -67,7 +67,7 @@ export class MainFrame {
             view.destroy();
 
             const newView = new BlessedPanel( { parent: this.baseWidget, viewCount: viewCount++ }, view.getReader() );
-            await newView.read( view.currentPathFile() );
+            await newView.read( isEscape ? view.firstScanPath : view.currentPathFile());
             newView.setFocus();
             this.blessedFrames[this.activeFrameNum] = newView;
         }

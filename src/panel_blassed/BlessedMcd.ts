@@ -83,9 +83,12 @@ export class BlessedMcd extends Mcd implements IBlessedView {
 
     viewDepthSize: number = 0;
 
-    constructor(  opts: Widgets.BoxOptions | any, reader: Reader = null ) {
+    firstScanPath: File = null;
+
+    constructor(  opts: Widgets.BoxOptions | any, reader: Reader = null, firstScanPath = null ) {
         super( reader );
 
+        this.firstScanPath = firstScanPath;
         const colorConfig = ColorConfig.instance();
 
         this.mcdColor = colorConfig.getBaseColor("mcd");
@@ -93,7 +96,7 @@ export class BlessedMcd extends Mcd implements IBlessedView {
         this.lineColor = colorConfig.getBaseColor("mcd_line");
         this.mcdHighlightColor = colorConfig.getBaseColor("mcd_highlight");
         let statColor = colorConfig.getBaseColor("stat");
-
+        
         this.baseWidget = new Widget( { ...opts } );
         this.mcdWidget = new Widget( { parent: this.baseWidget, top: 1, left: 0, height: "100%", width: "100%", border: "line", style: { ...this.mcdColor.blessed, border: this.lineColor.blessed } } );
         this.pathWidget = new Widget( { parent: this.baseWidget, top: "100%", left: 2, height: 1, style: { ...this.mcdColor.blessed, border: this.lineColor.blessed } } );
@@ -343,6 +346,10 @@ export class BlessedMcd extends Mcd implements IBlessedView {
     }
 
     async keyEnterPromise() {
-        await mainFrame().mcdPromise();
+        await mainFrame().mcdPromise(false);
+    }
+
+    async keyEscapePromise() {
+        await mainFrame().mcdPromise(true);
     }
 }

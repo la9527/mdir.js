@@ -68,6 +68,7 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         keyHome: "home",
         keyEnd: "end",
         keyEnterPromise: [ "return" ],
+        keyEscapePromise: "escape",
         subDirScanPromise: [
             {
                 key: "=",
