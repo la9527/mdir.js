@@ -245,7 +245,18 @@ export class MainFrame {
     }
 
     commandRun(cmd): Promise<void> {
-        log.debug( "commandRun : %s", cmd );
+        let cmds = cmd.split(" ");
+        if ( cmds[0] === "cd" && cmds[1] ) {
+            return new Promise( (resolve) => {
+                let chdirPath = cmds[1] === "-" ? this.activePanel().previousDir : cmds[1];
+                this.activePanel().read(chdirPath).then( () => {
+                    resolve();
+                }).catch( () => {
+                    resolve();
+                });
+            });
+        }
+
         return new Promise( (resolve, reject) => {
             let program = this.screen.program;
             if ( !cmd ) {

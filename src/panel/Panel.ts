@@ -21,7 +21,7 @@ export abstract class Panel extends AbstractPanel {
         return this.reader;
     }
 
-    async read( path: string | File ) {
+    async read( path: string | File ): Promise<void> {
         const previousDir: File = this._currentDir;
 
         try {
@@ -54,6 +54,7 @@ export abstract class Panel extends AbstractPanel {
                 if ( befPos > -1 ) {
                     this.currentPos = befPos;
                 }
+                this._previousDir = previousDir;
             }
         } catch ( e ) {
             // TODO: Messgae Box

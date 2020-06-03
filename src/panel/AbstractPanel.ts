@@ -15,6 +15,11 @@ export abstract class AbstractPanel {
     protected _currentPos: number = 0;
     protected dirFiles: File[] = [];
     protected _currentDir: File = null;
+    protected _previousDir: File = null;
+
+    get previousDir() {
+        return this._previousDir;
+    }
 
     keyLeft() {
         this.currentPos = this.currentPos < this.row ? 0 : this.currentPos - this.row;
