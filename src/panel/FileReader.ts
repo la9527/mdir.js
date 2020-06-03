@@ -1,10 +1,11 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
+import * as drivelist from "drivelist";
 
 import { File } from "../common/File";
 import { Logger } from "../common/Logger";
-import { Reader } from "../common/Reader";
+import { Reader, IMountList } from "../common/Reader";
 
 import { ColorConfig } from "../config/ColorConfig";
 
@@ -29,11 +30,22 @@ export class FileReader extends Reader {
     protected _readerFsType = "file";
 
     rootDir(): File {
-        return this.convertFile( path.sep );
+        return this.convertFile( path.parse(fs.realpathSync(".")).root );
     }
 
     homeDir(): File {
         return this.convertFile( os.homedir() );
+    }
+
+    async mountList(): Promise<IMountList[]> {
+        let mounts: IMountList[] = [];
+        let drives = await drivelist.list();
+        drives.forEach( item => {
+            item.mountpoints.forEach( (i) => {
+                mounts.push( { device: item.device, mountPath: this.convertFile( i.path ), size: item.size, name: i.path });
+            });
+        });
+        return mounts;
     }
 
     convertFile( filePath: string ): File {
@@ -52,7 +64,7 @@ export class FileReader extends Reader {
 
             const pathInfo = path.parse( file.fullname );
             file.root = pathInfo.root;
-            file.name = pathInfo.base;
+            file.name = pathInfo.base || pathInfo.root;
             file.size = stat.size;
             if ( process.platform === "win32" ) {
                 file.attr = convertAttr( stat );

@@ -121,14 +121,16 @@ export class Widget {
         cy = lpos.yi + box.itop + line;
         cx = lpos.xi + box.ileft + x;
       
-        // XXX Not sure, but this may still sometimes
-        // cause problems when leaving editor.
+        log.debug( "moveCursor: (%d, %d)", cx, cy );
+        program.cup(cy, cx);
+
+        /*
         if (cy === program.y && cx === program.x) {
             log.debug( "moveCursor : cy === program.y && cx === program.x - (%d, %d)", cx, cy );
             return;
         }
       
-        log.debug( "moveCursor: (%d, %d)", cx, cy );
+        
         if (cy === program.y) {
             if (cx > program.x) {
                 program.cuf(cx - program.x);
@@ -144,6 +146,7 @@ export class Widget {
         } else {
             program.cup(cy, cx);
         }
+        */
     }
 
     get top() {

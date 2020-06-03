@@ -1,5 +1,6 @@
 // import { createLogger, format, transports, Logger } from "winston";
 import path from "path";
+import * as os from "os";
 import * as moment from "moment";
 import * as winston from "winston";
 
@@ -34,7 +35,7 @@ export function Logger( labelName: string ): winston.Logger {
         transports: [
             new winston.transports.File({
                 level: "debug",
-                filename: process.env.HOME + "/.m/m.log"
+                filename: os.homedir() + "/.m/m.log"
             })
         ]
     });

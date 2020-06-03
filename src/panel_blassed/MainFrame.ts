@@ -265,8 +265,8 @@ export class MainFrame {
                 if (error) {
                     console.error(error.message);
                 } else {
-                    stderr && console.error(stderr);
-                    stdout && console.log(stdout);
+                    stderr && console.error(stderr.normalize());
+                    stdout && console.log(stdout.normalize());
                 }
                 console.log( colors.white("Press any key to return m.js") );
                 program.once( 'keypress', () => {

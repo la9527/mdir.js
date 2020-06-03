@@ -16,6 +16,7 @@
     "@types/sprintf-js": "^1.1.2",
     "@typescript-eslint/parser": "^3.0.0",
     "colors": "^1.4.0",
+    "drivelist": "^9.0.2",
     "fswin": "^3.18.918",
     "moment": "^2.26.0",
     "neo-blessed": "^0.2.0",
@@ -25,6 +26,7 @@
     "winston-daily-rotate-file": "^3.8.0"
   },
   "devDependencies": {
+    "@types/drivelist": "^6.4.1",
     "sprintf-js": "^1.1.2",
     "typescript": "^3.9.3"
   }

@@ -45,19 +45,15 @@ class McdDirButton extends Widget {
         let width = this.width as number;
         this.box.style = this.select ? this.mcdColor.blessedReverse : this.mcdColor.blessed;
         let content = "";
-        if ( this.node.file.fullname === "/" ) {
-            content = "/";
-        } else {
-            let name = this.node.file.name;
-            let nameSize: any = this.box.strWidth(name);
-            if ( nameSize < this.width ) {
-                content = name;
-                if ( this.node.subDir.length ) {
-                    blessed.box( { parent: this.box, top: 0, left: nameSize, width: width - nameSize, height: 1, content: "─".repeat( width - nameSize ), style: this.lineColor.blessed } )
-                }
-            } else {
-                content = sprintf( `%-${width-1}.${width-1}s~`, name );
+        let name = this.node.file.name;
+        let nameSize: any = this.box.strWidth(name);
+        if ( nameSize < this.width ) {
+            content = name;
+            if ( this.node.subDir.length ) {
+                blessed.box( { parent: this.box, top: 0, left: nameSize, width: width - nameSize, height: 1, content: "─".repeat( width - nameSize ), style: this.lineColor.blessed } )
             }
+        } else {
+            content = sprintf( `%-${width-1}.${width-1}s~`, name );
         }
         content = "{bold}" + content + "{/bold}";
         this.setContent(content);
@@ -165,7 +161,7 @@ export class BlessedMcd extends Mcd implements IBlessedView {
         let MAX_MCD_TEXT_SIZE = 40;
         let MIN_TEXT_SIZE_OF_WIDTH = 120;
 
-        let MCD_BASE_COL_POS = [ 0, 4 ];
+        let MCD_BASE_COL_POS = [ 0, 7 ];
         
         this.mcdWidget.height = this.baseWidget.height as number - 1;
         
@@ -180,7 +176,7 @@ export class BlessedMcd extends Mcd implements IBlessedView {
         }
 
         {
-            let i = 4;
+            let i = 7;
             do {
                 i = i + (MCD_TEXT_SIZE + 2);
                 MCD_BASE_COL_POS.push( i );
@@ -194,7 +190,7 @@ export class BlessedMcd extends Mcd implements IBlessedView {
             return viewDepthSize;
         }, 0);
 
-        log.debug( "MCD_TEXT_SIZE: %d, [%d]", MCD_TEXT_SIZE, this.viewDepthSize);
+        // log.debug( "MCD_TEXT_SIZE: %d, [%d]", MCD_TEXT_SIZE, this.viewDepthSize);
 
         this.lines.map( item => item.destroy() );
         this.lines = [];
@@ -247,7 +243,7 @@ export class BlessedMcd extends Mcd implements IBlessedView {
             col = node.depth;
             row = node.row;
 
-            //log.info("nODep [%d] col [%d] row [%d] scrollRow [%d] scrollCol [%d]", nODep, col, row, this.scrollRow, this.scrollCol);
+            log.info("nODep [%d] col [%d] row [%d] scrollRow [%d] scrollCol [%d]", nODep, col, row, this.scrollRow, this.scrollCol);
 		    // log.info("NCurses::Draw pNode->nDepth [%d]", node.depth);
 
             if ( node.index !== 0 && node.parentDir && node.parentDir.subDir[node.parentDir.subDir.length - 1].index === node.index ) {

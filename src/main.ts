@@ -96,4 +96,3 @@ program.move(10, 10);
 (async () => {
     await mainFrame().start();
 })();
-

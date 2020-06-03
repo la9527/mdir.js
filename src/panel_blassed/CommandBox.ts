@@ -18,10 +18,10 @@ class CmdHistory {
 
     updatePos() {
         this.curPos = Math.max( this.curPos, 0);
-        this.curPos = Math.min( this.cmdHistory.length, this.curPos);
+        this.curPos = Math.min( this.cmdHistory.length - 1, this.curPos);
     }
 
-    backend() {
+    end() {
         if ( this.cmdHistory.length === 0 || this.curPos < 0 ) {
             return null;
         }
@@ -41,32 +41,34 @@ class CmdHistory {
         if ( this.cmdHistory.length === 0 || this.curPos < 0 ) {
             return null;
         }
-
-        const result = this.cmdHistory[this.curPos-1];
-        this.curPos++;
+        if ( this.curPos === this.cmdHistory.length - 1 ) {
+            return "";
+        }
+        const result = this.cmdHistory[++this.curPos];
+        log.debug( "history down : [%s] [%d/%d]", result, this.curPos, this.cmdHistory.length );
         this.updatePos();
-        log.debug( "history down : %d/%d", this.curPos, this.cmdHistory.length );
         return result;
     }
 
     up() {
-        if ( this.cmdHistory.length === 0 || this.curPos < 0 ) {
+        if ( this.cmdHistory.length === 0 || this.curPos < 0) {
             return null;
         }
         
-        const result = this.cmdHistory[this.curPos-1];
-        this.curPos--;
+        const result = this.cmdHistory[this.curPos--];
         this.updatePos();
-        log.debug( "history up : %d/%d", this.curPos, this.cmdHistory.length );
+        log.debug( "history up : [%s] [%d/%d]", result, this.curPos, this.cmdHistory.length );
         return result;
     }
 
     push( cmd ) {
-        if ( this.cmdHistory.length > 0 ) {
+        if ( this.cmdHistory.length > 0 && this.curPos !== this.cmdHistory.length - 1 ) {
             this.cmdHistory = this.cmdHistory.slice(0, this.curPos);
         }
         this.cmdHistory.push( cmd );
-        this.curPos = this.cmdHistory.length;
+        this.curPos = this.cmdHistory.length - 1;
+
+        log.debug( "history push : [%s] [%d/%d]", cmd, this.curPos, this.cmdHistory.length );
     }
 }
 
@@ -108,8 +110,18 @@ export class CommandBox extends Widget {
 
     prompt( pathStr ) {
         try {
+            const MAX_PATH_SIZE = 50;
+            let path = pathStr;
+            if ( path.length > (this.width as number) - MAX_PATH_SIZE ) {
+                path = "..." + path.substr(MAX_PATH_SIZE-3);
+            }
+
             let prompt = os.userInfo().username + "@" + os.hostname().split(".")[0] + ":" + pathStr;
-            prompt += os.userInfo().username !== "root" ? "# " : "$ ";
+            if ( os.platform() !== "win32" ) {
+                prompt += os.userInfo().username !== "root" ? "# " : "$ ";
+            } else {
+                prompt += ">";
+            }
             return prompt;
         } catch ( e ) {
             log.error( e );
@@ -122,7 +134,7 @@ export class CommandBox extends Widget {
             let reader = this.panelView?.getReader();
 
             let pathInfo = path.parse(pathStr);
-            let pathFile = reader?.convertFile( pathInfo.dir );            
+            let pathFile = reader?.convertFile( pathInfo.dir ); 
             if ( !pathFile ) {
                 return [];
             }
@@ -144,25 +156,20 @@ export class CommandBox extends Widget {
         let dir: File = reader?.currentDir();
 
         let promptText = this.prompt( dir?.dirname );
-        this.setContentFormat( promptText + this.commandValue );
+        this.setContent( promptText + this.commandValue );
 
+        // log.debug( "moveCursor : %d", this.cursorPos);
         this.moveCursor( unicode.strWidth(promptText) + this.cursorPos, 0 );
     }
 
-    updateValue( value ) {
-        if ( value !== null ) {
-            this.commandValue = value;
-            this.cursorPos = Math.max( 0, this.cursorPos );
-            this.cursorPos = Math.min( this.commandValue.length, this.cursorPos );
-        }
-    }
-
     keyDown() {
-        this.updateValue(gCmdHistory.down());
+        this.commandValue = gCmdHistory.down();
+        this.cursorPos = unicode.strWidth(this.commandValue);
     }
 
     keyUp() {
-        this.updateValue(gCmdHistory.up());
+        this.commandValue = gCmdHistory.up();
+        this.cursorPos = unicode.strWidth(this.commandValue);
     }
 
     keyLeft() {
@@ -170,13 +177,14 @@ export class CommandBox extends Widget {
     }
 
     keyRight() {
-        this.cursorPos = Math.min( this.commandValue.length, ++this.cursorPos );
+        this.cursorPos = Math.min( unicode.strWidth(this.commandValue), ++this.cursorPos );
     }
 
     async keyReturnPromise() {
         gCmdHistory.push( this.commandValue );
         await mainFrame().commandRun( this.commandValue );
-        this.updateValue( "" );
+        this.cursorPos = 0;
+        this.commandValue = "";
         this.box.screen.program.showCursor();
     }
 
@@ -200,7 +208,7 @@ export class CommandBox extends Widget {
     }
 
     keyEnd() {
-        this.cursorPos = this.commandValue.length;
+        this.cursorPos = unicode.strWidth(this.commandValue);
     }
 
     keyTab() {
