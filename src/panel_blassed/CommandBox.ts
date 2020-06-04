@@ -76,11 +76,12 @@ const gCmdHistory = new CmdHistory();
 
 export class CommandBox extends Widget {
     private panelView: IBlessedView = null;
+    private promptText: string = "";
     private commandValue: string = "";
     private cursorPos = 0;
     private keylock = false;
 
-    constructor( opts: Widgets.BoxOptions ) {
+    constructor( opts: Widgets.BoxOptions, panelView: IBlessedView ) {
         super( { left: 0, top: "100%-1", width: "100%", height: 1, input: true, ...opts } );
 
         const defaultColor = ColorConfig.instance().getBaseColor("mcd");
@@ -96,12 +97,12 @@ export class CommandBox extends Widget {
             this.box.screen.program.hideCursor();
         });
         this.on("render", () => {
+            this.afterRender();
             if ( this.box.screen.program.cursorHidden ) {
                 this.box.screen.program.showCursor();
             }
         });
-        this.box.screen.program.showCursor();
-        this.render();
+        this.panelView = panelView;
     }
 
     setPanelView( panelView: IBlessedView ) {
@@ -152,24 +153,41 @@ export class CommandBox extends Widget {
     }
 
     draw() {
-        let reader = this.panelView?.getReader();
-        let dir: File = reader?.currentDir();
+        let dir: File = this.panelView?.getReader()?.currentDir();
+        if ( dir ) {
+            this.promptText = this.prompt( dir?.dirname );
+            this.setContent( this.promptText + this.commandValue );
 
-        let promptText = this.prompt( dir?.dirname );
-        this.setContent( promptText + this.commandValue );
+            
+            
+        }
+    }
 
+    afterRender() {
         // log.debug( "moveCursor : %d", this.cursorPos);
-        this.moveCursor( unicode.strWidth(promptText) + this.cursorPos, 0 );
+        this.moveCursor( unicode.strWidth(this.promptText) + this.cursorPos, 0 );
+    }
+
+    setFocus() {
+        super.setFocus();
+        this.box.screen.program.showCursor();
+        this.render();
     }
 
     keyDown() {
-        this.commandValue = gCmdHistory.down();
-        this.cursorPos = unicode.strWidth(this.commandValue);
+        let result = gCmdHistory.down();
+        if ( result !== null ) {
+            this.commandValue = result;
+            this.cursorPos = unicode.strWidth(this.commandValue);
+        }
     }
 
     keyUp() {
-        this.commandValue = gCmdHistory.up();
-        this.cursorPos = unicode.strWidth(this.commandValue);
+        let result = gCmdHistory.up();
+        if ( result !== null ) {
+            this.commandValue = result;
+            this.cursorPos = unicode.strWidth(this.commandValue);
+        }
     }
 
     keyLeft() {

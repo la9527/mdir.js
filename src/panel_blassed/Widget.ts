@@ -50,7 +50,7 @@ export class Widget {
     }
 
     hasFocus(): boolean {
-        log.info( "hasFocus: %d", (this._box as any).focused );
+        // log.info( "hasFocus: %d", (this._box as any).focused );
         return (this._box as any).focused;
     }
 
@@ -60,7 +60,15 @@ export class Widget {
     }
 
     render() {
-        this._box.render();
+        let startTime = Date.now();
+        log.debug( "WIDGET RENDER START [%s]", this.constructor.name );
+        const result = this._box.render();
+        const item: any = (this._box.screen as Widgets.Screen);
+        let start = Math.max( 0, Math.min(result.yi, result.yl) );
+        let end = Math.min( Math.max(result.yi, result.yl), item.lines.length - 1 );
+
+        this._box.screen.draw( start, end );
+        log.debug( "WIDGET RENDER END [%s] [%d,%d] - [%sms]", this.constructor.name, start, end, Date.now() - startTime );
     }
 
     show() {

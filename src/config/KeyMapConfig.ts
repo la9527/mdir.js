@@ -18,6 +18,12 @@ interface IMethodParam {
     funcParam: any[]
 }
 
+export enum RefreshType {
+    ALL = 1,
+    OBJECT = 2,
+    NONE = 3
+}
+
 export interface IKeyMapping {
     [methodName: string]: KeyName | KeyName[] | IFuncParam | IFuncParam[]
 }
@@ -163,10 +169,10 @@ export function KeyMapping( keyFrame: IKeyMapping, name: string = null ) {
     };
 }
 
-export async function keyMappingExec( baseObject, keyInfo ): Promise<Boolean> {
+export async function keyMappingExec( baseObject, keyInfo ): Promise<RefreshType> {
     if ( !baseObject || !baseObject.keyInfo ) {
         log.debug( "No active : %j", baseObject.keyInfo );
-        return false;
+        return RefreshType.NONE;
     }
 
     log.debug( "[%s] - keyInfo: %j", baseObject.viewName, keyInfo );
@@ -182,21 +188,24 @@ export async function keyMappingExec( baseObject, keyInfo ): Promise<Boolean> {
             param = (obj as IMethodParam).funcParam;
         }
 
-        log.info( "keypress [%s] - method: %s(%s)", keyName, method, param ? param.join(",") : "" );
-
         if ( baseObject[ (method as string) ] ) {
+            
+            log.info( "keypress [%s] - method: [ %s.%s(%s) ]", keyName, baseObject.viewName, method, param ? param.join(",") : "" );
+            let result = RefreshType.NONE;
             if ( /(p|P)romise/.exec(method as string) ) {
-                await baseObject[ (method as string) ].apply(baseObject, param);
+                result = await baseObject[ (method as string) ].apply(baseObject, param);
             } else {
-                baseObject[ (method as string) ].apply(baseObject, param);
+                result = baseObject[ (method as string) ].apply(baseObject, param);
             }
-            return true;
+            return result || RefreshType.OBJECT;
+        } else {
+            log.info( "keypress [%s] - METHOD UNDEFINED: %s.%s(%s)", keyName, baseObject.viewName, method, param ? param.join(",") : "" );
         }
-        return false;
+        return RefreshType.NONE;
     } else {
         log.info( "keypress [%s] %j", keyName, keyInfo );
     }
-    return false;
+    return RefreshType.NONE;
 }
 
 export function keyHumanReadable(key: string): string {

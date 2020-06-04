@@ -28,6 +28,8 @@ export class BlessedPanel extends Panel implements IBlessedView {
     private _fileViewType = 0;
     private _lines = [];
 
+    private _previousView = null;
+
     constructor( opts: Widgets.BoxOptions | any, reader: Reader = null ) {
         super( reader );
         const statColor = ColorConfig.instance().getBaseColor("stat");
@@ -109,19 +111,20 @@ export class BlessedPanel extends Panel implements IBlessedView {
     initRender() {
         log.info( "initRender : fileBox.size : %d", this.fileBox.length );
         this.panel.on( "prerender", () => {
+            let startTime = Date.now();
             log.debug( "Panel prerender !!! - Start %d", this.baseWidget._viewCount );
             this.resize();
             this.beforeRender();
-            log.debug( "BlessedPanel prerender !!! - End %d", this.baseWidget._viewCount);
+            log.debug( "BlessedPanel prerender !!! - End %d - [%dms]", this.baseWidget._viewCount, Date.now() - startTime);
         });
         this.header.on( "prerender", () => {
-            log.debug( "header prerender !!! - Start %d", this.baseWidget._viewCount );
+            // log.debug( "header prerender !!! - Start %d", this.baseWidget._viewCount );
             if ( this._currentDir ) {
                 this.header.setContent( this._currentDir.fullname );
             }
         });
         this.tailer.on( "prerender", () => {
-            log.debug( "tailer prerender !!! - Start %d", this.baseWidget._viewCount );
+            // log.debug( "tailer prerender !!! - Start %d", this.baseWidget._viewCount );
             if ( !this.dirFiles ) {
                 return;
             }
@@ -172,65 +175,112 @@ export class BlessedPanel extends Panel implements IBlessedView {
             this.row = this.panel.height as number - 2;
         }
 
-        this.fileBox.map( item => {
-            item.destroy();
-        });
-        this.fileBox = [];
-        for ( let n = 0; n < this.column * this.row; n++ ) {
-            this.fileBox.push( new PanelFileBox( { parent: this.panel as any, focusable: true }, this._fileViewType ) );
+        if ( this.column !== 0 && this.row !== 0 ) {
+            this.page = Math.floor(this.currentPos / (this.column * this.row));
         }
-        log.info( "init Render : COL:%d, ROW:%d, PAGE:%d, currentPos:%d fileBoxLen: %d - viewHeight: %d", this.column, this.row, this.page, this.currentPos, this.fileBox.length, viewHeight );
+
+        if ( this.isViewChange() ) {
+            this.fileBox.map( item => {
+                item.destroy();
+            });
+            this.fileBox = [];
+            for ( let n = 0; n < this.column * this.row; n++ ) {
+                this.fileBox.push( new PanelFileBox( { parent: this.panel as any, focusable: true }, this._fileViewType ) );
+            }
+            log.info( "init Render : COL:%d, ROW:%d, PAGE:%d, currentPos:%d fileBoxLen: %d - viewHeight: %d", this.column, this.row, this.page, this.currentPos, this.fileBox.length, viewHeight );
+        }
     }
 
     beforeRender() {
         log.info( "BlessedPanel beforeRender() - COL: %d, ROW: %d", this.column, this.row );
 
-        if ( this.column !== 0 && this.row !== 0 ) {
-            this.page = Math.floor(this.currentPos / (this.column * this.row));
-        }
-        let curPos = (this.column * this.row) * this.page;
-        const itemWidth = Math.floor((this.baseWidget.width as number - (this.column * 2)) / this.column);
+        if ( this.isViewChange() ) {
+            let curPos = (this.column * this.row) * this.page;
+            const itemWidth = Math.floor((this.baseWidget.width as number - (this.column * 2)) / this.column);
 
-        this._lines.map( (item) => {
-            item.destroy();
-        });
-        this._lines = [];
+            this._lines.map( (item) => {
+                item.destroy();
+            });
+            this._lines = [];
 
-        let num = 0;
-        for ( let col = 0; col < this.column; col++ ) {
-            for ( let row = 0; row < this.row; row++ ) {
-                const fileBox = this.fileBox[num++];
-                fileBox.height = 1;
-                fileBox.width = itemWidth;
-                fileBox.top = row;
-                // fileBox.left = col * (fileBox.width + 2);
-                fileBox.left = col * (itemWidth + 2);
-                if ( curPos < this.dirFiles.length ) {
-                    // log.debug( "SET_POS: %d, CUR_POS: %d", curPos, this.currentPos );
-                    fileBox.setFile( this.dirFiles[curPos], (curPos === this.currentPos && this.panel.hasFocus()), curPos );
-                } else {
-                    fileBox.setFile( null, false, -1 );
+            let num = 0;
+            for ( let col = 0; col < this.column; col++ ) {
+                for ( let row = 0; row < this.row; row++ ) {
+                    const fileBox = this.fileBox[num++];
+                    fileBox.height = 1;
+                    fileBox.width = itemWidth;
+                    fileBox.top = row;
+                    // fileBox.left = col * (fileBox.width + 2);
+                    fileBox.left = col * (itemWidth + 2);
+                    if ( curPos < this.dirFiles.length ) {
+                        // log.debug( "SET_POS: %d, CUR_POS: %d", curPos, this.currentPos );
+                        fileBox.setFile( this.dirFiles[curPos], (curPos === this.currentPos && this.panel.hasFocus()), curPos );
+                    } else {
+                        fileBox.setFile( null, false, -1 );
+                    }
+                    curPos++;
                 }
-                curPos++;
-            }
 
-            if ( col > 0 ) {
-                this._lines.push(blessed.line({
-                                        parent: this.panel.box,
-                                        orientation: "vertical",
-                                        type: "bg",
-                                        ch: "│",
-                                        left: (col * (itemWidth + 2)) - 1,
-                                        top: 0,
-                                        height: "100%-2"
-                                    }));
+                if ( col > 0 ) {
+                    this._lines.push(blessed.line({
+                                            parent: this.panel.box,
+                                            orientation: "vertical",
+                                            type: "bg",
+                                            ch: "│",
+                                            left: (col * (itemWidth + 2)) - 1,
+                                            top: 0,
+                                            height: "100%-2"
+                                        }));
+                }
             }
+            log.info( "FileBox: CUR: %d SIZE: %d", this.currentPos, this.fileBox.length );
+        } else {
+            this.fileBox.forEach( item => {
+                if ( item.getPosNo() === this.currentPos ) {
+                    item.setFileFocus(this.panel.hasFocus());
+                    item.render();
+                } else if ( this._previousView && item.getPosNo() === this._previousView.currentPos ) {
+                    item.setFileFocus(false);
+                    item.render();
+                }
+            });
         }
-        log.info( "FileBox: CUR: %d SIZE: %d", this.currentPos, this.fileBox.length );
-    }   
+        this._previousView = this.getCurrentView();
+    }
+
+    isViewChange() {
+        const getMatchData = ( data ) => {
+            let result = { ...data };
+            delete result.currentPos;
+            return JSON.stringify(result);
+        };
+        return !(this._previousView && getMatchData( this.getCurrentView() ) === getMatchData( this._previousView ));
+    }
+
+    getCurrentView() {
+        return {
+            currentPath: this.currentPath().fullname,
+            column: this.column, 
+            row: this.row, 
+            page: this.page, 
+            currentPos: this.currentPos,
+            fileBoxLength: this.fileBox.length,
+            width: this.baseWidget.width,
+            height: this.baseWidget.height
+        };
+    }
+
+    resetViewCache() {
+        this._previousView = null;
+    }
 
     render() {
-        this.baseWidget.render();
+        if ( this.isViewChange() ) {
+            this.baseWidget.render();
+        } else {
+            this.resize();
+            this.beforeRender();
+        }
     }
 
     commandBoxShow() {

@@ -25,6 +25,22 @@ export class PanelFileBox extends Widget {
         this.fileViewType = fileViewType;
     }
 
+    getPosNo() {
+        return this._positionNo;
+    }
+
+    getFile() {
+        return this._file;
+    }
+
+    getFocus() {
+        return this._viewFocus;
+    }
+
+    setFileFocus( focus: boolean ) {
+        this._viewFocus = focus;
+    }
+
     setFile( file: File, focus: boolean, position: number ) {
         this._file = file;
         this._viewFocus = focus;
@@ -116,10 +132,12 @@ export class PanelFileBox extends Widget {
             return;
         }
 
-        const { font, back } = this._file.color;
         if ( this._viewFocus ) {
+            const { font, back } = this._file.color;
             this.box.style.bg = font;
             this.box.style.fg = back === -1 ? 0 : back;
+        } else {
+            this.box.style = { fg: 7 };
         }
 
         switch ( this.fileViewType ) {

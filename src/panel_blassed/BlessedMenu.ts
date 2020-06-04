@@ -4,7 +4,7 @@ import { ColorConfig } from '../config/ColorConfig';
 import { ISubMenuConfig, menuConfig, IMainMenuConfig } from '../config/MenuConfig';
 import { Widget } from './Widget';
 import { sprintf } from "sprintf-js";
-import { KeyMapping, KeyMappingInfo, keyHumanReadable } from "../config/KeyMapConfig";
+import { KeyMapping, KeyMappingInfo, keyHumanReadable, RefreshType } from '../config/KeyMapConfig';
 import { Logger } from "../common/Logger";
 
 const log = Logger("blessed-menu");
@@ -172,6 +172,7 @@ export class BlessedMenu {
             this.menuBox.destroy();
             this.menuBox = null;
         }
+        return RefreshType.ALL;
     }
 
     keyLeft() {
@@ -180,7 +181,7 @@ export class BlessedMenu {
             this.menuPos = Object.keys(this.menuConfig).length - 1;
         }
         this.updateSubMenu();
-        (this.menuBox.parent as any).render();
+        return RefreshType.ALL;
     }
 
     keyRight() {
@@ -189,7 +190,7 @@ export class BlessedMenu {
             this.menuPos = 0;
         }
         this.updateSubMenu();
-        (this.menuBox.parent as any).render();
+        return RefreshType.ALL;
     }
 
     keyUp() {
@@ -198,5 +199,9 @@ export class BlessedMenu {
 
     keyDown() {
         this.menuBox.keyDown();
+    }
+
+    render() {
+        this.opt.parent.render();
     }
 }

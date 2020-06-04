@@ -246,7 +246,7 @@ export class BlessedMcd extends Mcd implements IBlessedView {
             col = node.depth;
             row = node.row;
 
-            log.info("nODep [%d] col [%d] row [%d] scrollRow [%d] scrollCol [%d]", nODep, col, row, this.scrollRow, this.scrollCol);
+            // log.info("nODep [%d] col [%d] row [%d] scrollRow [%d] scrollCol [%d]", nODep, col, row, this.scrollRow, this.scrollCol);
 		    // log.info("NCurses::Draw pNode->nDepth [%d]", node.depth);
 
             if ( node.index !== 0 && node.parentDir && node.parentDir.subDir[node.parentDir.subDir.length - 1].index === node.index ) {

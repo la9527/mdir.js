@@ -6,7 +6,7 @@ import { FuncKeyBox } from './FuncKeyBox';
 import BottomFilesBox from "./BottomFileBox";
 import { readerControl } from '../panel/readerControl';
 import { Widget } from "./Widget";
-import { keyMappingExec, menuKeyMapping, KeyMappingInfo, KeyMapping } from "../config/KeyMapConfig";
+import { keyMappingExec, menuKeyMapping, KeyMappingInfo, KeyMapping, RefreshType } from "../config/KeyMapConfig";
 import { menuConfig } from "../config/MenuConfig";
 import { BlessedMenu } from "./BlessedMenu";
 import { BlessedMcd } from './BlessedMcd';
@@ -54,7 +54,6 @@ export class MainFrame {
     }
 
     async mcdPromise(isEscape = false) {
-        log.debug( "mcdPromise !!!!");
         let view: BlessedPanel | BlessedMcd = this.blessedFrames[this.activeFrameNum];
         if ( view instanceof BlessedPanel ) {
             view.destroy();
@@ -131,7 +130,6 @@ export class MainFrame {
 
         this.eventStart();
         this.blessedFrames[0].setFocus();
-        // this.baseWidget.render();
         this.screen.render();
     }
 
@@ -142,19 +140,36 @@ export class MainFrame {
                 log.debug( "CommandBox running !!!" );
                 return;
             }
-            if ( await keyMappingExec( this.activeFocusObj(), keyInfo ) ) {
-                this.screen.render();
-            } else {
-                if ( await keyMappingExec( this, keyInfo ) ) {
+
+            log.info( "KEYPRESS [%s] - START", keyInfo.name );
+
+            let starTime = Date.now();
+
+            const execRefresh = ( type: RefreshType ) => {
+                if ( type === RefreshType.ALL ) {
+                    log.info( "REFRESH - ALL");
+                    this.screen.realloc();
+                    this.blessedFrames.forEach( item => item.resetViewCache() );
+                    this.baseWidget.render();
                     this.screen.render();
+                } else if ( type === RefreshType.OBJECT ) {
+                    log.info( "REFRESH - OBJECT");
+                    this.activeFocusObj().render();
                 }
+            };
+            
+            let type: RefreshType = await keyMappingExec( this.activeFocusObj(), keyInfo );
+            if ( type === RefreshType.NONE ) {
+                type = await keyMappingExec( this, keyInfo );
             }
+            execRefresh( type );
+            log.info( "KEYPRESS [%s] - (%dms)", keyInfo.name, Date.now() - starTime );
         });
     }
 
     refresh() {
         this.screen.realloc();
-        this.baseWidget.render();
+        // this.baseWidget.render();
         this.screen.render();
     }
 
@@ -165,7 +180,7 @@ export class MainFrame {
         }
         log.debug( "split: viewNumber [%d]", (this.viewType as number) );
         this.viewRender();
-        this.baseWidget.render();
+        return RefreshType.ALL;
     }
 
     quit() {
@@ -184,10 +199,11 @@ export class MainFrame {
         log.debug( "this.activeFrameNum %d", this.activeFrameNum );
         this.blessedFrames[ this.activeFrameNum ].setFocus();
         this.baseWidget.render();
+        return RefreshType.ALL;
     }
 
     activePanel(): BlessedPanel {
-        log.debug( "activePanel %d", this.activeFrameNum );
+        // log.debug( "activePanel %d", this.activeFrameNum );
         return this.blessedFrames[ this.activeFrameNum ];
     }
 
@@ -206,10 +222,13 @@ export class MainFrame {
         this.blessedMenu.init();
         this.blessedMenu.setMainMenuConfig( menuConfig[ viewName ] );
         this.blessedMenu.setFocus();
+        return RefreshType.ALL;
     }
 
     menuClose() {
+        log.debug( "menuClose !!!" );
         this.blessedMenu.close();
+        return RefreshType.ALL;
     }
 
     commandBoxShow() {
@@ -218,9 +237,9 @@ export class MainFrame {
             this.bottomFilesBox = null;
         }
 
-        this.commandBox = new CommandBox( { parent: this.baseWidget } );
-        this.commandBox.setPanelView( this.activePanel() );
+        this.commandBox = new CommandBox( { parent: this.baseWidget }, this.activePanel() );
         this.commandBox.setFocus();
+        return RefreshType.ALL;
     }
 
     commandBoxClose() {
@@ -230,6 +249,7 @@ export class MainFrame {
         }
         this.bottomFilesBox = new BottomFilesBox( { parent: this.baseWidget } );
         this.baseWidget.render();
+        return RefreshType.ALL;
     }
 
     consoleView(): Promise<void> {
