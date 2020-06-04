@@ -46,7 +46,6 @@ export class ColorConfig {
         });
 
         this._colorConfig.file.ext = extColor;
-        log.debug( extColor );
     }
 
     getBaseColor( name: string ): Color {
@@ -54,7 +53,7 @@ export class ColorConfig {
     }
 
     getFileColor( file: File ): Color {
-        const extname = file.extname;
+        const extname = file.extname.substr(1); // .ext => ext
         let color = this._colorConfig.base.default;
         if ( file.dir ) {
             color = this._colorConfig.base.dir;

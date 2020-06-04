@@ -6,6 +6,7 @@ import { Widget } from './Widget';
 import { sprintf } from "sprintf-js";
 import { KeyMapping, KeyMappingInfo, keyHumanReadable, RefreshType } from '../config/KeyMapConfig';
 import { Logger } from "../common/Logger";
+import mainFrame from './MainFrame';
 
 const log = Logger("blessed-menu");
 
@@ -57,7 +58,7 @@ class BlassedMenuBox extends Widget {
         });
         this.box.width = 30;
         this.box.height = this.menuBox.length + 2;
-        log.debug( "menu draw: T:%d,L:%d,W:%d,H:%d", this.box.top, this.box.left, this.box.width, this.box.height );
+        // log.debug( "menu draw: T:%d,L:%d,W:%d,H:%d", this.box.top, this.box.left, this.box.width, this.box.height );
     }
 
     keyUp() {
@@ -76,6 +77,10 @@ class BlassedMenuBox extends Widget {
                 this.selectPos = 0;
             }
         } while( this.menuItem[this.selectPos] === "-" )
+    }
+
+    getFocusMenu(): ISubMenuConfig {
+        return this.menuItem[this.selectPos];
     }
 }
 
@@ -158,8 +163,16 @@ export class BlessedMenu {
         this.menuBox.left = menuBoxPos;
         this.menuBox.draw();
 
-        log.debug( "%s", prefix + viewText );
+        // log.debug( "%s", prefix + viewText );
         this.topMenu.setContentFormat( prefix + viewText );
+    }
+
+    async keyEnterPromise() {
+        let menuInfo = this.menuBox.getFocusMenu();
+        this.close();
+        
+        await mainFrame().methodRun( menuInfo.method, menuInfo.funcParam );
+        return RefreshType.ALL;
     }
 
     close() {

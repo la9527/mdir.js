@@ -14,6 +14,10 @@ import { Mcd } from "./panel/Mcd";
 
 const log = Logger("main");
 
+(async () => {
+    await mainFrame().start();
+})();
+
 /*
 const screen = blessed.screen({
     smartCSR: true,
@@ -92,7 +96,3 @@ program.move(5, 5);
 program.write("Hello world");
 program.move(10, 10);
 */
-
-(async () => {
-    await mainFrame().start();
-})();

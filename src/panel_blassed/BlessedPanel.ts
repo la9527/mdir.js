@@ -10,7 +10,7 @@ import { PanelFileBox } from "./PanelFileBox";
 import { ColorConfig } from "../config/ColorConfig";
 import { Color } from "../common/Color";
 import { Reader } from "../common/Reader";
-import { KeyMapping } from "../config/KeyMapConfig";
+import { KeyMapping, RefreshType } from '../config/KeyMapConfig';
 import { KeyMappingInfo } from "../config/KeyMapConfig";
 import { IBlessedView } from "./IBlessedView";
 import mainFrame from './MainFrame';
@@ -25,6 +25,7 @@ export class BlessedPanel extends Panel implements IBlessedView {
     public header: Widget = null;
     public tailer: Widget = null;
     
+    protected viewColumn: number = 0;
     private _fileViewType = 0;
     private _lines = [];
 
@@ -139,10 +140,13 @@ export class BlessedPanel extends Panel implements IBlessedView {
         });
     }
 
+    setViewColumn( column = 0 ) {
+        this.viewColumn = column;
+        return RefreshType.ALL;
+    }
+
     resize() {
         const MAX_COLUMN = 6;
-
-        this.viewColumn = 0;
 
         const dirLength = this.dirFiles.length;
         const viewHeight = this.baseWidget.height as number - 2;

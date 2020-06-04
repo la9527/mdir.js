@@ -64,7 +64,37 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         keyEnd: "end",
         keyEnterPromise: [ "return" ],
         commandBoxShow: "/",
-        consoleViewPromise: "escape"
+        consoleViewPromise: "escape",
+        setViewColumn: [
+            {
+                key: "M-0",
+                funcParam: [ 0 ]
+            },
+            {
+                key: "M-1",
+                funcParam: [ 1 ]
+            },
+            {
+                key: "M-2",
+                funcParam: [ 2 ]
+            },
+            {
+                key: "M-3",
+                funcParam: [ 3 ]
+            },
+            {
+                key: "M-4",
+                funcParam: [ 4 ]
+            },
+            {
+                key: "M-5",
+                funcParam: [ 5 ]
+            },
+            {
+                key: "M-6",
+                funcParam: [ 6 ]
+            }
+        ]
     },
     Mcd: {
         keyUp: "up",
@@ -160,7 +190,7 @@ const convertFunctionToKey = ( keyFrame: IKeyMapping ): IFuncMapping => {
 
 export function KeyMapping( keyFrame: IKeyMapping, name: string = null ) {
     const keyInfo = convertFunctionToKey(keyFrame);
-    log.debug( keyInfo );
+    // log.debug( keyInfo );
     return function <T extends { new(...args: any[]): {} }>(constructor: T) {
         return class extends constructor {
             keyInfo = keyInfo;
@@ -171,7 +201,6 @@ export function KeyMapping( keyFrame: IKeyMapping, name: string = null ) {
 
 export async function keyMappingExec( baseObject, keyInfo ): Promise<RefreshType> {
     if ( !baseObject || !baseObject.keyInfo ) {
-        log.debug( "No active : %j", baseObject.keyInfo );
         return RefreshType.NONE;
     }
 
@@ -189,7 +218,6 @@ export async function keyMappingExec( baseObject, keyInfo ): Promise<RefreshType
         }
 
         if ( baseObject[ (method as string) ] ) {
-            
             log.info( "keypress [%s] - method: [ %s.%s(%s) ]", keyName, baseObject.viewName, method, param ? param.join(",") : "" );
             let result = RefreshType.NONE;
             if ( /(p|P)romise/.exec(method as string) ) {
@@ -215,8 +243,8 @@ export function keyHumanReadable(key: string): string {
             return "Ctrl+" + p2.toUpperCase();
         });
     }
-    if ( key.match( /^A\-/ ) ) {
-        return key.replace( /^(A\-)(.+)/, (a, p1, p2) => {
+    if ( key.match( /^M\-/ ) ) {
+        return key.replace( /^(M\-)(.+)/, (a, p1, p2) => {
             return "Alt+" + p2.toUpperCase();
         });
     }
@@ -242,8 +270,11 @@ export function menuKeyMapping( allkeyMappingInfo: IAllKeyMappingInfo, menuObjec
                 if ( typeof(keyInfo[0]) === "string" ) {
                     return keyInfo[0];
                 } else if ( funcParam ) {
-                    const key = (keyInfo as IFuncParam[]).find( fP => fP.funcParam === funcParam );
-                    return Array.isArray(key) ? key[0] : key;
+                    const keyInfoSub: IFuncParam = (keyInfo as IFuncParam[]).find( fP => fP.funcParam && JSON.stringify(fP.funcParam) === JSON.stringify(funcParam) );
+                    if ( !keyInfoSub ) {
+                        return null;
+                    }
+                    return Array.isArray(keyInfoSub.key) ? keyInfoSub[0].key : keyInfoSub.key;
                 }
             } else {
                 return keyInfo as string;

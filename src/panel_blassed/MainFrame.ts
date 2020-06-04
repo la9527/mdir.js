@@ -145,27 +145,27 @@ export class MainFrame {
 
             let starTime = Date.now();
 
-            const execRefresh = ( type: RefreshType ) => {
-                if ( type === RefreshType.ALL ) {
-                    log.info( "REFRESH - ALL");
-                    this.screen.realloc();
-                    this.blessedFrames.forEach( item => item.resetViewCache() );
-                    this.baseWidget.render();
-                    this.screen.render();
-                } else if ( type === RefreshType.OBJECT ) {
-                    log.info( "REFRESH - OBJECT");
-                    this.activeFocusObj().render();
-                }
-            };
-            
             let type: RefreshType = await keyMappingExec( this.activeFocusObj(), keyInfo );
             if ( type === RefreshType.NONE ) {
                 type = await keyMappingExec( this, keyInfo );
             }
-            execRefresh( type );
+            this.execRefreshType( type );
             log.info( "KEYPRESS [%s] - (%dms)", keyInfo.name, Date.now() - starTime );
         });
     }
+
+    execRefreshType( type: RefreshType ) {
+        if ( type === RefreshType.ALL ) {
+            log.info( "REFRESH - ALL");
+            this.screen.realloc();
+            this.blessedFrames.forEach( item => item.resetViewCache() );
+            this.baseWidget.render();
+            this.screen.render();
+        } else if ( type === RefreshType.OBJECT ) {
+            log.info( "REFRESH - OBJECT");
+            this.activeFocusObj().render();
+        }
+    };
 
     refresh() {
         this.screen.realloc();
@@ -307,6 +307,29 @@ export class MainFrame {
                 });
             });
         });
+    }
+
+    async methodRun( methodString, param ): Promise<RefreshType> {
+        let item = methodString.split(".");
+        
+        let className = item[0] || "";
+        let methodName = item[1] || "";
+        let object = null;
+        if ( /panel/i.exec(className) ) {
+            object = this.activePanel();
+        } else if ( /common/i.exec(className) ) {
+            object = this;
+        }
+
+        let result = RefreshType.NONE;
+        if ( object && object[ (methodName as string) ] ) {
+            if ( /(p|P)romise/.exec(methodName as string) ) {
+                result = await object[ (methodName as string) ].apply(object, param);
+            } else {
+                result = object[ (methodName as string) ].apply(object, param);
+            }
+        }
+        return result || RefreshType.OBJECT;
     }
 
     static instance() {

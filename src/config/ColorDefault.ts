@@ -42,21 +42,26 @@ export const ColorDefault = {
         },
         ext: {
             5: "a;so;la;so.1;so.0;",
+            6: [
+                "txt;md;me;ini;cfg;log;am;in;conf;m4;po;spec;",
+                "html;htm;xml;css;js;jsp;php;php3;asp;",
+                "jsx;ts;tsx;",
+                "c;cpp;cc;h;hh;pl;java;py;",
+                "diff;diff3;"
+            ],
+            10: [
+                "h;hh;",
+                "json;sh;"
+            ],
             12: [
                 "xls;xlw;xlt;lwp;wps;ods;ots;sxc;stc;xls;csv;hwp;pdf;",
                 "doc;dot;rtf;sdw;vor;pdb;odt;psw;sdw;pwd;jtd;jtt;",
                 "wps;dif;dbf;odt;ott;sxw;odg;odp;ppt;",
-                "txt;md;me;ini;cfg;log;am;in;conf;m4;po;spec;",
-                "html;htm;xml;css;jsp;php;php3;asp;",
-                "js;jsx;ts;tsx;sh;",
-                "c;cpp;cc;h;hh;pl;java;py;",
-                "diff;diff3;",
                 "pem;cer;p7b;der;",
                 "xls;xlw;xlt;lwp;wps;ods;ots;sxc;stc;xls;csv;",
                 "doc;dot;rtf;sdw;vor;pdb;odt;psw;sdw;pwd;jtd;jtt;",
                 "wps;dif;dbf;odt;ott;sxw;odg;odp;ppt;"
             ],
-            6: "h;hh;",
             2: "bmp;tga;pcx;gif;jpg;jpeg;png;pbm;pgm;ppm;xbm;xpm;",
             13: [
                 "tar;bz2;tbz;tgz;gz;zip;z;rpm;deb;alz;jar;iso;rar;lzh;cab;arj;",

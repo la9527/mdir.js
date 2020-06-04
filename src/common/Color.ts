@@ -69,14 +69,14 @@ export class Color {
         "magenta",
         "cyan",
         "white",
-        "lightblack", // gray
-        "lightred",
-        "lightgreen",
-        "lightyellow",
-        "lightblue",
-        "lightmagenta",
-        "lightcyan",
-        "lightwhite"
+        "light-black", // gray
+        "light-red",
+        "light-green",
+        "light-yellow",
+        "light-blue",
+        "light-magenta",
+        "light-cyan",
+        "light-white"
     ];
 
     constructor( font: number | number[] = 0, back: number = 0 ) {

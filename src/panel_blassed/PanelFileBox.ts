@@ -85,14 +85,14 @@ export class PanelFileBox extends Widget {
         const time = [("0" + (d.getHours() + 1)).slice(-2), ("0" + (d.getMinutes() + 1)).slice(-2)].join(":");
 
         const tailview = this.convertFileSize();
-        const { fontHex, backHex } = this._file.color;
+        const { fontColorName, backColorName } = this._file.color;
 
         const textFileName = this.convertFilename(this.width as number - 39);
         let viewText = null;
         if ( this._viewFocus ) {
             viewText = sprintf(`%10s %10s %5s %s %10s`, this._file.attr, date, time, textFileName, tailview);
         } else {
-            viewText = sprintf(`%10s %10s %5s {${fontHex}-fg}%s %10s{/}`, this._file.attr, date, time, textFileName, tailview);
+            viewText = sprintf(`%10s %10s %5s {${fontColorName}-fg}%s %10s{/}`, this._file.attr, date, time, textFileName, tailview);
         }
         // log.debug( viewText );
         this.box.setContent(viewText);
@@ -114,7 +114,7 @@ export class PanelFileBox extends Widget {
     }
 
     drawTypeThree() {
-        const { fontHex, backHex } = this._file.color;
+        const { fontColorName, backColorName } = this._file.color;
 
         const textFileName = this.convertFilename(this.width as number);
 
@@ -122,7 +122,7 @@ export class PanelFileBox extends Widget {
         if ( this._viewFocus ) {
             viewText = sprintf(` %s`, textFileName);
         } else {
-            viewText = sprintf(` {${fontHex}-fg}%s{/${fontHex}-fg}`, textFileName);
+            viewText = sprintf(` {${fontColorName}-fg}%s{/}`, textFileName);
         }
         this.box.setContent(viewText);
     }

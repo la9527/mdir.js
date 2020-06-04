@@ -8,8 +8,7 @@ export abstract class AbstractPanel {
     protected column: number = 0;
     protected row: number = 0;
     protected page: number = 0;
-    protected viewColumn: number = 0;
-
+    
     protected sortType: SortType = SortType.COLOR;
 
     protected _currentPos: number = 0;
