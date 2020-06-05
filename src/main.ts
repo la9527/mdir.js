@@ -11,6 +11,7 @@ import { readerControl } from './panel/readerControl';
 import { keyMappingExec, menuKeyMapping, KeyMappingInfo, keyHumanReadable } from "./config/KeyMapConfig";
 import { menuConfig } from "./config/MenuConfig";
 import { Mcd } from "./panel/Mcd";
+import { MessageBox } from "./panel_blassed/widget/MessageBox";
 
 const log = Logger("main");
 
@@ -30,6 +31,30 @@ const screen = blessed.screen({
     log: process.env.HOME + "/.m/m2.log"
 });
 
+(async () => {
+    let result = new MessageBox({
+        title: "테스트 타이틀",
+        msg: "테스트 합니다. 확인 바랍니다.",
+        button: [ "OK", "Cancel"],
+        result: ( result ) => {
+            log.debug( result );
+            screen.render();
+        }
+    }, { parent: screen });
+
+    screen.key("q", () => {
+        process.exit(0);
+    });
+
+    screen.key("r", () => {
+        screen.render();
+    });
+
+    screen.render();
+})();
+*/
+
+/*
 (async () => {
     menuKeyMapping( KeyMappingInfo, menuConfig );
     

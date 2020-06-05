@@ -52,6 +52,10 @@ export class ColorConfig {
         return new Color(this._colorConfig.base[name]);
     }
 
+    getBaseTwoColor( fgname: string, bgname: string ): Color {
+        return new Color(this._colorConfig.base[fgname][0], this._colorConfig.base[bgname][1]);
+    }
+
     getFileColor( file: File ): Color {
         const extname = file.extname.substr(1); // .ext => ext
         let color = this._colorConfig.base.default;
