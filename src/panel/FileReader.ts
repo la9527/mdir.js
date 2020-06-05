@@ -5,9 +5,11 @@ import * as drivelist from "drivelist";
 
 import { File } from "../common/File";
 import { Logger } from "../common/Logger";
-import { Reader, IMountList } from "../common/Reader";
+import { Reader, IMountList, ProgressFunc } from "../common/Reader";
 
 import { ColorConfig } from "../config/ColorConfig";
+import { rejects } from "assert";
+import { Transform } from "stream";
 
 const log = Logger("FileReader");
 
@@ -126,6 +128,76 @@ export class FileReader extends Reader {
                 log.error( "READDIR () - ERROR %j", e );
             }
             resolve( fileItem );
+        });
+    }
+
+    copy( source: File, targetDir: File, progress: ProgressFunc = null ): Promise<void> {
+        let reader = this;
+        return new Promise( ( resolve, reject ) => {
+            let srcFile = source.link ? source.link.file : source;
+            if ( srcFile.dir || !targetDir.dir ) {
+                reject("Unable to copy from a source directory.");
+                return;
+            }
+
+            if ( srcFile.dirname === targetDir.fullname ) {
+                log.debug( "source file and target file are the same." );
+                resolve();
+                return;
+            }
+
+            let chunkCopyLength = 0;
+            var rd = fs.createReadStream(srcFile.fullname);
+            var wr = fs.createWriteStream(targetDir.fullname + "/" + srcFile.name);
+
+            let rejectFunc = (err) => {
+                rd.destroy();
+                wr.end();
+                reject(err);
+            };
+
+            rd.on('error', rejectFunc);
+            wr.on('error', rejectFunc);
+            wr.on('finish', () => {
+                resolve();
+            });
+
+            const reportProgress = new Transform({
+                transform(chunk: Buffer, encoding, callback) {
+                    chunkCopyLength =+ chunk.length;
+                    progress && progress( srcFile, chunkCopyLength, srcFile.size );
+                    log.debug( "Copy to: %s => %s (%d / %d)", srcFile.fullname, targetDir.fullname, chunkCopyLength, srcFile.size );
+                    if ( reader.isUserCanceled ) {
+                        rd.destroy();
+                    }
+                    callback( null, chunk );
+                }
+            });
+            rd.pipe( reportProgress ).pipe(wr);
+        });
+    }
+
+    move( source: File, targetDir: File ): Promise<void> {
+        return new Promise( (resolve, reject) => {
+            fs.rename( source.fullname, targetDir.fullname, (err) => {
+                if ( err ) {
+                    reject( err );
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+
+    remove( source: File ): Promise<void> {
+        return new Promise( (resolve, reject) => {
+            fs.unlink( source.fullname, (err) => {
+                if ( err ) {
+                    reject( err );
+                } else {
+                    resolve();
+                }
+            });
         });
     }
 }

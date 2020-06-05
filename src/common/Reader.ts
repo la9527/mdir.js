@@ -7,9 +7,12 @@ export interface IMountList {
     size: number;
 }
 
+export type ProgressFunc = ( source: File, copySize: number, size: number) => void;
+
 export abstract class Reader {
     protected curDir: File = null;
-    protected _readerName: string = null;
+    protected _readerFsType: string = null;
+    public isUserCanceled = false;
 
     abstract convertFile( path: string ): File;
     abstract readdir( dir: File ): Promise<File[]>;
@@ -20,10 +23,14 @@ export abstract class Reader {
     abstract mountList(): Promise<IMountList[]>
 
     get readerName() {
-        return this.readerName;
+        return this._readerFsType;
     }
 
     currentDir(): File {
         return this.curDir;
     }
+
+    abstract copy( source: File, targetDir: File, progress ?: ProgressFunc ): Promise<void>;
+    abstract move( source: File, targetDir: File ): Promise<void>;
+    abstract remove( source: File ): Promise<void>;
 }

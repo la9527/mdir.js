@@ -72,7 +72,9 @@ export abstract class Panel extends AbstractPanel {
 
     toggleSelect() {
         if ( this.dirFiles[this.currentPos] ) {
-            this.dirFiles[this.currentPos].select = !this.dirFiles[ this.currentPos ].select;
+            if ( this.dirFiles[this.currentPos].name !== ".." ) {
+                this.dirFiles[this.currentPos].select = !this.dirFiles[ this.currentPos ].select;
+            }
             this.keyDown();
         }
     }
@@ -99,6 +101,9 @@ export abstract class Panel extends AbstractPanel {
                 log.error( "keyEnterPromise exception : %j", e );
             }
         }
-        log.debug( "keyEnterPromise !!!" );
+    }
+
+    getSelectFiles() {
+        return this.dirFiles.filter( item => item.select );
     }
 }

@@ -1,7 +1,7 @@
 import { sprintf } from "sprintf-js";
 import { BlessedProgram, Widgets, box, text, colors } from "neo-blessed";
 import { strWidth } from "neo-blessed/lib/unicode";
-import { Widget } from "./Widget";
+import { Widget } from "./widget/Widget";
 import mainFrame from "./MainFrame";
 import { Logger } from "../common/Logger";
 import { File } from "../common/File";

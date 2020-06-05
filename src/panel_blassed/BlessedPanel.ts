@@ -3,7 +3,7 @@ import { Widgets } from "neo-blessed";
 import { sprintf } from "sprintf-js";
 
 import { Panel } from "../panel/Panel";
-import { Widget } from "./Widget";
+import { Widget } from "./widget/Widget";
 import { Logger } from "../common/Logger";
 import { StringUtils } from "../common/StringUtils";
 import { PanelFileBox } from "./PanelFileBox";

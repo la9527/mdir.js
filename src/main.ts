@@ -4,7 +4,7 @@ import { Logger } from "./common/Logger";
 import { BlessedMenu } from "./panel_blassed/BlessedMenu";
 import { BlessedPanel } from './panel_blassed/BlessedPanel';
 import { FuncKeyBox } from './panel_blassed/FuncKeyBox';
-import { Widget } from "./panel_blassed/Widget";
+import { Widget } from "./panel_blassed/widget/Widget";
 import mainFrame, { MainFrame } from "./panel_blassed/MainFrame";
 import { BlessedMcd } from "./panel_blassed/BlessedMcd";
 import { readerControl } from './panel/readerControl';

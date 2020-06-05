@@ -1,4 +1,4 @@
-import { Widget } from './Widget';
+import { Widget } from './widget/Widget';
 import { Widgets, screen } from 'neo-blessed';
 import * as unicode from "neo-blessed/lib/unicode";
 import * as os from "os";
@@ -119,7 +119,7 @@ export class CommandBox extends Widget {
 
             let prompt = os.userInfo().username + "@" + os.hostname().split(".")[0] + ":" + pathStr;
             if ( os.platform() !== "win32" ) {
-                prompt += os.userInfo().username !== "root" ? "# " : "$ ";
+                prompt += os.userInfo().username === "root" ? "# " : "$ ";
             } else {
                 prompt += ">";
             }
@@ -229,7 +229,8 @@ export class CommandBox extends Widget {
         this.cursorPos = unicode.strWidth(this.commandValue);
     }
 
-    keyTab() {
+    // TODO: Need Implementation - tab key to search a matching files.
+    keyTab() {  
 
     }
 

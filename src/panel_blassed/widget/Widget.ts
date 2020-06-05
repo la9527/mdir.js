@@ -1,6 +1,6 @@
 import { BlessedProgram, Widgets, box, text, colors } from "neo-blessed";
-import { Logger } from "../common/Logger";
-import { Color } from "../common/Color";
+import { Logger } from "../../common/Logger";
+import { Color } from "../../common/Color";
 import { sprintf } from "sprintf-js";
 
 const log = Logger("main");

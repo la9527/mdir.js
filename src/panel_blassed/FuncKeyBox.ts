@@ -1,6 +1,6 @@
 import { BlessedProgram, Widgets, box, text, line, widget } from "neo-blessed";
 
-import { Widget } from "./Widget";
+import { Widget } from "./widget/Widget";
 import { ColorConfig } from "../config/ColorConfig";
 import { sprintf } from "sprintf-js";
 import { Color } from "../common/Color";

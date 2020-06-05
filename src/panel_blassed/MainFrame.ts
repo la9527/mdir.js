@@ -5,7 +5,7 @@ import { BlessedPanel } from './BlessedPanel';
 import { FuncKeyBox } from './FuncKeyBox';
 import BottomFilesBox from "./BottomFileBox";
 import { readerControl } from '../panel/readerControl';
-import { Widget } from "./Widget";
+import { Widget } from "./widget/Widget";
 import { keyMappingExec, menuKeyMapping, KeyMappingInfo, KeyMapping, RefreshType } from "../config/KeyMapConfig";
 import { menuConfig } from "../config/MenuConfig";
 import { BlessedMenu } from "./BlessedMenu";
@@ -13,6 +13,8 @@ import { BlessedMcd } from './BlessedMcd';
 import { CommandBox } from './CommandBox';
 import { exec } from "child_process";
 import * as colors from "colors";
+import selection, { Selection, ClipBoard } from "../panel/Selection";
+import { ProgressFunc } from "../common/Reader";
 
 const log = Logger("MainFrame");
 
@@ -267,14 +269,8 @@ export class MainFrame {
     commandRun(cmd): Promise<void> {
         let cmds = cmd.split(" ");
         if ( cmds[0] === "cd" && cmds[1] ) {
-            return new Promise( (resolve) => {
-                let chdirPath = cmds[1] === "-" ? this.activePanel().previousDir : cmds[1];
-                this.activePanel().read(chdirPath).then( () => {
-                    resolve();
-                }).catch( () => {
-                    resolve();
-                });
-            });
+            let chdirPath = cmds[1] === "-" ? this.activePanel().previousDir : cmds[1];
+            return this.activePanel().read(chdirPath);
         }
 
         return new Promise( (resolve, reject) => {
@@ -290,14 +286,14 @@ export class MainFrame {
 
             this.screen.leave();
             
-            console.log( colors.white("m.js $ ") + cmd );
+            process.stdout.write( colors.white("m.js $ ") + cmd + "\n");
 
             exec(cmd, (error, stdout, stderr) => {
                 if (error) {
                     console.error(error.message);
                 } else {
-                    stderr && console.error(stderr.normalize());
-                    stdout && console.log(stdout.normalize());
+                    stderr && process.stderr.write(stderr);
+                    stdout && process.stdout.write(stdout);
                 }
                 console.log( colors.white("Press any key to return m.js") );
                 program.once( 'keypress', () => {
@@ -330,6 +326,45 @@ export class MainFrame {
             }
         }
         return result || RefreshType.OBJECT;
+    }
+
+    clipboardCut() {
+        selection().set( this.activePanel().getSelectFiles(), ClipBoard.CLIP_CUT );
+    }
+
+    clipboardCopy() {
+        selection().set( this.activePanel().getSelectFiles(), ClipBoard.CLIP_COPY );
+    }
+
+    async clipboardPastePromise() {
+        const files = selection().getFiles();
+        if ( !files || files.length === 0 ) {
+            return RefreshType.NONE;
+        }
+
+        const progressStatus: ProgressFunc = ( source, copySize, size ) => {
+
+        };
+
+        const activePanel = this.activePanel();
+        if ( activePanel instanceof BlessedPanel ) {
+            if ( files[0].dirname === activePanel.currentPath().fullname ) {
+                log.error( "source file and target file are the same." );
+                return RefreshType.NONE;
+            }
+            
+            const reader = activePanel.getReader();
+            if ( reader.readerName === files[0].fstype ) {
+                for( let item of files ) {
+                    try {
+                        await reader.copy( item, activePanel.currentPath(), progressStatus );
+                    } catch( err ) {
+                        
+                    }
+                }
+            }
+        }
+        return RefreshType.ALL;
     }
 
     static instance() {

@@ -1,6 +1,6 @@
 import { BlessedProgram, Widgets, box, text, colors } from "neo-blessed";
 import { strWidth } from "neo-blessed/lib/unicode";
-import { Widget } from "./Widget";
+import { Widget } from "./widget/Widget";
 import { File } from "../common/File";
 import { sprintf } from "sprintf-js";
 import { StringUtils } from "../common/StringUtils";
@@ -87,12 +87,14 @@ export class PanelFileBox extends Widget {
         const tailview = this.convertFileSize();
         const { fontColorName, backColorName } = this._file.color;
 
+        const select = this._file.select ? "{white-fg}*{/}" : " ";
+
         const textFileName = this.convertFilename(this.width as number - 39);
         let viewText = null;
         if ( this._viewFocus ) {
-            viewText = sprintf(`%10s %10s %5s %s %10s`, this._file.attr, date, time, textFileName, tailview);
+            viewText = sprintf(`%10s %10s %5s%s%s %10s`, this._file.attr, date, time, select, textFileName, tailview);
         } else {
-            viewText = sprintf(`%10s %10s %5s {${fontColorName}-fg}%s %10s{/}`, this._file.attr, date, time, textFileName, tailview);
+            viewText = sprintf(`%10s %10s %5s%s{${fontColorName}-fg}%s %10s{/}`, this._file.attr, date, time, select, textFileName, tailview);
         }
         // log.debug( viewText );
         this.box.setContent(viewText);
@@ -103,12 +105,13 @@ export class PanelFileBox extends Widget {
 
         const textFileName = this.convertFilename(this.width as number - 12);
         const tailview = this.convertFileSize();
+        const select = this._file.select ? "{white-fg}*{/}" : " ";
 
         let viewText = null;
         if ( this._viewFocus ) {
-            viewText = sprintf(`%s %10s`, textFileName, tailview);
+            viewText = sprintf(`%s%s %10s`, select, textFileName, tailview);
         } else {
-            viewText = sprintf(`{${fontHex}-fg}%s %10s{/${fontHex}-fg}`, textFileName, tailview);
+            viewText = sprintf(`%s{${fontHex}-fg}%s %10s{/${fontHex}-fg}`, select, textFileName, tailview);
         }
         this.box.setContent(viewText);
     }
@@ -116,13 +119,14 @@ export class PanelFileBox extends Widget {
     drawTypeThree() {
         const { fontColorName, backColorName } = this._file.color;
 
+        const select = this._file.select ? "{white-fg}*{/}" : " ";
         const textFileName = this.convertFilename(this.width as number);
 
         let viewText = null;
         if ( this._viewFocus ) {
-            viewText = sprintf(` %s`, textFileName);
+            viewText = sprintf(`%s%s`, select, textFileName);
         } else {
-            viewText = sprintf(` {${fontColorName}-fg}%s{/}`, textFileName);
+            viewText = sprintf(`%s{${fontColorName}-fg}%s{/}`, select, textFileName);
         }
         this.box.setContent(viewText);
     }

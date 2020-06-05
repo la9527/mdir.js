@@ -1,12 +1,10 @@
 import { Logger } from "../common/Logger";
 import { IFrameMenuConfig, ISubMenuConfig } from "./MenuConfig";
-import { pbkdf2 } from "crypto";
 
 const log = Logger("MainFrame");
 
 type MethodName = string;
 type KeyName = string;
-type FuncName = string;
 
 interface IFuncParam {
     key: KeyName | KeyName[];
@@ -63,6 +61,7 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         keyHome: "home",
         keyEnd: "end",
         keyEnterPromise: [ "return" ],
+        toggleSelect: "space",
         commandBoxShow: "/",
         consoleViewPromise: "escape",
         setViewColumn: [

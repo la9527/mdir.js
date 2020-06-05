@@ -2,7 +2,7 @@ import { BlessedProgram, Widgets, box, text, line, colors } from "neo-blessed";
 import { Color } from '../common/Color';
 import { ColorConfig } from '../config/ColorConfig';
 import { ISubMenuConfig, menuConfig, IMainMenuConfig } from '../config/MenuConfig';
-import { Widget } from './Widget';
+import { Widget } from './widget/Widget';
 import { sprintf } from "sprintf-js";
 import { KeyMapping, KeyMappingInfo, keyHumanReadable, RefreshType } from '../config/KeyMapConfig';
 import { Logger } from "../common/Logger";

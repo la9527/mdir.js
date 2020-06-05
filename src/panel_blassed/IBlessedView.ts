@@ -1,5 +1,5 @@
 import { Reader } from "../common/Reader";
-import { Widget } from "./Widget";
+import { Widget } from "./widget/Widget";
 
 export interface IBlessedView {
     setReader( reader: Reader );

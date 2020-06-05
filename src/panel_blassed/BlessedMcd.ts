@@ -7,7 +7,7 @@ import { File } from "../common/File";
 import { Reader } from "../common/Reader";
 import { BlessedPanel } from "./BlessedPanel";
 import { Mcd } from "../panel/Mcd";
-import { Widget } from './Widget';
+import { Widget } from './widget/Widget';
 import { Dir } from "../common/Dir";
 import { Color } from '../common/Color';
 import { ColorConfig } from '../config/ColorConfig';
