@@ -5,6 +5,7 @@ import { Logger } from "../../common/Logger";
 import { toUnicode } from 'punycode';
 import { strWidth } from "neo-blessed/lib/unicode";
 import { Z_BEST_COMPRESSION } from 'zlib';
+import mainFrame from '../MainFrame';
 
 const log = Logger("MessageBox");
 
@@ -15,7 +16,7 @@ interface IMessageOption {
     result?: (button) => void;
 }
 
-export class MessageBox extends Widget {    
+export class MessageBox extends Widget {
     private textWidget: Widget = null;
     private titleWidget: Widget = null;
     private buttonWidgets: Widget[] = [];
@@ -121,15 +122,13 @@ export class MessageBox extends Widget {
             this.render();
             this.box.screen.render();
         });
+
+        mainFrame().keyLock = true;
         this.setFocus();
     }
 
     setMessageOption( msgOption ) {
         this.msgOption = msgOption;
-    }
-
-    viewBoxUpdate() {
-        
     }
 
     draw() {
@@ -145,9 +144,22 @@ export class MessageBox extends Widget {
     }
 
     destroy() {
+        mainFrame().keyLock = false;
         this.titleWidget.destroy();
         this.textWidget.destroy();
         this.buttonWidgets.map( i => i.destroy() );
         super.destroy();
     }
+}
+
+export function messageBox( msgOpt: IMessageOption, opts: Widgets.BoxOptions ): Promise<string> {
+    return new Promise(( resolve, reject ) => {
+        new MessageBox({
+            title: msgOpt.title, 
+            msg: msgOpt.msg, button: msgOpt.button,
+            result: (button) => {
+                resolve( button );
+            }
+        }, opts);
+    });
 }

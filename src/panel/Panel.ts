@@ -104,6 +104,13 @@ export abstract class Panel extends AbstractPanel {
     }
 
     getSelectFiles() {
-        return this.dirFiles.filter( item => item.select );
+        let selectItems = this.dirFiles.filter( item => item.select );
+        if ( selectItems.length > 0 ) {
+            return selectItems;
+        }
+        if ( this.currentFile()?.name !== ".." ) {
+            return [ this.currentFile() ];
+        }
+        return null;
     }
 }

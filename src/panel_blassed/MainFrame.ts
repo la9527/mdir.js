@@ -15,6 +15,7 @@ import { exec } from "child_process";
 import * as colors from "colors";
 import selection, { Selection, ClipBoard } from "../panel/Selection";
 import { ProgressFunc } from "../common/Reader";
+import { messageBox } from "./widget/MessageBox";
 
 const log = Logger("MainFrame");
 
@@ -39,6 +40,7 @@ export class MainFrame {
     private bottomFilesBox: BottomFilesBox = null;
     private activeFrameNum = 0;
     private commandBox: CommandBox = null;
+    public keyLock = false;
 
     constructor() {
         this.screen = blessed.screen({
@@ -138,6 +140,10 @@ export class MainFrame {
     eventStart() {
         this.screen.off('keypress');
         this.screen.on('keypress', async (ch, keyInfo) => {
+            if ( this.keyLock ) {
+                log.debug( "keyLock !!!");
+                return;
+            }
             if ( this.commandBox ) {
                 log.debug( "CommandBox running !!!" );
                 return;
@@ -343,23 +349,69 @@ export class MainFrame {
         }
 
         const progressStatus: ProgressFunc = ( source, copySize, size ) => {
-
+            
         };
 
         const activePanel = this.activePanel();
         if ( activePanel instanceof BlessedPanel ) {
             if ( files[0].dirname === activePanel.currentPath().fullname ) {
                 log.error( "source file and target file are the same." );
+                await messageBox( { title: "ERROR", msg: "source and target directory are the same.", button: [ "OK" ] }, { parent: this.baseWidget } );
                 return RefreshType.NONE;
             }
             
             const reader = activePanel.getReader();
             if ( reader.readerName === files[0].fstype ) {
-                for( let item of files ) {
-                    try {
-                        await reader.copy( item, activePanel.currentPath(), progressStatus );
-                    } catch( err ) {
+                let targetPath = activePanel.currentPath();
+                let i = 0, skipAll = false, overwriteAll = false;
+                for ( let src of files ) {
+                    if ( !reader.exist(src.fullname) ) {
+                        let result = await messageBox( {
+                            title: "ERROR",
+                            msg: `'${src.name}' file NOT exists. What would you do want?`,
+                            button: [ "Skip", "Cancel" ]
+                        }, { parent: this.baseWidget });
+                        if ( result === "Cancel" ) {
+                            break;
+                        }
+                        continue;
+                    }
+
+                    if ( !overwriteAll && reader.exist( targetPath.fullname + reader.sep() + src.name ) ) {
+                        let result = await messageBox( {
+                            title: "Copy",
+                            msg: `'${src.name}' file exists. What would you do want?`,
+                            button: [ "Overwrite", "Skip", "Rename", "Overwrite All", "Skip All" ]
+                        }, { parent: this.baseWidget });
                         
+                        if ( result === "Skip" ) {
+                            continue;
+                        }
+                        if ( result === "Overwrite All") {
+                            overwriteAll = true;
+                        }
+                        if ( result === "Skip All") {
+                            break;
+                        }
+                        if ( result === "Rename" ) {
+                            // TODO !!!
+                            continue;
+                        }
+                    }
+
+                    try {
+                        await reader.copy( src, activePanel.currentPath(), progressStatus );
+                    } catch( err ) {
+                        let result = await messageBox( {
+                            title: "Copy",
+                            msg: "ERROR: " + err,
+                            button: [ "OK", "Cancel" ]
+                        }, { parent: this.baseWidget });
+                        if ( result === "Cancel" ) {
+                            break;
+                        }
+                    } finally {
+                        log.debug( "Copy - [%s]", src.fullname );
                     }
                 }
             }

@@ -131,6 +131,17 @@ export class FileReader extends Reader {
         });
     }
 
+    sep() {
+        return path.sep;
+    }
+
+    exist( source: File | string ) {
+        if ( source instanceof File ) {
+            return fs.existsSync( source.fullname );
+        }
+        return fs.existsSync( source );
+    }
+
     copy( source: File, targetDir: File, progress: ProgressFunc = null ): Promise<void> {
         let reader = this;
         return new Promise( ( resolve, reject ) => {

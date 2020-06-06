@@ -29,7 +29,9 @@ export abstract class Reader {
     currentDir(): File {
         return this.curDir;
     }
-
+    
+    abstract sep(): string;
+    abstract exist( source: File | string ): boolean;
     abstract copy( source: File, targetDir: File, progress ?: ProgressFunc ): Promise<void>;
     abstract move( source: File, targetDir: File ): Promise<void>;
     abstract remove( source: File ): Promise<void>;
