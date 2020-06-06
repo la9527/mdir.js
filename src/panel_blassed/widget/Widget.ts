@@ -21,6 +21,10 @@ export class Widget {
         });
     }
 
+    get screen() {
+        return this.box?.screen;
+    }
+
     setFront() {
         this._box.setFront();
     }

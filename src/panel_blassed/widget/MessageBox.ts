@@ -125,6 +125,7 @@ export class MessageBox extends Widget {
 
         mainFrame().keyLock = true;
         this.setFocus();
+        this.box.screen.render();
     }
 
     setMessageOption( msgOption ) {
@@ -158,8 +159,10 @@ export function messageBox( msgOpt: IMessageOption, opts: Widgets.BoxOptions ): 
             title: msgOpt.title, 
             msg: msgOpt.msg, button: msgOpt.button,
             result: (button) => {
+                opts.parent.screen.render();
                 resolve( button );
             }
         }, opts);
+        opts.parent.screen.render();
     });
 }

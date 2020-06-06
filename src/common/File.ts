@@ -1,9 +1,21 @@
 import { Color } from "./Color";
 import * as path from "path";
 
-export interface FileLink {
+export class FileLink {
     name: string;
     file: File;
+
+    constructor( name = null, file = null ) {
+        this.name = name;
+        this.file = file;
+    }
+
+    clone(): FileLink {
+        const link = new FileLink();
+        link.name = this.name;
+        link.file = this.file && this.file.clone();
+        return link;
+    }
 }
 
 export class File {
@@ -37,5 +49,20 @@ export class File {
 
     equal(file: File) {
         return file.fullname === this.fullname;
+    }
+
+    clone(): File {
+        let renew = new File();
+        renew.attr = this.attr;
+        renew.color = this.color;
+        renew.dir = this.dir;
+        renew.name = this.name;
+        renew.fullname = this.fullname;
+        renew.owner = this.owner;
+        renew.group = this.group;
+        renew.fstype = this.fstype;
+        renew.link = this.link && this.link.clone();
+        renew.error = this.error;
+        return renew;
     }
 }

@@ -1,5 +1,7 @@
 import { Reader } from "../common/Reader";
 import { File } from "../common/File";
+import { fileURLToPath } from "url";
+import { log } from "winston";
 
 export enum ClipBoard {
     CLIP_NONE,
@@ -11,21 +13,28 @@ let gSelection: Selection = null;
 
 export class Selection {
     private arrFiles: File[] = [];
-    private isExpandDir = true;
+    private selectedBaseDir: File = null;
+    private isExpandDir = false;
     private stateClipboard: ClipBoard = ClipBoard.CLIP_NONE;
 
     getClipboard() {
         return this.stateClipboard;
     }
 
-    set( files: File[], stateClipboard: ClipBoard ) {
+    getSelecteBaseDir(): File {
+        return this.selectedBaseDir;
+    }
+
+    set( files: File[], selectedBaseDir: File, stateClipboard: ClipBoard ) {
         this.arrFiles = files;
         this.stateClipboard = stateClipboard;
+        this.selectedBaseDir = selectedBaseDir;
+        this.isExpandDir = false;
     }
 
     clear() {
         this.arrFiles = [];
-        this.isExpandDir = true;
+        this.isExpandDir = false;
     }
 
     push( file: File ) {
@@ -53,7 +62,7 @@ export class Selection {
     }
 
     async expandDir(reader: Reader) {
-        if ( !this.isExpandDir || !reader ) {
+        if ( this.isExpandDir || !reader ) {
             return;
         }
 
@@ -78,6 +87,8 @@ export class Selection {
                     arrDirs.push( { dirFile: item, checked: false } );
                 }
             });
+
+            this.arrFiles = this.arrFiles.concat( files );
         }
 
         reader.readdir(beforeDir);

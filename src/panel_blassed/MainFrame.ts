@@ -41,6 +41,7 @@ export class MainFrame {
     private activeFrameNum = 0;
     private commandBox: CommandBox = null;
     public keyLock = false;
+    private _keyLockScreen = false;
 
     constructor() {
         this.screen = blessed.screen({
@@ -140,6 +141,9 @@ export class MainFrame {
     eventStart() {
         this.screen.off('keypress');
         this.screen.on('keypress', async (ch, keyInfo) => {
+            if ( this._keyLockScreen ) {
+                return;
+            }
             if ( this.keyLock ) {
                 log.debug( "keyLock !!!");
                 return;
@@ -152,6 +156,7 @@ export class MainFrame {
             log.info( "KEYPRESS [%s] - START", keyInfo.name );
 
             let starTime = Date.now();
+            this._keyLockScreen = true;
 
             let type: RefreshType = await keyMappingExec( this.activeFocusObj(), keyInfo );
             if ( type === RefreshType.NONE ) {
@@ -159,6 +164,7 @@ export class MainFrame {
             }
             this.execRefreshType( type );
             log.info( "KEYPRESS [%s] - (%dms)", keyInfo.name, Date.now() - starTime );
+            this._keyLockScreen = false;
         });
     }
 
@@ -175,9 +181,13 @@ export class MainFrame {
         }
     };
 
-    refresh() {
+    async refreshPromise() {
         this.screen.realloc();
-        // this.baseWidget.render();
+        for ( let item of this.blessedFrames ) {
+            if ( item instanceof BlessedPanel ) {
+                await item.refresh();
+            }
+        }
         this.screen.render();
     }
 
@@ -264,9 +274,9 @@ export class MainFrame {
         return new Promise( (resolve, reject) => {
             let program = this.screen.program;
             this.screen.leave();
-            program.once( 'keypress', () => {
+            program.once( 'keypress', async () => {
                 this.screen.enter();
-                this.refresh();
+                await this.refreshPromise();
                 resolve();
             });
         });
@@ -302,9 +312,9 @@ export class MainFrame {
                     stdout && process.stdout.write(stdout);
                 }
                 console.log( colors.white("Press any key to return m.js") );
-                program.once( 'keypress', () => {
+                program.once( 'keypress', async () => {
                     this.screen.enter();
-                    this.refresh();
+                    await this.refreshPromise();
                     resolve();
                 });
             });
@@ -334,25 +344,75 @@ export class MainFrame {
         return result || RefreshType.OBJECT;
     }
 
-    clipboardCut() {
-        selection().set( this.activePanel().getSelectFiles(), ClipBoard.CLIP_CUT );
-    }
-
-    clipboardCopy() {
-        selection().set( this.activePanel().getSelectFiles(), ClipBoard.CLIP_COPY );
-    }
-
-    async clipboardPastePromise() {
-        const files = selection().getFiles();
-        if ( !files || files.length === 0 ) {
+    async removePromise() {
+        let result = await messageBox( { title: "Question", msg: "Do you want to delete the selected files?", button: [ "OK", "Cancel" ] }, { parent: this.baseWidget } );
+        if ( result === "Cancel" ) {
             return RefreshType.NONE;
         }
 
+        let select = new Selection();
+        select.set( this.activePanel().getSelectFiles(), this.activePanel().currentPath(), ClipBoard.CLIP_NONE );
+
+        const reader = this.activePanel().getReader();
+        await select.expandDir( reader );
+
+        let files = select.getFiles();
+        if ( !files || files.length === 0 ) {
+            log.debug( "REMOVE FILES: 0");
+            return RefreshType.NONE;
+        }
+
+        // Sort in filename length descending order.
+        files.sort( (a, b) => b.fullname.length - a.fullname.length);
+
+        for ( let src of files ) {
+            try {
+                log.debug( "REMOVE : [%s]", src.fullname);
+                await reader.remove( src );
+            } catch ( err ) {
+                let result = await messageBox( {
+                    title: "Remove Error",
+                    msg: err,
+                    button: [ "Continue", "Cancel" ]
+                }, { parent: this.baseWidget });
+                if ( result === "Cancel" ) {
+                    break;
+                }
+            }
+        }
+        this.refreshPromise();
+        return RefreshType.ALL;
+    }
+
+    clipboardCut() {
+        selection().set( this.activePanel().getSelectFiles(), this.activePanel().currentPath(), ClipBoard.CLIP_CUT );
+    }
+
+    clipboardCopy() {
+        selection().set( this.activePanel().getSelectFiles(), this.activePanel().currentPath(), ClipBoard.CLIP_COPY );
+    }
+
+    async clipboardPastePromise() {
+        const activePanel = this.activePanel();
+        const clipSelected = selection();
+        
+        await clipSelected.expandDir( activePanel.getReader() );
+
+        let files = clipSelected.getFiles();
+        if ( !files || files.length === 0 ) {
+            log.debug( "CLIPBOARD Length: 0");
+            return RefreshType.NONE;
+        }
+
+        // Sort in filename length ascending order.
+        files.sort( (a, b) => a.fullname.length - b.fullname.length);
+
+        const sourceBasePath = clipSelected.getSelecteBaseDir().fullname;
+
         const progressStatus: ProgressFunc = ( source, copySize, size ) => {
-            
+
         };
 
-        const activePanel = this.activePanel();
         if ( activePanel instanceof BlessedPanel ) {
             if ( files[0].dirname === activePanel.currentPath().fullname ) {
                 log.error( "source file and target file are the same." );
@@ -361,6 +421,7 @@ export class MainFrame {
             }
             
             const reader = activePanel.getReader();
+            log.debug( "READER : [%s] => [%s]", reader.readerName, files[0].fstype );
             if ( reader.readerName === files[0].fstype ) {
                 let targetPath = activePanel.currentPath();
                 let i = 0, skipAll = false, overwriteAll = false;
@@ -377,7 +438,12 @@ export class MainFrame {
                         continue;
                     }
 
-                    if ( !overwriteAll && reader.exist( targetPath.fullname + reader.sep() + src.name ) ) {
+                    let targetBasePath = activePanel.currentPath().fullname;
+
+                    let target = src.clone();
+                    target.fullname = targetBasePath + target.fullname.substr(sourceBasePath.length);
+                    
+                    if ( !overwriteAll && reader.exist( target.fullname ) ) {
                         let result = await messageBox( {
                             title: "Copy",
                             msg: `'${src.name}' file exists. What would you do want?`,
@@ -400,7 +466,13 @@ export class MainFrame {
                     }
 
                     try {
-                        await reader.copy( src, activePanel.currentPath(), progressStatus );
+                        if ( src.dir ) {
+                            log.debug( "COPY DIR - [%s] => [%s]", src.fullname, target.fullname );
+                            reader.mkdir( target );
+                        } else {
+                            log.debug( "COPY - [%s] => [%s]", src.fullname, target.fullname );
+                            await reader.copy( src, target, progressStatus );
+                        }
                     } catch( err ) {
                         let result = await messageBox( {
                             title: "Copy",
@@ -416,6 +488,7 @@ export class MainFrame {
                 }
             }
         }
+        await this.refreshPromise();
         return RefreshType.ALL;
     }
 

@@ -32,7 +32,7 @@ interface IAllKeyMappingInfo {
 
 export const KeyMappingInfo: IAllKeyMappingInfo = {
     Common: {
-        refresh: "f5",
+        refreshPromise: "f5",
         split: [ "C-w" ],
         nextWindow: [ "tab", "C-e" ],
         mcdPromise: "f10",
@@ -40,7 +40,8 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         quit: "C-q",
         clipboardCopy: "C-c",
         clipboardCut: "C-x",
-        clipboardPastePromise: "C-v"
+        clipboardPastePromise: "C-v",
+        removePromise: "C-d"
     },
     Menu: {
         keyUp: "up",
@@ -52,7 +53,7 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         keyHome: "home",
         keyEnd: "end",
         close: "escape",
-        keyEnterPromise: [ "return" ]
+        keyEnterPromise: [ "enter" ]
     },
     Panel: {
         keyUp: "up",
@@ -63,7 +64,7 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         keyPageDown: "pagedown",
         keyHome: "home",
         keyEnd: "end",
-        keyEnterPromise: [ "return" ],
+        keyEnterPromise: [ "enter" ],
         toggleSelect: "space",
         commandBoxShow: "/",
         consoleViewPromise: "escape",
@@ -105,7 +106,7 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         keyLeft: "left",
         keyHome: "home",
         keyEnd: "end",
-        keyEnterPromise: [ "return" ],
+        keyEnterPromise: [ "enter" ],
         keyEscapePromise: "escape",
         subDirScanPromise: [
             {
@@ -127,7 +128,7 @@ export const FuncKeyMappingInfo = {
         F2: { name: "Rename", func: "Panel.rename" },
         F3: { name: "Editor", func: "Common.editor" },
         F4: { name: "Vim", func: "Command.vim" },
-        F5: { name: "Refresh", func: "Common.refresh" },
+        F5: { name: "Refresh", func: "Common.refreshPromise" },
         F6: { name: "Remote", func: "Common.remote" },
         F7: { name: "Mkdir", func: "Panel.mkdir", },
         F8: { name: "Remove", func: "Panel.remove" },
@@ -139,7 +140,7 @@ export const FuncKeyMappingInfo = {
     Mcd: {
         F1: { name: "Help", func: "Common.help" },
         F2: { name: "Rename", func: "Mcd.rename" },
-        F5: { name: "Refresh", func: "Common.refresh" },
+        F5: { name: "Refresh", func: "Common.refreshPromise" },
         F7: { name: "Mkdir", func: "Mcd.mkdir", },
         F8: { name: "Remove", func: "Mcd.rename" },
         F9: { name: "Size", func: "Mcd.size" },
@@ -222,10 +223,15 @@ export async function keyMappingExec( baseObject, keyInfo ): Promise<RefreshType
         if ( baseObject[ (method as string) ] ) {
             log.info( "keypress [%s] - method: [ %s.%s(%s) ]", keyName, baseObject.viewName, method, param ? param.join(",") : "" );
             let result = RefreshType.NONE;
-            if ( /(p|P)romise/.exec(method as string) ) {
-                result = await baseObject[ (method as string) ].apply(baseObject, param);
-            } else {
-                result = baseObject[ (method as string) ].apply(baseObject, param);
+            try {
+                if ( /(p|P)romise/.exec(method as string) ) {
+                    result = await baseObject[ (method as string) ].apply(baseObject, param);
+                } else {
+                    result = baseObject[ (method as string) ].apply(baseObject, param);
+                }
+                log.error( "RUNNING SUCCESS : %s", result );
+            } catch( e ) {
+                log.error( "RUNNING FAIL : %s", e.trace );
             }
             return result || RefreshType.OBJECT;
         } else {

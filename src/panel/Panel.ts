@@ -62,8 +62,8 @@ export abstract class Panel extends AbstractPanel {
         }
     }
 
-    refresh() {
-        
+    async refresh() {
+        await this.read( this.currentPath() );
     }
 
     abstract initRender(): void;

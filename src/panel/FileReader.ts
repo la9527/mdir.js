@@ -3,7 +3,7 @@ import * as path from "path";
 import * as os from "os";
 import * as drivelist from "drivelist";
 
-import { File } from "../common/File";
+import { File, FileLink } from "../common/File";
 import { Logger } from "../common/Logger";
 import { Reader, IMountList, ProgressFunc } from "../common/Reader";
 
@@ -79,7 +79,7 @@ export class FileReader extends Reader {
             if ( stat.isSymbolicLink() ) {
                 try {
                     const linkOrgName = fs.readlinkSync( file.fullname );
-                    file.link = { name: path.basename( linkOrgName ), file: null };
+                    file.link = new FileLink( path.basename( linkOrgName ) );
 
                     const linkStat = fs.lstatSync( linkOrgName );
                     if ( linkStat && !linkStat.isSymbolicLink() ) {
@@ -141,6 +141,27 @@ export class FileReader extends Reader {
         }
         return fs.existsSync( source );
     }
+
+    mkdir( path: string | File ) {
+        if ( path instanceof File ) {
+            if ( !path.dir ) {
+                return;
+            }
+            let mode = 0;
+            mode = mode | (path.attr[1] === 'r' ? fs.constants.S_IRUSR : 0);
+            mode = mode | (path.attr[2] === 'w' ? fs.constants.S_IWUSR : 0);
+            mode = mode | (path.attr[3] === 'x' ? fs.constants.S_IXUSR : 0);
+            mode = mode | (path.attr[4] === 'r' ? fs.constants.S_IRGRP : 0);
+            mode = mode | (path.attr[5] === 'w' ? fs.constants.S_IWGRP : 0);
+            mode = mode | (path.attr[6] === 'x' ? fs.constants.S_IWGRP : 0);
+            mode = mode | (path.attr[7] === 'r' ? fs.constants.S_IROTH : 0);
+            mode = mode | (path.attr[8] === 'w' ? fs.constants.S_IWOTH : 0);
+            mode = mode | (path.attr[9] === 'x' ? fs.constants.S_IXOTH : 0);
+            fs.mkdirSync( path.fullname, { mode } );
+        } else {
+            fs.mkdirSync( path );
+        }
+    }
     
     rename( source: File, rename: string ): Promise<void> {
         return new Promise( (resolve, reject) => {
@@ -154,16 +175,16 @@ export class FileReader extends Reader {
         });
     }
 
-    copy( source: File, targetDir: File, progress: ProgressFunc = null ): Promise<void> {
+    copy( source: File, target: File, progress: ProgressFunc = null ): Promise<void> {
         let reader = this;
         return new Promise( ( resolve, reject ) => {
             let srcFile = source.link ? source.link.file : source;
-            if ( srcFile.dir || !targetDir.dir ) {
+            if ( srcFile.dir || target.dir ) {
                 reject("Unable to copy from a source directory.");
                 return;
             }
 
-            if ( srcFile.dirname === targetDir.fullname ) {
+            if ( srcFile.dirname === target.fullname ) {
                 log.debug( "source file and target file are the same." );
                 resolve();
                 return;
@@ -171,7 +192,7 @@ export class FileReader extends Reader {
 
             let chunkCopyLength = 0;
             let rd = fs.createReadStream(srcFile.fullname);
-            let wr = fs.createWriteStream(targetDir.fullname + "/" + srcFile.name);
+            let wr = fs.createWriteStream(target.fullname);
 
             let rejectFunc = (err) => {
                 rd.destroy();
@@ -187,9 +208,9 @@ export class FileReader extends Reader {
 
             const reportProgress = new Transform({
                 transform(chunk: Buffer, encoding, callback) {
-                    chunkCopyLength =+ chunk.length;
+                    chunkCopyLength += chunk.length;
                     progress && progress( srcFile, chunkCopyLength, srcFile.size );
-                    log.debug( "Copy to: %s => %s (%d / %d)", srcFile.fullname, targetDir.fullname, chunkCopyLength, srcFile.size );
+                    log.debug( "Copy to: %s => %s (%d / %d)", srcFile.fullname, target.fullname, chunkCopyLength, srcFile.size );
                     if ( reader.isUserCanceled ) {
                         rd.destroy();
                     }
@@ -202,13 +223,23 @@ export class FileReader extends Reader {
 
     remove( source: File ): Promise<void> {
         return new Promise( (resolve, reject) => {
-            fs.unlink( source.fullname, (err) => {
-                if ( err ) {
-                    reject( err );
-                } else {
-                    resolve();
-                }
-            });
+            if ( source.dir ) {
+                fs.rmdir( source.fullname, (err) => {
+                    if ( err ) {
+                        reject( err );
+                    } else {
+                        resolve();
+                    }
+                });
+            } else {
+                fs.unlink( source.fullname, (err) => {
+                    if ( err ) {
+                        reject( err );
+                    } else {
+                        resolve();
+                    }
+                });
+            }
         });
     }
 }
