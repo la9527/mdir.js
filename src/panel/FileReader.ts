@@ -141,6 +141,18 @@ export class FileReader extends Reader {
         }
         return fs.existsSync( source );
     }
+    
+    rename( source: File, rename: string ): Promise<void> {
+        return new Promise( (resolve, reject) => {
+            fs.rename( source.fullname, rename, (err) => {
+                if ( err ) {
+                    reject( err );
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
 
     copy( source: File, targetDir: File, progress: ProgressFunc = null ): Promise<void> {
         let reader = this;
@@ -158,8 +170,8 @@ export class FileReader extends Reader {
             }
 
             let chunkCopyLength = 0;
-            var rd = fs.createReadStream(srcFile.fullname);
-            var wr = fs.createWriteStream(targetDir.fullname + "/" + srcFile.name);
+            let rd = fs.createReadStream(srcFile.fullname);
+            let wr = fs.createWriteStream(targetDir.fullname + "/" + srcFile.name);
 
             let rejectFunc = (err) => {
                 rd.destroy();
@@ -185,18 +197,6 @@ export class FileReader extends Reader {
                 }
             });
             rd.pipe( reportProgress ).pipe(wr);
-        });
-    }
-
-    move( source: File, targetDir: File ): Promise<void> {
-        return new Promise( (resolve, reject) => {
-            fs.rename( source.fullname, targetDir.fullname, (err) => {
-                if ( err ) {
-                    reject( err );
-                } else {
-                    resolve();
-                }
-            });
         });
     }
 

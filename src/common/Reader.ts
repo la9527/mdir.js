@@ -1,4 +1,5 @@
 import { File } from "./File";
+import { ReadStream, WriteStream } from "fs";
 
 export interface IMountList {
     device: string;
@@ -32,7 +33,7 @@ export abstract class Reader {
     
     abstract sep(): string;
     abstract exist( source: File | string ): boolean;
+    abstract rename( source: File, rename: string ): Promise<void>;
     abstract copy( source: File, targetDir: File, progress ?: ProgressFunc ): Promise<void>;
-    abstract move( source: File, targetDir: File ): Promise<void>;
     abstract remove( source: File ): Promise<void>;
 }
