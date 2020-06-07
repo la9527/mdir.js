@@ -24,6 +24,7 @@ export class MessageBox extends Widget {
     private color = null;
     private btnColor = null;
     private focusBtnNum: number = 0;
+    private buttonWidth = 0;
 
     constructor( messageOption: IMessageOption, opts: Widgets.BoxOptions | any ) {
         super( { ...opts, top: "center", left: "center", width: "50%", height: "50%", border: "line", clickable: true });
@@ -37,13 +38,18 @@ export class MessageBox extends Widget {
     resize() {
         const MIN_WIDTH = 50;
         const MAX_WIDTH = this.box.screen.width as number;
+
+        const MIN_BUTTON_WIDTH = 12;
+        this.buttonWidth = this.msgOption.button.reduce( (pre, item) => pre < item.length + 2 ? item.length + 2 : pre, MIN_BUTTON_WIDTH);
+
+        let buttonAllWidth = this.msgOption.button.length * (this.buttonWidth + 2);
         
         let widthTitle = Math.min( strWidth(this.msgOption.title), MAX_WIDTH );
         let msgLines = this.msgOption.msg.split("\n");
         let widthMsg = msgLines.map( i => strWidth(i) ).reduce( (pre: number, cur: string ) => {
             return Math.min( Math.max(pre, strWidth(cur)), MAX_WIDTH );
         }, MIN_WIDTH );
-        this.box.width = Math.max(widthTitle, widthMsg);
+        this.box.width = Math.max( buttonAllWidth, Math.max(widthTitle, widthMsg) );
         this.box.height = Math.min(msgLines.length + 7, 14);
 
         log.debug( "%d %d, %d", msgLines.length, this.box.width, this.box.height );
@@ -52,6 +58,8 @@ export class MessageBox extends Widget {
     init() {
         this.color = ColorConfig.instance().getBaseColor("dialog");
         this.btnColor = ColorConfig.instance().getBaseTwoColor("dialog", "func");
+
+        log.debug( "this.color : %s", this.color);
 
         this.box.style = { ...this.color.blessed, border: this.color.blessed };
         this.titleWidget = new Widget( { 
@@ -77,10 +85,11 @@ export class MessageBox extends Widget {
 
         this.resize();
 
-        const buttonWidth = 12;
+        log.debug( "buttonWidth : %d", this.buttonWidth);
+
         let len = this.msgOption.button.length;
         this.msgOption.button.map( (item, i) => {
-            let left = (Math.round((this.box.width as number) / (len+1)) * (i+1)) - Math.round(buttonWidth / 2);
+            let left = (Math.floor((this.box.width as number) / (len+1)) * (i+1)) - Math.floor(this.buttonWidth / 2);
             this.buttonWidgets.push( 
                 new Widget( {
                     parent: this, 
@@ -90,7 +99,7 @@ export class MessageBox extends Widget {
                     clickable: true,
                     bottom: 1, 
                     height: 1, 
-                    width: buttonWidth,
+                    width: this.buttonWidth,
                     style: i === 0 ? this.btnColor.blessedReverse : this.btnColor.blessed
                 })
             );

@@ -44,17 +44,6 @@ export class MainFrame {
     private _keyLockScreen = false;
 
     constructor() {
-        this.screen = blessed.screen({
-            smartCSR: true,
-            fullUnicode: true,
-            dockBorders: false,
-            useBCE: true,
-            ignoreDockContrast: true,
-            debug: false,
-            // dump: true,
-            // log: process.env.HOME + "/.m/m2.log"
-        });
-
         menuKeyMapping( KeyMappingInfo, menuConfig );
     }
 
@@ -107,6 +96,17 @@ export class MainFrame {
     }
 
     async start() {
+        this.screen = blessed.screen({
+            smartCSR: true,
+            fullUnicode: true,
+            dockBorders: false,
+            useBCE: true,
+            ignoreDockContrast: true,
+            debug: false,
+            // dump: true,
+            // log: process.env.HOME + "/.m/m2.log"
+        });
+        
         this.baseWidget = new Widget( { parent: this.screen, left: 0, top: 0, width: "100%", height: "100%" } );
         this.blessedMenu = new BlessedMenu({ parent: this.baseWidget });
 
