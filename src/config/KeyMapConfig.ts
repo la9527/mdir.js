@@ -41,7 +41,8 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         clipboardCopy: "C-c",
         clipboardCut: "C-x",
         clipboardPastePromise: "C-v",
-        removePromise: "C-d"
+        removePromise: "C-d",
+        consoleViewPromise: "escape"
     },
     Menu: {
         keyUp: "up",
@@ -67,7 +68,6 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         keyEnterPromise: [ "enter" ],
         toggleSelect: "space",
         commandBoxShow: "/",
-        consoleViewPromise: "escape",
         setViewColumn: [
             {
                 key: "M-0",
@@ -261,11 +261,18 @@ export function keyHumanReadable(key: string): string {
             return "Shift+" + p2.toUpperCase();
         });
     }
-    if ( key === "pagedown" ) return "PgDn";
-    if ( key === "pageup" ) return "PgUp";
-    if ( key === "insert" ) return "Ins";
-    if ( key === "delete" ) return "Del";
-    if ( key === "home" ) return "Home";
+
+    const resultKeyInfo = {
+        pagedown: "PgDn",
+        pageup: "PgUp",
+        insert: "Ins",
+        delete: "Del",
+        home: "Home",
+        escape: "ESC"
+    };
+    if ( resultKeyInfo[ key ] ) {
+        return resultKeyInfo[ key ];
+    }
     return key.toUpperCase();
 }
 

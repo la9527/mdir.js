@@ -292,6 +292,6 @@ export class BlessedPanel extends Panel implements IBlessedView {
     }
 
     async consoleViewPromise() {
-        await mainFrame().consoleView();
+        await mainFrame().consoleViewPromise();
     }
 }

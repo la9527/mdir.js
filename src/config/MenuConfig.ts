@@ -28,20 +28,20 @@ export const menuConfig: IFrameMenuConfig = {
             { name: "Run", method: "Panel.keyEnterPromise" },
             { name: "Run(select)" },
             "-",
-            { name: "View Console" }
+            { name: "View Console", method: "Common.consoleViewPromise" }
         ],
         File: [
             { name : "New" },
             "-",
-            { name: "ClipCopy" },
-            { name: "ClipCut" },
-            { name: "ClipPaste" },
+            { name: "Copy", method: "Common.clipboardCopy" },
+            { name: "Cut", method: "Common.clipboardCut" },
+            { name: "Paste", method: "Common.clipboardPastePromise" },
             "-",
             { name: "Find" },
             { name: "Diff" }
         ],
         Directory: [
-            { name: "Mcd", method: "Common.runMcd" },
+            { name: "Mcd", method: "Common.mcdPromise" },
             { name: "Qcd" },
             "-",
             { name: "Mkdir" },
@@ -53,7 +53,7 @@ export const menuConfig: IFrameMenuConfig = {
             { name: "Forward" }
         ],
         View: [
-            { name: "Refresh", method: "Common.refresh" },
+            { name: "Refresh", method: "Common.refreshPromise" },
             { name: "Column AUTO", method: "Panel.setViewColumn", funcParam: [ 0 ] },
             "-",
             { name: "Column 1", method: "Panel.setViewColumn", funcParam: [ 1 ] },

@@ -274,7 +274,7 @@ export class MainFrame {
         return RefreshType.ALL;
     }
 
-    consoleView(): Promise<void> {
+    consoleViewPromise(): Promise<void> {
         return new Promise( (resolve, reject) => {
             let program = this.screen.program;
             this.screen.leave();
@@ -339,6 +339,8 @@ export class MainFrame {
 
         let result = RefreshType.NONE;
         if ( object && object[ (methodName as string) ] ) {
+            log.info( "methodRun [%s] - method: [ %s.%s(%s) ]", methodString, object.viewName, methodName, param ? param.join(",") : "" );
+
             if ( /(p|P)romise/.exec(methodName as string) ) {
                 result = await object[ (methodName as string) ].apply(object, param);
             } else {

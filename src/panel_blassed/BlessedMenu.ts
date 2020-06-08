@@ -52,7 +52,7 @@ class BlassedMenuBox extends Widget {
                     keyHumanReadable((item as ISubMenuConfig).key || "");
 
                 let style = i === this.selectPos ? this.menuColor.blessedReverse : this.menuColor.blessed;
-                lineBox = text( { ...opt, top: i, content: (item as ISubMenuConfig).name + "{|}" + keyName, style, tags: true } );
+                lineBox = text( { ...opt, top: i, content: " " + (item as ISubMenuConfig).name + "{|}" + keyName, style, tags: true } );
             }
             this.menuBox.push( lineBox );
         });
