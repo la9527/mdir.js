@@ -3,8 +3,13 @@ import { BlessedProgram, Widgets, box, text, colors } from "neo-blessed";
 import { Logger } from "../common/Logger";
 import { messageBox } from "../panel_blassed/widget/MessageBox";
 import mainFrame from "../panel_blassed/MainFrame";
+import { ProgressBox } from "../panel_blassed/widget/ProgressBox";
+import { StringUtils } from '../common/StringUtils';
+import { Color } from "../common/Color";
 
 const log = Logger( "TEST" );
+
+// console.log( StringUtils.ellipsis("ABCDEFGHJKLMNOPRSTUVWXYZ1234567890", 20) );
 
 const screen = blessed.screen({
     smartCSR: true,
@@ -26,6 +31,7 @@ const screen = blessed.screen({
         screen.render();
     });
 
+    /*
     try {
         let result = await messageBox( {
             title: "Copy",
@@ -35,4 +41,24 @@ const screen = blessed.screen({
     } catch( e ) {
         log.error( e );
     }
+    */
+    const progressBox = new ProgressBox( { title: "Copy", msg: "Calculating...", cancel: () => {
+        log.debug( "Cancel Button !!!");
+        screen.render();
+    }}, { parent: screen });
+    progressBox.init();
+
+    let i = 0;
+    let interval = setInterval( () => {
+        let lastText = (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(i*1000).trim()) + "/" + 
+                        (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(i*1000).trim()) +
+                        `(${StringUtils.sizeConvert(121242,false).trim()}/s)`;
+        // progressBox.updateProgress( source.fullname, lastText, copyBytes, fullFileSize );
+        progressBox.updateProgress("ABCDEFGHJKLMNOPRSTUVWXYZ1234567890ABCDEFGHJKLMNOPRSTUVWXYZ1234567890ABCDEFGHJKLMNOPRSTUVWXYZ1234567890ABCDEFGHJKLMNOPRSTUVWXYZ1234567890", lastText, ++i, 100);
+        if ( i === 100 ) {
+            clearInterval( interval );
+        }
+    }, 50);
+
+    screen.render();
 })();

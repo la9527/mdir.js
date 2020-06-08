@@ -3007,7 +3007,7 @@ export namespace Widgets {
         /**
          * same as `filled`.
          */
-        value: number;
+        value?: number;
 
         /**
          * enable key support.

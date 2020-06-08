@@ -8,6 +8,7 @@ const log = Logger("main");
 export class Widget {
     private _box: Widgets.BoxElement;
     _viewCount: number = -1;
+    protected destroyed = false;
 
     constructor( opts: Widgets.BoxOptions | any ) {
         if ( opts.parent && (opts.parent as any).box ) {
@@ -16,7 +17,7 @@ export class Widget {
             this._box = box( { ...opts, tags: true } );
         }
         this._viewCount = opts?.viewCount;
-        this._box.on( "prerender", () => {
+        this.on( "prerender", () => {
             this.draw();
         });
     }
@@ -61,6 +62,7 @@ export class Widget {
     destroy() {
         this._box.off();
         this._box.destroy();
+        this.destroyed = true;
     }
 
     render() {
@@ -185,6 +187,13 @@ export class Widget {
     set height(num: string | number) {
         this._box.height = num;
     }
+    set bottom(bottom: string | number) {
+        this._box.bottom = bottom;
+    }
+    get bottom() {
+        return this._box.bottom;
+    }
+
     set parent( parent ) {
         this._box.parent = parent;
     }

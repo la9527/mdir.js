@@ -209,7 +209,7 @@ export class FileReader extends Reader {
             const reportProgress = new Transform({
                 transform(chunk: Buffer, encoding, callback) {
                     chunkCopyLength += chunk.length;
-                    progress && progress( srcFile, chunkCopyLength, srcFile.size );
+                    progress && progress( srcFile, chunkCopyLength, srcFile.size, chunk.length );
                     log.debug( "Copy to: %s => %s (%d / %d)", srcFile.fullname, target.fullname, chunkCopyLength, srcFile.size );
                     if ( reader.isUserCanceled ) {
                         rd.destroy();

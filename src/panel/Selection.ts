@@ -61,9 +61,9 @@ export class Selection {
         return this.size;
     }
 
-    async expandDir(reader: Reader) {
+    async expandDir(reader: Reader): Promise<boolean> {
         if ( this.isExpandDir || !reader ) {
-            return;
+            return false;
         }
 
         interface IDir {
@@ -74,12 +74,23 @@ export class Selection {
         let arrDirs: IDir[] = [];
         this.arrFiles.forEach( (item) => item.dir && !item.link && arrDirs.push( { dirFile: item, checked: false } ) );
 
+        let result = false;
+
         const beforeDir = reader.currentDir();
         for ( ;; ) {
             let dir = arrDirs.find( (item) => !item.checked );
-            if ( !dir ) break;
+            if ( !dir ) {
+                result = true;
+                break;
+            }
 
             dir.checked = true;
+
+            if ( reader.isUserCanceled ) {
+                reader.isUserCanceled = false;
+                result = false;
+                break;
+            }
 
             const files = await reader.readdir( dir.dirFile );
             files && files.forEach( (item) => {
@@ -93,6 +104,7 @@ export class Selection {
 
         reader.readdir(beforeDir);
         this.isExpandDir = true;
+        return true;
     }
 
     static instance() {

@@ -16,6 +16,10 @@ import * as colors from "colors";
 import selection, { Selection, ClipBoard } from "../panel/Selection";
 import { ProgressFunc } from "../common/Reader";
 import { messageBox } from "./widget/MessageBox";
+import { ProgressBox } from "./widget/ProgressBox";
+import { StringUtils } from "../common/StringUtils";
+import { Color } from "../common/Color";
+import { resolve } from "dns";
 
 const log = Logger("MainFrame");
 
@@ -380,7 +384,7 @@ export class MainFrame {
                 }
             }
         }
-        this.refreshPromise();
+        await this.refreshPromise();
         return RefreshType.ALL;
     }
 
@@ -396,26 +400,52 @@ export class MainFrame {
         const activePanel = this.activePanel();
         const clipSelected = selection();
         
-        await clipSelected.expandDir( activePanel.getReader() );
-
         let files = clipSelected.getFiles();
         if ( !files || files.length === 0 ) {
             log.debug( "CLIPBOARD Length: 0");
             return RefreshType.NONE;
         }
 
+        const progressBox = new ProgressBox( { title: "Copy", msg: "Calculating...", cancel: () => {
+            activePanel.getReader().isUserCanceled = true;
+        }}, { parent: this.baseWidget } );
+        this.screen.render();
+        await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
+        
+        if ( await clipSelected.expandDir( activePanel.getReader() ) === false ) {
+            return RefreshType.NONE;
+        }
+        
+        files = clipSelected.getFiles();
+
         // Sort in filename length ascending order.
         files.sort( (a, b) => a.fullname.length - b.fullname.length);
 
+        const fullFileSize = files.reduce( (sum, item) => sum + item.size, 0 );
         const sourceBasePath = clipSelected.getSelecteBaseDir().fullname;
 
-        const progressStatus: ProgressFunc = ( source, copySize, size ) => {
-
+        let copyBytes = 0;
+        let befCopyInfo = { beforeTime: Date.now(), copyBytes };
+        
+        let refreshTimeMs = 300;
+        const progressStatus: ProgressFunc = ( source, copySize, size, chunkLength ) => {
+            copyBytes += chunkLength;
+            let repeatTime = Date.now() - befCopyInfo.beforeTime;
+            if ( repeatTime > refreshTimeMs ) {
+                let bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
+                let lastText = (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + "/" + 
+                                (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(fullFileSize, false, 1).trim());
+                                // + `(${StringUtils.sizeConvert(bytePerSec, false, 1).trim()}s)`;
+                progressBox.updateProgress( source.fullname, lastText, copyBytes, fullFileSize );
+                befCopyInfo.beforeTime = Date.now();
+                befCopyInfo.copyBytes = copyBytes;
+            }
         };
 
         if ( activePanel instanceof BlessedPanel ) {
             if ( files[0].dirname === activePanel.currentPath().fullname ) {
                 log.error( "source file and target file are the same." );
+                progressBox.destroy();
                 await messageBox( { title: "ERROR", msg: "source and target directory are the same.", button: [ "OK" ] }, { parent: this.baseWidget } );
                 return RefreshType.NONE;
             }
@@ -426,6 +456,9 @@ export class MainFrame {
                 let targetPath = activePanel.currentPath();
                 let i = 0, skipAll = false, overwriteAll = false;
                 for ( let src of files ) {
+                    if ( progressBox.getCanceled() ) {
+                        break;
+                    }
                     if ( !reader.exist(src.fullname) ) {
                         let result = await messageBox( {
                             title: "ERROR",
@@ -488,6 +521,8 @@ export class MainFrame {
                 }
             }
         }
+
+        progressBox.destroy();
         await this.refreshPromise();
         return RefreshType.ALL;
     }

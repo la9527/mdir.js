@@ -2,9 +2,7 @@ import { Widget } from './Widget';
 import { Widgets, text, button } from 'neo-blessed';
 import { ColorConfig } from '../../config/ColorConfig';
 import { Logger } from "../../common/Logger";
-import { toUnicode } from 'punycode';
 import { strWidth } from "neo-blessed/lib/unicode";
-import { Z_BEST_COMPRESSION } from 'zlib';
 import mainFrame from '../MainFrame';
 
 const log = Logger("MessageBox");
@@ -16,6 +14,11 @@ interface IMessageOption {
     result?: (button) => void;
 }
 
+enum VIEW_TYPE {
+    HORIZONTAL,
+    VERTICAL
+}
+
 export class MessageBox extends Widget {
     private textWidget: Widget = null;
     private titleWidget: Widget = null;
@@ -25,6 +28,8 @@ export class MessageBox extends Widget {
     private btnColor = null;
     private focusBtnNum: number = 0;
     private buttonWidth = 0;
+
+    private buttonViewType: VIEW_TYPE = VIEW_TYPE.HORIZONTAL;
 
     constructor( messageOption: IMessageOption, opts: Widgets.BoxOptions | any ) {
         super( { ...opts, top: "center", left: "center", width: "50%", height: "50%", border: "line", clickable: true });
@@ -49,10 +54,39 @@ export class MessageBox extends Widget {
         let widthMsg = msgLines.map( i => strWidth(i) ).reduce( (pre: number, cur: string ) => {
             return Math.min( Math.max(pre, strWidth(cur)), MAX_WIDTH );
         }, MIN_WIDTH );
-        this.box.width = Math.max( buttonAllWidth, Math.max(widthTitle, widthMsg) );
-        this.box.height = Math.min(msgLines.length + 7, 14);
 
-        log.debug( "%d %d, %d", msgLines.length, this.box.width, this.box.height );
+        if ( buttonAllWidth < MAX_WIDTH ) {
+            this.buttonViewType = VIEW_TYPE.HORIZONTAL;            
+
+            this.box.width = Math.max( buttonAllWidth, Math.max(widthTitle, widthMsg) );
+            this.box.height = Math.min(msgLines.length + 7, 14);
+
+            log.debug( "RESIZE - HORIZONTAL %d (%d, %d)", msgLines.length, this.box.width, this.box.height );
+        } else {
+            this.buttonViewType = VIEW_TYPE.VERTICAL;
+            this.buttonWidth = Math.max(this.buttonWidth, 20);
+
+            this.box.width = Math.max(widthTitle, widthMsg);
+            this.box.height = Math.min(msgLines.length + 5 + this.msgOption.button.length, 14);
+            log.debug( "RESIZE - VERTICAL %d (%d, %d)", msgLines.length, this.box.width, this.box.height );
+        }
+
+        let len = this.msgOption.button.length;
+        this.buttonWidgets.map( (item, i) => {
+            if ( this.buttonViewType === VIEW_TYPE.HORIZONTAL ) {
+                let left = (Math.floor((this.box.width as number) / (len+1)) * (i+1)) - Math.floor(this.buttonWidth / 2);
+                item.bottom = 1;
+                item.left = left;
+                item.width = this.buttonWidth;
+            } else {
+                // VERITCAL
+                let left = Math.round((this.box.width as number) / 2) - Math.round(this.buttonWidth / 2);
+                let bottom = len - i - 1;
+                item.left = left;
+                item.bottom = bottom;
+                item.width = this.buttonWidth;
+            }
+        });
     }
 
     init() {
@@ -83,27 +117,46 @@ export class MessageBox extends Widget {
             align: "center" 
         } );
 
-        this.resize();
-
         log.debug( "buttonWidth : %d", this.buttonWidth);
 
         let len = this.msgOption.button.length;
         this.msgOption.button.map( (item, i) => {
-            let left = (Math.floor((this.box.width as number) / (len+1)) * (i+1)) - Math.floor(this.buttonWidth / 2);
-            this.buttonWidgets.push( 
-                new Widget( {
-                    parent: this, 
-                    tags: true, 
-                    content: "{center}" + item + "{/center}", 
-                    left, 
-                    clickable: true,
-                    bottom: 1, 
-                    height: 1, 
-                    width: this.buttonWidth,
-                    style: i === 0 ? this.btnColor.blessedReverse : this.btnColor.blessed
-                })
-            );
+            if ( this.buttonViewType === VIEW_TYPE.HORIZONTAL ) {
+                let left = (Math.floor((this.box.width as number) / (len+1)) * (i+1)) - Math.floor(this.buttonWidth / 2);
+                this.buttonWidgets.push( 
+                    new Widget( {
+                        parent: this, 
+                        tags: true, 
+                        content: "{center}" + item + "{/center}", 
+                        left, 
+                        clickable: true,
+                        bottom: 1, 
+                        height: 1, 
+                        width: this.buttonWidth,
+                        style: i === 0 ? this.btnColor.blessedReverse : this.btnColor.blessed
+                    })
+                );
+            } else {
+                // VERITCAL
+                let left = Math.round((this.box.width as number) / 2) - Math.round(this.buttonWidth / 2);
+                let bottom = len - i - 1;
+                this.buttonWidgets.push( 
+                    new Widget( {
+                        parent: this, 
+                        tags: true, 
+                        content: "{center}" + item + "{/center}", 
+                        left, 
+                        clickable: true,
+                        bottom,
+                        height: 1, 
+                        width: this.buttonWidth,
+                        style: i === 0 ? this.btnColor.blessedReverse : this.btnColor.blessed
+                    })
+                );
+            }
         });
+
+        this.resize();
 
         this.box.off("keypress");
         this.box.on("element click", (el, name) => {
@@ -122,7 +175,8 @@ export class MessageBox extends Widget {
             if ( [ "tab", "right", "down" ].indexOf(keyInfo.name) > -1 ) {
                 this.focusBtnNum = ++this.focusBtnNum % this.buttonWidgets.length;
             } else if ( [ "left", "up" ].indexOf(keyInfo.name) > -1 ) {
-                    this.focusBtnNum = Math.abs(--this.focusBtnNum) % this.buttonWidgets.length;
+                    this.focusBtnNum = --this.focusBtnNum;
+                    this.focusBtnNum = this.focusBtnNum < 0 ? this.buttonWidgets.length - 1 : this.focusBtnNum;
             } else if ( [ "return", "space" ].indexOf(keyInfo.name) > -1 ) {
                 this.destroy();
                 this.msgOption.result && this.msgOption.result( this.msgOption.button[this.focusBtnNum] );

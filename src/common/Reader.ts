@@ -8,7 +8,7 @@ export interface IMountList {
     size: number;
 }
 
-export type ProgressFunc = ( source: File, copySize: number, size: number) => void;
+export type ProgressFunc = ( source: File, copySize: number, size: number, chunkLength: number) => void;
 
 export abstract class Reader {
     protected curDir: File = null;
