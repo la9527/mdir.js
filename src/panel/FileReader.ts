@@ -196,7 +196,10 @@ export class FileReader extends Reader {
 
             let rejectFunc = (err) => {
                 rd.destroy();
-                wr.end();
+                wr.end(() => {
+                    fs.unlinkSync( target.fullname );
+                });
+                log.debug( "COPY ERROR - " + err );
                 reject(err);
             };
 
@@ -213,6 +216,12 @@ export class FileReader extends Reader {
                     log.debug( "Copy to: %s => %s (%d / %d)", srcFile.fullname, target.fullname, chunkCopyLength, srcFile.size );
                     if ( reader.isUserCanceled ) {
                         rd.destroy();
+                        wr.end(() => {
+                            fs.unlinkSync( target.fullname );
+                        });
+                        log.debug( "COPY - CANCEL" );
+                        reject( "USER_CANCEL" );
+                        return;
                     }
                     callback( null, chunk );
                 }

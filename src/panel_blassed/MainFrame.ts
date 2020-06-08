@@ -358,20 +358,44 @@ export class MainFrame {
         select.set( this.activePanel().getSelectFiles(), this.activePanel().currentPath(), ClipBoard.CLIP_NONE );
 
         const reader = this.activePanel().getReader();
-        await select.expandDir( reader );
+        reader.isUserCanceled = false;
+
+        const progressBox = new ProgressBox( { title: "Remove", msg: "Calculating...", cancel: () => {
+            reader.isUserCanceled = true;
+        }}, { parent: this.baseWidget } );
+        this.screen.render();
+        await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
+        
+        if ( await select.expandDir( reader ) === false ) {
+            progressBox.destroy();
+            return RefreshType.NONE;
+        }
 
         let files = select.getFiles();
         if ( !files || files.length === 0 ) {
             log.debug( "REMOVE FILES: 0");
+            progressBox.destroy();
             return RefreshType.NONE;
         }
 
         // Sort in filename length descending order.
         files.sort( (a, b) => b.fullname.length - a.fullname.length);
 
-        for ( let src of files ) {
+        let beforeTime = Date.now();
+        let refreshTimeMs = 300;
+
+        for ( let i = 0; i < files.length; i++ ) {
+            let src = files[i];
             try {
                 log.debug( "REMOVE : [%s]", src.fullname);
+                if ( Date.now() - beforeTime > refreshTimeMs ) {
+                    progressBox.updateProgress( src.fullname, `${i+1} / ${files.length}`, i+1, files.length );
+                    await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
+                    beforeTime = Date.now();
+                }
+                if ( progressBox.getCanceled() ) {
+                    break;
+                }
                 await reader.remove( src );
             } catch ( err ) {
                 let result = await messageBox( {
@@ -384,6 +408,7 @@ export class MainFrame {
                 }
             }
         }
+        progressBox.destroy();
         await this.refreshPromise();
         return RefreshType.ALL;
     }
@@ -406,13 +431,17 @@ export class MainFrame {
             return RefreshType.NONE;
         }
 
+        const reader = activePanel.getReader();
+        reader.isUserCanceled = false;
+
         const progressBox = new ProgressBox( { title: "Copy", msg: "Calculating...", cancel: () => {
-            activePanel.getReader().isUserCanceled = true;
+            reader.isUserCanceled = true;
         }}, { parent: this.baseWidget } );
         this.screen.render();
         await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
         
-        if ( await clipSelected.expandDir( activePanel.getReader() ) === false ) {
+        if ( await clipSelected.expandDir( reader ) === false ) {
+            progressBox.destroy();
             return RefreshType.NONE;
         }
         
@@ -433,7 +462,7 @@ export class MainFrame {
             let repeatTime = Date.now() - befCopyInfo.beforeTime;
             if ( repeatTime > refreshTimeMs ) {
                 let bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
-                let lastText = (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + "/" + 
+                let lastText = (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
                                 (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(fullFileSize, false, 1).trim());
                                 // + `(${StringUtils.sizeConvert(bytePerSec, false, 1).trim()}s)`;
                 progressBox.updateProgress( source.fullname, lastText, copyBytes, fullFileSize );
@@ -507,16 +536,18 @@ export class MainFrame {
                             await reader.copy( src, target, progressStatus );
                         }
                     } catch( err ) {
-                        let result = await messageBox( {
-                            title: "Copy",
-                            msg: "ERROR: " + err,
-                            button: [ "OK", "Cancel" ]
-                        }, { parent: this.baseWidget });
-                        if ( result === "Cancel" ) {
+                        if ( err === "USER_CANCEL" ) {
                             break;
+                        } else {
+                            let result = await messageBox( {
+                                title: "Copy",
+                                msg: "ERROR: " + err,
+                                button: [ "OK", "Cancel" ]
+                            }, { parent: this.baseWidget });
+                            if ( result === "Cancel" ) {
+                                break;
+                            }
                         }
-                    } finally {
-                        log.debug( "Copy - [%s]", src.fullname );
                     }
                 }
             }
