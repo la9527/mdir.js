@@ -133,7 +133,8 @@ export class BlessedPanel extends Panel implements IBlessedView {
             const fileSize = this.dirFiles.filter( i => !i.dir ).length;
             const allFileSize = this.dirFiles.filter( i => !i.dir ).reduce((v, t) => v + t.size, 0);
 
-            this.tailer.setContentFormat( "{bold}%5s{/bold} Files {bold}%5s{/bold} Dir {bold}%20s{/bold} Byte", StringUtils.toregular(fileSize), StringUtils.toregular(dirSize), StringUtils.toregular(allFileSize) );
+            this.tailer.setContentFormat( "{bold}%5s{/bold} Files {bold}%5s{/bold} Dir {bold}%20s{/bold} Byte", 
+                    StringUtils.toregular(fileSize), StringUtils.toregular(dirSize), StringUtils.toregular(allFileSize) );
         });
         this.baseWidget.on("detach", () => {
             log.debug( "panel detach !!! - %d", this.baseWidget._viewCount );

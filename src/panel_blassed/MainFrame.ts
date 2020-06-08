@@ -182,6 +182,9 @@ export class MainFrame {
         } else if ( type === RefreshType.OBJECT ) {
             log.info( "REFRESH - OBJECT");
             this.activeFocusObj().render();
+            if ( this.bottomFilesBox ) {
+                this.bottomFilesBox.render();
+            }
         }
     };
 

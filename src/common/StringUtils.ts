@@ -20,8 +20,6 @@ export class StringUtils {
             textSize = sprintf("%9." + digit + "f" + (color ? "{yellow-fg}G{/yellow-fg}" : "G"), size / 1073741824);
         } else if ( size >= 10000000) {
             textSize = sprintf("%9." + digit + "f" + (color ? "{yellow-fg}M{/yellow-fg}" : "M"), size / 1048576);
-        } else if ( size >= 10000) {
-            textSize = sprintf("%9." + digit + "f" + (color ? "{yellow-fg}K{/yellow-fg}" : "K"), size / 1024);
         } else {
             textSize = sprintf("%10s", StringUtils.toregular(size));
         }
