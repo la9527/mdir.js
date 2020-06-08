@@ -311,7 +311,12 @@ export class MainFrame {
             
             process.stdout.write( colors.white("m.js $ ") + cmd + "\n");
 
-            exec(cmd, (error, stdout, stderr) => {
+
+            if ( process.platform === "win32" ) {
+                cmd = "@chcp 65001 >nul & cmd /d/s/c " + cmd;
+            }
+
+            exec(cmd, { encoding: "utf-8" }, (error, stdout, stderr) => {
                 if (error) {
                     console.error(error.message);
                 } else {
