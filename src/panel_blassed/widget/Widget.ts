@@ -69,12 +69,14 @@ export class Widget {
         let startTime = Date.now();
         log.debug( "WIDGET RENDER START [%s]", this.constructor.name );
         const result = this._box.render();
-        const item: any = (this._box.screen as Widgets.Screen);
-        let start = Math.max( 0, Math.min(result.yi, result.yl) );
-        let end = Math.min( Math.max(result.yi, result.yl), item.lines.length - 1 );
+        if ( result ) {
+            const item: any = (this._box.screen as Widgets.Screen);
+            let start = Math.max( 0, Math.min(result.yi, result.yl) );
+            let end = Math.min( Math.max(result.yi, result.yl), item.lines.length - 1 );
 
-        this._box.screen.draw( start, end );
-        log.debug( "WIDGET RENDER END [%s] [%d,%d] - [%sms]", this.constructor.name, start, end, Date.now() - startTime );
+            this._box.screen.draw( start, end );
+            log.debug( "WIDGET RENDER END [%s] [%d,%d] - [%sms]", this.constructor.name, start, end, Date.now() - startTime );
+        }
     }
 
     show() {

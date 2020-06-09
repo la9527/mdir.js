@@ -62,7 +62,7 @@ export abstract class Panel extends AbstractPanel {
         }
     }
 
-    async refresh() {
+    async refreshPromise(): Promise<void> {
         await this.read( this.currentPath() );
     }
 
@@ -70,7 +70,17 @@ export abstract class Panel extends AbstractPanel {
     abstract beforeRender(): void;
     abstract render(): void;
 
+    validCheckPosition() {
+        if ( this.currentPos > this.dirFiles.length - 1 ) {
+            this.currentPos = this.dirFiles.length - 1;
+        } else if ( this.currentPos < 0 ) {
+            this.currentPos = 0;
+        }
+    }
+
     toggleSelect() {
+        this.validCheckPosition();
+
         if ( this.dirFiles[this.currentPos] ) {
             if ( this.dirFiles[this.currentPos].name !== ".." ) {
                 this.dirFiles[this.currentPos].select = !this.dirFiles[ this.currentPos ].select;
@@ -84,6 +94,8 @@ export abstract class Panel extends AbstractPanel {
     }
 
     currentFile(): File {
+        this.validCheckPosition();
+
         try {
             return this.dirFiles[this.currentPos];
         } catch ( e ) {
@@ -92,7 +104,24 @@ export abstract class Panel extends AbstractPanel {
         return null;
     }
 
+    focusFile( file: File ): boolean {
+        if ( !file ) {
+            log.debug( "focusFile FILE IS NULL" );
+            return false;
+        }
+        const findIndex = this.dirFiles.findIndex( (item) => item.equal(file) );
+        log.debug( "focusFile [%s] FIND - [%d]", file.name, findIndex );
+        if ( findIndex > -1 ) {
+            this.currentPos = findIndex;
+            log.debug( "focusFile : [%d], [%s]", this.currentPos, this.currentFile()?.name);
+            return true;
+        }
+        return false;
+    }
+
     async keyEnterPromise() {
+        this.validCheckPosition();
+
         const currentFile: File = this.dirFiles[this.currentPos];
         if ( currentFile.dir ) {
             try {
@@ -112,5 +141,9 @@ export abstract class Panel extends AbstractPanel {
             return [ this.currentFile() ];
         }
         return null;
+    }
+
+    async gotoHomePromise() {
+        await this.read( this.reader.homeDir() );
     }
 }

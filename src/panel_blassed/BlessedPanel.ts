@@ -13,9 +13,61 @@ import { Reader } from "../common/Reader";
 import { KeyMapping, RefreshType } from '../config/KeyMapConfig';
 import { KeyMappingInfo } from "../config/KeyMapConfig";
 import { IBlessedView } from "./IBlessedView";
-import mainFrame from './MainFrame';
+import mainFrame from "./MainFrame";
+import { SearchFileBox } from './SearchFileBox';
+import { File } from "../common/File";
 
 const log = Logger("blessedpanel");
+
+class SearchFileInfo {
+    private _index = -1;
+    private _files: File[] = [];
+
+    constructor( files: File[] ) {
+        this.files = files || [];
+    }
+
+    next() {
+        this.index = this.index + 1;
+        log.debug( "NEXT: %d/%d", this.index, this.files.length );
+        return this.get();
+    }
+
+    get index() {
+        return this._index;
+    }
+
+    set index( index ) {
+        if ( index >= this._files.length ) {
+            this._index = 0;
+        } else if ( index < 0 ) {
+            this._index = 0;
+        } else {
+            this._index = index;
+        }
+    }
+
+    get files() {
+        return this._files || [];
+    }
+
+    set files( files: File[] ) {
+        if ( files && files.length ) {
+            this._files = files || [];
+            this._index = 0;
+        } else {
+            this._files = [];
+            this._index = -1;
+        }
+    }
+
+    get() {
+        if ( this._files.length === 0 ) {
+            return null;
+        }
+        return this._files[this.index];
+    }
+}
 
 @KeyMapping( KeyMappingInfo.Panel, "Panel" )
 export class BlessedPanel extends Panel implements IBlessedView {
@@ -24,12 +76,14 @@ export class BlessedPanel extends Panel implements IBlessedView {
     public panel: Widget = null;
     public header: Widget = null;
     public tailer: Widget = null;
+    public searchFileBox: SearchFileBox = null;
     
     protected viewColumn: number = 0;
     private _fileViewType = 0;
     private _lines = [];
 
     private _previousView = null;
+    private _searchFiles: SearchFileInfo = null;
 
     constructor( opts: Widgets.BoxOptions | any, reader: Reader = null ) {
         super( reader );
@@ -69,6 +123,7 @@ export class BlessedPanel extends Panel implements IBlessedView {
                 fg: statColor.font
             }
         });
+
         this.initRender();
     }
 
@@ -136,9 +191,57 @@ export class BlessedPanel extends Panel implements IBlessedView {
             this.tailer.setContentFormat( "{bold}%5s{/bold} Files {bold}%5s{/bold} Dir {bold}%20s{/bold} Byte", 
                     StringUtils.toregular(fileSize), StringUtils.toregular(dirSize), StringUtils.toregular(allFileSize) );
         });
+        
         this.baseWidget.on("detach", () => {
             log.debug( "panel detach !!! - %d", this.baseWidget._viewCount );
         });
+    }
+
+    async keyInputSearchFile(ch, keyInfo) {
+        if ( !this.searchFileBox || !this.searchFileBox.value ) {
+            const keyName = keyInfo.full || keyInfo.name;
+            if ( [ "escape", "tab", "~", "/" ].indexOf(keyName) > -1 ) {
+                log.debug( "KEY INPUT SEARCH UNABLE !!!" );
+                return false;
+            }
+        }
+
+        if ( !this.searchFileBox ) {
+            this.searchFileBox = new SearchFileBox( { parent: this.baseWidget } );
+            this.searchFileBox.on("TAB_KEY", () => {
+                this.searchFileTabKey();
+            });
+        }
+        const result = await this.searchFileBox.executePromise(ch, keyInfo);
+        if ( result && keyInfo?.name !== "tab" ) {
+            this.searchFile();
+        }
+        if ( result ) {
+            this.baseWidget.render();
+        }
+        return result;
+    }
+
+    async keyEnterPromise(): Promise<any> {
+        this.searchFileBox?.clear();
+        await super.keyEnterPromise();
+        return RefreshType.ALL;
+    }
+
+    searchFile() {
+        if ( !this.searchFileBox?.value ) {
+            return;
+        }
+        const searchExp = new RegExp( this.searchFileBox?.value, "i" );
+        this._searchFiles = new SearchFileInfo( this.dirFiles.filter( item => searchExp.test(item.name) ) );
+        log.debug( "SEARCH FILES : [%j]", this._searchFiles.files.map( item => item.name ) );
+        this.focusFile(this._searchFiles.get());
+    }
+
+    searchFileTabKey() {
+        if ( this.searchFileBox.value ) {
+            this.focusFile( this._searchFiles.next() );
+        }
     }
 
     setViewColumn( column = 0 ) {

@@ -81,7 +81,7 @@ export abstract class AbstractPanel {
         return this._currentPos;
     }
 
-    abstract refresh(): void;
+    abstract refreshPromise(): Promise<void>;
 
     sort() {
         let fileSort = (isType: SortType, a: File, b: File): number => {

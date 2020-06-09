@@ -68,6 +68,7 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         keyEnterPromise: [ "enter" ],
         toggleSelect: "space",
         commandBoxShow: "/",
+        gotoHomePromise: "~",
         setViewColumn: [
             {
                 key: "M-0",

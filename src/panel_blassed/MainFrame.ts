@@ -19,7 +19,6 @@ import { messageBox } from "./widget/MessageBox";
 import { ProgressBox } from "./widget/ProgressBox";
 import { StringUtils } from "../common/StringUtils";
 import { Color } from "../common/Color";
-import { resolve } from "dns";
 
 const log = Logger("MainFrame");
 
@@ -156,11 +155,19 @@ export class MainFrame {
                 log.debug( "CommandBox running !!!" );
                 return;
             }
-
-            log.info( "KEYPRESS [%s] - START", keyInfo.name );
+            const keyName = keyInfo.full || keyInfo.name;
+            log.info( "KEYPRESS [%s] - START", keyName );
 
             let starTime = Date.now();
             this._keyLockScreen = true;
+
+            if ( this.activeFocusObj() instanceof BlessedPanel ) {
+                if ( await this.activeFocusObj().keyInputSearchFile(ch, keyInfo) ) {
+                    this.execRefreshType( RefreshType.OBJECT );
+                    this._keyLockScreen = false;
+                    return;
+                }
+            }
 
             let type: RefreshType = await keyMappingExec( this.activeFocusObj(), keyInfo );
             if ( type === RefreshType.NONE ) {
@@ -189,13 +196,12 @@ export class MainFrame {
     };
 
     async refreshPromise() {
-        this.screen.realloc();
         for ( let item of this.blessedFrames ) {
             if ( item instanceof BlessedPanel ) {
-                await item.refresh();
+                await item.refreshPromise();
             }
         }
-        this.screen.render();
+        return RefreshType.ALL;
     }
 
     split() {
@@ -277,14 +283,14 @@ export class MainFrame {
         return RefreshType.ALL;
     }
 
-    consoleViewPromise(): Promise<void> {
+    consoleViewPromise(): Promise<RefreshType> {
         return new Promise( (resolve, reject) => {
             let program = this.screen.program;
             this.screen.leave();
             program.once( 'keypress', async () => {
                 this.screen.enter();
                 await this.refreshPromise();
-                resolve();
+                resolve(RefreshType.ALL);
             });
         });
     }

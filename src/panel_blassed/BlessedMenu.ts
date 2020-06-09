@@ -14,6 +14,7 @@ class BlassedMenuBox extends Widget {
     private menuBox = [];
     private menuColor: Color = ColorConfig.instance().getBaseColor("func");
     private menuAColor: Color = ColorConfig.instance().getBaseColor("funcA");
+    private menuSelColor = ColorConfig.instance().getBaseColor("funcSel");
     private lineColor: Color = ColorConfig.instance().getBaseColor("menuLine");
     private menuItem = null;
     private selectPos = 0;
@@ -51,8 +52,8 @@ class BlassedMenuBox extends Widget {
                     this.menuAColor.fontHexBlessFormat(keyHumanReadable((item as ISubMenuConfig).key || "")) : 
                     keyHumanReadable((item as ISubMenuConfig).key || "");
 
-                let style = i === this.selectPos ? this.menuColor.blessedReverse : this.menuColor.blessed;
-                lineBox = text( { ...opt, top: i, content: " " + (item as ISubMenuConfig).name + "{|}" + keyName, style, tags: true } );
+                let style = i === this.selectPos ? this.menuSelColor.blessed : this.menuColor.blessed;
+                lineBox = text( { ...opt, top: i, content: " " + (item as ISubMenuConfig).name + "{|}" + keyName + " ", style, tags: true } );
             }
             this.menuBox.push( lineBox );
         });
