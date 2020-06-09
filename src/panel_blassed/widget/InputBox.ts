@@ -1,5 +1,5 @@
 import { Widget } from "./Widget";
-import { Widgets } from "neo-blessed";
+import { Widgets, text, input, button, form } from "neo-blessed";
 import { strWidth } from "neo-blessed/lib/unicode";
 import { ColorConfig } from "../../config/ColorConfig";
 import { Logger } from '../../common/Logger';
@@ -14,7 +14,7 @@ interface InputBoxOption {
 }
 
 export class InputBox extends Widget {
-    private textWidget: Widget = null;
+    private inputWidget: Widget = null;
     private titleWidget: Widget = null;
     private buttonWidgets: Widget[] = [];
 
@@ -26,7 +26,7 @@ export class InputBox extends Widget {
     private color = null;
     private inputColor = null;
     private btnColor = null;
-    private focusBtnNum: number = 0;
+    private focusBtnNum: number = -1;
     private buttonWidth = 0;
 
     private inputBoxOption: InputBoxOption = null;
@@ -45,19 +45,58 @@ export class InputBox extends Widget {
             log.debug( "InputBox [%s] [%j]", ch, keyinfo );
             await this.listener(ch, keyinfo);
             log.debug( "InputBox text - [%s]", this.value );
+
+            this.afterRender();
+            this.updateCursor();
         });
+        
         this.on("detach", () => {
             log.debug( "detach !!!" );
             this.box.screen.program.hideCursor();
         });
-        this.on("render", () => {
-            this.afterRender();
-            if ( this.box.screen.program.cursorHidden ) {
-                this.box.screen.program.showCursor();
-            }
-        });
+
         this.init();
         this.setFocus();
+    }
+
+    setFocus() {
+        super.setFocus();
+    }
+
+    updateCursor() {
+        const program = this.box.screen.program;
+        if ( this.focusBtnNum === -1 && program.cursorHidden ) {
+            log.debug( "showCursor !!!");
+            program.showCursor();
+        } else if ( !program.cursorHidden ) {
+            log.debug( "hideCursor !!!");
+            program.hideCursor();
+        }
+    }
+
+    resize() {
+        const MIN_WIDTH = 50;
+        const MAX_WIDTH = this.box.screen.width as number;
+
+        const MIN_BUTTON_WIDTH = 12;
+        this.buttonWidth = this.inputBoxOption.button.reduce( (pre, item) => pre < item.length + 2 ? item.length + 2 : pre, MIN_BUTTON_WIDTH);
+
+        let buttonAllWidth = this.inputBoxOption.button.length * (this.buttonWidth + 2);
+        
+        let width = Math.min( Math.max(strWidth(this.inputBoxOption.title), buttonAllWidth), MAX_WIDTH );
+        this.buttonWidth = Math.max(this.buttonWidth, MIN_BUTTON_WIDTH);
+
+        this.box.width = Math.max( width, MIN_WIDTH);
+        this.box.height = Math.min( 6 + this.inputBoxOption.button.length, 14);
+        log.debug( "RESIZE - (%d, %d)", this.box.width, this.box.height );
+
+        let len = this.inputBoxOption.button.length;
+        this.buttonWidgets.map( (item, i) => {
+            let left = (Math.floor((this.box.width as number) / (len+1)) * (i+1)) - Math.floor(this.buttonWidth / 2);
+            item.bottom = 1;
+            item.left = left;
+            item.width = this.buttonWidth;
+        });
     }
 
     init() {
@@ -78,24 +117,27 @@ export class InputBox extends Widget {
             style: this.color.blessedReverse, 
             align: "center" } );
 
-        this.textWidget = new Widget( { 
+        this.inputWidget = new Widget( { 
                 parent: this, 
                 top: 2, 
-                width: "100%-2",
+                left: "center",
+                width: "100%-4",
                 tags: false, 
                 height: 1, 
                 style: this.inputColor.blessed, 
                 align: "left" 
             });
 
+        const len = this.inputBoxOption.button.length;
         this.inputBoxOption.button.map( (item, i, arr) => {
-            let left = (Math.floor((this.box.width as number) / (arr.length+1)) * (i+1)) - Math.floor(this.buttonWidth / 2);
+            let left = (Math.floor((this.box.width as number) / (len+1)) * (i+1)) - Math.floor(this.buttonWidth / 2);
             this.buttonWidgets.push( 
                 new Widget( {
                     parent: this, 
                     tags: true, 
-                    content: "{center}" + item + "{/center}", 
+                    content: item, 
                     left, 
+                    align: "center",
                     clickable: true,
                     bottom: 1, 
                     height: 1, 
@@ -106,36 +148,11 @@ export class InputBox extends Widget {
         });
     }
 
-    resize() {
-        const MIN_WIDTH = 50;
-        const MAX_WIDTH = this.box.screen.width as number;
-
-        const MIN_BUTTON_WIDTH = 12;
-        this.buttonWidth = this.inputBoxOption.button.reduce( (pre, item) => pre < item.length + 2 ? item.length + 2 : pre, MIN_BUTTON_WIDTH);
-
-        let buttonAllWidth = this.inputBoxOption.button.length * (this.buttonWidth + 2);
-        
-        let width = Math.min( Math.max(strWidth(this.inputBoxOption.title), buttonAllWidth), MAX_WIDTH );
-        this.buttonWidth = Math.max(this.buttonWidth, 20);
-
-        this.box.width = Math.max( width, MIN_WIDTH);
-        this.box.height = Math.min( 6 + this.inputBoxOption.button.length, 14);
-        log.debug( "RESIZE - (%d, %d)", this.box.width, this.box.height );
-
-        let len = this.inputBoxOption.button.length;
-        this.buttonWidgets.map( (item, i) => {
-            let left = (Math.floor((this.box.width as number) / (len+1)) * (i+1)) - Math.floor(this.buttonWidth / 2);
-            item.bottom = 1;
-            item.left = left;
-            item.width = this.buttonWidth;
-        });
-    }
-
     draw() {
         this.resize();
 
         this.titleWidget.setContent( this.inputBoxOption.title );
-        this.textWidget.setContent( this.value );
+        this.inputWidget.setContent( this.value );
 
         this.buttonWidgets.map( (i, n) => {
             i.box.style = (this.focusBtnNum === n ? this.btnColor.blessedReverse : this.btnColor.blessed);
@@ -144,16 +161,10 @@ export class InputBox extends Widget {
     }
 
     afterRender() {
-        log.debug( "moveCursor : %d", this.cursorPos);
-        this.textWidget.moveCursor( this.cursorPos, 0 );
+        log.debug( "moveCursor : %d, %d", this.cursorPos, 0);
+        this.inputWidget.moveCursor( this.cursorPos, 0 );
     }
-
-    setFocus() {
-        super.setFocus();
-        this.box.screen.program.showCursor();
-        this.render();
-    }
-
+    
     keyDown() {
         this.keyTab();
     }
@@ -176,9 +187,12 @@ export class InputBox extends Widget {
         this.cursorPos = Math.min( strWidth(this.value), ++this.cursorPos );
     }
 
-    async keyReturnPromise() {
-        this.inputBoxOption?.result(this.value, this.focusBtnNum === -1 ? 
-            this.inputBoxOption.button[0] : this.inputBoxOption.button[this.focusBtnNum] );
+    keyReturn() {
+        if ( this.focusBtnNum === -1 ) {
+            this.keyTab();
+            return;
+        }
+        this.inputBoxOption?.result(this.value, this.inputBoxOption.button[this.focusBtnNum] );
     }
 
     keyEscape() {
@@ -186,21 +200,33 @@ export class InputBox extends Widget {
     }
 
     keyBackspace() {
-        log.debug( "BS - pos:%d", this.cursorPos );
+        if ( this.focusBtnNum > -1 ) {
+            return;
+        }
         this.value = this.value.substr(0, this.cursorPos - 1) + this.value.substr(this.cursorPos);
         this.keyLeft();
+        log.debug( "BS - pos:[%d], this.value [%d]", this.cursorPos, this.value.length );
     }
 
     keyDelete() {
+        if ( this.focusBtnNum > -1 ) {
+            return;
+        }
         log.debug( "DEL - pos:%d", this.cursorPos );
         this.value = this.value.substr(0, this.cursorPos) + this.value.substr(this.cursorPos+1);
     }
 
     keyHome() {
+        if ( this.focusBtnNum > -1 ) {
+            return;
+        }
         this.cursorPos = 0;
     }
 
     keyEnd() {
+        if ( this.focusBtnNum > -1 ) {
+            return;
+        }
         this.cursorPos = strWidth(this.value);
     }
 
@@ -223,6 +249,12 @@ export class InputBox extends Widget {
             return;
         }
         this.keylock = true;
+        const keyRelease = (render = false) => {
+            if ( render ) {
+                this.box?.screen.render();
+            }
+            this.keylock = false;
+        };
 
         let camelize = (str) => {
             return str.replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) => {
@@ -235,20 +267,23 @@ export class InputBox extends Widget {
             log.debug( "InputBox.%s()", methodName );
             if ( this[methodName] ) {
                 this[methodName]();
-                this.box?.screen.render();
-                this.keylock = false;
+                keyRelease(true);
                 return;
             } else if ( this[methodName + "Promise"] ) {
                 await this[methodName + "Promise"]();
-                this.box?.screen.render();
-                this.keylock = false;
+                keyRelease(true);
                 return;
             }
         }
 
         if ( ["return", "enter"].indexOf(key.name) > -1 ) {
             // Fix for Windows OS (\r\n)
-            this.keylock = false;
+            keyRelease();
+            return;
+        }
+
+        if ( this.focusBtnNum > -1 ) {
+            keyRelease(true);
             return;
         }
 
@@ -257,10 +292,7 @@ export class InputBox extends Widget {
             this.value = this.value.substr(0, this.cursorPos) + ch + this.value.substr(this.cursorPos);
             this.cursorPos += strWidth(ch);
         }
-        if (this.value !== value) {
-            this.box.screen.render();
-        }
-        this.keylock = false;
+        keyRelease(true);
     }
 }
 

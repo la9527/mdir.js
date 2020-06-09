@@ -115,10 +115,6 @@ export class Widget {
 
     moveCursor( x, y ) {
         const screen: Widgets.Screen = this.box.screen;
-        if (screen.focused !== this.box) {
-            log.debug( "moveCursor : screen.focused !== this.box" );
-            return;
-        }
         const box: any = this.box;
         const lpos = box.lpos;
         if (!lpos) {
@@ -137,7 +133,7 @@ export class Widget {
         cy = lpos.yi + box.itop + line;
         cx = lpos.xi + box.ileft + x;
       
-        log.debug( "moveCursor: (%d, %d)", cx, cy );
+        log.debug( "moveCursor: cx, cy (%d, %d)", cx, cy );
         program.cup(cy, cx);
 
         /*
@@ -146,7 +142,6 @@ export class Widget {
             return;
         }
       
-        
         if (cy === program.y) {
             if (cx > program.x) {
                 program.cuf(cx - program.x);
