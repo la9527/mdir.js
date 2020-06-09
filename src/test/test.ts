@@ -6,6 +6,7 @@ import mainFrame from "../panel_blassed/MainFrame";
 import { ProgressBox } from "../panel_blassed/widget/ProgressBox";
 import { StringUtils } from '../common/StringUtils';
 import { Color } from "../common/Color";
+import { inputBox } from "../panel_blassed/widget/InputBox";
 
 const log = Logger( "TEST" );
 
@@ -31,6 +32,18 @@ const screen = blessed.screen({
         screen.render();
     });
 
+    try {
+        const result = await inputBox( { 
+            title: "INPUT BOX TEST",
+            defaultText: "defaultText",
+            button: [ "OK", "Cancel" ]
+        }, { parent: screen });
+
+        log.debug( "INPUTBOX RESULT : %s", result );
+    } catch( e ) {
+        log.error( e.stack );
+    }
+
     /*
     try {
         let result = await messageBox( {
@@ -41,7 +54,7 @@ const screen = blessed.screen({
     } catch( e ) {
         log.error( e );
     }
-    */
+    
     const progressBox = new ProgressBox( { title: "Copy", msg: "Calculating...", cancel: () => {
         log.debug( "Cancel Button !!!");
         screen.render();
@@ -59,6 +72,7 @@ const screen = blessed.screen({
             clearInterval( interval );
         }
     }, 50);
+    */
 
     screen.render();
 })();
