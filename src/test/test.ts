@@ -33,11 +33,12 @@ const screen = blessed.screen({
     });
 
     try {
-        const result = await inputBox( { 
+        const result = await inputBox( {
+            parent: screen,
             title: "INPUT BOX TEST",
             defaultText: "defaultText",
             button: [ "OK", "Cancel" ]
-        }, { parent: screen });
+        });
 
         log.debug( "INPUTBOX RESULT : %s", result );
     } catch( e ) {
@@ -76,3 +77,107 @@ const screen = blessed.screen({
 
     screen.render();
 })();
+
+
+/*
+const screen = blessed.screen({
+    smartCSR: true,
+    fullUnicode: true,
+    dockBorders: true,
+    useBCE: true,
+    ignoreDockContrast: true,
+    debug: true,
+    //dump: true,
+    log: process.env.HOME + "/.m/m2.log"
+});
+
+(async () => {
+    let result = new MessageBox({
+        title: "테스트 타이틀",
+        msg: "테스트 합니다. 확인 바랍니다.",
+        button: [ "OK", "Cancel"],
+        result: ( result ) => {
+            log.debug( result );
+            screen.render();
+        }
+    }, { parent: screen });
+
+    screen.key("q", () => {
+        process.exit(0);
+    });
+
+    screen.key("r", () => {
+        screen.render();
+    });
+
+    screen.render();
+})();
+*/
+
+/*
+(async () => {
+    menuKeyMapping( KeyMappingInfo, menuConfig );
+    
+    let blessedMenu = new BlessedMenu({ parent: screen });
+    blessedMenu.setMainMenuConfig( menuConfig.Panel );
+
+    screen.on('keypress', async (ch, keyInfo) => {
+        if ( await keyMappingExec( blessedMenu, keyInfo ) ) {
+            screen.render();
+        }
+    });
+
+    screen.key("q", () => {
+        process.exit(0);
+    });
+
+    screen.key("r", () => {
+        screen.render();
+    });
+
+    screen.render();
+})();
+*/
+
+/*
+(async () => {
+
+    const mcd = new BlessedMcd({ parent: screen, top: 1, left: 0, width: "100%", height: "100%-2" });
+    mcd.setReader(readerControl("file"));
+    await mcd.scanCurrentDir();
+    mcd.setFocus();
+    
+    screen.key("q", () => {
+        process.exit(0);
+    });
+
+    screen.key("r", () => {
+        screen.render();
+    });
+
+    screen.render();
+})();
+*/
+
+/*
+const program: BlessedProgram = blessed.program();
+
+program.alternateBuffer();
+program.enableMouse();
+program.hideCursor();
+program.clear();
+
+program.on("keypress", (ch, key) => {
+    if (key.name === "q") {
+        program.clear();
+        program.disableMouse();
+        program.showCursor();
+        program.normalBuffer();
+        process.exit(0);
+    }
+});
+
+program.move(5, 5);
+program.write("Hello world");
+program.move(10, 10);
+*/

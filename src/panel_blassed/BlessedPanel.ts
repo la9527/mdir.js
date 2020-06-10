@@ -13,7 +13,7 @@ import { Reader } from "../common/Reader";
 import { KeyMapping, RefreshType } from '../config/KeyMapConfig';
 import { KeyMappingInfo } from "../config/KeyMapConfig";
 import { IBlessedView } from "./IBlessedView";
-import mainFrame from "./MainFrame";
+import mainFrame from './MainFrame';
 import { SearchFileBox } from './SearchFileBox';
 import { File } from "../common/File";
 
@@ -200,7 +200,7 @@ export class BlessedPanel extends Panel implements IBlessedView {
     async keyInputSearchFile(ch, keyInfo) {
         if ( !this.searchFileBox || !this.searchFileBox.value ) {
             const keyName = keyInfo.full || keyInfo.name;
-            if ( [ "escape", "tab", "~", "/" ].indexOf(keyName) > -1 ) {
+            if ( [ "escape", "tab", "~", "/", "space" ].indexOf(keyName) > -1 ) {
                 log.debug( "KEY INPUT SEARCH UNABLE !!!" );
                 return false;
             }
@@ -393,6 +393,14 @@ export class BlessedPanel extends Panel implements IBlessedView {
 
     commandBoxShow() {
         mainFrame().commandBoxShow();
+    }
+
+    async mkdirPromise() {
+        return await mainFrame().mkdirPromise();
+    }
+
+    async renamePromise() {
+        return await mainFrame().renamePromise();
     }
 
     async consoleViewPromise() {

@@ -1,13 +1,15 @@
-import { Widget } from './Widget';
-import { Widgets, text, button } from 'neo-blessed';
-import { ColorConfig } from '../../config/ColorConfig';
-import { Logger } from "../../common/Logger";
+import { Widgets, text, button } from "neo-blessed";
 import { strWidth } from "neo-blessed/lib/unicode";
-import mainFrame from '../MainFrame';
+
+import { Widget } from "./Widget";
+import { ColorConfig } from "../../config/ColorConfig";
+import { Logger } from "../../common/Logger";
+import mainFrame from "../MainFrame";
 
 const log = Logger("MessageBox");
 
 interface IMessageOption {
+    parent: Widget;
     title: string;
     msg: string;
     button: string[];
@@ -32,7 +34,7 @@ export class MessageBox extends Widget {
     private buttonViewType: VIEW_TYPE = VIEW_TYPE.HORIZONTAL;
 
     constructor( messageOption: IMessageOption, opts: Widgets.BoxOptions | any ) {
-        super( { ...opts, top: "center", left: "center", width: "50%", height: "50%", border: "line", clickable: true });
+        super( { parent: messageOption.parent, ...opts, top: "center", left: "center", width: "50%", height: "50%", border: "line", clickable: true });
 
         this.box.enableMouse();
         this.msgOption = messageOption;
@@ -216,16 +218,18 @@ export class MessageBox extends Widget {
     }
 }
 
-export function messageBox( msgOpt: IMessageOption, opts: Widgets.BoxOptions ): Promise<string> {
+export function messageBox( msgOpt: IMessageOption, opts: Widgets.BoxOptions = {}): Promise<string> {
     return new Promise(( resolve, reject ) => {
+        const screen = msgOpt.parent.screen || opts.parent.screen;
         new MessageBox({
+            parent: msgOpt.parent,
             title: msgOpt.title, 
             msg: msgOpt.msg, button: msgOpt.button,
             result: (button) => {
-                opts.parent.screen.render();
+                screen.render();
                 resolve( button );
             }
         }, opts);
-        opts.parent.screen.render();
+        screen.render();
     });
 }

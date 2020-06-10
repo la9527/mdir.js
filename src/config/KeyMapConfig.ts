@@ -69,6 +69,8 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         toggleSelect: "space",
         commandBoxShow: "/",
         gotoHomePromise: "~",
+        mkdirPromise: "f7",
+        renamePromise: "f2",
         setViewColumn: [
             {
                 key: "M-0",
@@ -230,9 +232,9 @@ export async function keyMappingExec( baseObject, keyInfo ): Promise<RefreshType
                 } else {
                     result = baseObject[ (method as string) ].apply(baseObject, param);
                 }
-                log.error( "RUNNING SUCCESS : %s", result );
+                log.info( "RUNNING SUCCESS : %s", result );
             } catch( e ) {
-                log.error( "RUNNING FAIL : %s", e.trace );
+                log.error( "RUNNING FAIL : %s.%s(%s) - %s", baseObject.viewName, method, param ? param.join(",") : "", e.stack );
             }
             return result || RefreshType.OBJECT;
         } else {

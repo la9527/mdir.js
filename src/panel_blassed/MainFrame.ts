@@ -19,6 +19,7 @@ import { messageBox } from "./widget/MessageBox";
 import { ProgressBox } from "./widget/ProgressBox";
 import { StringUtils } from "../common/StringUtils";
 import { Color } from "../common/Color";
+import { inputBox } from "./widget/InputBox";
 
 const log = Logger("MainFrame");
 
@@ -365,7 +366,12 @@ export class MainFrame {
     }
 
     async removePromise() {
-        let result = await messageBox( { title: "Question", msg: "Do you want to delete the selected files?", button: [ "OK", "Cancel" ] }, { parent: this.baseWidget } );
+        let result = await messageBox( { 
+                    parent: this.baseWidget, 
+                    title: "Question", 
+                    msg: "Do you want to remove the selected file(s)?", 
+                    button: [ "OK", "Cancel" ] 
+                });
         if ( result === "Cancel" ) {
             return RefreshType.NONE;
         }
@@ -415,10 +421,11 @@ export class MainFrame {
                 await reader.remove( src );
             } catch ( err ) {
                 let result = await messageBox( {
+                    parent: this.baseWidget,
                     title: "Remove Error",
                     msg: err,
                     button: [ "Continue", "Cancel" ]
-                }, { parent: this.baseWidget });
+                });
                 if ( result === "Cancel" ) {
                     break;
                 }
@@ -491,7 +498,12 @@ export class MainFrame {
             if ( files[0].dirname === activePanel.currentPath().fullname ) {
                 log.error( "source file and target file are the same." );
                 progressBox.destroy();
-                await messageBox( { title: "ERROR", msg: "source and target directory are the same.", button: [ "OK" ] }, { parent: this.baseWidget } );
+                await messageBox( {
+                    parent: this.baseWidget,
+                    title: "ERROR", 
+                    msg: "source and target directory are the same.", 
+                    button: [ "OK" ] 
+                });
                 return RefreshType.NONE;
             }
             
@@ -506,10 +518,11 @@ export class MainFrame {
                     }
                     if ( !reader.exist(src.fullname) ) {
                         let result = await messageBox( {
+                            parent: this.baseWidget,
                             title: "ERROR",
                             msg: `'${src.name}' file NOT exists. What would you do want?`,
                             button: [ "Skip", "Cancel" ]
-                        }, { parent: this.baseWidget });
+                        });
                         if ( result === "Cancel" ) {
                             break;
                         }
@@ -523,10 +536,11 @@ export class MainFrame {
                     
                     if ( !overwriteAll && reader.exist( target.fullname ) ) {
                         let result = await messageBox( {
+                            parent: this.baseWidget,
                             title: "Copy",
                             msg: `'${src.name}' file exists. What would you do want?`,
                             button: [ "Overwrite", "Skip", "Rename", "Overwrite All", "Skip All" ]
-                        }, { parent: this.baseWidget });
+                        });
                         
                         if ( result === "Skip" ) {
                             continue;
@@ -538,8 +552,17 @@ export class MainFrame {
                             break;
                         }
                         if ( result === "Rename" ) {
-                            // TODO !!!
-                            continue;
+                            const result = await inputBox( { 
+                                parent: this.baseWidget,
+                                title: "Rename",
+                                defaultText: src.name,
+                                button: [ "OK", "Cancel" ]
+                            });
+                            if ( result && result[1] === "OK" && result[0] ) {
+                                target.fullname = targetBasePath + reader.sep() + result[0];
+                            } else {
+                                continue;   
+                            }
                         }
                     }
 
@@ -556,10 +579,11 @@ export class MainFrame {
                             break;
                         } else {
                             let result = await messageBox( {
+                                parent: this.baseWidget,
                                 title: "Copy",
-                                msg: "ERROR: " + err,
+                                msg: `ERROR: ${src.name} - ${err}`,
                                 button: [ "OK", "Cancel" ]
-                            }, { parent: this.baseWidget });
+                            });
                             if ( result === "Cancel" ) {
                                 break;
                             }
@@ -570,6 +594,54 @@ export class MainFrame {
         }
 
         progressBox.destroy();
+        await this.refreshPromise();
+        return RefreshType.ALL;
+    }
+
+    async mkdirPromise() {
+        const panel = this.activePanel();
+        if ( panel instanceof BlessedPanel ) {
+            const reader = panel.getReader();
+            const result = await inputBox( {
+                parent: this.baseWidget,
+                title: "Make Directory",
+                button: [ "OK", "Cancel" ]
+            }, {  });
+            if ( result && result[1] === "OK" && result[0] ) {
+                try {
+                    reader.mkdir( panel.currentPath().fullname + reader.sep() + result[0] );
+                } catch( e ) {
+                    await messageBox( { parent: this.baseWidget, title: "ERROR", msg: e, button: [ "OK" ] } );
+                }
+            }
+        }
+        await this.refreshPromise();
+        return RefreshType.ALL;
+    }
+
+    async renamePromise() {
+        const panel = this.activePanel();
+        if ( panel instanceof BlessedPanel ) {
+            const reader = panel.getReader();
+            const file = panel.currentFile();
+            if ( file.dir && file.name === ".." ) {
+                return RefreshType.NONE;
+            }
+
+            const result = await inputBox( {
+                parent: this.baseWidget,
+                title: "Rename",
+                defaultText: file.name,
+                button: [ "OK", "Cancel" ]
+            }, {  });
+            if ( result && result[1] === "OK" && result[0] ) {
+                try {
+                    reader.rename( file, panel.currentPath().fullname + reader.sep() + result[0] );
+                } catch( e ) {
+                    await messageBox( { parent: this.baseWidget, title: "ERROR", msg: e, button: [ "OK" ] } );
+                }
+            }
+        }
         await this.refreshPromise();
         return RefreshType.ALL;
     }

@@ -22,7 +22,7 @@ const myFormat = printf( (info) => {
             // console.log( e );
         }
     }
-    return `${moment().format("YY-MM-DD hh:mm:ss.SSS")} ${level[info.level] || ""}: ${info.message}`;
+    return `${moment().format("YY-MM-DD hh:mm:ss.SSS")} [${info.label.padEnd(10)}] ${level[info.level] || ""}: ${info.message}`;
   });
 
 export function Logger( labelName: string ): winston.Logger {

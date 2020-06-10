@@ -7,11 +7,16 @@ import { Logger } from '../../common/Logger';
 const log = Logger("InputBox");
 
 interface InputBoxOption {
+    parent: Widget | Widgets.Screen,
     title: string;
-    defaultText: string;
+    defaultText?: string;
     button: string[];
     result?: (text, button) => void;
 }
+
+const MIN_WIDTH = 50;
+const MIN_HEIGHT = 14;
+const MIN_BUTTON_WIDTH = 12;
 
 export class InputBox extends Widget {
     private inputWidget: Widget = null;
@@ -32,7 +37,7 @@ export class InputBox extends Widget {
     private inputBoxOption: InputBoxOption = null;
 
     constructor( inputBoxOpts: InputBoxOption, opts: Widgets.BoxOptions ) {
-        super( { ...opts, top: "center", left: "center", width: "50%", height: "50%", border: "line", clickable: true });
+        super( { parent: inputBoxOpts.parent, ...(opts || {}), top: "center", left: "center", width: MIN_WIDTH, height: MIN_HEIGHT, border: "line", clickable: true });
 
         this.inputBoxOption = inputBoxOpts;
         this.value = inputBoxOpts.defaultText || "";
@@ -45,18 +50,24 @@ export class InputBox extends Widget {
             log.debug( "InputBox [%s] [%j]", ch, keyinfo );
             await this.listener(ch, keyinfo);
             log.debug( "InputBox text - [%s]", this.value );
+            if ( !this.destroyed ) {
+                this.afterRender();
+                this.updateCursor();
+            }
+        });
 
+        this.on("render", () => {
+            log.debug( "AFTER RENDER" );
             this.afterRender();
             this.updateCursor();
         });
-        
+
         this.on("detach", () => {
             log.debug( "detach !!!" );
             this.box.screen.program.hideCursor();
         });
 
         this.init();
-        this.setFocus();
     }
 
     setFocus() {
@@ -68,26 +79,23 @@ export class InputBox extends Widget {
         if ( this.focusBtnNum === -1 && program.cursorHidden ) {
             log.debug( "showCursor !!!");
             program.showCursor();
-        } else if ( !program.cursorHidden ) {
+        } else if ( this.focusBtnNum > -1 && !program.cursorHidden ) {
             log.debug( "hideCursor !!!");
             program.hideCursor();
         }
     }
 
     resize() {
-        const MIN_WIDTH = 50;
-        const MAX_WIDTH = this.box.screen.width as number;
-
-        const MIN_BUTTON_WIDTH = 12;
+        const maxWidth = this.box.screen.width as number;
         this.buttonWidth = this.inputBoxOption.button.reduce( (pre, item) => pre < item.length + 2 ? item.length + 2 : pre, MIN_BUTTON_WIDTH);
 
         let buttonAllWidth = this.inputBoxOption.button.length * (this.buttonWidth + 2);
         
-        let width = Math.min( Math.max(strWidth(this.inputBoxOption.title), buttonAllWidth), MAX_WIDTH );
+        let width = Math.min( Math.max(strWidth(this.inputBoxOption.title), buttonAllWidth), maxWidth );
         this.buttonWidth = Math.max(this.buttonWidth, MIN_BUTTON_WIDTH);
 
         this.box.width = Math.max( width, MIN_WIDTH);
-        this.box.height = Math.min( 6 + this.inputBoxOption.button.length, 14);
+        this.box.height = Math.min( 6 + this.inputBoxOption.button.length, MIN_HEIGHT);
         log.debug( "RESIZE - (%d, %d)", this.box.width, this.box.height );
 
         let len = this.inputBoxOption.button.length;
@@ -103,8 +111,6 @@ export class InputBox extends Widget {
         this.color = ColorConfig.instance().getBaseColor("dialog");
         this.inputColor = ColorConfig.instance().getBaseColor("input_box");
         this.btnColor = ColorConfig.instance().getBaseTwoColor("dialog", "func");
-
-        log.debug( "this.color : %s", this.color);
 
         this.box.style = { ...this.color.blessed, border: this.color.blessed };
         this.titleWidget = new Widget( { 
@@ -146,6 +152,9 @@ export class InputBox extends Widget {
                 })
             );
         });
+
+        this.resize();
+        this.setFocus();
     }
 
     draw() {
@@ -296,9 +305,11 @@ export class InputBox extends Widget {
     }
 }
 
-export function inputBox( msgOpt: InputBoxOption, opts: Widgets.BoxOptions ): Promise<string[]> {
+export function inputBox( msgOpt: InputBoxOption, opts: Widgets.BoxOptions = {} ): Promise<string[]> {
     return new Promise(( resolve, reject ) => {
+        const screen = msgOpt.parent.screen || opts.parent.screen;
         const input = new InputBox({
+            parent: msgOpt.parent,
             title: msgOpt.title, 
             defaultText: msgOpt.defaultText, 
             button: msgOpt.button,
@@ -306,10 +317,10 @@ export function inputBox( msgOpt: InputBoxOption, opts: Widgets.BoxOptions ): Pr
                 process.nextTick( () => {
                     input.destroy();
                     resolve( [ text, button ] );
-                    opts.parent.screen.render();
+                    screen.render();
                 });
             }
         }, opts);
-        opts.parent.screen.render();
+        screen.render();
     });
 }
