@@ -16,13 +16,13 @@ export interface IFrameMenuConfig {
 
 export const menuConfig: IFrameMenuConfig = {
     Panel: {
-        LinM: [ 
+        "Mdir.js": [ 
             { name: "About", method: "Common.about" },
             { name: "Help", method: "Panel.help" },
             "-",
             { name: "Settings" },
             "-",
-            { name: "Quit LinM", method: "Common.quit" }
+            { name: "Quit", method: "Common.quit" }
         ],
         Run: [
             { name: "Run", method: "Panel.keyEnterPromise" },

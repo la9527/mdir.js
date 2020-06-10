@@ -1,8 +1,8 @@
 {
   "name": "mdir.js",
   "version": "0.1.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Mdir.js is text base file manager. Mdir.js is clone LinM.",
+  "main": "./build/src/main.js",
   "scripts": {
     "clean": "rm -rf ./build",
     "build": "tsc -p tsconfig.json",
