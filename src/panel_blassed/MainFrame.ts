@@ -6,7 +6,7 @@ import { FuncKeyBox } from './FuncKeyBox';
 import BottomFilesBox from "./BottomFileBox";
 import { readerControl } from '../panel/readerControl';
 import { Widget } from "./widget/Widget";
-import { keyMappingExec, menuKeyMapping, KeyMappingInfo, KeyMapping, RefreshType } from "../config/KeyMapConfig";
+import { keyMappingExec, menuKeyMapping, KeyMappingInfo, KeyMapping, RefreshType, Hint } from "../config/KeyMapConfig";
 import { menuConfig } from "../config/MenuConfig";
 import { BlessedMenu } from "./BlessedMenu";
 import { BlessedMcd } from './BlessedMcd';
@@ -20,6 +20,7 @@ import { ProgressBox } from "./widget/ProgressBox";
 import { StringUtils } from "../common/StringUtils";
 import { Color } from "../common/Color";
 import { inputBox } from "./widget/InputBox";
+import { HintBox } from "./HintBox";
 
 const log = Logger("MainFrame");
 
@@ -42,6 +43,7 @@ export class MainFrame {
     private blessedMenu = null;
     private funcKeyBox = null;
     private bottomFilesBox: BottomFilesBox = null;
+    private hintBox = null;
     private activeFrameNum = 0;
     private commandBox: CommandBox = null;
     public keyLock = false;
@@ -51,6 +53,7 @@ export class MainFrame {
         menuKeyMapping( KeyMappingInfo, menuConfig );
     }
 
+    @Hint({ hint: "MCD", help: "showing directory structure on this window." })
     async mcdPromise(isEscape = false) {
         let view: BlessedPanel | BlessedMcd = this.blessedFrames[this.activeFrameNum];
         if ( view instanceof BlessedPanel ) {
@@ -122,6 +125,8 @@ export class MainFrame {
             new BlessedPanel( { parent: this.baseWidget, viewCount: viewCount++ } )
         ];
 
+        this.hintBox = new HintBox( { parent: this.baseWidget } );
+
         for ( var i = 0; i < this.blessedFrames.length; i++ ) {
             try {
                 this.blessedFrames[i].setReader(readerControl("file"));
@@ -133,9 +138,11 @@ export class MainFrame {
 
         this.viewRender();
 
+        /*
         this.screen.key("q", () => {
             process.exit(0);
         });
+        */
 
         this.eventStart();
         this.blessedFrames[0].setFocus();
@@ -205,6 +212,7 @@ export class MainFrame {
         return RefreshType.ALL;
     }
 
+    @Hint({ hint: "Split", help: "split window", order: 2 })
     split() {
         this.viewType++;
         if ( this.viewType > 2 ) {
@@ -215,10 +223,12 @@ export class MainFrame {
         return RefreshType.ALL;
     }
 
+    @Hint({ hint: "Quit", help: "quit this program.", order: 1 })
     quit() {
         process.exit(0);
     }
 
+    @Hint({ hint: "NextWindow", help: "Move focus to next window", order: 2 })
     nextWindow() {
         if ( this.viewType !== VIEW_TYPE.NORMAL ) {
             this.activeFrameNum++;
@@ -246,6 +256,7 @@ export class MainFrame {
         return this.activePanel();
     }
 
+    @Hint({ hint: "Menu", help: "visible the menu", order: 3 })
     menu() {
         this.menuClose();
 
@@ -263,6 +274,7 @@ export class MainFrame {
         return RefreshType.ALL;
     }
 
+    @Hint({ hint: "Shell", help: "visible the command line at the bottom.", order: 4 })
     commandBoxShow() {
         if ( this.bottomFilesBox ) {
             this.bottomFilesBox.destroy();
@@ -284,6 +296,7 @@ export class MainFrame {
         return RefreshType.ALL;
     }
 
+    @Hint({ hint: "Console View", help: "Show the console for a moment." })
     consoleViewPromise(): Promise<RefreshType> {
         return new Promise( (resolve, reject) => {
             let program = this.screen.program;
@@ -317,7 +330,6 @@ export class MainFrame {
             this.screen.leave();
             
             process.stdout.write( colors.white("m.js $ ") + cmd + "\n");
-
 
             if ( process.platform === "win32" ) {
                 cmd = "@chcp 65001 >nul & cmd /d/s/c " + cmd;
@@ -365,6 +377,7 @@ export class MainFrame {
         return result || RefreshType.OBJECT;
     }
 
+    @Hint({ hint: "Remove", help: "Remove the selected file(s)." })
     async removePromise() {
         let result = await messageBox( { 
                     parent: this.baseWidget, 
@@ -436,14 +449,17 @@ export class MainFrame {
         return RefreshType.ALL;
     }
 
+    @Hint({ hint: "Cut", help: "Cut to clipboard on selected files.", order: 6 })
     clipboardCut() {
         selection().set( this.activePanel().getSelectFiles(), this.activePanel().currentPath(), ClipBoard.CLIP_CUT );
     }
 
+    @Hint({ hint: "Copy", help: "Copy to clipboard on selected files.", order: 5 })
     clipboardCopy() {
         selection().set( this.activePanel().getSelectFiles(), this.activePanel().currentPath(), ClipBoard.CLIP_COPY );
     }
 
+    @Hint({ hint: "Paste", help: "From clipboard to paste on current directory.", order: 7 })
     async clipboardPastePromise() {
         const activePanel = this.activePanel();
         const clipSelected = selection();

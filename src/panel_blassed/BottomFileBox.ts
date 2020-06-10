@@ -17,7 +17,7 @@ export default class BottomFilesBox extends Widget {
     colorFunc: Color = null;
 
     constructor( opt: Widgets.BoxOptions ) {
-        super( { left: 0, top: "100%-1", width: "100%", height: 1, ...opt } );
+        super( { left: 0, bottom: 0, width: "100%", height: 1, ...opt } );
         this.colorFunc = ColorConfig.instance().getBaseColor("func");
     }
 

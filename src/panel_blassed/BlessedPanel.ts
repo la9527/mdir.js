@@ -200,8 +200,8 @@ export class BlessedPanel extends Panel implements IBlessedView {
     async keyInputSearchFile(ch, keyInfo) {
         if ( !this.searchFileBox || !this.searchFileBox.value ) {
             const keyName = keyInfo.full || keyInfo.name;
-            if ( [ "escape", "tab", "~", "/", "space" ].indexOf(keyName) > -1 ) {
-                log.debug( "KEY INPUT SEARCH UNABLE !!!" );
+            if ( [ "escape", "tab", "~", "/", "space", "delete", "home", "end" ].indexOf(keyName) > -1 ) {
+                log.debug( "ignore key - [%s]", keyName );
                 return false;
             }
         }

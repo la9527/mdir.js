@@ -205,6 +205,33 @@ export function KeyMapping( keyFrame: IKeyMapping, name: string = null ) {
     };
 }
 
+export function methodToKeyname( baseObject, method ) {
+    if ( !baseObject || !baseObject.keyInfo ) {
+        return null;
+    }
+
+    for ( let key of Object.keys(baseObject.keyInfo) ) {
+        if ( baseObject.keyInfo[key] === method ) {
+            return keyHumanReadable(key);
+        }
+    }
+    return null;
+}
+
+export interface IHintInfo {
+    hint?: string;
+    help?: string;
+    order?: number;
+    key?: string;
+}
+
+export function Hint( { hint, help, order }: IHintInfo ) {
+    return function(target: any, propName: string, description: PropertyDescriptor) {
+        target.hintInfo = target.hintInfo || {};
+        target.hintInfo[ propName ] = { hint, help, order: order || 10 };
+    };
+}
+
 export async function keyMappingExec( baseObject, keyInfo ): Promise<RefreshType> {
     if ( !baseObject || !baseObject.keyInfo ) {
         return RefreshType.NONE;
