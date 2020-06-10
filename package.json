@@ -1,7 +1,7 @@
 {
   "name": "mdir.js",
   "version": "0.1.0",
-  "description": "Mdir.js is text base file manager. Mdir.js is clone LinM.",
+  "description": "Mdir.js is visual file manager. (text mode application)",
   "main": "./build/src/main.js",
   "scripts": {
     "clean": "rm -rf ./build",
@@ -18,7 +18,7 @@
     }
   ],
   "bin": {
-    "m": "bin/mdir.js"
+    "mdir": "bin/mdir.js"
   },
   "repository": {
     "type": "git",
