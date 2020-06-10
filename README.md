@@ -39,8 +39,8 @@ $ npx mdir
 
 # Gallery
 
-![MDir MAIN](https://raw.githubusercontent.com/la9527/mdir.js/master/images/mdir_v1.0_windows10_cmd.png)
+![MDir MAIN](https://github.com/la9527/mdir.js/blob/master/images/mdir_v0.1_windows10_cmd.png?raw=true)
 
-![Mdir.js MCD](https://raw.githubusercontent.com/la9527/mdir.js/master/images/mdir_v1.0_windows10_cmd_mcd.png)
+![Mdir.js MCD](https://github.com/la9527/mdir.js/blob/master/images/mdir_v0.1_windows10_cmd_mcd.png?raw=true)
 
 
