@@ -1,16 +1,16 @@
-Requirements
+# Requirements
 
- - Node > 12.x
+ - Node.js >= 12.x
 
-Tested OS
+# Tested OS
 
  - Windows 10
  - MAC OSX Catalina (10.15.x)
  - Ubuntu 
 
-Installation
- - directory check
- - git clone https://github.com/la9527/mdir.js.git .
- - npm install
- - npm run start
+# Installation
+
+ 1. npm install mdir.js -g
+
+
 

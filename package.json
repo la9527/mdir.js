@@ -10,8 +10,24 @@
     "debug": "tsc -p tsconfig.json && node --inspect-brk ./build/src/main.js",
     "test": "tsc -p tsconfig.json && node ./build/src/test/test.js"
   },
-  "author": "Byoungyoung La(la9527@daum.net)",
-  "license": "MIT",
+  "author": "La Byoungyoung <la9527@daum.net>",
+  "contributors": [
+    {
+      "name": "La Byoungyoung",
+      "email": "la9527@daum.net"
+    }
+  ],
+  "bin": {
+    "m": "bin/mdir.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/la9527/mdir.js.git"
+  },
+  "license": "BSD3",
+  "engines": {
+    "node": ">= 12.0.0"
+  },
   "dependencies": {
     "@types/node": "^11.10.4",
     "@types/sprintf-js": "^1.1.2",
