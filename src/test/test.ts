@@ -7,26 +7,11 @@ import { ProgressBox } from "../panel_blassed/widget/ProgressBox";
 import { StringUtils } from '../common/StringUtils';
 import { Color } from "../common/Color";
 import { inputBox } from "../panel_blassed/widget/InputBox";
-import { Hint } from '../config/KeyMapConfig';
+
 
 const log = Logger( "TEST" );
 
 // console.log( StringUtils.ellipsis("ABCDEFGHJKLMNOPRSTUVWXYZ1234567890", 20) );
-
-class Test {
-    @Hint({ hint: "HINT1", help: "HELP2"})
-    test1() {
-        console.log( "test1" );
-    }
-
-    @Hint({ hint: "HINT1", help: "HELP2"})
-    test2() {
-        console.log( "test2" );
-    }
-}
-
-console.log( (new Test() as any).hintInfo );
-
 /*
 const screen = blessed.screen({
     smartCSR: true,

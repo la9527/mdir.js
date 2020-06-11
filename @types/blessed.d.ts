@@ -1499,6 +1499,7 @@ export namespace Widgets {
          * characters and SGR codes. Can be displayed by simply echoing it in a terminal.
          */
         screenshot(xi: number, xl: number, yi: number, yl: number): string;
+        screenshot(xi: number, xl: number, yi: number, yl: number, term ?: any): string;
         screenshot(): void;
 
         /**
