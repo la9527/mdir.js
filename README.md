@@ -28,7 +28,7 @@ For bug reports, comments and questions, please email to la9527@daum.net
 ### 1. Install
 
 ```bash
-$ npm install mdir.js
+$ npm install mdir.js -g
 ```
 
 ### 2. Run 
