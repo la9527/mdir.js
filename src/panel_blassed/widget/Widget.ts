@@ -11,7 +11,7 @@ export class Widget {
     protected destroyed = false;
 
     constructor( opts: Widgets.BoxOptions | any ) {
-        if ( opts.parent && (opts.parent as any).box ) {
+        if ( opts.parent && opts.parent instanceof Widget ) {
             this._box = box( { ...opts, parent: (opts.parent as any).box, tags: true } );
         } else {
             this._box = box( { ...opts, tags: true } );
@@ -172,19 +172,19 @@ export class Widget {
     set left( num ) {
         this._box.left = num;
     }
-    get width(): string | number {
+    get width() {
         return this._box.width;
     }
-    set width(num: string | number) {
+    set width(num) {
         this._box.width = num;
     }
     get height() {
         return this._box.height;
     }
-    set height(num: string | number) {
+    set height(num) {
         this._box.height = num;
     }
-    set bottom(bottom: string | number) {
+    set bottom(bottom) {
         this._box.bottom = bottom;
     }
     get bottom() {

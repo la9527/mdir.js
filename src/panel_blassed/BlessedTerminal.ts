@@ -1,9 +1,14 @@
 import { Widget } from "./widget/Widget";
 import { Widgets } from "neo-blessed";
 import * as Term from "term.js";
-import NodePTY, { IPty } from "node-pty";
+import { IPty } from "node-pty";
+import * as NodePTY from "node-pty";
+import * as os from 'os';
+import { Logger } from "../common/Logger";
 
-export class Terminal extends Widget {
+const log = Logger("BlassedTerminal");
+
+export class BlessedTerminal extends Widget {
     options: Widgets.TerminalElement | any;
     shell: string;
     args: string[];
@@ -21,24 +26,30 @@ export class Terminal extends Widget {
     constructor( options: Widgets.TerminalElement | any ) {
         super( { ...options, scrollable: false } );
 
+        this.options = options;
+
         // XXX Workaround for all motion
         if (this.screen.program.tmux && this.screen.program.tmuxVersion >= 2) {
             this.screen.program.enableMouse();
         }
 
         this.handler = options.handler;
-        this.shell = options.shell || process.env.SHELL || 'sh';
+        this.shell = options.shell || process.env.SHELL || (os.platform() === 'win32' ? 'powershell.exe' : 'sh');
         this.args = options.args || [];
 
-        this.cursor = this.options.cursor;
-        this.cursorBlink = this.options.cursorBlink;
-        this.screenKeys = this.options.screenKeys;
+        this.cursor = options.cursor;
+        this.cursorBlink = options.cursorBlink;
+        this.screenKeys = options.screenKeys;
 
         this.termName = options.terminal
                 || options.term
                 || process.env.TERM
                 || 'xterm';
 
+        (this.box as any).render = () => {
+            log.debug( "render !!!" );
+            this.render();
+        };
         this.bootstrap();
     }
 
@@ -73,7 +84,7 @@ export class Terminal extends Widget {
         
         element.parentNode = element;
         element.offsetParent = element;
-        
+
         this.term = Term({
             termName: this.termName,
             cols: (this.box.width as number) - (this.box.iwidth as number),
@@ -85,7 +96,7 @@ export class Terminal extends Widget {
             cursorBlink: this.cursorBlink,
             screenKeys: this.screenKeys
         });
-        
+
         this.term.refresh = () => {
             this.screen.render();
         };
@@ -126,9 +137,9 @@ export class Terminal extends Widget {
                 || this.term.utfMouse
                 || this.term.sgrMouse
                 || this.term.urxvtMouse) {
-            ;
+                ;
             } else {
-            return;
+                return;
             }
         
             let b = data.raw[0]
@@ -196,9 +207,10 @@ export class Terminal extends Widget {
         });
         
         if (this.handler) {
+            log.error( "handler null !!!" );
             return;
         }
-        
+
         this.pty = NodePTY.spawn(this.shell, this.args, {
             name: this.termName,
             cols: (this.width as number) - (this.box.iwidth as number),
@@ -206,7 +218,7 @@ export class Terminal extends Widget {
             cwd: process.env.HOME,
             env: this.options.env || process.env
         });
-        
+
         this.on('resize', () => {
             process.nextTick(() => {
                 try {
@@ -218,11 +230,12 @@ export class Terminal extends Widget {
         });
         
         this.handler = (data) => {
+            log.debug( "pty write : %s", data );
             this.pty.write(data);
-            this.screen.render();
         };
         
         this.pty.on('data', (data) => {
+            log.debug( "screen write : %s", data );
             this.write(data);
             this.screen.render();
         });
@@ -232,19 +245,21 @@ export class Terminal extends Widget {
         });
         
         this.box.onScreenEvent('keypress', () => {
+            log.error( "onScreenEvent - box keypress !!!" );
             this.screen.render();
         });
-        
+
         (this.screen as any)._listenKeys(this);
     }
 
     _onData(data) {
-        if (this.screen.focused === this.box && !(this.box as any)._isMouse(data)) {
-          this.handler(data);
+        if (this.screen.focused === this.box && !this._isMouse(data)) {
+            this.handler(data);
         }
     }
 
     write(data) {
+        log.debug( "term write %s", data );
         return this.term.write(data);
     }
       
@@ -263,27 +278,27 @@ export class Terminal extends Widget {
           , yl = ret.yl - box.ibottom
           , cursor;
       
-        var scrollback = this.term.lines.length - (yl - yi);
-      
-        for (var y = Math.max(yi, 0); y < yl; y++) {
-          var line = screen.lines[y];
+        let scrollback = this.term.lines.length - (yl - yi);
+
+        for (let y = Math.max(yi, 0); y < yl; y++) {
+          let line = screen.lines[y];
           if (!line || !this.term.lines[scrollback + y - yi]) break;
       
           if (y === yi + this.term.y
               && this.term.cursorState
-              && screen.focused === this
+              && screen.focused === this.box
               && (this.term.ydisp === this.term.ybase || this.term.selectMode)
               && !this.term.cursorHidden) {
-            cursor = xi + this.term.x;
+                cursor = xi + this.term.x;
           } else {
-            cursor = -1;
+                cursor = -1;
           }
       
-          for (var x = Math.max(xi, 0); x < xl; x++) {
+          for (let x = Math.max(xi, 0); x < xl; x++) {
             if (!line[x] || !this.term.lines[scrollback + y - yi][x - xi]) break;
-      
+
             line[x][0] = this.term.lines[scrollback + y - yi][x - xi][0];
-      
+
             if (x === cursor) {
               if (this.cursor === 'line') {
                 line[x][0] = box.dattr;
@@ -312,6 +327,7 @@ export class Terminal extends Widget {
           }
       
           line.dirty = true;
+          screen.lines[y] = line;
         }
         return ret;
     }
@@ -319,12 +335,12 @@ export class Terminal extends Widget {
     _isMouse(buf) {
         let s = buf;
         if (Buffer.isBuffer(s)) {
-          if (s[0] > 127 && s[1] === undefined) {
-            s[0] -= 128;
-            s = '\x1b' + s.toString('utf-8');
-          } else {
-            s = s.toString('utf-8');
-          }
+            if (s[0] > 127 && s[1] === undefined) {
+                s[0] -= 128;
+                s = '\x1b' + s.toString('utf-8');
+            } else {
+                s = s.toString('utf-8');
+            }
         }
         return (buf[0] === 0x1b && buf[1] === 0x5b && buf[2] === 0x4d)
           || /^\x1b\[M([\x00\u0020-\uffff]{3})/.test(s)
@@ -398,5 +414,10 @@ export class Terminal extends Widget {
             clearInterval(this.term._blink);
         }
         this.term.destroy();
+    }
+
+    destroy() {
+        this.kill();
+        super.destroy();
     }
 }

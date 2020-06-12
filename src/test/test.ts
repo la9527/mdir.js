@@ -7,12 +7,13 @@ import { ProgressBox } from "../panel_blassed/widget/ProgressBox";
 import { StringUtils } from '../common/StringUtils';
 import { Color } from "../common/Color";
 import { inputBox } from "../panel_blassed/widget/InputBox";
-
+import { Hint } from '../config/KeyMapConfig';
+import { BlessedTerminal } from "../panel_blassed/BlessedTerminal";
 
 const log = Logger( "TEST" );
 
 // console.log( StringUtils.ellipsis("ABCDEFGHJKLMNOPRSTUVWXYZ1234567890", 20) );
-/*
+
 const screen = blessed.screen({
     smartCSR: true,
     fullUnicode: true,
@@ -34,19 +35,41 @@ const screen = blessed.screen({
     });
 
     try {
-        const result = await inputBox( {
+        const blessedProgram = new BlessedTerminal( { 
             parent: screen,
-            title: "INPUT BOX TEST",
-            defaultText: "defaultText",
-            button: [ "OK", "Cancel" ]
+            cursor: 'line',
+            cursorBlink: true,
+            screenKeys: false,
+            label: ' multiplex.js ',
+            left: "center",
+            top: "center",
+            width: '50%',
+            height: '50%',
+            border: 'line',
+            style: {
+                fg: 'default',
+                bg: 'default',
+                focus: {
+                    border: {
+                        fg: 'green'
+                    }
+                }
+            }
         });
+        blessedProgram.setFocus();
 
-        log.debug( "INPUTBOX RESULT : %s", result );
+        /*
+        blessedProgram.pty.on('data', (data) => {
+            log.debug("pty %s", JSON.stringify(data));
+        });
+        */
+        screen.render();
     } catch( e ) {
         log.error( e.stack );
     }
-    */
-    /*
+})();
+
+/*
     try {
         let result = await messageBox( {
             title: "Copy",
@@ -77,9 +100,6 @@ const screen = blessed.screen({
     screen.render();
 })();
 
-*/
-
-/*
 const screen = blessed.screen({
     smartCSR: true,
     fullUnicode: true,
@@ -112,9 +132,7 @@ const screen = blessed.screen({
 
     screen.render();
 })();
-*/
 
-/*
 (async () => {
     menuKeyMapping( KeyMappingInfo, menuConfig );
     
@@ -137,9 +155,7 @@ const screen = blessed.screen({
 
     screen.render();
 })();
-*/
 
-/*
 (async () => {
 
     const mcd = new BlessedMcd({ parent: screen, top: 1, left: 0, width: "100%", height: "100%-2" });
@@ -157,9 +173,7 @@ const screen = blessed.screen({
 
     screen.render();
 })();
-*/
 
-/*
 const program: BlessedProgram = blessed.program();
 
 program.alternateBuffer();
