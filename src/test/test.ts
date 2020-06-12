@@ -34,36 +34,44 @@ const screen = blessed.screen({
         screen.render();
     });
 
+    screen.render();
+
+    let blessedProgram = null;
     try {
-        const blessedProgram = new BlessedTerminal( { 
-            parent: screen,
-            cursor: 'line',
-            cursorBlink: true,
-            screenKeys: false,
-            label: ' multiplex.js ',
-            left: "center",
-            top: "center",
-            width: '50%',
-            height: '50%',
-            border: 'line',
-            style: {
-                fg: 'default',
-                bg: 'default',
-                focus: {
-                    border: {
-                        fg: 'green'
+        screen.key("c", async () => {
+            blessedProgram = new BlessedTerminal( { 
+                parent: screen,
+                cursor: 'line',
+                cursorBlink: true,
+                screenKeys: false,
+                label: ' multiplex.js ',
+                left: "center",
+                top: "center",
+                width: '50%',
+                height: '50%',
+                border: 'line',
+                style: {
+                    fg: 'default',
+                    bg: 'default',
+                    focus: {
+                        border: {
+                            fg: 'green'
+                        }
                     }
                 }
-            }
+            }, null, null);
+            blessedProgram.setFocus();
         });
-        blessedProgram.setFocus();
 
-        /*
-        blessedProgram.pty.on('data', (data) => {
-            log.debug("pty %s", JSON.stringify(data));
+        screen.key("k", async () => {
+            blessedProgram.destroy();
+
+            await messageBox( { parent: screen, title: "TEST", msg: "Test", button: ["OK"] });
+
+            blessedProgram = null;
+            screen.render();
         });
-        */
-        screen.render();
+        
     } catch( e ) {
         log.error( e.stack );
     }

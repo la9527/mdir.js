@@ -9,7 +9,7 @@ import mainFrame from "../MainFrame";
 const log = Logger("MessageBox");
 
 interface IMessageOption {
-    parent: Widget;
+    parent: Widget | Widgets.Screen;
     title: string;
     msg: string;
     button: string[];

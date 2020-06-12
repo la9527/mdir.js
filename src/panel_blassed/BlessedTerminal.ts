@@ -5,10 +5,13 @@ import { IPty } from "node-pty";
 import * as NodePTY from "node-pty";
 import * as os from 'os';
 import { Logger } from "../common/Logger";
+import { IBlessedView } from "./IBlessedView";
+import { Reader } from "../common/Reader";
+import { File } from "../common/File";
 
 const log = Logger("BlassedTerminal");
 
-export class BlessedTerminal extends Widget {
+export class BlessedTerminal extends Widget implements IBlessedView {
     options: Widgets.TerminalElement | any;
     shell: string;
     args: string[];
@@ -23,9 +26,12 @@ export class BlessedTerminal extends Widget {
     title: string;
     pty: IPty = null;
 
-    constructor( options: Widgets.TerminalElement | any ) {
+    reader: Reader = null;
+
+    constructor( options: Widgets.TerminalElement | any, reader: Reader, firstPath: File ) {
         super( { ...options, scrollable: false } );
 
+        this.setReader( reader );
         this.options = options;
 
         // XXX Workaround for all motion
@@ -34,9 +40,8 @@ export class BlessedTerminal extends Widget {
         }
 
         this.handler = options.handler;
-        this.shell = options.shell || process.env.SHELL || (os.platform() === 'win32' ? 'powershell.exe' : 'sh');
-        this.args = options.args || [];
-
+        this.shell = options.shell || process.env.SHELL || (os.platform() === 'win32' ? "powershell.exe" : 'sh');
+        
         this.cursor = options.cursor;
         this.cursorBlink = options.cursorBlink;
         this.screenKeys = options.screenKeys;
@@ -47,13 +52,12 @@ export class BlessedTerminal extends Widget {
                 || 'xterm';
 
         (this.box as any).render = () => {
-            log.debug( "render !!!" );
-            this.render();
+            this._render();
         };
-        this.bootstrap();
+        this.bootstrap(firstPath);
     }
 
-    bootstrap() {
+    bootstrap(firstPath: File) {
         const element = {
             // window
             get document() { return element; },
@@ -98,7 +102,7 @@ export class BlessedTerminal extends Widget {
         });
 
         this.term.refresh = () => {
-            this.screen.render();
+            this.render();
         };
         
         this.term.keyDown = () => {};
@@ -118,10 +122,17 @@ export class BlessedTerminal extends Widget {
         
         // Incoming keys and mouse inputs.
         // NOTE: Cannot pass mouse events - coordinates will be off!
+        /*
         this.screen.program.input.on('data', (data) => {
             this._onData(data);
         });
-        
+        */
+        /*
+        this.on("keypress", (ch, keyInfo) => {
+            this._onData(ch);
+        });
+        */
+
         this.box.onScreenEvent('mouse', (data) => {
             if (this.screen.focused !== this.box) return;
         
@@ -176,7 +187,8 @@ export class BlessedTerminal extends Widget {
         });
         
         this.on('blur', () => {
-            this.term.blur();
+            log.debug( "blur" );
+            this.term?.blur();
         });
         
         this.term.on('title', (title) => {
@@ -185,25 +197,23 @@ export class BlessedTerminal extends Widget {
         });
         
         this.term.on('passthrough', (data) => {
+            log.debug( "passthrough: %s", data );
             this.screen.program.flush();
             (this.screen.program as any)._owrite(data);
         });
         
         this.on('resize', () => {
             process.nextTick(() => {
-                this.term.resize((this.width as number) - (this.box.iwidth as number), (this.height as number) - (this.box.iheight as number));
+                this.term?.resize((this.width as number) - (this.box.iwidth as number), (this.height as number) - (this.box.iheight as number));
             });
         });
         
         this.box.once('render', () => {
-            this.term.resize((this.width as number) - (this.box.iwidth as number), (this.height as number) - (this.box.iheight as number));
+            this.term?.resize((this.width as number) - (this.box.iwidth as number), (this.height as number) - (this.box.iheight as number));
         });
         
         this.on('destroy', () => {
             this.kill();
-            this.screen.program.input.removeListener('data', ( data ) => {
-                this._onData( data );
-            });
         });
         
         if (this.handler) {
@@ -215,41 +225,47 @@ export class BlessedTerminal extends Widget {
             name: this.termName,
             cols: (this.width as number) - (this.box.iwidth as number),
             rows: (this.height as number) - (this.box.iheight as number),
-            cwd: process.env.HOME,
+            cwd: firstPath ? firstPath.fullname : process.env.HOME,
+            encoding: "utf-8",
             env: this.options.env || process.env
         });
 
         this.on('resize', () => {
             process.nextTick(() => {
                 try {
-                    this.pty.resize((this.width as number) - (this.box.iwidth as number), (this.height as number) - (this.box.iheight as number));
+                    this.pty?.resize((this.width as number) - (this.box.iwidth as number), (this.height as number) - (this.box.iheight as number));
                 } catch (e) {
-                    ;
+                    log.debug( e );
                 }
             });
         });
         
         this.handler = (data) => {
-            log.debug( "pty write : %s", data );
-            this.pty.write(data);
+            log.debug( "pty write : [%d]", data.length );
+            this.pty?.write(data);
         };
         
         this.pty.on('data', (data) => {
-            log.debug( "screen write : %s", data );
-            this.write(data);
+            log.debug( "screen write : [%d]", data.length );
+            this?.write(data);
             this.screen.render();
         });
         
         this.pty.on('exit', (code) => {
-            this.box.emit('exit', code || null);
+            log.debug( "on exit !!! - %d", code );
+            this.box.emit( "process_exit", code );
         });
         
         this.box.onScreenEvent('keypress', () => {
             log.error( "onScreenEvent - box keypress !!!" );
-            this.screen.render();
+            this.render();
         });
 
         (this.screen as any)._listenKeys(this);
+    }
+
+    inputWrite( ch, keyInfo ) {
+        this.handler(keyInfo.sequence);
     }
 
     _onData(data) {
@@ -259,11 +275,11 @@ export class BlessedTerminal extends Widget {
     }
 
     write(data) {
-        log.debug( "term write %s", data );
-        return this.term.write(data);
+        log.debug( "term write [%d]", data.length );
+        return this.term?.write(data);
     }
-      
-    render() {
+
+    _render() {
         const box = this.box as any;
         const screen = this.screen as any;
 
@@ -405,19 +421,55 @@ export class BlessedTerminal extends Widget {
     }
     
     kill() {
+        this.screen.program.input.removeListener('data', ( data ) => {
+            this._onData( data );
+        });
+        if ( this.term ) {
+            if ( this.term._blink ) {
+                clearInterval(this.term._blink);
+            }
+            this.term.refresh = function() {};
+            this.term.write('\x1b[H\x1b[J');
+            this.term.destroy();
+            delete this.term;
+            this.term = null;
+        }
         if (this.pty) {
-            this.pty.kill();
+            try {
+                (this.pty as any)?.emit('exit', 0);
+                log.debug( "PROCESS KILL - %d", this.pty.pid );
+                process.kill( this.pty.pid );
+                /* BUG - process stop
+                this.pty.kill();
+                */
+                delete this.pty;
+            } catch ( e ) {
+                log.error( e );
+            }
+            this.pty = null;
         }
-        this.term.refresh = function() {};
-        this.term.write('\x1b[H\x1b[J');
-        if ( this.term._blink ) {
-            clearInterval(this.term._blink);
-        }
-        this.term.destroy();
+        log.debug( "kill() END");
     }
 
     destroy() {
+        this.off();
         this.kill();
         super.destroy();
+    }
+
+    getReader() {
+        return this.reader;
+    }
+
+    setReader( reader ) {
+        this.reader = reader;
+    }
+
+    getWidget() {
+        return this;
+    }
+
+    getCurrentPath() {
+        
     }
 }

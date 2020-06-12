@@ -42,7 +42,8 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         clipboardCut: "C-x",
         clipboardPastePromise: "C-v",
         removePromise: "C-d",
-        consoleViewPromise: "escape"
+        consoleViewPromise: "escape",
+        terminalPromise: "C-o"
     },
     Menu: {
         keyUp: "up",

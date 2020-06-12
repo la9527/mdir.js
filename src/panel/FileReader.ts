@@ -8,7 +8,6 @@ import { Logger } from "../common/Logger";
 import { Reader, IMountList, ProgressFunc } from "../common/Reader";
 
 import { ColorConfig } from "../config/ColorConfig";
-import { rejects } from "assert";
 import { Transform } from "stream";
 
 const log = Logger("FileReader");

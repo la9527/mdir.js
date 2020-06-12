@@ -157,9 +157,6 @@ export class CommandBox extends Widget {
         if ( dir ) {
             this.promptText = this.prompt( dir?.dirname );
             this.setContent( this.promptText + this.commandValue );
-
-            
-            
         }
     }
 

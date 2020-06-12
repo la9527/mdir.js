@@ -68,6 +68,11 @@ export const menuConfig: IFrameMenuConfig = {
             "-",
             { name: "Split", method: "Common.split" },
             { name: "Next Window", method: "Common.nextWindow" }
+        ],
+        Terminal: [
+            { name: "Shell", method: "Common.terminalPromise" },
+            "-",
+            { name: "Vim", /* method: "Common.vimPromise" */ }
         ]
     }
 };

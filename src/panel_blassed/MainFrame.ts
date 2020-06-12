@@ -21,6 +21,7 @@ import { StringUtils } from "../common/StringUtils";
 import { Color } from "../common/Color";
 import { inputBox } from "./widget/InputBox";
 import { HintBox } from "./HintBox";
+import { BlessedTerminal } from "./BlessedTerminal";
 
 const log = Logger("MainFrame");
 
@@ -39,7 +40,7 @@ export class MainFrame {
     private screen: Widgets.Screen = null;
     private viewType: VIEW_TYPE = VIEW_TYPE.NORMAL;
     private baseWidget = null;
-    private blessedFrames = [];
+    private blessedFrames: (BlessedMcd | BlessedPanel | BlessedTerminal)[] = [];
     private blessedMenu = null;
     private funcKeyBox = null;
     private bottomFilesBox: BottomFilesBox = null;
@@ -55,7 +56,7 @@ export class MainFrame {
 
     @Hint({ hint: "MCD", help: "showing directory structure on this window." })
     async mcdPromise(isEscape = false) {
-        let view: BlessedPanel | BlessedMcd = this.blessedFrames[this.activeFrameNum];
+        let view = this.blessedFrames[this.activeFrameNum];
         if ( view instanceof BlessedPanel ) {
             view.destroy();
 
@@ -70,9 +71,60 @@ export class MainFrame {
             await newView.read( isEscape ? view.firstScanPath : view.currentPathFile());
             newView.setFocus();
             this.blessedFrames[this.activeFrameNum] = newView;
+        } else if ( view instanceof BlessedTerminal ) {
+            return RefreshType.NONE;
         }
         this.viewRender();
         this.baseWidget.render();
+        return RefreshType.ALL;
+    }
+
+    @Hint({ hint: "Terminal", help: "Run to XTerm(shell command) on this window." })
+    async terminalPromise(isEscape = false) {
+        let view = this.blessedFrames[this.activeFrameNum];
+        if ( view instanceof BlessedPanel ) {
+            view.destroy();
+
+            const newView = new BlessedTerminal( { parent: this.baseWidget, 
+                cursor: 'line',
+                cursorBlink: true,
+                screenKeys: false,
+                viewCount: viewCount++ 
+            }, view.getReader(), view.currentPath() );
+            newView.on("process_exit", () => {
+                process.nextTick( () => {
+                    this.terminalPromise( true );
+                });
+            });
+            newView.setFocus();
+            this.blessedFrames[this.activeFrameNum] = newView;
+        } else if ( view instanceof BlessedMcd ) {
+            view.destroy();
+
+            const newView = new BlessedTerminal( { parent: this.baseWidget, viewCount: viewCount++,
+                    cursor: 'line',
+                    cursorBlink: true,
+                    screenKeys: false
+                }, view.getReader(), view.currentPathFile() );
+            newView.on("process_exit", () => {
+                process.nextTick( () => {
+                    this.terminalPromise( true );
+                });
+            });
+            newView.setFocus();
+            this.blessedFrames[this.activeFrameNum] = newView;
+        } else if ( view instanceof BlessedTerminal ) {
+            view.destroy();
+
+            const newView = new BlessedPanel( { parent: this.baseWidget, viewCount: viewCount++ }, view.getReader() );
+            await newView.read( view.getReader().currentDir() || "." );
+            newView.setFocus();
+            this.blessedFrames[this.activeFrameNum] = newView;
+        }
+        log.debug( "terminal END - COMPLETE" );
+        this.viewRender();
+        this.baseWidget.render();
+        return RefreshType.ALL;
     }
 
     viewRender() {
@@ -128,11 +180,14 @@ export class MainFrame {
         this.hintBox = new HintBox( { parent: this.baseWidget } );
 
         for ( var i = 0; i < this.blessedFrames.length; i++ ) {
-            try {
-                this.blessedFrames[i].setReader(readerControl("file"));
-                await this.blessedFrames[i].read( "." );
-            } catch ( e ) {
-                log.error( e );
+            const panel = this.blessedFrames[i];
+            if ( panel instanceof BlessedPanel ) {
+                try {
+                    panel.setReader(readerControl("file"));
+                    await panel.read( "." );
+                } catch ( e ) {
+                    log.error( e );
+                }
             }
         }
 
@@ -152,7 +207,9 @@ export class MainFrame {
     eventStart() {
         this.screen.off('keypress');
         this.screen.on('keypress', async (ch, keyInfo) => {
+            log.debug( "keypress !!!" );
             if ( this._keyLockScreen ) {
+                log.debug( "_keyLockScreen !!!");
                 return;
             }
             if ( this.keyLock ) {
@@ -169,20 +226,30 @@ export class MainFrame {
             let starTime = Date.now();
             this._keyLockScreen = true;
 
-            if ( this.activeFocusObj() instanceof BlessedPanel ) {
+            const panel = this.activeFocusObj();
+
+            if ( panel instanceof BlessedPanel ) {
                 if ( await this.activeFocusObj().keyInputSearchFile(ch, keyInfo) ) {
                     this.execRefreshType( RefreshType.OBJECT );
                     this._keyLockScreen = false;
                     return;
                 }
             }
-
-            let type: RefreshType = await keyMappingExec( this.activeFocusObj(), keyInfo );
-            if ( type === RefreshType.NONE ) {
-                type = await keyMappingExec( this, keyInfo );
+            
+            if ( panel instanceof BlessedTerminal ) {
+                let type = await keyMappingExec( this, keyInfo );
+                if ( type === RefreshType.NONE ) {
+                    panel.inputWrite(ch, keyInfo);
+                }
+            } else {
+                log.info( "KEYPRESS - KEY START [%s] - (%dms)", keyInfo.name, Date.now() - starTime );
+                let type: RefreshType = await keyMappingExec( this.activeFocusObj(), keyInfo );
+                if ( type === RefreshType.NONE ) {
+                    type = await keyMappingExec( this, keyInfo );
+                }
+                this.execRefreshType( type );
+                log.info( "KEYPRESS - KEY END [%s] - (%dms)", keyInfo.name, Date.now() - starTime );
             }
-            this.execRefreshType( type );
-            log.info( "KEYPRESS [%s] - (%dms)", keyInfo.name, Date.now() - starTime );
             this._keyLockScreen = false;
         });
     }
@@ -191,7 +258,11 @@ export class MainFrame {
         if ( type === RefreshType.ALL ) {
             log.info( "REFRESH - ALL");
             this.screen.realloc();
-            this.blessedFrames.forEach( item => item.resetViewCache() );
+            this.blessedFrames.forEach( item => {
+                if ( item instanceof BlessedPanel ) {
+                    item.resetViewCache() 
+                }
+            });
             this.baseWidget.render();
             this.screen.render();
         } else if ( type === RefreshType.OBJECT ) {
@@ -244,7 +315,7 @@ export class MainFrame {
         return RefreshType.ALL;
     }
 
-    activePanel(): BlessedPanel {
+    activePanel(): BlessedPanel | BlessedMcd | BlessedTerminal {
         // log.debug( "activePanel %d", this.activeFrameNum );
         return this.blessedFrames[ this.activeFrameNum ];
     }
@@ -258,6 +329,10 @@ export class MainFrame {
 
     @Hint({ hint: "Menu", help: "visible the menu", order: 3 })
     menu() {
+        const activePanel = this.activePanel();
+        if ( (activePanel instanceof BlessedTerminal) ) {
+            return RefreshType.NONE;
+        }
         this.menuClose();
 
         let viewName = this.activeFocusObj().viewName || "Common";
@@ -269,6 +344,10 @@ export class MainFrame {
     }
 
     menuClose() {
+        const activePanel = this.activePanel();
+        if ( (activePanel instanceof BlessedTerminal) ) {
+            return RefreshType.NONE;
+        }
         log.debug( "menuClose !!!" );
         this.blessedMenu.close();
         return RefreshType.ALL;
@@ -276,6 +355,11 @@ export class MainFrame {
 
     @Hint({ hint: "Shell", help: "visible the command line at the bottom.", order: 4 })
     commandBoxShow() {
+        const activePanel = this.activePanel();
+        if ( !(activePanel instanceof BlessedPanel) ) {
+            return RefreshType.NONE;
+        }
+
         if ( this.bottomFilesBox ) {
             this.bottomFilesBox.destroy();
             this.bottomFilesBox = null;
@@ -310,10 +394,15 @@ export class MainFrame {
     }
 
     commandRun(cmd): Promise<void> {
+        const activePanel = this.activePanel();
+        if ( !(activePanel instanceof BlessedPanel) ) {
+            return new Promise( resolve => resolve() );
+        }
+
         let cmds = cmd.split(" ");
         if ( cmds[0] === "cd" && cmds[1] ) {
-            let chdirPath = cmds[1] === "-" ? this.activePanel().previousDir : cmds[1];
-            return this.activePanel().read(chdirPath);
+            let chdirPath = cmds[1] === "-" ? activePanel.previousDir : cmds[1];
+            return activePanel.read(chdirPath);
         }
 
         return new Promise( (resolve, reject) => {
@@ -379,6 +468,11 @@ export class MainFrame {
 
     @Hint({ hint: "Remove", help: "Remove the selected file(s)." })
     async removePromise() {
+        const activePanel = this.activePanel();
+        if ( !(activePanel instanceof BlessedPanel) ) {
+            return RefreshType.NONE;
+        }
+
         let result = await messageBox( { 
                     parent: this.baseWidget, 
                     title: "Question", 
@@ -390,9 +484,9 @@ export class MainFrame {
         }
 
         let select = new Selection();
-        select.set( this.activePanel().getSelectFiles(), this.activePanel().currentPath(), ClipBoard.CLIP_NONE );
+        select.set( activePanel.getSelectFiles(), activePanel.currentPath(), ClipBoard.CLIP_NONE );
 
-        const reader = this.activePanel().getReader();
+        const reader = activePanel.getReader();
         reader.isUserCanceled = false;
 
         const progressBox = new ProgressBox( { title: "Remove", msg: "Calculating...", cancel: () => {
@@ -451,12 +545,20 @@ export class MainFrame {
 
     @Hint({ hint: "Cut", help: "Cut to clipboard on selected files.", order: 6 })
     clipboardCut() {
-        selection().set( this.activePanel().getSelectFiles(), this.activePanel().currentPath(), ClipBoard.CLIP_CUT );
+        const activePanel = this.activePanel();
+        if ( !(activePanel instanceof BlessedPanel) ) {
+            return ;
+        }
+        selection().set( activePanel.getSelectFiles(), activePanel.currentPath(), ClipBoard.CLIP_CUT );
     }
 
     @Hint({ hint: "Copy", help: "Copy to clipboard on selected files.", order: 5 })
     clipboardCopy() {
-        selection().set( this.activePanel().getSelectFiles(), this.activePanel().currentPath(), ClipBoard.CLIP_COPY );
+        const activePanel = this.activePanel();
+        if ( !(activePanel instanceof BlessedPanel) ) {
+            return ;
+        }
+        selection().set( activePanel.getSelectFiles(), activePanel.currentPath(), ClipBoard.CLIP_COPY );
     }
 
     @Hint({ hint: "Paste", help: "From clipboard to paste on current directory.", order: 7 })
@@ -467,6 +569,10 @@ export class MainFrame {
         let files = clipSelected.getFiles();
         if ( !files || files.length === 0 ) {
             log.debug( "CLIPBOARD Length: 0");
+            return RefreshType.NONE;
+        }
+
+        if ( !(activePanel instanceof BlessedPanel) ) {
             return RefreshType.NONE;
         }
 
