@@ -265,7 +265,9 @@ export class BlessedTerminal extends Widget implements IBlessedView {
     }
 
     inputWrite( ch, keyInfo ) {
-        this.handler(keyInfo.sequence);
+        if ( keyInfo.sequence ) {
+            this.handler(keyInfo.sequence);
+        }
     }
 
     _onData(data) {
