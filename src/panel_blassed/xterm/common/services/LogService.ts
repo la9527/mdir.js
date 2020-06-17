@@ -4,9 +4,9 @@
  */
 
 import { ILogService, IOptionsService } from '../services/Services';
-import { Logger } from "../../../../common/Logger";
+// import { Logger } from "../../../../common/Logger";
 
-const log = Logger("XtermLog");
+// const log = Logger("XtermLog");
 
 type LogType = (message?: any, ...optionalParams: any[]) => void;
 
@@ -78,27 +78,23 @@ export class LogService implements ILogService {
     if (this._logLevel <= LogLevel.DEBUG) {
       this._log(console.log, message, optionalParams);
     }
-    log.debug.call( log, [ message, ...optionalParams ] );
   }
 
   public info(message: string, ...optionalParams: any[]): void {
     if (this._logLevel <= LogLevel.INFO) {
       this._log(console.info, message, optionalParams);
     }
-    log.info.call( log, [ message, ...optionalParams ] );
   }
 
   public warn(message: string, ...optionalParams: any[]): void {
     if (this._logLevel <= LogLevel.WARN) {
       this._log(console.warn, message, optionalParams);
     }
-    log.warn.call( log, [ message, ...optionalParams ] );
   }
 
   public error(message: string, ...optionalParams: any[]): void {
     if (this._logLevel <= LogLevel.ERROR) {
       this._log(console.error, message, optionalParams);
     }
-    log.error.call( log, [ message, ...optionalParams ] );
   }
 }

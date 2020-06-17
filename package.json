@@ -8,7 +8,7 @@
     "build": "tsc -p tsconfig.json",
     "start": "tsc -p tsconfig.json && node ./build/main.js",
     "debug": "tsc -p tsconfig.json && node --inspect-brk ./build/main.js",
-    "test": "tsc -p tsconfig.json && node ./build/src/test/test.js"
+    "test": "tsc -p tsconfig.json && node ./build/test/test.js"
   },
   "author": "La Byoungyoung <la9527@daum.net>",
   "contributors": [

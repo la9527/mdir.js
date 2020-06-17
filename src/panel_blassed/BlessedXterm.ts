@@ -7,7 +7,6 @@ import { IBlessedView } from "./IBlessedView";
 import { Reader } from "../common/Reader";
 import { File } from "../common/File";
 import { XTerminal } from "./xterm/XTerminal";
-import { start } from "repl";
 
 const log = Logger("BlassedXTerm");
 
@@ -41,7 +40,7 @@ export class BlessedXterm extends Widget implements IBlessedView {
         
         this.cursorBlink = options.cursorBlink;
         this.screenKeys = options.screenKeys;
-        this.box.style = this.box.style || { bg: "black", fg: "white" };
+        this.box.style = this.box.style || { bg: "default", fg: "default" };
         
         this.termName = options.terminal
                 || options.term
@@ -189,8 +188,7 @@ export class BlessedXterm extends Widget implements IBlessedView {
         let xi = ret.xi + box.ileft
           , xl = ret.xl - box.iright
           , yi = ret.yi + box.itop
-          , yl = ret.yl - box.ibottom
-          , cursor;
+          , yl = ret.yl - box.ibottom;
       
         let scrollback = this.term.buffer.lines.length - (yl - yi);
 
@@ -200,13 +198,8 @@ export class BlessedXterm extends Widget implements IBlessedView {
 
           if (!line) break;
 
-          if (y === yi + this.term.buffer.y
-              && screen.focused === this.box
-              && (this.term.buffer.ydisp === this.term.buffer.ybase)) {
-                cursor = xi + this.term.buffer.x;
-          } else {
-                cursor = -1;
-          }
+          // const str = bufferLine.translateToString(true);
+          // log.debug( "line : %d, COLOR [%d/%d] [%d] [%s]", scrollback + y - yi, bufferLine.getFg(0), bufferLine.getBg(0), str.length, str );
 
           for (let x = Math.max(xi, 0); x < xl; x++) {
             if (!line[x]) break;
@@ -223,9 +216,6 @@ export class BlessedXterm extends Widget implements IBlessedView {
 
             line[x][1] = bufferLine.getString(x - xi) || ' ';
           }
-
-          // const str = bufferLine.translateToString(true);
-          // log.debug( "line : %d, COLOR [%d/%d] [%d] [%s]", scrollback + y - yi, bufferLine.getFg(0), bufferLine.getBg(0), str.length, str );
 
           line.dirty = true;
           screen.lines[y] = line;

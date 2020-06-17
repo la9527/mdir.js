@@ -8,7 +8,7 @@ import { StringUtils } from '../common/StringUtils';
 import { Color } from "../common/Color";
 import { inputBox } from "../panel_blassed/widget/InputBox";
 import { Hint } from '../config/KeyMapConfig';
-import { BlessedTerminal } from "../panel_blassed/BlessedTerminal";
+import { BlessedXterm } from "../panel_blassed/BlessedXterm";
 
 const log = Logger( "TEST" );
 
@@ -39,7 +39,7 @@ const screen = blessed.screen({
     let blessedProgram = null;
     try {
         screen.key("c", async () => {
-            blessedProgram = new BlessedTerminal( { 
+            blessedProgram = new BlessedXterm( { 
                 parent: screen,
                 cursor: 'line',
                 cursorBlink: true,
