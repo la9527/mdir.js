@@ -5,7 +5,10 @@
         "sourceMap": true,
         "allowJs": true,
         "moduleResolution": "node",
-        "rootDir": ".",
+        "rootDirs": [
+            ".",
+            "xterm/src"
+        ],
         "forceConsistentCasingInFileNames": true,
         "noImplicitReturns": true,
         "noImplicitThis": true,
@@ -19,10 +22,8 @@
         "outDir": "./build",
         "baseUrl": ".",
         "paths": {
-            "*": [
-                "test_server/*"
-            ],
-            "neo-blessed": [ "./@types/blessed.d.ts" ]
+            "neo-blessed": [ "./@types/blessed.d.ts" ],
+            "common/*": [ "./xterm/src/common/*" ]
         },
         "types": [
             "node"
@@ -33,6 +34,7 @@
       	]
     },
     "include": [
+        "xterm/src/common",
         "src/**/*"
     ]
 }

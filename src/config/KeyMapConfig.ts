@@ -270,7 +270,7 @@ export async function keyMappingExec( baseObject, keyInfo ): Promise<RefreshType
         }
         return RefreshType.NONE;
     } else {
-        log.info( "keypress [%s] %j", keyName, keyInfo );
+        log.info( "keyFrame[%s] NULL - %j", keyName, keyInfo );
     }
     return RefreshType.NONE;
 }

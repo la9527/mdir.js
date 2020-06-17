@@ -21,7 +21,8 @@ import { StringUtils } from "../common/StringUtils";
 import { Color } from "../common/Color";
 import { inputBox } from "./widget/InputBox";
 import { HintBox } from "./HintBox";
-import { BlessedTerminal } from "./BlessedTerminal";
+// import { BlessedTerminal } from "./BlessedTerminal";
+import { BlessedXterm } from "./BlessedXterm";
 
 const log = Logger("MainFrame");
 
@@ -40,7 +41,7 @@ export class MainFrame {
     private screen: Widgets.Screen = null;
     private viewType: VIEW_TYPE = VIEW_TYPE.NORMAL;
     private baseWidget = null;
-    private blessedFrames: (BlessedMcd | BlessedPanel | BlessedTerminal)[] = [];
+    private blessedFrames: (BlessedMcd | BlessedPanel | BlessedXterm)[] = [];
     private blessedMenu = null;
     private funcKeyBox = null;
     private bottomFilesBox: BottomFilesBox = null;
@@ -71,7 +72,7 @@ export class MainFrame {
             await newView.read( isEscape ? view.firstScanPath : view.currentPathFile());
             newView.setFocus();
             this.blessedFrames[this.activeFrameNum] = newView;
-        } else if ( view instanceof BlessedTerminal ) {
+        } else if ( view instanceof BlessedXterm ) {
             return RefreshType.NONE;
         }
         this.viewRender();
@@ -85,7 +86,7 @@ export class MainFrame {
         if ( view instanceof BlessedPanel ) {
             view.destroy();
 
-            const newView = new BlessedTerminal( { parent: this.baseWidget, 
+            const newView = new BlessedXterm( { parent: this.baseWidget, 
                 cursor: 'line',
                 cursorBlink: true,
                 screenKeys: false,
@@ -101,8 +102,8 @@ export class MainFrame {
         } else if ( view instanceof BlessedMcd ) {
             view.destroy();
 
-            const newView = new BlessedTerminal( { parent: this.baseWidget, viewCount: viewCount++,
-                    cursor: 'line',
+            const newView = new BlessedXterm( { parent: this.baseWidget, viewCount: viewCount++,
+                    cursor: 'block',
                     cursorBlink: true,
                     screenKeys: false
                 }, view.getReader(), view.currentPathFile() );
@@ -113,7 +114,7 @@ export class MainFrame {
             });
             newView.setFocus();
             this.blessedFrames[this.activeFrameNum] = newView;
-        } else if ( view instanceof BlessedTerminal ) {
+        } else if ( view instanceof BlessedXterm ) {
             view.destroy();
 
             const newView = new BlessedPanel( { parent: this.baseWidget, viewCount: viewCount++ }, view.getReader() );
@@ -133,6 +134,7 @@ export class MainFrame {
             widget.left = opt.left;
             widget.height = opt.height;
             widget.width = opt.width;
+            widget.box.emit("resize");
             widget.show();
         };
 
@@ -236,10 +238,10 @@ export class MainFrame {
                 }
             }
             
-            if ( panel instanceof BlessedTerminal ) {
+            if ( panel instanceof BlessedXterm ) {
                 let type = await keyMappingExec( this, keyInfo );
                 if ( type === RefreshType.NONE ) {
-                    panel.inputWrite(ch, keyInfo);
+                    panel.ptyKeyWrite(ch, keyInfo);
                 }
             } else {
                 log.info( "KEYPRESS - KEY START [%s] - (%dms)", keyInfo.name, Date.now() - starTime );
@@ -315,7 +317,7 @@ export class MainFrame {
         return RefreshType.ALL;
     }
 
-    activePanel(): BlessedPanel | BlessedMcd | BlessedTerminal {
+    activePanel(): BlessedPanel | BlessedMcd | BlessedXterm {
         // log.debug( "activePanel %d", this.activeFrameNum );
         return this.blessedFrames[ this.activeFrameNum ];
     }
@@ -330,7 +332,7 @@ export class MainFrame {
     @Hint({ hint: "Menu", help: "visible the menu", order: 3 })
     menu() {
         const activePanel = this.activePanel();
-        if ( (activePanel instanceof BlessedTerminal) ) {
+        if ( (activePanel instanceof BlessedXterm) ) {
             return RefreshType.NONE;
         }
         this.menuClose();
@@ -345,7 +347,7 @@ export class MainFrame {
 
     menuClose() {
         const activePanel = this.activePanel();
-        if ( (activePanel instanceof BlessedTerminal) ) {
+        if ( (activePanel instanceof BlessedXterm) ) {
             return RefreshType.NONE;
         }
         log.debug( "menuClose !!!" );
