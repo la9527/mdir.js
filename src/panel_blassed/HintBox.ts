@@ -31,7 +31,7 @@ export class HintBox extends Widget {
         addHintInfo(mainFrame().activePanel());
 
         item.sort( (a, b) => a.order - b.order );
-        log.debug( item );
+        // log.debug( item );
         return item;
     }
 

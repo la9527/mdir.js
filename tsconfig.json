@@ -5,10 +5,7 @@
         "sourceMap": true,
         "allowJs": true,
         "moduleResolution": "node",
-        "rootDirs": [
-            ".",
-            "xterm/src"
-        ],
+        "rootDir": "./src",
         "forceConsistentCasingInFileNames": true,
         "noImplicitReturns": true,
         "noImplicitThis": true,
@@ -19,11 +16,11 @@
         "noUnusedParameters": false,
         "experimentalDecorators": true,
         "allowSyntheticDefaultImports": true,
+        "listEmittedFiles": true,
         "outDir": "./build",
-        "baseUrl": ".",
+        "baseUrl": "./src",
         "paths": {
             "neo-blessed": [ "./@types/blessed.d.ts" ],
-            "common/*": [ "./xterm/src/common/*" ]
         },
         "types": [
             "node"
@@ -34,7 +31,6 @@
       	]
     },
     "include": [
-        "xterm/src/common",
         "src/**/*"
     ]
 }
