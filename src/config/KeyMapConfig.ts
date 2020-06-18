@@ -30,6 +30,8 @@ interface IAllKeyMappingInfo {
     [widgetName: string]: IKeyMapping
 }
 
+export const TerminalAllowKeys = [ "C-e", "C-w", "C-o" ];
+
 export const KeyMappingInfo: IAllKeyMappingInfo = {
     Common: {
         refreshPromise: "f5",
@@ -213,7 +215,7 @@ export function methodToKeyname( baseObject, method ) {
 
     for ( let key of Object.keys(baseObject.keyInfo) ) {
         if ( baseObject.keyInfo[key] === method ) {
-            return keyHumanReadable(key);
+            return { humanName: keyHumanReadable(key), key };
         }
     }
     return null;

@@ -36,7 +36,12 @@ export class BlessedXterm extends Widget implements IBlessedView {
             this.screen.program.enableMouse();
         }
 
-        this.shell = options.shell || process.env.SHELL || (os.platform() === 'win32' ? "powershell.exe" : 'sh');
+        const osShell = {
+            "win32": "powershell.exe",
+            "darwin": "zsh",
+            "linux": "sh"
+        };
+        this.shell = options.shell || osShell[os.platform()] || process.env.SHELL || "sh";
         
         this.cursorBlink = options.cursorBlink;
         this.screenKeys = options.screenKeys;
@@ -62,7 +67,7 @@ export class BlessedXterm extends Widget implements IBlessedView {
 
         this.on('resize', () => {
             process.nextTick(() => {
-                this.term.resize((this.width as number) - (this.box.iwidth as number), (this.height as number) - (this.box.iheight as number));
+                this.term?.resize((this.width as number) - (this.box.iwidth as number), (this.height as number) - (this.box.iheight as number));
             });
         });
 
@@ -71,10 +76,6 @@ export class BlessedXterm extends Widget implements IBlessedView {
         /*
         this.screen.program.input.on('data', (data) => {
             this._onData(data);
-        });
-
-        this.on("keypress", (ch, keyInfo) => {
-            this.ptyKeyWrite(ch, keyInfo);
         });
         */
 
@@ -152,7 +153,9 @@ export class BlessedXterm extends Widget implements IBlessedView {
     ptyKeyWrite( ch, keyInfo ) {
         if ( keyInfo.sequence || ch ) {
             log.debug( "pty write : [%s]", keyInfo.sequence || ch );
-            this.pty?.write(keyInfo.sequence || ch);
+            if ( keyInfo.name !== "enter" ) {
+                this.pty?.write(keyInfo.sequence || ch);
+            }
         }
     }
 
@@ -183,6 +186,11 @@ export class BlessedXterm extends Widget implements IBlessedView {
         const ret = box._render();
         if (!ret) return;
 
+        if ( !this.term ) {
+            log.debug( "term is null !!!" );
+            return;
+        }
+
         box.dattr = box.sattr(this.box.style);
       
         let xi = ret.xi + box.ileft
@@ -195,6 +203,9 @@ export class BlessedXterm extends Widget implements IBlessedView {
         for (let y = Math.max(yi, 0); y < yl; y++) {
           let line = screen.lines[y];
           const bufferLine = this.term.buffer.lines.get(scrollback + y - yi);
+          if ( !bufferLine ) {
+              continue;
+          }
 
           if (!line) break;
 

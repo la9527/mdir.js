@@ -6,7 +6,7 @@ import { FuncKeyBox } from './FuncKeyBox';
 import BottomFilesBox from "./BottomFileBox";
 import { readerControl } from '../panel/readerControl';
 import { Widget } from "./widget/Widget";
-import { keyMappingExec, menuKeyMapping, KeyMappingInfo, KeyMapping, RefreshType, Hint } from "../config/KeyMapConfig";
+import { keyMappingExec, menuKeyMapping, KeyMappingInfo, KeyMapping, RefreshType, Hint, TerminalAllowKeys } from "../config/KeyMapConfig";
 import { menuConfig } from "../config/MenuConfig";
 import { BlessedMenu } from "./BlessedMenu";
 import { BlessedMcd } from './BlessedMcd';
@@ -239,10 +239,14 @@ export class MainFrame {
             }
             
             if ( panel instanceof BlessedXterm ) {
-                let type = await keyMappingExec( this, keyInfo );
-                if ( type === RefreshType.NONE ) {
-                    panel.ptyKeyWrite(ch, keyInfo);
+                if ( TerminalAllowKeys.indexOf( keyName ) > -1 ) {
+                    let type = await keyMappingExec( this, keyInfo );
+                    if ( type !== RefreshType.NONE ) {
+                        this._keyLockScreen = false;
+                        return;
+                    }
                 }
+                panel.ptyKeyWrite(ch, keyInfo);
             } else {
                 log.info( "KEYPRESS - KEY START [%s] - (%dms)", keyInfo.name, Date.now() - starTime );
                 let type: RefreshType = await keyMappingExec( this.activeFocusObj(), keyInfo );

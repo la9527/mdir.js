@@ -16,7 +16,6 @@
         "noUnusedParameters": false,
         "experimentalDecorators": true,
         "allowSyntheticDefaultImports": true,
-        "listEmittedFiles": true,
         "outDir": "./build",
         "baseUrl": "./src",
         "paths": {

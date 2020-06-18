@@ -1,10 +1,11 @@
 import { Widget } from "./widget/Widget";
 import { Widgets } from "neo-blessed";
-import mainFrame from "./MainFrame";
-import { IHintInfo, keyHumanReadable, methodToKeyname } from '../config/KeyMapConfig';
+import mainFrame from './MainFrame';
+import { IHintInfo, keyHumanReadable, methodToKeyname, TerminalAllowKeys } from '../config/KeyMapConfig';
 import { strWidth } from "neo-blessed/lib/unicode";
 import { Logger } from '../common/Logger';
 import { Color } from "../common/Color";
+import { BlessedXterm } from "./BlessedXterm";
 
 const log = Logger("HintBox");
 
@@ -15,12 +16,17 @@ export class HintBox extends Widget {
 
     hintInfo() {
         let item: IHintInfo[] = [];
+        let activePanel = mainFrame().activePanel();
+
         const addHintInfo = (view: any) => {
             if ( view.hintInfo && view.keyInfo ) {
                 for ( let method of Object.keys(view.hintInfo) ) {
-                    let keyName = methodToKeyname(view, method);
-                    if ( keyName ) {
-                        view.hintInfo[ method ].key = keyName;
+                    let { humanName, key } = methodToKeyname(view, method) || {};
+                    if ( activePanel instanceof BlessedXterm && TerminalAllowKeys.indexOf(key) === -1 ) {
+                        continue;
+                    }
+                    if ( humanName ) {
+                        view.hintInfo[ method ].key = humanName;
                     }
                     item.push( view.hintInfo[method] );
                 }
@@ -28,7 +34,7 @@ export class HintBox extends Widget {
         };
 
         addHintInfo(mainFrame());
-        addHintInfo(mainFrame().activePanel());
+        addHintInfo(activePanel);
 
         item.sort( (a, b) => a.order - b.order );
         // log.debug( item );
