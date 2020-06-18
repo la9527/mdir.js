@@ -1,2 +1,2 @@
 #!/usr/bin/env node
-require("../build/src/main");
+require("../build/main");
