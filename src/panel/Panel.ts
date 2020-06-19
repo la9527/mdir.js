@@ -129,7 +129,9 @@ export abstract class Panel extends AbstractPanel {
             } catch( e ) {
                 log.error( "keyEnterPromise exception : %j", e );
             }
+            return true;
         }
+        return false;
     }
 
     getSelectFiles() {

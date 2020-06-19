@@ -224,7 +224,12 @@ export class BlessedPanel extends Panel implements IBlessedView {
 
     async keyEnterPromise(): Promise<any> {
         this.searchFileBox?.clear();
-        await super.keyEnterPromise();
+        const result = await super.keyEnterPromise();
+        if ( !result ) {
+            const currentFile: File = this.dirFiles[this.currentPos];
+            
+            await mainFrame().commandRun( currentFile.fullname, true );
+        }
         return RefreshType.ALL;
     }
 

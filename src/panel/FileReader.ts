@@ -9,6 +9,7 @@ import { Reader, IMountList, ProgressFunc } from "../common/Reader";
 
 import { ColorConfig } from "../config/ColorConfig";
 import { Transform } from "stream";
+import * as FileType from "file-type";
 
 const log = Logger("FileReader");
 
@@ -105,7 +106,7 @@ export class FileReader extends Reader {
     }
 
     readdir( dirFile: File ): Promise<File[]> {
-        return new Promise<File[]>( (resolve, reject ) => {
+        return new Promise<File[]>( async (resolve, reject ) => {
             if ( !dirFile.dir ) {
                 reject(`Not directory. ${dirFile.name}`);
                 return;
@@ -117,12 +118,23 @@ export class FileReader extends Reader {
 
                 const fileList: any[] = fs.readdirSync( dirFile.fullname, { encoding: "utf-8" } );
                 // log.info( "READDIR: PATH: [%s], FILES: %j", dirFile.fullname, fileList );
-                fileList.map( (file) => {
+                for ( let file of fileList ) {
                     const item = this.convertFile( dirFile.fullname + path.sep + file );
+
+                    if ( !item.dir && !item.link ) {
+                        try {
+                            const fileType = await FileType.fromFile( item.fullname );
+                            if ( fileType ) {
+                                item.mimetype = fileType.mime;
+                            }
+                        } catch( e ) {
+                            log.debug( e );
+                        }
+                    }
                     if ( item ) {
                         fileItem.push( item );
                     }
-                });
+                }
             } catch ( e ) {
                 log.error( "READDIR () - ERROR %j", e );
             }

@@ -10,6 +10,7 @@ import { scrstrncpy } from "./ScreenUtils";
 import { ColorConfig } from "../config/ColorConfig";
 import { Color } from "../common/Color";
 import { BlessedPanel } from './BlessedPanel';
+import * as FileType from "file-type";
 
 const log = Logger("BottomFilesBox");
 
@@ -29,7 +30,7 @@ export default class BottomFilesBox extends Widget {
         const repeatSize = filenameMaxSize - strWidth(fileName);
         let textFileName = fileName;
         if ( repeatSize > 0 ) {
-            textFileName = fileName + " ".repeat(repeatSize);
+            textFileName = fileName; // + " ".repeat(repeatSize);
         } else if ( repeatSize < 0 ) {
             textFileName = scrstrncpy( fileName, 0, filenameMaxSize - 1) + "~";
         }
@@ -54,16 +55,19 @@ export default class BottomFilesBox extends Widget {
 
         this.setColor( this.colorFunc );
 
-        const textFileName = this.convertFilename(file, this.width as number - 39);
+        const textFileName = this.convertFilename(file, this.width as number - 50);
         let viewText = null;
         if ( process.platform === "win32" ) {
             viewText = sprintf(`{bold}%10s{/bold} | {bold}%s{/bold} {bold}%s{/bold} | {bold}%20s{/bold} | {bold}%s{/bold}`, 
                                 file.attr, date, time, StringUtils.toregular(file.size), textFileName);
         } else {
-            viewText = sprintf(`%10s | %s %s | %20s | %s %s | %s  | %10s`, 
+            viewText = sprintf(`{bold}%10s{/bold} | {bold}%s{/bold} {bold}%s{/bold} | {bold}%10s{/bold} | {bold}%s %s{/bold} | {bold}%s{/bold}`, 
                                 file.attr, file.owner, file.group, StringUtils.toregular(file.size), date, time, textFileName);
         }
-        //log.info( viewText );
+        if ( file.mimetype ) {
+            viewText += ` | {bold}${file.mimetype}{/bold}`;
+        }
+        log.info( viewText );
         this.box.setContent(viewText);
     }
 }

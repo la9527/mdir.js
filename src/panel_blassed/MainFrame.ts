@@ -399,16 +399,18 @@ export class MainFrame {
         });
     }
 
-    commandRun(cmd): Promise<void> {
+    commandRun(cmd, fileRunMode = false ): Promise<void> {
         const activePanel = this.activePanel();
         if ( !(activePanel instanceof BlessedPanel) ) {
             return new Promise( resolve => resolve() );
         }
 
-        let cmds = cmd.split(" ");
-        if ( cmds[0] === "cd" && cmds[1] ) {
-            let chdirPath = cmds[1] === "-" ? activePanel.previousDir : cmds[1];
-            return activePanel.read(chdirPath);
+        if ( !fileRunMode ) {
+            let cmds = cmd.split(" ");
+            if ( cmds[0] === "cd" && cmds[1] ) {
+                let chdirPath = cmds[1] === "-" ? activePanel.previousDir : cmds[1];
+                return activePanel.read(chdirPath);
+            }
         }
 
         return new Promise( (resolve, reject) => {
@@ -424,11 +426,21 @@ export class MainFrame {
 
             this.screen.leave();
             
-            process.stdout.write( colors.white("m.js $ ") + cmd + "\n");
-
-            if ( process.platform === "win32" ) {
-                cmd = "@chcp 65001 >nul & cmd /d/s/c " + cmd;
+            if ( fileRunMode ) {
+                if ( process.platform === "win32" ) {
+                    cmd = `@chcp 65001 >nul & cmd /s/c ""${cmd}""`;
+                } else if ( process.platform === "darwin" ) {
+                    cmd = `open "${cmd}"`;
+                } else if ( process.platform === "linux" ) {
+                    cmd = `xdg-open "${cmd}"`;
+                }
+            } else {
+                if ( process.platform === "win32" ) {
+                    cmd = "@chcp 65001 >nul & cmd /d/s/c " + cmd;
+                }
             }
+
+            process.stdout.write( colors.white("mdir.js $ ") + cmd + "\n");
 
             exec(cmd, { encoding: "utf-8" }, (error, stdout, stderr) => {
                 if (error) {

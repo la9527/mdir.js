@@ -39,6 +39,8 @@ export class File {
 
     error:      any = null; // reading fail.
 
+    mimetype:   string = null;
+
     get dirname() {
         return path.dirname(this.fullname);
     }
@@ -63,6 +65,7 @@ export class File {
         renew.fstype = this.fstype;
         renew.link = this.link && this.link.clone();
         renew.error = this.error;
+        renew.mimetype = this.mimetype;
         return renew;
     }
 }
