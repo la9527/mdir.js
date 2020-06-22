@@ -43,3 +43,4 @@ $ npx mdir
 
 ![Mdir.js MCD](https://github.com/la9527/mdir.js/blob/master/images/mdir_v0.1_windows10_cmd_mcd.png?raw=true)
 
+![Mdir.js XTerm](https://github.com/la9527/mdir.js/blob/master/images/mdir_v3.0_macos_terminal.png?raw=true)
