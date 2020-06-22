@@ -42,6 +42,7 @@ export class BlessedXterm extends Widget implements IBlessedView {
             "linux": "sh"
         };
         this.shell = options.shell || osShell[os.platform()] || process.env.SHELL || "sh";
+        this.args = options.args || [];
         
         this.cursorBlink = options.cursorBlink;
         this.screenKeys = options.screenKeys;
@@ -120,6 +121,8 @@ export class BlessedXterm extends Widget implements IBlessedView {
         this.on('destroy', () => {
             this.kill();
         });
+
+        log.debug( "SHELL : %s %s", this.shell, this.args );
         
         this.pty = NodePTY.spawn(this.shell, this.args, {
             name: this.termName,
@@ -159,17 +162,18 @@ export class BlessedXterm extends Widget implements IBlessedView {
         (this.screen as any)._listenKeys(this);
     }
 
-    ptyKeyWrite( ch, keyInfo ) {
-        if ( keyInfo.sequence || ch ) {
-            log.debug( "pty write : [%s]", keyInfo.sequence || ch );
-            if ( keyInfo.name !== "enter" ) {
-                this.pty?.write(keyInfo.sequence || ch);
-            }
+    ptyKeyWrite( keyInfo ) {
+        if ( keyInfo && keyInfo.name !== "enter" && keyInfo ) {
+            log.debug( "pty write : [%j]", keyInfo );
+            this.pty?.write(keyInfo.sequence || keyInfo.ch);
+        } else {
+            log.debug( "NOT - pty write : [%j]", keyInfo );
         }
     }
 
     _onData(data) {
-        if (this.screen.focused === this.box && !this._isMouse(data)) {
+        log.debug( "_onData: %j", data );
+        if (this.screen.focused === this.box && !this._isMouse(data) ) {
             this.pty?.write(data);
         }
     }
@@ -334,9 +338,11 @@ export class BlessedXterm extends Widget implements IBlessedView {
     }
     
     kill() {
+        /*
         this.screen.program.input.removeListener('data', ( data ) => {
             this._onData( data );
         });
+        */
         if ( this.term ) {
             this.term.write('\x1b[H\x1b[J');
             this.term.dispose();

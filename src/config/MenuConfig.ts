@@ -72,7 +72,7 @@ export const menuConfig: IFrameMenuConfig = {
         Terminal: [
             { name: "Shell", method: "Common.terminalPromise" },
             "-",
-            { name: "Vim", /* method: "Common.vimPromise" */ }
+            { name: "Vim", method: "Common.terminalPromise", funcParam: [ false, "vim %1" ] }
         ]
     }
 };

@@ -80,9 +80,27 @@ export class MainFrame {
         return RefreshType.ALL;
     }
 
+    async vimPromise() {
+        await this.terminalPromise( false, `vim %1` );
+    }
+
+    private commandParsing( cmd: string ) {
+        if ( cmd ) {
+            const panel = this.activePanel();
+            if ( panel instanceof BlessedPanel && panel.currentFile() ) {
+                cmd = cmd.replace("%1", panel.currentFile().fullname );
+            }
+        }
+        log.debug( "commandParsing : %s", cmd );
+        return cmd;
+    }
+
     @Hint({ hint: "Terminal", help: "Run to XTerm(shell command) on this window." })
-    async terminalPromise(isEscape = false) {
-        let view = this.blessedFrames[this.activeFrameNum];
+    async terminalPromise(isEscape = false, shellCmd: string = null ) {
+        let view = this.blessedFrames[this.activeFrameNum];        
+        let shell: any = this.commandParsing( shellCmd );
+        shell = shell ? shell.split(" ") : null;
+
         if ( view instanceof BlessedPanel ) {
             view.destroy();
 
@@ -90,6 +108,8 @@ export class MainFrame {
                 cursor: 'line',
                 cursorBlink: true,
                 screenKeys: false,
+                shell: shell ? shell[0] : null,
+                args: shell ? shell.splice(1) : null,
                 viewCount: viewCount++ 
             }, view.getReader(), view.currentPath() );
             newView.on("process_exit", () => {
@@ -105,7 +125,9 @@ export class MainFrame {
             const newView = new BlessedXterm( { parent: this.baseWidget, viewCount: viewCount++,
                     cursor: 'block',
                     cursorBlink: true,
-                    screenKeys: false
+                    screenKeys: false,
+                    shell: shell ? shell[0] : null,
+                    args: shell ? shell.splice(1) : null,
                 }, view.getReader(), view.currentPathFile() );
             newView.on("process_exit", () => {
                 process.nextTick( () => {
@@ -246,7 +268,7 @@ export class MainFrame {
                         return;
                     }
                 }
-                panel.ptyKeyWrite(ch, keyInfo);
+                panel.ptyKeyWrite(keyInfo);
             } else {
                 log.info( "KEYPRESS - KEY START [%s] - (%dms)", keyInfo.name, Date.now() - starTime );
                 let type: RefreshType = await keyMappingExec( this.activeFocusObj(), keyInfo );

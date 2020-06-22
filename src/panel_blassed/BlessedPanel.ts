@@ -323,7 +323,6 @@ export class BlessedPanel extends Panel implements IBlessedView {
                     fileBox.height = 1;
                     fileBox.width = itemWidth;
                     fileBox.top = row;
-                    // fileBox.left = col * (fileBox.width + 2);
                     fileBox.left = col * (itemWidth + 2);
                     if ( curPos < this.dirFiles.length ) {
                         // log.debug( "SET_POS: %d, CUR_POS: %d", curPos, this.currentPos );
