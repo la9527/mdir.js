@@ -26,7 +26,7 @@ export class BlessedXterm extends Widget implements IBlessedView {
     reader: Reader = null;
 
     constructor( options: any, reader: Reader, firstPath: File ) {
-        super( { ...options, scrollable: false } );
+        super( { ...options, border: "line", scrollable: false } );
 
         this.setReader( reader );
         this.options = options;
@@ -51,6 +51,15 @@ export class BlessedXterm extends Widget implements IBlessedView {
                 || options.term
                 || process.env.TERM
                 || 'xterm';
+
+        this.on("detach", () => {
+            this.box.screen.program.hideCursor();
+        });
+        this.on("render", () => {
+            if ( this.box.screen.program.cursorHidden ) {
+                this.box.screen.program.showCursor();
+            }
+        });
 
         (this.box as any).render = () => {
             this._render();
@@ -196,40 +205,63 @@ export class BlessedXterm extends Widget implements IBlessedView {
         let xi = ret.xi + box.ileft
           , xl = ret.xl - box.iright
           , yi = ret.yi + box.itop
-          , yl = ret.yl - box.ibottom;
+          , yl = ret.yl - box.ibottom
+          , cursor;
       
         let scrollback = this.term.buffer.lines.length - (yl - yi);
 
         for (let y = Math.max(yi, 0); y < yl; y++) {
-          let line = screen.lines[y];
-          const bufferLine = this.term.buffer.lines.get(scrollback + y - yi);
-          if ( !bufferLine ) {
-              continue;
-          }
+            let line = screen.lines[y];
+            const bufferLine = this.term.buffer.lines.get(scrollback + y - yi);
+            if ( !bufferLine ) {
+                continue;
+            }
 
-          if (!line) break;
+            if (!line) break;
 
-          // const str = bufferLine.translateToString(true);
-          // log.debug( "line : %d, COLOR [%d/%d] [%d] [%s]", scrollback + y - yi, bufferLine.getFg(0), bufferLine.getBg(0), str.length, str );
+            if (y === yi + this.term.buffer.y
+                && this.screen.focused === this.box
+                && (this.term.buffer.ydisp === this.term.buffer.ybase)) {
+                cursor = xi + this.term.buffer.x;
+            } else {
+                cursor = -1;
+            }
 
-          for (let x = Math.max(xi, 0); x < xl; x++) {
-            if (!line[x]) break;
+            // const str = bufferLine.translateToString(true);
+            // log.debug( "line : %d, COLOR [%d/%d] [%d] [%s]", scrollback + y - yi, bufferLine.getFg(0), bufferLine.getBg(0), str.length, str );
 
-            line[x][0] = (this.box as any).sattr({
-                bold: false,
-                underline: false,
-                blink: false,
-                inverse: false,
-                invisible: false,
-                bg: bufferLine.getBg(x - xi) || this.box.style.bg,
-                fg: bufferLine.getFg(x - xi) || this.box.style.fg,
-            });
+            for (let x = Math.max(xi, 0); x < xl; x++) {
+                if (!line[x]) break;
 
-            line[x][1] = bufferLine.getString(x - xi) || ' ';
-          }
+                line[x][0] = (this.box as any).sattr({
+                    bold: false,
+                    underline: false,
+                    blink: false,
+                    inverse: false,
+                    invisible: false,
+                    bg: bufferLine.getBg(x - xi) || this.box.style.bg,
+                    fg: bufferLine.getFg(x - xi) || this.box.style.fg,
+                });
 
-          line.dirty = true;
-          screen.lines[y] = line;
+                if (x === cursor) {
+                    // if (this.cursor === 'block' || !this.cursor) {
+                      line[x][0] = (this.box as any).sattr({
+                            bold: false,
+                            underline: false,
+                            blink: false,
+                            inverse: false,
+                            invisible: false,
+                            bg: this.box.style.bg,
+                            fg: this.box.style.fg,
+                        }) | (8 << 18);
+                    // }
+                }
+
+                line[x][1] = bufferLine.getString(x - xi) || ' ';
+            }
+
+            line.dirty = true;
+            screen.lines[y] = line;
         }
         return ret;
     }

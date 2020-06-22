@@ -97,7 +97,7 @@ export class BlessedPanel extends Panel implements IBlessedView {
             left: 0,
             top: 1,
             width: "100%",
-            height: "100%-1"
+            height: "100%-2"
         });
 
         this.header = new Widget({
@@ -115,7 +115,7 @@ export class BlessedPanel extends Panel implements IBlessedView {
         this.tailer = new Widget({
             parent: this.baseWidget,
             left: 0,
-            top: "100%",
+            top: "100%-1",
             width: "100%",
             height: 1,
             style: {

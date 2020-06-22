@@ -36,7 +36,7 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
     Common: {
         refreshPromise: "f5",
         split: [ "C-w" ],
-        nextWindow: [ "tab", "C-e" ],
+        nextWindow: [ "C-e", "tab" ],
         mcdPromise: "f10",
         menu: "f12",
         quit: "C-q",

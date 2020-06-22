@@ -143,13 +143,13 @@ export class MainFrame {
         log.debug( "mainFrame: width [%d] height [%d]", width, height );
 
         if ( this.viewType === VIEW_TYPE.NORMAL ) {
-            this.activeFrameNum = 0;
-            updateWidget( this.blessedFrames[0].getWidget(), { top: 1, left: 0, width: "100%", height: "100%-4" } );
-            this.blessedFrames[1].hide();
-            this.blessedFrames[0].setFocus();
+            const deActiveNum = (this.activeFrameNum + 1) % 2;
+            updateWidget( this.blessedFrames[this.activeFrameNum].getWidget(), { top: 1, left: 0, width: "100%", height: "100%-3" } );
+            this.blessedFrames[deActiveNum].hide();
+            this.blessedFrames[this.activeFrameNum].setFocus();
         } else if ( this.viewType === VIEW_TYPE.VERTICAL_SPLIT ) {
-            updateWidget( this.blessedFrames[0].getWidget(), { top: 1, left: 0, width: "50%", height: "100%-4" } );
-            updateWidget( this.blessedFrames[1].getWidget(), { top: 1, left: "50%", width: "50%", height: "100%-4" } );
+            updateWidget( this.blessedFrames[0].getWidget(), { top: 1, left: 0, width: "50%", height: "100%-3" } );
+            updateWidget( this.blessedFrames[1].getWidget(), { top: 1, left: "50%", width: "50%", height: "100%-3" } );
         } else if ( this.viewType === VIEW_TYPE.HORIZONTAL_SPLIT ) {
             updateWidget( this.blessedFrames[0].getWidget(), { top: 1, left: 0, width: "100%", height: "50%-1" } );
             updateWidget( this.blessedFrames[1].getWidget(), { top: "50%", left: 0, width: "100%", height: "50%-1" } );
