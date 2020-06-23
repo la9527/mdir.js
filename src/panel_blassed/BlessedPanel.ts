@@ -1,6 +1,5 @@
 import * as blessed from "neo-blessed";
 import { Widgets } from "neo-blessed";
-import { sprintf } from "sprintf-js";
 
 import { Panel } from "../panel/Panel";
 import { Widget } from "./widget/Widget";
@@ -8,9 +7,8 @@ import { Logger } from "../common/Logger";
 import { StringUtils } from "../common/StringUtils";
 import { PanelFileBox } from "./PanelFileBox";
 import { ColorConfig } from "../config/ColorConfig";
-import { Color } from "../common/Color";
 import { Reader } from "../common/Reader";
-import { KeyMapping, RefreshType } from '../config/KeyMapConfig';
+import { KeyMapping, RefreshType, SearchDisallowKeys } from '../config/KeyMapConfig';
 import { KeyMappingInfo } from "../config/KeyMapConfig";
 import { IBlessedView } from "./IBlessedView";
 import mainFrame from './MainFrame';
@@ -200,7 +198,7 @@ export class BlessedPanel extends Panel implements IBlessedView {
     async keyInputSearchFile(ch, keyInfo) {
         if ( !this.searchFileBox || !this.searchFileBox.value ) {
             const keyName = keyInfo.full || keyInfo.name;
-            if ( [ "escape", "tab", "~", "/", "space", "delete", "home", "end" ].indexOf(keyName) > -1 ) {
+            if ( SearchDisallowKeys.indexOf(keyName) > -1 ) {
                 log.debug( "ignore key - [%s]", keyName );
                 return false;
             }
@@ -409,5 +407,30 @@ export class BlessedPanel extends Panel implements IBlessedView {
 
     async consoleViewPromise() {
         await mainFrame().consoleViewPromise();
+    }
+
+    async sortChangePromise() {
+        super.sortChange();
+        await this.refreshPromise();
+        return RefreshType.ALL;
+    }
+
+    async sortReversePromise() {
+        super.sortReverse();
+        await this.refreshPromise();
+        return RefreshType.ALL;
+    }
+
+    async toggleExcludeHiddenFilePromise() {
+        super.toggleExcludeHiddenFile();
+        await this.refreshPromise();
+        return RefreshType.ALL;
+    }
+
+    async viewResetPromise() {
+        super.viewReset();
+        this.viewColumn = 0;
+        await this.refreshPromise();
+        return RefreshType.ALL;
     }
 }

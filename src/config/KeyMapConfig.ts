@@ -30,6 +30,7 @@ interface IAllKeyMappingInfo {
     [widgetName: string]: IKeyMapping
 }
 
+export const SearchDisallowKeys = [ "escape", "tab", "~", "/", "space", "delete", "home", "end", "backspace", "\\" ];
 export const TerminalAllowKeys = [ "C-e", "C-w", "C-o" ];
 
 export const KeyMappingInfo: IAllKeyMappingInfo = {
@@ -73,8 +74,14 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         toggleSelect: "space",
         commandBoxShow: "/",
         gotoHomePromise: "~",
+        gotoParentPromise: "backspace",
+        gotoRootPromise: "\\",
         mkdirPromise: "f7",
         renamePromise: "f2",
+        sortChangePromise: "M-c",
+        sortReversePromise: "M-a",
+        viewResetPromise: "M-r",
+        toggleExcludeHiddenFilePromise: "M-z",
         setViewColumn: [
             {
                 key: "M-0",
@@ -302,7 +309,8 @@ export function keyHumanReadable(key: string): string {
         insert: "Ins",
         delete: "Del",
         home: "Home",
-        escape: "ESC"
+        escape: "ESC",
+        backspace: "BS"
     };
     if ( resultKeyInfo[ key ] ) {
         return resultKeyInfo[ key ];

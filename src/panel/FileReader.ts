@@ -105,7 +105,7 @@ export class FileReader extends Reader {
         return this.convertFile(process.cwd());
     }
 
-    readdir( dirFile: File ): Promise<File[]> {
+    readdir( dirFile: File, option ?: { isExcludeHiddenFile ?: boolean } ): Promise<File[]> {
         return new Promise<File[]>( async (resolve, reject ) => {
             if ( !dirFile.dir ) {
                 reject(`Not directory. ${dirFile.name}`);
@@ -120,7 +120,11 @@ export class FileReader extends Reader {
                 // log.info( "READDIR: PATH: [%s], FILES: %j", dirFile.fullname, fileList );
                 for ( let file of fileList ) {
                     const item = this.convertFile( dirFile.fullname + path.sep + file );
-
+                    if ( option?.isExcludeHiddenFile ) {
+                        if ( process.platform !== "win32" && item.name !== ".." && item.name[0] === "." ) {
+                            continue;
+                        }
+                    }
                     if ( !item.dir && !item.link ) {
                         try {
                             const fileType = await FileType.fromFile( item.fullname );

@@ -16,7 +16,7 @@ export abstract class Reader {
     public isUserCanceled = false;
 
     abstract convertFile( path: string ): File;
-    abstract readdir( dir: File ): Promise<File[]>;
+    abstract readdir( dir: File, option ?: { isExcludeHiddenFile ?: boolean } ): Promise<File[]>;
     abstract homeDir(): File;
 
     abstract rootDir(): File;

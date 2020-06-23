@@ -45,26 +45,28 @@ export const menuConfig: IFrameMenuConfig = {
             { name: "Qcd" },
             "-",
             { name: "Mkdir" },
-            { name: "To parent" },
-            { name: "To root" },
-            { name: "To home" },
+            { name: "To parent", method: "Panel.gotoParentPromise" },
+            { name: "To root" , method: "Panel.gotoRootPromise" },
+            { name: "To home", method: "Panel.gotoHomePromise" },
             "-",
             { name: "Back" },
             { name: "Forward" }
         ],
         View: [
             { name: "Refresh", method: "Common.refreshPromise" },
-            { name: "Column AUTO", method: "Panel.setViewColumn", funcParam: [ 0 ] },
+            { name: "Column AUTO", method: "Panel.setViewColumn", funcParam: [ 0 ] },            
             "-",
             { name: "Column 1", method: "Panel.setViewColumn", funcParam: [ 1 ] },
             { name: "Column 2", method: "Panel.setViewColumn", funcParam: [ 2 ] },
             { name: "Column 3", method: "Panel.setViewColumn", funcParam: [ 3 ] },
             { name: "Column 4", method: "Panel.setViewColumn", funcParam: [ 4 ] },
             "-",
-            { name: "Hidden file on/off" },
+            { name: "Hidden file on/off", method: "Panel.toggleExcludeHiddenFilePromise" },
             { name: "Owner show on/off" },
-            { name: "Sort change" },
-            { name: "Sort Asc/Descend" },
+            { name: "Sort change", method: "Panel.sortChangePromise" },
+            { name: "Sort Asc/Descend", method: "Panel.sortReversePromise" },
+            "-",
+            { name: "Reset", method: "Panel.viewResetPromise" },
             "-",
             { name: "Split", method: "Common.split" },
             { name: "Next Window", method: "Common.nextWindow" }
@@ -72,7 +74,7 @@ export const menuConfig: IFrameMenuConfig = {
         Terminal: [
             { name: "Shell", method: "Common.terminalPromise" },
             "-",
-            { name: "Vim", method: "Common.terminalPromise", funcParam: [ false, "vim %1" ] }
+            { name: "Vim", method: "Common.vimPromise" }
         ]
     }
 };

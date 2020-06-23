@@ -2,11 +2,13 @@ import { AbstractPanel } from "./AbstractPanel";
 import { Reader } from "../common/Reader";
 import { Logger } from "../common/Logger";
 import { File } from "../common/File";
+import { SortType } from "../common/Sort";
 
 const log = Logger("main");
 
 export abstract class Panel extends AbstractPanel {
     protected reader: Reader = null;
+    protected _excludeHiddenFile = false;
 
     constructor( reader: Reader = null ) {
         super();
@@ -27,7 +29,7 @@ export abstract class Panel extends AbstractPanel {
         try {
             const file = (path instanceof File) ? path : this.reader.convertFile( path );
             log.info( "Panel: %s", file.fullname );
-            this.dirFiles = await this.reader.readdir( file );
+            this.dirFiles = await this.reader.readdir( file, { isExcludeHiddenFile: this._excludeHiddenFile } );
 
             this._currentDir = file;
             file.name = ".";
@@ -147,5 +149,23 @@ export abstract class Panel extends AbstractPanel {
 
     async gotoHomePromise() {
         await this.read( this.reader.homeDir() );
+    }
+
+    async gotoRootPromise() {
+        await this.read( this.reader.rootDir() );
+    }
+
+    async gotoParentPromise() {
+        await this.read( ".." );
+    }
+
+    toggleExcludeHiddenFile() {
+        this._excludeHiddenFile = !this._excludeHiddenFile;
+    }
+
+    viewReset() {
+        this._excludeHiddenFile = false;
+        this._sortReverse = false;
+        this.sortType = SortType.COLOR;        
     }
 }

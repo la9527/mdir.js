@@ -1,4 +1,5 @@
 import * as blessed from "neo-blessed";
+import * as which from "which";
 import { BlessedProgram, Widgets, box, text, screen } from "neo-blessed";
 import { Logger } from "../common/Logger";
 import { BlessedPanel } from './BlessedPanel';
@@ -81,7 +82,15 @@ export class MainFrame {
     }
 
     async vimPromise() {
-        await this.terminalPromise( false, `vim %1` );
+        try {
+            let result = await which("vim");
+            if ( result ) {
+                log.debug( result );
+                await this.terminalPromise( false, `vim %1` );
+            }
+        } catch ( e ) {
+            await messageBox( { parent: this.baseWidget, title: "ERROR", msg: `'vim' could not be executed. (${e})`, button: [ "OK" ] } );
+        }
     }
 
     private commandParsing( cmd: string ) {
@@ -252,33 +261,38 @@ export class MainFrame {
 
             const panel = this.activeFocusObj();
 
-            if ( panel instanceof BlessedPanel ) {
-                if ( await this.activeFocusObj().keyInputSearchFile(ch, keyInfo) ) {
-                    this.execRefreshType( RefreshType.OBJECT );
-                    this._keyLockScreen = false;
-                    return;
-                }
-            }
-            
-            if ( panel instanceof BlessedXterm ) {
-                if ( TerminalAllowKeys.indexOf( keyName ) > -1 ) {
-                    let type = await keyMappingExec( this, keyInfo );
-                    if ( type !== RefreshType.NONE ) {
+            try {
+                if ( panel instanceof BlessedPanel ) {
+                    if ( await this.activeFocusObj().keyInputSearchFile(ch, keyInfo) ) {
+                        this.execRefreshType( RefreshType.OBJECT );
                         this._keyLockScreen = false;
                         return;
                     }
                 }
-                panel.ptyKeyWrite(keyInfo);
-            } else {
-                log.info( "KEYPRESS - KEY START [%s] - (%dms)", keyInfo.name, Date.now() - starTime );
-                let type: RefreshType = await keyMappingExec( this.activeFocusObj(), keyInfo );
-                if ( type === RefreshType.NONE ) {
-                    type = await keyMappingExec( this, keyInfo );
+                
+                if ( panel instanceof BlessedXterm ) {
+                    if ( TerminalAllowKeys.indexOf( keyName ) > -1 ) {
+                        let type = await keyMappingExec( this, keyInfo );
+                        if ( type !== RefreshType.NONE ) {
+                            this._keyLockScreen = false;
+                            return;
+                        }
+                    }
+                    panel.ptyKeyWrite(keyInfo);
+                } else {
+                    log.info( "KEYPRESS - KEY START [%s] - (%dms)", keyInfo.name, Date.now() - starTime );
+                    let type: RefreshType = await keyMappingExec( this.activeFocusObj(), keyInfo );
+                    if ( type === RefreshType.NONE ) {
+                        type = await keyMappingExec( this, keyInfo );
+                    }
+                    this.execRefreshType( type );
+                    log.info( "KEYPRESS - KEY END [%s] - (%dms)", keyInfo.name, Date.now() - starTime );
                 }
-                this.execRefreshType( type );
-                log.info( "KEYPRESS - KEY END [%s] - (%dms)", keyInfo.name, Date.now() - starTime );
+            } catch ( e ) {
+                log.error( e );
+            } finally {
+                this._keyLockScreen = false;
             }
-            this._keyLockScreen = false;
         });
     }
 
