@@ -89,7 +89,7 @@ export class MainFrame {
                 await this.terminalPromise( false, `vim %1` );
             }
         } catch ( e ) {
-            await messageBox( { parent: this.baseWidget, title: "ERROR", msg: `'vim' could not be executed. (${e})`, button: [ "OK" ] } );
+            await messageBox( { parent: this.baseWidget, title: "ERROR", msg: `The file 'vim' could not be executed.\nyou need to install VIM editor on this system.`, button: [ "OK" ] } );
         }
     }
 

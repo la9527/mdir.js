@@ -53,7 +53,7 @@ export class MessageBox extends Widget {
         
         let widthTitle = Math.min( strWidth(this.msgOption.title), MAX_WIDTH );
         let msgLines = this.msgOption.msg.split("\n");
-        let widthMsg = msgLines.map( i => strWidth(i) ).reduce( (pre: number, cur: string ) => {
+        let widthMsg = msgLines.reduce( (pre: number, cur: string ) => {
             return Math.min( Math.max(pre, strWidth(cur)), MAX_WIDTH );
         }, MIN_WIDTH );
 
