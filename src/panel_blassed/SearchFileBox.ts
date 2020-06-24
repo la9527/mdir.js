@@ -23,6 +23,10 @@ export class SearchFileBox extends Widget {
         return true;
     }
 
+    updateLastChar() {
+        this.viewText = this.viewText.substr(this.viewText.length - 1);
+    }
+
     draw() {
         if ( this.viewText ) {
             this.setContentFormat( "[%-20s]", this.viewText);

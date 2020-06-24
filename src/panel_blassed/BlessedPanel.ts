@@ -240,7 +240,11 @@ export class BlessedPanel extends Panel implements IBlessedView {
         const searchExp = new RegExp( this.searchFileBox?.value, "i" );
         this._searchFiles = new SearchFileInfo( this.dirFiles.filter( item => searchExp.test(item.name) ) );
         log.debug( "SEARCH FILES : [%j]", this._searchFiles.files.map( item => item.name ) );
-        this.focusFile(this._searchFiles.get());
+        if ( !this._searchFiles.get() ) {
+            this.searchFileBox.updateLastChar();
+        } else {
+            this.focusFile(this._searchFiles.get());
+        }
     }
 
     searchFileTabKey() {
