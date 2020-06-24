@@ -62,7 +62,7 @@ export default class BottomFilesBox extends Widget {
                                 file.attr, date, time, StringUtils.toregular(file.size), textFileName);
         } else {
             viewText = sprintf(`{bold}%10s{/bold} | {bold}%s{/bold} {bold}%s{/bold} | {bold}%10s{/bold} | {bold}%s %s{/bold} | {bold}%s{/bold}`, 
-                                file.attr, file.owner, file.group, StringUtils.toregular(file.size), date, time, textFileName);
+                                file.attr, (file.owner || file.uid), (file.group || file.gid), StringUtils.toregular(file.size), date, time, textFileName);
         }
         if ( file.mimetype ) {
             viewText += ` | {bold}${file.mimetype}{/bold}`;

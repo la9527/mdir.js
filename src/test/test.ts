@@ -13,7 +13,6 @@ import { BlessedXterm } from "../panel_blassed/BlessedXterm";
 const log = Logger( "TEST" );
 
 // console.log( StringUtils.ellipsis("ABCDEFGHJKLMNOPRSTUVWXYZ1234567890", 20) );
-
 const screen = blessed.screen({
     smartCSR: true,
     fullUnicode: true,

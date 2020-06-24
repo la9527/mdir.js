@@ -29,6 +29,8 @@ export class File {
 
     owner:      string;
     group:      string;
+    uid:        number;
+    gid:        number;
     ctime:      Date;       // create time
     mtime:      Date;       // modify time
 
@@ -62,6 +64,8 @@ export class File {
         renew.fullname = this.fullname;
         renew.owner = this.owner;
         renew.group = this.group;
+        renew.gid = this.gid;
+        renew.uid = this.uid;
         renew.fstype = this.fstype;
         renew.link = this.link && this.link.clone();
         renew.error = this.error;

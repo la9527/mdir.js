@@ -28,8 +28,75 @@ const convertAttr = ( stats: fs.Stats ): string => {
     return fileMode.join("");
 };
 
+const PASSWD_FILE = "/etc/passwd";
+
+interface ISystemUserInfo {
+    name ?: string;
+    uid ?: number;
+    gid ?: number;
+    fullname ?: string;
+    homepath ?: string;
+    sh ?: string;
+}
+
+export class SystemUserInfo {
+    private _userInfo: ISystemUserInfo[] = [];
+
+    constructor() {
+        this.reload();
+    }
+
+    reload() {
+        try {
+            if ( fs.existsSync( PASSWD_FILE ) ) {
+                let valueKeys = [ "name", "", "uid", "gid", "fullname", "homepath", "sh" ];
+                
+                // root:x:0:0:root:/root:/bin/bash
+                const buffer = fs.readFileSync( PASSWD_FILE, "utf8" );
+                let userInfos = [];
+                buffer.split("\n").forEach( userInfoLine => {
+                    if ( !userInfoLine.startsWith("#" ) ) {
+                        const userInfoArr = userInfoLine.split(":");
+                        let userInfo = {};
+                        valueKeys.forEach( (key, i) => {
+                            if ( key ) {
+                                if ( [ "uid", "gid" ].indexOf(key) > -1 ) {
+                                    userInfo[key] = parseInt(userInfoArr[i]);
+                                } else {
+                                    userInfo[key] = userInfoArr[i];
+                                }
+                            }
+                        });
+                        userInfos.push( userInfo );
+                    }
+                });
+                this._userInfo = userInfos;
+            }
+        } catch( e ) {
+            log.error( e );
+            this._userInfo = [];
+        }
+    }
+
+    findUid( uid: number, key: string = null ): ISystemUserInfo | string | number {
+        const item = this._userInfo.find( (item) => item.uid === uid );
+        return key ? (item && item[ key ]) : item;
+    }
+
+    findGid( gid: number, key: string = null ): ISystemUserInfo | string | number {
+        const item = this._userInfo.find( (item) => item.gid === gid );
+        return key ? (item && item[ key ]) : item;
+    }
+}
+
 export class FileReader extends Reader {
     protected _readerFsType = "file";
+    protected systemUserInfo = null;
+
+    constructor() {
+        super();
+        this.systemUserInfo = new SystemUserInfo();
+    }
 
     rootDir(): File {
         return this.convertFile( path.parse(fs.realpathSync(".")).root );
@@ -61,7 +128,6 @@ export class FileReader extends Reader {
                 file.fullname = filePath;
             }
 
-            // log.debug( "FILE [%s]", file.fullname );
             const stat = fs.lstatSync( filePath );
 
             const pathInfo = path.parse( file.fullname );
@@ -72,8 +138,10 @@ export class FileReader extends Reader {
                 file.attr = convertAttr( stat );
             } else {
                 file.attr = convertAttr( stat );
-                file.owner = "" + stat.uid;
-                file.group = "" + stat.gid;
+                file.uid = stat.uid;
+                file.gid = stat.gid;
+                file.owner = this.systemUserInfo.findUid(stat.uid, "name");
+                file.group = this.systemUserInfo.findGid(stat.gid, "name");
             }
             file.dir = stat.isDirectory();
             if ( stat.isSymbolicLink() ) {

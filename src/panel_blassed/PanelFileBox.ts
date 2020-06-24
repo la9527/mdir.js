@@ -13,16 +13,18 @@ const log = Logger("filebox");
 export class PanelFileBox extends Widget {
     public fileViewType: number = 0;
 
+    private _viewOwner: boolean = false;
     private _viewFocus: boolean = false;
     private _file: File = null;
-    private _positionNo: number = -1;
+    private _positionNo: number = -1;    
     
-    constructor( opts: Widgets.BoxOptions, fileViewType: number ) {
+    constructor( opts: Widgets.BoxOptions, fileViewType: number, viewOwner: boolean ) {
         super({
             ...opts,
             wrap: false
         });
         this.fileViewType = fileViewType;
+        this._viewOwner = viewOwner;
     }
 
     getPosNo() {
@@ -80,21 +82,29 @@ export class PanelFileBox extends Widget {
     }
 
     drawTypeOne() {
-        const d = this._file.mtime;
-        const date = [d.getFullYear(), ("0" + (d.getMonth() + 1)).slice(-2), ("0" + d.getDate()).slice(-2)].join("-");
-        const time = [("0" + (d.getHours() + 1)).slice(-2), ("0" + (d.getMinutes() + 1)).slice(-2)].join(":");
-
         const tailview = this.convertFileSize();
         const { fontColorName, backColorName } = this._file.color;
+        const { owner, group, uid, gid } = this._file;
 
         const select = this._file.select ? "{white-fg}*{/}" : " ";
 
         const textFileName = this.convertFilename(this.width as number - 39);
         let viewText = null;
-        if ( this._viewFocus ) {
-            viewText = sprintf(`%10s %10s %5s%s%s %10s`, this._file.attr, date, time, select, textFileName, tailview);
+
+        let viewDateTime = "";
+        if ( this._viewOwner ) {
+            viewDateTime = sprintf("%8s %7s", owner ? owner.substr(0,7) : uid, group ? group.substr(0,7) : gid );
         } else {
-            viewText = sprintf(`%10s %10s %5s%s{${fontColorName}-fg}%s %10s{/}`, this._file.attr, date, time, select, textFileName, tailview);
+            const d = this._file.mtime;
+            const date = [d.getFullYear(), ("0" + (d.getMonth() + 1)).slice(-2), ("0" + d.getDate()).slice(-2)].join("-");
+            const time = [("0" + (d.getHours() + 1)).slice(-2), ("0" + (d.getMinutes() + 1)).slice(-2)].join(":");
+            viewDateTime = sprintf("%10s %5s", date, time);
+        }
+
+        if ( this._viewFocus ) {
+            viewText = sprintf(`%10s %16s%s%s %10s`, this._file.attr, viewDateTime, select, textFileName, tailview);
+        } else {
+            viewText = sprintf(`%10s %16s%s{${fontColorName}-fg}%s %10s{/}`, this._file.attr, viewDateTime, select, textFileName, tailview);
         }
         // log.debug( viewText );
         this.box.setContent(viewText);

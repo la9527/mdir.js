@@ -83,6 +83,8 @@ export class BlessedPanel extends Panel implements IBlessedView {
     private _previousView = null;
     private _searchFiles: SearchFileInfo = null;
 
+    private _isViewOwner = false;
+
     constructor( opts: Widgets.BoxOptions | any, reader: Reader = null ) {
         super( reader );
         const statColor = ColorConfig.instance().getBaseColor("stat");
@@ -296,7 +298,7 @@ export class BlessedPanel extends Panel implements IBlessedView {
             });
             this.fileBox = [];
             for ( let n = 0; n < this.column * this.row; n++ ) {
-                this.fileBox.push( new PanelFileBox( { parent: this.panel as any, focusable: true }, this._fileViewType ) );
+                this.fileBox.push( new PanelFileBox( { parent: this.panel as any, focusable: true }, this._fileViewType, this._isViewOwner ) );
             }
             log.info( "init Render : COL:%d, ROW:%d, PAGE:%d, currentPos:%d fileBoxLen: %d - viewHeight: %d", this.column, this.row, this.page, this.currentPos, this.fileBox.length, viewHeight );
         }
@@ -430,6 +432,12 @@ export class BlessedPanel extends Panel implements IBlessedView {
     async viewResetPromise() {
         super.viewReset();
         this.viewColumn = 0;
+        await this.refreshPromise();
+        return RefreshType.ALL;
+    }
+
+    async viewOwnerPromise() {
+        this._isViewOwner = !this._isViewOwner;
         await this.refreshPromise();
         return RefreshType.ALL;
     }

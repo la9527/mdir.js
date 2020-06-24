@@ -81,6 +81,7 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         sortChangePromise: "M-c",
         sortReversePromise: "M-a",
         viewResetPromise: "M-r",
+        viewOwnerPromise: "M-o",
         toggleExcludeHiddenFilePromise: "M-z",
         setViewColumn: [
             {
