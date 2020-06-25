@@ -291,6 +291,7 @@ export class MainFrame {
                 }
             } catch ( e ) {
                 log.error( e );
+                await messageBox( e.toString() );
             } finally {
                 this._keyLockScreen = false;
             }

@@ -1,5 +1,6 @@
 import { Logger } from "../common/Logger";
 import { IFrameMenuConfig, ISubMenuConfig } from "./MenuConfig";
+import { sprintf } from "sprintf-js";
 
 const log = Logger("MainFrame");
 
@@ -274,7 +275,8 @@ export async function keyMappingExec( baseObject, keyInfo ): Promise<RefreshType
                 }
                 log.info( "RUNNING SUCCESS : %s", result );
             } catch( e ) {
-                log.error( "RUNNING FAIL : %s.%s(%s) - %s", baseObject.viewName, method, param ? param.join(",") : "", e.stack );
+                let item = sprintf( "FAIL : %s.%s(%s)\n%s", baseObject.viewName, method, param ? param.join(",") : "", e.stack );
+                throw item;
             }
             return result || RefreshType.OBJECT;
         } else {
