@@ -295,6 +295,7 @@ export class MainFrame {
                     parent: this.baseWidget,
                     title: "ERROR", 
                     msg: e.toString(), 
+                    textAlign: "left",
                     button: [ "OK" ] 
                 });
             } finally {

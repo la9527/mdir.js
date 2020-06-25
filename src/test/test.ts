@@ -13,6 +13,7 @@ import { BlessedXterm } from "../panel_blassed/BlessedXterm";
 const log = Logger( "TEST" );
 
 // console.log( StringUtils.ellipsis("ABCDEFGHJKLMNOPRSTUVWXYZ1234567890", 20) );
+
 const screen = blessed.screen({
     smartCSR: true,
     fullUnicode: true,
@@ -40,9 +41,7 @@ const screen = blessed.screen({
         screen.key("c", async () => {
             blessedProgram = new BlessedXterm( { 
                 parent: screen,
-                cursor: 'line',
                 cursorBlink: true,
-                screenKeys: false,
                 label: ' multiplex.js ',
                 left: "center",
                 top: "center",
@@ -63,9 +62,18 @@ const screen = blessed.screen({
         });
 
         screen.key("k", async () => {
-            blessedProgram.destroy();
+            blessedProgram && blessedProgram.destroy();
 
-            await messageBox( { parent: screen, title: "TEST", msg: "Test", button: ["OK"] });
+            let msg = `FAIL : Common.mountListPromise()\n` +
+                `Error: Command failed: lsblk --bytes --all --pairs\n` +
+                `\n` +
+                `lsblk: failed to access sysfs directory: /sys/dev/block: No such file or directory\n` +
+                `    at ChildProcess.exithandler (child_process.js:303:12)\n` +
+                `    at ChildProcess.emit (events.js:315:20)\n` +
+                `    at maybeClose (internal/child_process.js:1051:16)\n` +
+                `    at Process.ChildProcess._handle.onexit (internal/child_process.js:287:5)]\n`;
+
+            await messageBox( { parent: screen, title: "TEST", msg, button: ["OK"], textAlign: "left" });
 
             blessedProgram = null;
             screen.render();

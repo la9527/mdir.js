@@ -20,7 +20,7 @@ interface IMessageOption {
     msg ?: string;
     button: string[];
     buttonType ?: MSG_BUTTON_TYPE;
-    buttonAlign ?: string;
+    textAlign ?: string;
     result?: (button: string, buttonPos ?: number ) => void;
 }
 
@@ -75,12 +75,22 @@ export class MessageBox extends Widget {
             this.box.width = Math.max( buttonAllWidth, Math.max(widthTitle, widthMsg) );
             this.box.height = Math.min((this.msgOption.msg ? (msgLines.length + 7) : 4), 14);
 
+            if ( this.textWidget ) {
+                this.textWidget.width = this.box.width - 4;
+                this.textWidget.height = msgLines.length;
+            }
+
             log.debug( "RESIZE - HORIZONTAL %d (%d, %d)", msgLines.length, this.box.width, this.box.height );
         } else {
             this.buttonWidth = Math.max(this.buttonWidth, 20);
             this.box.width = Math.max( Math.max(widthTitle, widthMsg), this.buttonWidth + 4 );
             this.box.height = Math.min( (this.msgOption.msg ? (msgLines.length + 5) : 4) + this.msgOption.button.length, 14);
             log.debug( "RESIZE - VERTICAL %d (%d, %d)", msgLines.length, this.box.width, this.box.height );
+
+            if ( this.textWidget ) {
+                this.textWidget.width = this.box.width - 4;
+                this.textWidget.height = msgLines.length;
+            }
         }
 
         let len = this.msgOption.button.length;
@@ -127,7 +137,7 @@ export class MessageBox extends Widget {
                 height: 2, 
                 content: this.msgOption.msg, 
                 style: this.color.blessed, 
-                align: "center" 
+                align: this.msgOption.textAlign || "center"
             } );
         }
 
@@ -244,7 +254,7 @@ export function messageBox( msgOpt: IMessageOption, opts: Widgets.BoxOptions = {
                 title: msgOpt.title, 
                 msg: msgOpt.msg, button: msgOpt.button,
                 buttonType: msgOpt.buttonType,
-                buttonAlign: msgOpt.buttonAlign,
+                textAlign: msgOpt.textAlign,
                 result: (button, buttonPos) => {
                     screen.render();
                     resolve( button );
