@@ -68,7 +68,7 @@ export class Mcd {
 
         arrDir.push( dir );
 
-        while( arrDir.length != 0 ) {
+        while( arrDir.length !== 0 ) {
             pTree = arrDir.pop();
 
             let dirInfo: File[] = await this.reader.readdir( pTree.file );
@@ -81,7 +81,7 @@ export class Mcd {
                 }
             });
 
-            pTree.check = true;            
+            pTree.check = true;
             pTree.subDir = pTree.subDir.sort( (a: Dir, b: Dir) => {
                 if ( a.file.name > b.file.name ) return 1;
                 if ( b.file.name > a.file.name ) return -1;
@@ -221,7 +221,7 @@ export class Mcd {
         let dir: Dir = null;
         do {
             dir = this.searchDir( dirPath, true );
-            // log.debug( "addDirectory: searchDir: [%s]", dir.file.fullname );
+            log.debug( "addDirectory: searchDir: [%s]", dir.file.fullname );
             await this.scan( dir, 1 );
         } while( dir.file.fullname !== dirPath );
         return true;

@@ -7,13 +7,24 @@ import { ProgressBox } from "../panel_blassed/widget/ProgressBox";
 import { StringUtils } from '../common/StringUtils';
 import { Color } from "../common/Color";
 import { inputBox } from "../panel_blassed/widget/InputBox";
-import { Hint } from '../config/KeyMapConfig';
+import { Hint, KeyMappingInfo, menuKeyMapping, keyMappingExec } from '../config/KeyMapConfig';
 import { BlessedXterm } from "../panel_blassed/BlessedXterm";
+import { menuConfig } from "../config/MenuConfig";
+import { BlessedMenu } from "../panel_blassed/BlessedMenu";
+import { BlessedMcd } from "../panel_blassed/BlessedMcd";
+import { readerControl } from "../panel/readerControl";
+import { Mcd } from "../panel/Mcd";
 
 const log = Logger( "TEST" );
 
 // console.log( StringUtils.ellipsis("ABCDEFGHJKLMNOPRSTUVWXYZ1234567890", 20) );
 
+
+// menuKeyMapping( KeyMappingInfo, menuConfig );
+
+// console.log( JSON.stringify( menuConfig, null, 4) );
+
+/*
 const screen = blessed.screen({
     smartCSR: true,
     fullUnicode: true,
@@ -24,7 +35,33 @@ const screen = blessed.screen({
     //dump: true,
     log: process.env.HOME + "/.m/m2.log"
 });
+*/
 
+(async () => {
+    /*
+    const mcd = new BlessedMcd({ parent: screen, top: 1, left: 0, width: "100%", height: "100%-2" });
+    mcd.setReader(readerControl("file"));
+    await mcd.scanCurrentDir();
+    mcd.setFocus();
+    
+    screen.key("q", () => {
+        process.exit(0);
+    });
+
+    screen.key("r", () => {
+        screen.render();
+    });
+
+    screen.render();
+    */
+
+    const mcd = new Mcd(readerControl("file"));
+    await mcd.scanCurrentDir();
+
+    console.log( "END !!! ");
+})();
+
+/*
 (async () => {
     screen.key("q", () => {
         process.exit(0);
@@ -83,7 +120,7 @@ const screen = blessed.screen({
         log.error( e.stack );
     }
 })();
-
+*/
 /*
     try {
         let result = await messageBox( {
@@ -150,7 +187,7 @@ const screen = blessed.screen({
 
 (async () => {
     menuKeyMapping( KeyMappingInfo, menuConfig );
-    
+
     let blessedMenu = new BlessedMenu({ parent: screen });
     blessedMenu.setMainMenuConfig( menuConfig.Panel );
 
@@ -171,6 +208,7 @@ const screen = blessed.screen({
     screen.render();
 })();
 
+/*
 (async () => {
 
     const mcd = new BlessedMcd({ parent: screen, top: 1, left: 0, width: "100%", height: "100%-2" });

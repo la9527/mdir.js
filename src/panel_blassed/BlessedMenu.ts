@@ -47,15 +47,16 @@ class BlassedMenuBox extends Widget {
             let lineBox = null;
             if ( item === "-" ) {
                 lineBox = line( { ...opt, type: "line", top: top++, orientation: "horizontal", style: this.lineColor.blessed } );
-                log.debug( "SUBMENU: %s", item );
             } else if ( (item as ISubMenuConfig)?.name ) {
+                log.debug( "SUBMENU: %s", item );
+
                 let keyName = i !== this.selectPos ? 
                     this.menuAColor.fontHexBlessFormat(keyHumanReadable((item as ISubMenuConfig).key || "")) : 
                     keyHumanReadable((item as ISubMenuConfig).key || "");
 
                 let style = i === this.selectPos ? this.menuSelColor.blessed : this.menuColor.blessed;
                 lineBox = text( { ...opt, top: top++, content: " " + (item as ISubMenuConfig).name + "{|}" + keyName + " ", style, tags: true } );
-                log.debug( "SUBMENU: %s", (item as ISubMenuConfig).name );
+                // log.debug( "SUBMENU: %s", (item as ISubMenuConfig).name );
             }
             if ( lineBox ) {
                 this.menuBox.push( lineBox );

@@ -138,11 +138,7 @@ export class FileReader extends Reader {
         file.fstype = this._readerFsType;
 
         try {
-            if ( filePath === "." || filePath === ".." ) {
-                file.fullname = fs.realpathSync( filePath );
-            } else {
-                file.fullname = filePath;
-            }
+            file.fullname = fs.realpathSync( filePath );
             const pathInfo = path.parse( file.fullname );
             file.root = pathInfo.root;
             file.name = pathInfo.base || pathInfo.root;
@@ -227,6 +223,7 @@ export class FileReader extends Reader {
                             continue;
                         }
                     }
+                    /*
                     if ( !item.dir && !item.link ) {
                         try {
                             const fileType = await FileType.fromFile( item.fullname );
@@ -237,6 +234,7 @@ export class FileReader extends Reader {
                             log.debug( e );
                         }
                     }
+                    */
                     if ( item ) {
                         fileItem.push( item );
                     }
@@ -244,6 +242,7 @@ export class FileReader extends Reader {
             } catch ( e ) {
                 log.error( "READDIR () - ERROR %j", e );
                 reject(e);
+                return;
             }
             resolve( fileItem );
         });

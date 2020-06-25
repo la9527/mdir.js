@@ -202,8 +202,7 @@ export class MainFrame {
         
         this.baseWidget = new Widget( { parent: this.screen, left: 0, top: 0, width: "100%", height: "100%" } );
         this.blessedMenu = new BlessedMenu({ parent: this.baseWidget });
-
-        this.funcKeyBox = new FuncKeyBox( { parent: this.baseWidget }  );
+        this.funcKeyBox = new FuncKeyBox( { parent: this.baseWidget } );
         this.bottomFilesBox = new BottomFilesBox( { parent: this.baseWidget } );
 
         this.blessedFrames = [
@@ -232,7 +231,7 @@ export class MainFrame {
             process.exit(0);
         });
         */
-
+        
         this.eventStart();
         this.blessedFrames[0].setFocus();
         this.screen.render();
