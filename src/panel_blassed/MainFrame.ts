@@ -15,8 +15,8 @@ import { CommandBox } from './CommandBox';
 import { exec } from "child_process";
 import * as colors from "colors";
 import selection, { Selection, ClipBoard } from "../panel/Selection";
-import { ProgressFunc } from "../common/Reader";
-import { messageBox } from "./widget/MessageBox";
+import { ProgressFunc, IMountList } from "../common/Reader";
+import { messageBox, MSG_BUTTON_TYPE } from "./widget/MessageBox";
 import { ProgressBox } from "./widget/ProgressBox";
 import { StringUtils } from "../common/StringUtils";
 import { Color } from "../common/Color";
@@ -24,6 +24,7 @@ import { inputBox } from "./widget/InputBox";
 import { HintBox } from "./HintBox";
 // import { BlessedTerminal } from "./BlessedTerminal";
 import { BlessedXterm } from "./BlessedXterm";
+import { sprintf } from "sprintf-js";
 
 const log = Logger("MainFrame");
 
@@ -820,6 +821,37 @@ export class MainFrame {
         }
         await this.refreshPromise();
         return RefreshType.ALL;
+    }
+
+    async mountListPromise() {
+        const panel = this.activePanel();
+        if ( panel instanceof BlessedPanel ) {
+            const mountList: IMountList[] = await panel.getReader().mountList();
+            if ( mountList ) {
+                mountList.sort( (a, b) => {
+                    if ( a.mountPath.fullname > b.mountPath.fullname ) return 1;
+                    if ( b.mountPath.fullname > a.mountPath.fullname ) return -1;
+                    return 0;
+                });
+
+                let viewMountInfo = mountList.map( (item) => {
+                    return sprintf("%-10s | %-30s | %s", item.mountPath.fullname, item.description, StringUtils.sizeConvert(item.size, true));
+                });
+
+                log.debug( viewMountInfo );
+
+                try {
+                    const result = await messageBox( { parent: this.baseWidget, title: "MOUNT LIST", msg: "", button: viewMountInfo, buttonType: MSG_BUTTON_TYPE.VERTICAL } );
+                    if ( result && viewMountInfo.indexOf(result) > -1 ) {
+                        await panel.read( mountList[ viewMountInfo.indexOf(result) ].mountPath );
+                        return RefreshType.ALL;
+                    }
+                } catch ( e ) {
+                    log.error( e );
+                }
+            }
+        }
+        return RefreshType.NONE;
     }
 
     static instance() {

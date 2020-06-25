@@ -1,11 +1,15 @@
 import { File } from "./File";
-import { ReadStream, WriteStream } from "fs";
+import { ReadStream, WriteStream, FSWatcher } from "fs";
 
 export interface IMountList {
     device: string;
-    name: string;
+    description: string;
     mountPath: File;
     size: number;
+    isCard: boolean;
+    isUSB: boolean;
+    isRemovable: boolean;
+    isSystem: boolean;
 }
 
 export type ProgressFunc = ( source: File, copySize: number, size: number, chunkLength: number) => void;
@@ -15,7 +19,7 @@ export abstract class Reader {
     protected _readerFsType: string = null;
     public isUserCanceled = false;
 
-    abstract convertFile( path: string ): File;
+    abstract convertFile( path: string, fileInfo ?: any, useThrow ?: boolean ): File;
     abstract readdir( dir: File, option ?: { isExcludeHiddenFile ?: boolean } ): Promise<File[]>;
     abstract homeDir(): File;
 

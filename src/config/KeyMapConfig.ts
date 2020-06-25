@@ -47,7 +47,8 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         removePromise: "C-d",
         consoleViewPromise: "escape",
         terminalPromise: "C-o",
-        vimPromise: "f4"
+        vimPromise: "f4",
+        mountListPromise: "f11"
     },
     Menu: {
         keyUp: "up",

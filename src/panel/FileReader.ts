@@ -28,6 +28,12 @@ const convertAttr = ( stats: fs.Stats ): string => {
     return fileMode.join("");
 };
 
+const convertAttrFsDirect = ( dirent: fs.Dirent ): string => {
+    const fileMode: string[] = "----------".split("");
+    fileMode[0] = dirent.isSymbolicLink() ? "l" : (dirent.isDirectory() ? "d" : "-");
+    return fileMode.join("");
+};
+
 const PASSWD_FILE = "/etc/passwd";
 
 interface ISystemUserInfo {
@@ -110,14 +116,24 @@ export class FileReader extends Reader {
         let mounts: IMountList[] = [];
         let drives = await drivelist.list();
         drives.forEach( item => {
+            log.debug( "MOUNT INFO : %j", item );
             item.mountpoints.forEach( (i) => {
-                mounts.push( { device: item.device, mountPath: this.convertFile( i.path ), size: item.size, name: i.path });
+                mounts.push( {
+                    device: item.device,
+                    description: item.description,
+                    mountPath: this.convertFile( i.path ),
+                    size: item.size,
+                    isCard: item.isCard,
+                    isUSB: item.isUSB,
+                    isRemovable: item.isRemovable,
+                    isSystem: item.isSystem
+                });
             });
         });
         return mounts;
     }
 
-    convertFile( filePath: string ): File {
+    convertFile( filePath: string, fileInfo ?: fs.Dirent, useThrow ?: boolean ): File {
         const file = new File();
         file.fstype = this._readerFsType;
 
@@ -127,12 +143,20 @@ export class FileReader extends Reader {
             } else {
                 file.fullname = filePath;
             }
-
-            const stat = fs.lstatSync( filePath );
-
             const pathInfo = path.parse( file.fullname );
             file.root = pathInfo.root;
             file.name = pathInfo.base || pathInfo.root;
+        } catch( e ) {
+            log.error( "convertfile - FAIL : [%s] %j", filePath, e);
+            if ( useThrow ) {
+                throw e;
+            }
+            return null;
+        }
+
+        try {
+            const stat = fs.lstatSync( filePath );
+            file.dir = stat.isDirectory();
             file.size = stat.size;
             if ( process.platform === "win32" ) {
                 file.attr = convertAttr( stat );
@@ -143,27 +167,37 @@ export class FileReader extends Reader {
                 file.owner = this.systemUserInfo.findUid(stat.uid, "name");
                 file.group = this.systemUserInfo.findGid(stat.gid, "name");
             }
-            file.dir = stat.isDirectory();
-            if ( stat.isSymbolicLink() ) {
-                try {
-                    const linkOrgName = fs.readlinkSync( file.fullname );
-                    file.link = new FileLink( path.basename( linkOrgName ) );
-
-                    const linkStat = fs.lstatSync( linkOrgName );
-                    if ( linkStat && !linkStat.isSymbolicLink() ) {
-                        file.link.file = this.convertFile( linkOrgName );
-                    }
-                } catch ( e ) {
-                    log.error( "FAIL - 2: %j", e);
-                }
-            } else {
-                file.fullname = fs.realpathSync( filePath );
-            }
             file.ctime = stat.ctime;
             file.mtime = stat.mtime;
         } catch ( e ) {
-            log.error( "FAIL - 3: [%s] %j", filePath, e);
-            return null;
+            log.error( "convertfile - FAIL 2 : [%s] %j", filePath, e);
+            if ( fileInfo ) {
+                file.dir = fileInfo.isDirectory();
+                file.attr = convertAttrFsDirect( fileInfo );
+                file.uid = -1;
+                file.gid = -1;
+                file.ctime = new Date(0);
+                file.mtime = new Date(0);
+            } else {
+                if ( useThrow ) {
+                    throw e;
+                }
+                return null;
+            }
+        }
+
+        if ( file.attr && file.attr[0] === "l" ) {
+            try {
+                const linkOrgName = fs.readlinkSync( file.fullname );
+                file.link = new FileLink( path.basename( linkOrgName ) );
+
+                const linkStat = fs.lstatSync( linkOrgName );
+                if ( linkStat && !linkStat.isSymbolicLink() ) {
+                    file.link.file = this.convertFile( linkOrgName );
+                }
+            } catch ( e ) {
+                log.error( "convertfile - FAIL 3 : [%s] %j", filePath, e);
+            }
         }
         file.color = ColorConfig.instance().getFileColor( file );
         return file;
@@ -184,10 +218,10 @@ export class FileReader extends Reader {
             try {
                 process.chdir(dirFile.fullname);
 
-                const fileList: any[] = fs.readdirSync( dirFile.fullname, { encoding: "utf-8" } );
+                const fileList: fs.Dirent[] = (fs as any).readdirSync( dirFile.fullname, { encoding: "utf8", withFileTypes: true  } );
                 // log.info( "READDIR: PATH: [%s], FILES: %j", dirFile.fullname, fileList );
                 for ( let file of fileList ) {
-                    const item = this.convertFile( dirFile.fullname + path.sep + file );
+                    const item = this.convertFile( dirFile.fullname + path.sep + file.name, file );
                     if ( option?.isExcludeHiddenFile ) {
                         if ( process.platform !== "win32" && item.name !== ".." && item.name[0] === "." ) {
                             continue;
@@ -209,6 +243,7 @@ export class FileReader extends Reader {
                 }
             } catch ( e ) {
                 log.error( "READDIR () - ERROR %j", e );
+                reject(e);
             }
             resolve( fileItem );
         });

@@ -16,7 +16,9 @@ export class StringUtils {
 
      static sizeConvert( size: number, color: boolean = true, digit = 2 ) {
         let textSize = null;
-        if (size >= 1000000000) {
+        if ( size >= 1000000000000 ) {
+            textSize = sprintf("%9." + digit + "f" + (color ? "{yellow-fg}T{/yellow-fg}" : "T"), size / 1099511627776);
+        } else if (size >= 1000000000) {
             textSize = sprintf("%9." + digit + "f" + (color ? "{yellow-fg}G{/yellow-fg}" : "G"), size / 1073741824);
         } else if ( size >= 10000000) {
             textSize = sprintf("%9." + digit + "f" + (color ? "{yellow-fg}M{/yellow-fg}" : "M"), size / 1048576);

@@ -26,41 +26,36 @@ export abstract class Panel extends AbstractPanel {
     async read( path: string | File ): Promise<void> {
         const previousDir: File = this._currentDir;
 
+        const file = (path instanceof File) ? path : this.reader.convertFile( path, null, true );
+        log.info( "Panel: %s", file.fullname );
+        this.dirFiles = await this.reader.readdir( file, { isExcludeHiddenFile: this._excludeHiddenFile } );
+
+        this._currentDir = file;
+        file.name = ".";
+
         try {
-            const file = (path instanceof File) ? path : this.reader.convertFile( path );
-            log.info( "Panel: %s", file.fullname );
-            this.dirFiles = await this.reader.readdir( file, { isExcludeHiddenFile: this._excludeHiddenFile } );
-
-            this._currentDir = file;
-            file.name = ".";
-
-            try {
-                const parentFile = this.reader.convertFile("..");
-                if ( parentFile.fullname !== file.fullname ) {
-                    parentFile.name = "..";
-                    this.dirFiles.unshift( parentFile );
-                }
-            } catch ( e ) {
-                log.error( "PARENT DIR READ FAILED %j", e );
-            }
-            //log.info( "FIND LIST: %s", JSON.stringify(this.dirFiles.map((item) => `${item.fullname} - ${item.name}`), null, 4) );
-            this.sort();
-            
-            if ( previousDir ) {
-                // search directory
-                const befPos = this.dirFiles.findIndex( (file: File) => {
-                    log.debug( "file.fullname: [%s]", file.fullname );
-                    return file.fullname === previousDir.fullname;
-                });
-                log.debug( "BEFORE DIR: %s, befPos: %d", previousDir.fullname, befPos );
-                if ( befPos > -1 ) {
-                    this.currentPos = befPos;
-                }
-                this._previousDir = previousDir;
+            const parentFile = this.reader.convertFile("..");
+            if ( parentFile.fullname !== file.fullname ) {
+                parentFile.name = "..";
+                this.dirFiles.unshift( parentFile );
             }
         } catch ( e ) {
-            // TODO: Messgae Box
-            log.error( "READ ERROR %j", e );
+            log.error( "PARENT DIR READ FAILED %j", e );
+        }
+        //log.info( "FIND LIST: %s", JSON.stringify(this.dirFiles.map((item) => `${item.fullname} - ${item.name}`), null, 4) );
+        this.sort();
+        
+        if ( previousDir ) {
+            // search directory
+            const befPos = this.dirFiles.findIndex( (file: File) => {
+                log.debug( "file.fullname: [%s]", file.fullname );
+                return file.fullname === previousDir.fullname;
+            });
+            log.debug( "BEFORE DIR: %s, befPos: %d", previousDir.fullname, befPos );
+            if ( befPos > -1 ) {
+                this.currentPos = befPos;
+            }
+            this._previousDir = previousDir;
         }
     }
 

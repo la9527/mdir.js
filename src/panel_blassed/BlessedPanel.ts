@@ -14,6 +14,8 @@ import { IBlessedView } from "./IBlessedView";
 import mainFrame from './MainFrame';
 import { SearchFileBox } from './SearchFileBox';
 import { File } from "../common/File";
+import { message } from "../../@types/blessed";
+import { messageBox } from "./widget/MessageBox";
 
 const log = Logger("blessedpanel");
 
@@ -21,13 +23,13 @@ class SearchFileInfo {
     private _index = -1;
     private _files: File[] = [];
 
-    constructor( files: File[] ) {
+    constructor(files: File[]) {
         this.files = files || [];
     }
 
     next() {
         this.index = this.index + 1;
-        log.debug( "NEXT: %d/%d", this.index, this.files.length );
+        log.debug("NEXT: %d/%d", this.index, this.files.length);
         return this.get();
     }
 
@@ -35,10 +37,10 @@ class SearchFileInfo {
         return this._index;
     }
 
-    set index( index ) {
-        if ( index >= this._files.length ) {
+    set index(index) {
+        if (index >= this._files.length) {
             this._index = 0;
-        } else if ( index < 0 ) {
+        } else if (index < 0) {
             this._index = 0;
         } else {
             this._index = index;
@@ -49,8 +51,8 @@ class SearchFileInfo {
         return this._files || [];
     }
 
-    set files( files: File[] ) {
-        if ( files && files.length ) {
+    set files(files: File[]) {
+        if (files && files.length) {
             this._files = files || [];
             this._index = 0;
         } else {
@@ -60,14 +62,14 @@ class SearchFileInfo {
     }
 
     get() {
-        if ( this._files.length === 0 ) {
+        if (this._files.length === 0) {
             return null;
         }
         return this._files[this.index];
     }
 }
 
-@KeyMapping( KeyMappingInfo.Panel, "Panel" )
+@KeyMapping(KeyMappingInfo.Panel, "Panel")
 export class BlessedPanel extends Panel implements IBlessedView {
     public fileBox: PanelFileBox[] = [];
     public baseWidget: Widget = null;
@@ -75,7 +77,7 @@ export class BlessedPanel extends Panel implements IBlessedView {
     public header: Widget = null;
     public tailer: Widget = null;
     public searchFileBox: SearchFileBox = null;
-    
+
     protected viewColumn: number = 0;
     private _fileViewType = 0;
     private _lines = [];
@@ -85,11 +87,11 @@ export class BlessedPanel extends Panel implements IBlessedView {
 
     private _isViewOwner = false;
 
-    constructor( opts: Widgets.BoxOptions | any, reader: Reader = null ) {
-        super( reader );
+    constructor(opts: Widgets.BoxOptions | any, reader: Reader = null) {
+        super(reader);
         const statColor = ColorConfig.instance().getBaseColor("stat");
 
-        this.baseWidget = new Widget( { ...opts } );
+        this.baseWidget = new Widget({ ...opts });
 
         this.panel = new Widget({
             parent: this.baseWidget,
@@ -131,8 +133,8 @@ export class BlessedPanel extends Panel implements IBlessedView {
         return this.reader;
     }
 
-    setReader( reader: Reader ) {
-        super.setReader( reader );
+    setReader(reader: Reader) {
+        super.setReader(reader);
     }
 
     hide() {
@@ -144,7 +146,7 @@ export class BlessedPanel extends Panel implements IBlessedView {
     }
 
     destroy() {
-        log.debug( "PANEL - destroy()" );
+        log.debug("PANEL - destroy()");
         this.panel.destroy();
         this.header.destroy();
         this.tailer.destroy();
@@ -165,58 +167,58 @@ export class BlessedPanel extends Panel implements IBlessedView {
     }
 
     initRender() {
-        log.info( "initRender : fileBox.size : %d", this.fileBox.length );
-        this.panel.on( "prerender", () => {
+        log.info("initRender : fileBox.size : %d", this.fileBox.length);
+        this.panel.on("prerender", () => {
             let startTime = Date.now();
-            log.debug( "Panel prerender !!! - Start %d", this.baseWidget._viewCount );
+            log.debug("Panel prerender !!! - Start %d", this.baseWidget._viewCount);
             this.resize();
             this.beforeRender();
-            log.debug( "BlessedPanel prerender !!! - End %d - [%dms]", this.baseWidget._viewCount, Date.now() - startTime);
+            log.debug("BlessedPanel prerender !!! - End %d - [%dms]", this.baseWidget._viewCount, Date.now() - startTime);
         });
-        this.header.on( "prerender", () => {
+        this.header.on("prerender", () => {
             // log.debug( "header prerender !!! - Start %d", this.baseWidget._viewCount );
-            if ( this._currentDir ) {
-                this.header.setContent( this._currentDir.fullname );
+            if (this._currentDir) {
+                this.header.setContent(this._currentDir.fullname);
             }
         });
-        this.tailer.on( "prerender", () => {
+        this.tailer.on("prerender", () => {
             // log.debug( "tailer prerender !!! - Start %d", this.baseWidget._viewCount );
-            if ( !this.dirFiles ) {
+            if (!this.dirFiles) {
                 return;
             }
-            const dirSize = this.dirFiles.filter( i => i.dir ).length;
-            const fileSize = this.dirFiles.filter( i => !i.dir ).length;
-            const allFileSize = this.dirFiles.filter( i => !i.dir ).reduce((v, t) => v + t.size, 0);
+            const dirSize = this.dirFiles.filter(i => i.dir).length;
+            const fileSize = this.dirFiles.filter(i => !i.dir).length;
+            const allFileSize = this.dirFiles.filter(i => !i.dir).reduce((v, t) => v + t.size, 0);
 
-            this.tailer.setContentFormat( "{bold}%5s{/bold} Files {bold}%5s{/bold} Dir {bold}%20s{/bold} Byte", 
-                    StringUtils.toregular(fileSize), StringUtils.toregular(dirSize), StringUtils.toregular(allFileSize) );
+            this.tailer.setContentFormat("{bold}%5s{/bold} Files {bold}%5s{/bold} Dir {bold}%20s{/bold} Byte",
+                StringUtils.toregular(fileSize), StringUtils.toregular(dirSize), StringUtils.toregular(allFileSize));
         });
-        
+
         this.baseWidget.on("detach", () => {
-            log.debug( "panel detach !!! - %d", this.baseWidget._viewCount );
+            log.debug("panel detach !!! - %d", this.baseWidget._viewCount);
         });
     }
 
     async keyInputSearchFile(ch, keyInfo) {
-        if ( !this.searchFileBox || !this.searchFileBox.value ) {
+        if (!this.searchFileBox || !this.searchFileBox.value) {
             const keyName = keyInfo.full || keyInfo.name;
-            if ( SearchDisallowKeys.indexOf(keyName) > -1 ) {
-                log.debug( "ignore key - [%s]", keyName );
+            if (SearchDisallowKeys.indexOf(keyName) > -1) {
+                log.debug("ignore key - [%s]", keyName);
                 return false;
             }
         }
 
-        if ( !this.searchFileBox ) {
-            this.searchFileBox = new SearchFileBox( { parent: this.baseWidget } );
+        if (!this.searchFileBox) {
+            this.searchFileBox = new SearchFileBox({ parent: this.baseWidget });
             this.searchFileBox.on("TAB_KEY", () => {
                 this.searchFileTabKey();
             });
         }
         const result = await this.searchFileBox.executePromise(ch, keyInfo);
-        if ( result && keyInfo?.name !== "tab" ) {
+        if (result && keyInfo?.name !== "tab") {
             this.searchFile();
         }
-        if ( result ) {
+        if (result) {
             this.baseWidget.render();
         }
         return result;
@@ -225,22 +227,31 @@ export class BlessedPanel extends Panel implements IBlessedView {
     async keyEnterPromise(): Promise<any> {
         this.searchFileBox?.clear();
         const result = await super.keyEnterPromise();
-        if ( !result ) {
+        if (!result) {
             const currentFile: File = this.dirFiles[this.currentPos];
-            
-            await mainFrame().commandRun( currentFile.fullname, true );
+
+            await mainFrame().commandRun(currentFile.fullname, true);
         }
         return RefreshType.ALL;
     }
 
+    async read(path: string | File): Promise<void> {
+        try {
+            await super.read(path);
+        } catch (e) {
+            log.error(e.stack);
+            await messageBox({ parent: this.baseWidget, title: "ERROR", msg: e.toString(), button: ["OK"] });
+        }
+    }
+
     searchFile() {
-        if ( !this.searchFileBox?.value ) {
+        if (!this.searchFileBox?.value) {
             return;
         }
-        const searchExp = new RegExp( this.searchFileBox?.value, "i" );
-        this._searchFiles = new SearchFileInfo( this.dirFiles.filter( item => searchExp.test(item.name) ) );
-        log.debug( "SEARCH FILES : [%j]", this._searchFiles.files.map( item => item.name ) );
-        if ( !this._searchFiles.get() ) {
+        const searchExp = new RegExp(this.searchFileBox?.value, "i");
+        this._searchFiles = new SearchFileInfo(this.dirFiles.filter(item => searchExp.test(item.name)));
+        log.debug("SEARCH FILES : [%j]", this._searchFiles.files.map(item => item.name));
+        if (!this._searchFiles.get()) {
             this.searchFileBox.updateLastChar();
         } else {
             this.focusFile(this._searchFiles.get());
@@ -248,12 +259,12 @@ export class BlessedPanel extends Panel implements IBlessedView {
     }
 
     searchFileTabKey() {
-        if ( this.searchFileBox.value ) {
-            this.focusFile( this._searchFiles.next() );
+        if (this.searchFileBox.value) {
+            this.focusFile(this._searchFiles.next());
         }
     }
 
-    setViewColumn( column = 0 ) {
+    setViewColumn(column = 0) {
         this.viewColumn = column;
         return RefreshType.ALL;
     }
@@ -263,22 +274,22 @@ export class BlessedPanel extends Panel implements IBlessedView {
 
         const dirLength = this.dirFiles.length;
         const viewHeight = this.baseWidget.height as number - 2;
-        if ( this.viewColumn === 0 || this.viewColumn > 6 ) {
-            if ( dirLength <= this.baseWidget.height ) {
+        if (this.viewColumn === 0 || this.viewColumn > 6) {
+            if (dirLength <= this.baseWidget.height) {
                 this.column = 1;
-            } else if ( dirLength <= (viewHeight * 2) ) {
+            } else if (dirLength <= (viewHeight * 2)) {
                 this.column = 2;
-            } else if ( dirLength <= (viewHeight * 3) ) {
+            } else if (dirLength <= (viewHeight * 3)) {
                 this.column = 3;
-            } else if ( dirLength <= (viewHeight * 4) ) {
+            } else if (dirLength <= (viewHeight * 4)) {
                 this.column = 4;
-            } else if ( dirLength <= (viewHeight * 5) ) {
+            } else if (dirLength <= (viewHeight * 5)) {
                 this.column = 5;
             } else {
                 this.column = 6;
             }
             const columnSize = Math.round(this.baseWidget.width as number / MAX_COLUMN);
-            if ( this.column > columnSize ) {
+            if (this.column > columnSize) {
                 this.column = columnSize;
             }
         } else {
@@ -286,76 +297,76 @@ export class BlessedPanel extends Panel implements IBlessedView {
         }
 
         const row = Math.round((dirLength + this.column - 1) / this.column);
-        if ( row <= (this.panel.height as number) - 2 ) {
+        if (row <= (this.panel.height as number) - 2) {
             this.row = row;
         } else {
             this.row = this.panel.height as number - 2;
         }
 
-        if ( this.column !== 0 && this.row !== 0 ) {
+        if (this.column !== 0 && this.row !== 0) {
             this.page = Math.floor(this.currentPos / (this.column * this.row));
         }
 
-        if ( this.isViewChange() ) {
-            this.fileBox.map( item => {
+        if (this.isViewChange()) {
+            this.fileBox.map(item => {
                 item.destroy();
             });
             this.fileBox = [];
-            for ( let n = 0; n < this.column * this.row; n++ ) {
-                this.fileBox.push( new PanelFileBox( { parent: this.panel as any, focusable: true }, this._fileViewType, this._isViewOwner ) );
+            for (let n = 0; n < this.column * this.row; n++) {
+                this.fileBox.push(new PanelFileBox({ parent: this.panel as any, focusable: true }, this._fileViewType, this._isViewOwner));
             }
-            log.info( "init Render : COL:%d, ROW:%d, PAGE:%d, currentPos:%d fileBoxLen: %d - viewHeight: %d", this.column, this.row, this.page, this.currentPos, this.fileBox.length, viewHeight );
+            log.info("init Render : COL:%d, ROW:%d, PAGE:%d, currentPos:%d fileBoxLen: %d - viewHeight: %d", this.column, this.row, this.page, this.currentPos, this.fileBox.length, viewHeight);
         }
     }
 
     beforeRender() {
-        log.info( "BlessedPanel beforeRender() - COL: %d, ROW: %d", this.column, this.row );
+        log.info("BlessedPanel beforeRender() - COL: %d, ROW: %d", this.column, this.row);
 
-        if ( this.isViewChange() ) {
+        if (this.isViewChange()) {
             let curPos = (this.column * this.row) * this.page;
             const itemWidth = Math.floor((this.baseWidget.width as number - (this.column * 2)) / this.column);
 
-            this._lines.map( (item) => {
+            this._lines.map((item) => {
                 item.destroy();
             });
             this._lines = [];
 
             let num = 0;
-            for ( let col = 0; col < this.column; col++ ) {
-                for ( let row = 0; row < this.row; row++ ) {
+            for (let col = 0; col < this.column; col++) {
+                for (let row = 0; row < this.row; row++) {
                     const fileBox = this.fileBox[num++];
                     fileBox.height = 1;
                     fileBox.width = itemWidth;
                     fileBox.top = row;
                     fileBox.left = col * (itemWidth + 2);
-                    if ( curPos < this.dirFiles.length ) {
+                    if (curPos < this.dirFiles.length) {
                         // log.debug( "SET_POS: %d, CUR_POS: %d", curPos, this.currentPos );
-                        fileBox.setFile( this.dirFiles[curPos], (curPos === this.currentPos && this.panel.hasFocus()), curPos );
+                        fileBox.setFile(this.dirFiles[curPos], (curPos === this.currentPos && this.panel.hasFocus()), curPos);
                     } else {
-                        fileBox.setFile( null, false, -1 );
+                        fileBox.setFile(null, false, -1);
                     }
                     curPos++;
                 }
 
-                if ( col > 0 ) {
+                if (col > 0) {
                     this._lines.push(blessed.line({
-                                            parent: this.panel.box,
-                                            orientation: "vertical",
-                                            type: "bg",
-                                            ch: "│",
-                                            left: (col * (itemWidth + 2)) - 1,
-                                            top: 0,
-                                            height: "100%-2"
-                                        }));
+                        parent: this.panel.box,
+                        orientation: "vertical",
+                        type: "bg",
+                        ch: "│",
+                        left: (col * (itemWidth + 2)) - 1,
+                        top: 0,
+                        height: "100%-2"
+                    }));
                 }
             }
-            log.info( "FileBox: CUR: %d SIZE: %d", this.currentPos, this.fileBox.length );
+            log.info("FileBox: CUR: %d SIZE: %d", this.currentPos, this.fileBox.length);
         } else {
-            this.fileBox.forEach( item => {
-                if ( item.getPosNo() === this.currentPos ) {
+            this.fileBox.forEach(item => {
+                if (item.getPosNo() === this.currentPos) {
                     item.setFileFocus(this.panel.hasFocus());
                     item.render();
-                } else if ( this._previousView && item.getPosNo() === this._previousView.currentPos ) {
+                } else if (this._previousView && item.getPosNo() === this._previousView.currentPos) {
                     item.setFileFocus(false);
                     item.render();
                 }
@@ -365,20 +376,20 @@ export class BlessedPanel extends Panel implements IBlessedView {
     }
 
     isViewChange() {
-        const getMatchData = ( data ) => {
+        const getMatchData = (data) => {
             let result = { ...data };
             delete result.currentPos;
             return JSON.stringify(result);
         };
-        return !(this._previousView && getMatchData( this.getCurrentView() ) === getMatchData( this._previousView ));
+        return !(this._previousView && getMatchData(this.getCurrentView()) === getMatchData(this._previousView));
     }
 
     getCurrentView() {
         return {
             currentPath: this.currentPath().fullname,
-            column: this.column, 
-            row: this.row, 
-            page: this.page, 
+            column: this.column,
+            row: this.row,
+            page: this.page,
             currentPos: this.currentPos,
             fileBoxLength: this.fileBox.length,
             width: this.baseWidget.width,
@@ -391,7 +402,7 @@ export class BlessedPanel extends Panel implements IBlessedView {
     }
 
     render() {
-        if ( this.isViewChange() ) {
+        if (this.isViewChange()) {
             this.baseWidget.render();
         } else {
             this.resize();
