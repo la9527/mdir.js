@@ -14,7 +14,6 @@ import { IBlessedView } from "./IBlessedView";
 import mainFrame from './MainFrame';
 import { SearchFileBox } from './SearchFileBox';
 import { File } from "../common/File";
-import { message } from "../../@types/blessed";
 import { messageBox } from "./widget/MessageBox";
 
 const log = Logger("blessedpanel");

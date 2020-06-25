@@ -90,7 +90,7 @@ export class MainFrame {
                 await this.terminalPromise( false, `vim %1` );
             }
         } catch ( e ) {
-            await messageBox( { parent: this.baseWidget, title: "ERROR", msg: `The file 'vim' could not be executed.\nyou need to install VIM editor on this system.`, button: [ "OK" ] } );
+            await messageBox( { parent: this.baseWidget, title: "ERROR", msg: `'VIM' is not executed.\nVIM software must be installed on this system to run it.`, button: [ "OK" ] } );
         }
     }
 
@@ -830,6 +830,7 @@ export class MainFrame {
         return RefreshType.ALL;
     }
 
+    @Hint({ hint: "MountList", help: "Change to drive or mount directory.", order: 7 })
     async mountListPromise() {
         const panel = this.activePanel();
         if ( panel instanceof BlessedPanel ) {

@@ -42,18 +42,20 @@ class BlassedMenuBox extends Widget {
 
         this.box.style = { ...this.menuColor.blessed, border: this.menuColor.blessed };
         let opt = { parent: this.box, left: 0, width: (this.width as number) - 2, height: 1 };
+        let top = 0;
         this.menuItem.forEach( (item: string | ISubMenuConfig, i: number) => {
             let lineBox = null;
             if ( item === "-" ) {
-                lineBox = line( { ...opt, type: "line", top: i, orientation: "horizontal", style: this.lineColor.blessed } );
+                lineBox = line( { ...opt, type: "line", top: top++, orientation: "horizontal", style: this.lineColor.blessed } );
+                log.debug( "SUBMENU: %s", item );
             } else if ( (item as ISubMenuConfig)?.name ) {
-                let content = null;
                 let keyName = i !== this.selectPos ? 
                     this.menuAColor.fontHexBlessFormat(keyHumanReadable((item as ISubMenuConfig).key || "")) : 
                     keyHumanReadable((item as ISubMenuConfig).key || "");
 
                 let style = i === this.selectPos ? this.menuSelColor.blessed : this.menuColor.blessed;
-                lineBox = text( { ...opt, top: i, content: " " + (item as ISubMenuConfig).name + "{|}" + keyName + " ", style, tags: true } );
+                lineBox = text( { ...opt, top: top++, content: " " + (item as ISubMenuConfig).name + "{|}" + keyName + " ", style, tags: true } );
+                log.debug( "SUBMENU: %s", (item as ISubMenuConfig).name );
             }
             if ( lineBox ) {
                 this.menuBox.push( lineBox );
@@ -70,7 +72,7 @@ class BlassedMenuBox extends Widget {
             if ( this.selectPos < 0 ) {
                 this.selectPos = this.menuItem.length - 1;
             }
-        } while( this.menuItem[this.selectPos] === "-" );
+        } while( this.menuItem[this.selectPos] === "-" || !this.menuItem[this.selectPos] );
     }
 
     keyDown() {
@@ -79,7 +81,7 @@ class BlassedMenuBox extends Widget {
             if ( this.selectPos >= this.menuItem.length ) {
                 this.selectPos = 0;
             }
-        } while( this.menuItem[this.selectPos] === "-" )
+        } while( this.menuItem[this.selectPos] === "-" || !this.menuItem[this.selectPos] )
     }
 
     getFocusMenu(): ISubMenuConfig {

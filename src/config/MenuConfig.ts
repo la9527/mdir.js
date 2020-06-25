@@ -62,7 +62,7 @@ export const menuConfig: IFrameMenuConfig = {
             { name: "Column 4", method: "Panel.setViewColumn", funcParam: [ 4 ] },
             "-",
             { name: "Hidden file on/off", method: "Panel.toggleExcludeHiddenFilePromise" },
-            process.platform !== 'win32' && { name: "Owner show on/off", method: "Panel.viewOwnerPromise" },
+            (process.platform !== 'win32' ? { name: "Owner show on/off", method: "Panel.viewOwnerPromise" } : null),
             { name: "Sort change", method: "Panel.sortChangePromise" },
             { name: "Sort Asc/Descend", method: "Panel.sortReversePromise" },
             "-",

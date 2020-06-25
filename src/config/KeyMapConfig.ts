@@ -350,7 +350,7 @@ export function menuKeyMapping( allkeyMappingInfo: IAllKeyMappingInfo, menuObjec
     Object.keys(menuObject).forEach( i => {
         Object.keys(menuObject[i]).forEach( j => {            
             menuObject[i][j].map( (item: ISubMenuConfig | string ) => {
-                if ( typeof(item) === "object" && item.method ) {
+                if ( typeof(item) === "object" && item?.method ) {
                     let key = getKeyName(item.method, item.funcParam);
                     if ( key ) {
                         item.key = key;

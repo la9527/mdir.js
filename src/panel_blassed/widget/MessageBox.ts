@@ -98,13 +98,13 @@ export class MessageBox extends Widget {
             if ( this.buttonType === MSG_BUTTON_TYPE.HORIZONTAL ) {
                 let left = (Math.floor((this.box.width as number) / (len+1)) * (i+1)) - Math.floor(this.buttonWidth / 2);
                 item.bottom = 1;
-                item.left = left;
+                item.left = left - 1;
                 item.width = this.buttonWidth;
             } else {
                 // VERITCAL
                 let left = Math.floor((this.box.width as number) / 2) - Math.floor(this.buttonWidth / 2);
                 let bottom = len - i - 1;
-                item.left = left;
+                item.left = left - 1;
                 item.bottom = bottom;
                 item.width = this.buttonWidth;
             }
@@ -132,6 +132,7 @@ export class MessageBox extends Widget {
             this.textWidget = new Widget( { 
                 parent: this, 
                 top: 2, 
+                left: 1,
                 width: "100%-2", 
                 tags: true, 
                 height: 2, 
@@ -152,7 +153,8 @@ export class MessageBox extends Widget {
                         parent: this, 
                         tags: true, 
                         content: "{center}" + item + "{/center}", 
-                        left, 
+                        align: "center",
+                        left: left - 1,
                         clickable: true,
                         bottom: 1, 
                         height: 1, 
@@ -168,8 +170,9 @@ export class MessageBox extends Widget {
                     new Widget( {
                         parent: this,
                         tags: true,
-                        content: "{center}" + item + "{/center}",
-                        left,
+                        content: item,
+                        align: "center",
+                        left: left - 1,
                         clickable: true,
                         bottom,
                         height: 1,
@@ -199,8 +202,12 @@ export class MessageBox extends Widget {
             if ( [ "tab", "right", "down" ].indexOf(keyInfo.name) > -1 ) {
                 this.focusBtnNum = ++this.focusBtnNum % this.buttonWidgets.length;
             } else if ( [ "left", "up" ].indexOf(keyInfo.name) > -1 ) {
-                    this.focusBtnNum = --this.focusBtnNum;
-                    this.focusBtnNum = this.focusBtnNum < 0 ? this.buttonWidgets.length - 1 : this.focusBtnNum;
+                this.focusBtnNum = --this.focusBtnNum;
+                this.focusBtnNum = this.focusBtnNum < 0 ? this.buttonWidgets.length - 1 : this.focusBtnNum;
+            } else if ( [ "pageup" ].indexOf(keyInfo.name) > -1 ) {
+                this.focusBtnNum = 0;
+            } else if ( [ "pagedown" ].indexOf(keyInfo.name) > -1 ) {
+                this.focusBtnNum = this.buttonWidgets.length - 1;
             } else if ( [ "return", "space", "escape" ].indexOf(keyInfo.name) > -1 ) {
                 this.destroy();
                 if ( keyInfo.name === "escape" ) {
