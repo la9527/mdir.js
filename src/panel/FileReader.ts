@@ -138,7 +138,11 @@ export class FileReader extends Reader {
         file.fstype = this._readerFsType;
 
         try {
-            file.fullname = fs.realpathSync( filePath );
+            if ( filePath === ".." || filePath === "." ) {
+                file.fullname = fs.realpathSync( filePath );
+            } else {
+                file.fullname = filePath;
+            }
             const pathInfo = path.parse( file.fullname );
             file.root = pathInfo.root;
             file.name = pathInfo.base || pathInfo.root;
@@ -215,15 +219,20 @@ export class FileReader extends Reader {
                 process.chdir(dirFile.fullname);
 
                 const fileList: fs.Dirent[] = (fs as any).readdirSync( dirFile.fullname, { encoding: "utf8", withFileTypes: true  } );
-                // log.info( "READDIR: PATH: [%s], FILES: %j", dirFile.fullname, fileList );
+                log.info( "READDIR: PATH: [%s], FILES: %j", dirFile.fullname, fileList );
                 for ( let file of fileList ) {
-                    const item = this.convertFile( dirFile.fullname + path.sep + file.name, file );
+                    let dirPath = dirFile.fullname;
+                    if ( dirPath.substr(0, dirPath.length - 1) !== path.sep) {
+                        dirPath += path.sep;
+                    }
+
+                    const item = this.convertFile(dirPath + file.name, file );
+                    // console.log( "dirInfo", dirPath, file.name, item.fullname );
                     if ( option?.isExcludeHiddenFile ) {
                         if ( process.platform !== "win32" && item.name !== ".." && item.name[0] === "." ) {
                             continue;
                         }
                     }
-                    /*
                     if ( !item.dir && !item.link ) {
                         try {
                             const fileType = await FileType.fromFile( item.fullname );
@@ -233,8 +242,7 @@ export class FileReader extends Reader {
                         } catch( e ) {
                             log.debug( e );
                         }
-                    }
-                    */
+                    }                    
                     if ( item ) {
                         fileItem.push( item );
                     }

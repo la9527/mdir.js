@@ -70,7 +70,7 @@ export class Mcd {
 
         while( arrDir.length !== 0 ) {
             pTree = arrDir.pop();
-
+            console.log( pTree.file.fullname );
             let dirInfo: File[] = await this.reader.readdir( pTree.file );
             pTree.subDir = [];
             dirInfo.map( item => {
@@ -219,11 +219,12 @@ export class Mcd {
         }
         log.debug( "addDirectory : %s", dirPath );
         let dir: Dir = null;
+        let n = 0;
         do {
             dir = this.searchDir( dirPath, true );
             log.debug( "addDirectory: searchDir: [%s]", dir.file.fullname );
             await this.scan( dir, 1 );
-        } while( dir.file.fullname !== dirPath );
+        } while( dir.file.fullname !== dirPath && n++ < 10 );
         return true;
     }
 

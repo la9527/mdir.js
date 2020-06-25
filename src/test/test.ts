@@ -14,6 +14,7 @@ import { BlessedMenu } from "../panel_blassed/BlessedMenu";
 import { BlessedMcd } from "../panel_blassed/BlessedMcd";
 import { readerControl } from "../panel/readerControl";
 import { Mcd } from "../panel/Mcd";
+import { FileReader } from "../panel/FileReader";
 
 const log = Logger( "TEST" );
 
@@ -58,6 +59,11 @@ const screen = blessed.screen({
     const mcd = new Mcd(readerControl("file"));
     await mcd.scanCurrentDir();
 
+    /*
+    const fileReader = new FileReader();
+    await fileReader.readdir( fileReader.currentDir() );
+    */
+    
     console.log( "END !!! ");
 })();
 
