@@ -291,7 +291,12 @@ export class MainFrame {
                 }
             } catch ( e ) {
                 log.error( e );
-                await messageBox( e.toString() );
+                await messageBox( {
+                    parent: this.baseWidget,
+                    title: "ERROR", 
+                    msg: e.toString(), 
+                    button: [ "OK" ] 
+                });
             } finally {
                 this._keyLockScreen = false;
             }
