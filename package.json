@@ -8,7 +8,8 @@
     "build": "tsc -p tsconfig.json",
     "start": "tsc -p tsconfig.json && node ./build/main.js",
     "debug": "tsc -p tsconfig.json && node --inspect-brk ./build/main.js",
-    "test": "tsc -p tsconfig.json && node ./build/test/test.js"
+    "test": "tsc -p tsconfig.json && node ./build/test/test.js",
+    "pkg": "pkg --target=node12-macos-x64 --out-path=./binary ."
   },
   "author": "La Byoungyoung <la9527@daum.net>",
   "contributors": [
@@ -52,10 +53,16 @@
     "xterm": "^4.7.0"
   },
   "devDependencies": {
+    "@types/drivelist": "^6.4.1",
     "@types/node": "^11.10.4",
     "@types/sprintf-js": "^1.1.2",
     "@typescript-eslint/parser": "^3.0.0",
-    "@types/drivelist": "^6.4.1",
+    "pkg": "^4.4.8",
     "typescript": "^3.9.3"
+  },
+  "pkg": {
+    "scripts": [ "build/**/*.js" ],
+    "assets": [ "node_modules/neo-blessed/**", "node_modules/node-pty/**", "node_modules/drivelist/**" ],
+    "tagets": [ "node12" ]
   }
 }

@@ -10,7 +10,6 @@ import { scrstrncpy } from "./ScreenUtils";
 import { ColorConfig } from "../config/ColorConfig";
 import { Color } from "../common/Color";
 import { BlessedPanel } from './BlessedPanel';
-import * as FileType from "file-type";
 
 const log = Logger("BottomFilesBox");
 
