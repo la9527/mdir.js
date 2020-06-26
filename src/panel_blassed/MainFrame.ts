@@ -274,6 +274,7 @@ export class MainFrame {
                     if ( TerminalAllowKeys.indexOf( keyName ) > -1 ) {
                         let type = await keyMappingExec( this, keyInfo );
                         if ( type !== RefreshType.NONE ) {
+                            this.execRefreshType( type );
                             this._keyLockScreen = false;
                             return;
                         }
@@ -492,7 +493,7 @@ export class MainFrame {
                     stderr && process.stderr.write(stderr);
                     stdout && process.stdout.write(stdout);
                 }
-                console.log( colors.white("Press any key to return m.js") );
+                process.stdout.write( colors.white("Press any key to return m.js") );
                 program.once( 'keypress', async () => {
                     this.screen.enter();
                     await this.refreshPromise();

@@ -109,9 +109,8 @@ export class BlessedXterm extends Widget implements IBlessedView {
         });
 
         this.term.onRefreshRows( (startRow, endRow) => {
-            log.debug( "onRefreshRow : %d/%d", startRow, endRow );
             this._render();
-            this.screen.render();
+            this.screen.draw( this.box.itop + startRow + 1, this.box.itop + endRow + 1 );
         });
         
         this.box.once('render', () => {

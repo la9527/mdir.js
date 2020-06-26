@@ -70,7 +70,7 @@ export class Mcd {
 
         while( arrDir.length !== 0 ) {
             pTree = arrDir.pop();
-            console.log( pTree.file.fullname );
+            
             let dirInfo: File[] = await this.reader.readdir( pTree.file );
             pTree.subDir = [];
             dirInfo.map( item => {
