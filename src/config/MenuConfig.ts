@@ -17,7 +17,7 @@ export interface IFrameMenuConfig {
 export const menuConfig: IFrameMenuConfig = {
     Panel: {
         "Mdir.js": [ 
-            { name: "About", method: "Common.about" },
+            { name: "About", method: "Common.aboutPromise" },
             { name: "Help", method: "Panel.help" },
             "-",
             { name: "Settings" },

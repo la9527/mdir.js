@@ -90,7 +90,12 @@ export class MainFrame {
                 await this.terminalPromise( false, `vim %1` );
             }
         } catch ( e ) {
-            await messageBox( { parent: this.baseWidget, title: "ERROR", msg: `'VIM' is not executed.\nVIM software must be installed on this system to run it.`, button: [ "OK" ] } );
+            await messageBox({
+                parent: this.baseWidget,
+                title: "ERROR",
+                msg: `'VIM' is not executed.\nVIM software must be installed on this system to run it.`,
+                button: [ "OK" ]
+            });
         }
     }
 
@@ -199,6 +204,8 @@ export class MainFrame {
             // dump: true,
             // log: process.env.HOME + "/.m/m2.log"
         });
+
+        this.screen.title = "MDIR.js v" + process.env.npm_package_version;
         
         this.baseWidget = new Widget( { parent: this.screen, left: 0, top: 0, width: "100%", height: "100%" } );
         this.blessedMenu = new BlessedMenu({ parent: this.baseWidget });
@@ -860,6 +867,32 @@ export class MainFrame {
             }
         }
         return RefreshType.NONE;
+    }
+
+    aboutPromise(): Promise<RefreshType> {
+        return new Promise( (resolve) => {
+            let about = `{center}{bold}Mdir.js{/bold} is a visual file manager.{/center}
+
+It's a feature rich full-screen text mode application that allows
+you to copy, move and delete files and whole directory trees,
+search for files and run commands in the sub-shell.
+
+For bug reports, comments and questions, please visit the homepage.
+
+ * Homepage : {bold}https://github.com/la9527/mdir.js{/bold}
+ `;
+
+            setTimeout( async () => {
+                await messageBox( {
+                    parent: this.baseWidget,
+                    title: "Mdir.js - v" + process.env.npm_package_version,
+                    msg: about,
+                    textAlign: "left",
+                    button: [ "OK" ]
+                });
+                resolve( RefreshType.ALL );
+            }, 100);
+        });
     }
 
     static instance() {

@@ -9,7 +9,8 @@
     "start": "tsc -p tsconfig.json && node ./build/main.js",
     "debug": "tsc -p tsconfig.json && node --inspect-brk ./build/main.js",
     "test": "tsc -p tsconfig.json && node ./build/test/test.js",
-    "pkg": "pkg --target=node12-macos-x64 --out-path=./binary ."
+    "pkg": "pkg --target=node12-macos-x64 --out-path=./binary .",
+    "pkg-win": "pkg --debug --target=node12-win-x64 --out-path=./binary ."
   },
   "author": "La Byoungyoung <la9527@daum.net>",
   "contributors": [
@@ -61,8 +62,16 @@
     "typescript": "^3.9.3"
   },
   "pkg": {
-    "scripts": [ "build/**/*.js" ],
-    "assets": [ "node_modules/neo-blessed/**", "node_modules/node-pty/**", "node_modules/drivelist/**" ],
-    "tagets": [ "node12" ]
+    "scripts": [
+      "build/**/*.js"
+    ],
+    "assets": [
+      "node_modules/neo-blessed/**",
+      "node_modules/node-pty/**",
+      "node_modules/drivelist/**"
+    ],
+    "tagets": [
+      "node12"
+    ]
   }
 }

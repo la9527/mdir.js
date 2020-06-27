@@ -233,6 +233,7 @@ export class FileReader extends Reader {
                             continue;
                         }
                     }
+                    /*
                     if ( !item.dir && !item.link ) {
                         try {
                             const fileType = await FileType.fromFile( item.fullname );
@@ -242,7 +243,8 @@ export class FileReader extends Reader {
                         } catch( e ) {
                             log.debug( e );
                         }
-                    }                    
+                    }
+                    */
                     if ( item ) {
                         fileItem.push( item );
                     }

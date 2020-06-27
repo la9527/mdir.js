@@ -73,7 +73,7 @@ export class MessageBox extends Widget {
 
         if ( this.buttonType === MSG_BUTTON_TYPE.HORIZONTAL ) {
             this.box.width = Math.max( buttonAllWidth, Math.max(widthTitle, widthMsg) );
-            this.box.height = Math.min((this.msgOption.msg ? (msgLines.length + 7) : 4), 14);
+            this.box.height = Math.min((this.msgOption.msg ? (msgLines.length + 7) : 4), this.screen.height - 6);
 
             if ( this.textWidget ) {
                 this.textWidget.width = this.box.width - 4;
@@ -84,7 +84,7 @@ export class MessageBox extends Widget {
         } else {
             this.buttonWidth = Math.max(this.buttonWidth, 20);
             this.box.width = Math.max( Math.max(widthTitle, widthMsg), this.buttonWidth + 4 );
-            this.box.height = Math.min( (this.msgOption.msg ? (msgLines.length + 5) : 4) + this.msgOption.button.length, 14);
+            this.box.height = Math.min( (this.msgOption.msg ? (msgLines.length + 5) : 4) + this.msgOption.button.length, this.screen.height - 6);
             log.debug( "RESIZE - VERTICAL %d (%d, %d)", msgLines.length, this.box.width, this.box.height );
 
             if ( this.textWidget ) {
