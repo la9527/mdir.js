@@ -12,7 +12,7 @@ import { Dir } from "../common/Dir";
 import { Color } from '../common/Color';
 import { ColorConfig } from '../config/ColorConfig';
 import { Logger } from "../common/Logger";
-import { KeyMapping } from "../config/KeyMapConfig";
+import { KeyMapping, IHelpService } from "../config/KeyMapConfig";
 import { KeyMappingInfo } from "../config/KeyMapConfig";
 import { IBlessedView } from "./IBlessedView";
 import mainFrame from './MainFrame';
@@ -66,8 +66,8 @@ class McdDirButton extends Widget {
     }
 }
 
-@KeyMapping( KeyMappingInfo.Mcd, "Mcd" )
-export class BlessedMcd extends Mcd implements IBlessedView {
+@KeyMapping( KeyMappingInfo.Mcd )
+export class BlessedMcd extends Mcd implements IBlessedView, IHelpService {
     buttonList: McdDirButton[] = [];
     lines: Widgets.BoxElement[] = [];
 
@@ -114,6 +114,10 @@ export class BlessedMcd extends Mcd implements IBlessedView {
             }
         });
         this.initRender();
+    }
+
+    viewName() {
+        return "Mcd";
     }
 
     hide() {

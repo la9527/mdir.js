@@ -3,16 +3,21 @@ import { Reader } from "../common/Reader";
 import { Logger } from "../common/Logger";
 import { File } from "../common/File";
 import { SortType } from "../common/Sort";
+import { IHelpService, Help } from "../config/KeyMapConfig";
 
 const log = Logger("main");
 
-export abstract class Panel extends AbstractPanel {
+export abstract class Panel extends AbstractPanel implements IHelpService {
     protected reader: Reader = null;
     protected _excludeHiddenFile = false;
 
     constructor( reader: Reader = null ) {
         super();
         this.setReader( reader );
+    }
+
+    viewName() {
+        return "Panel";
     }
 
     setReader( reader: Reader ) {
@@ -75,6 +80,7 @@ export abstract class Panel extends AbstractPanel {
         }
     }
 
+    @Help("toggle select file.")
     toggleSelect() {
         this.validCheckPosition();
 
@@ -142,14 +148,17 @@ export abstract class Panel extends AbstractPanel {
         return null;
     }
 
+    @Help("go to home directory.")
     async gotoHomePromise() {
         await this.read( this.reader.homeDir() );
     }
 
+    @Help("go to root directory.")
     async gotoRootPromise() {
         await this.read( this.reader.rootDir() );
     }
 
+    @Help("go to parent directory.")
     async gotoParentPromise() {
         await this.read( ".." );
     }

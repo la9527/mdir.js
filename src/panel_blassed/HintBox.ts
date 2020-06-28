@@ -21,12 +21,12 @@ export class HintBox extends Widget {
         const addHintInfo = (view: any) => {
             if ( view.hintInfo && view.keyInfo ) {
                 for ( let method of Object.keys(view.hintInfo) ) {
-                    let { humanName, key } = methodToKeyname(view, method) || {};
+                    let { humanKeyName, key } = methodToKeyname(view, method) || {};
                     if ( activePanel instanceof BlessedXterm && TerminalAllowKeys.indexOf(key) === -1 ) {
                         continue;
                     }
-                    if ( humanName ) {
-                        view.hintInfo[ method ].key = humanName;
+                    if ( humanKeyName ) {
+                        view.hintInfo[ method ].key = humanKeyName;
                     }
                     item.push( view.hintInfo[method] );
                 }

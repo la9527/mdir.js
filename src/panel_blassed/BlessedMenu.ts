@@ -4,7 +4,7 @@ import { ColorConfig } from '../config/ColorConfig';
 import { ISubMenuConfig, menuConfig, IMainMenuConfig } from '../config/MenuConfig';
 import { Widget } from './widget/Widget';
 import { sprintf } from "sprintf-js";
-import { KeyMapping, KeyMappingInfo, keyHumanReadable, RefreshType } from '../config/KeyMapConfig';
+import { KeyMapping, KeyMappingInfo, keyHumanReadable, RefreshType, IHelpService } from '../config/KeyMapConfig';
 import { Logger } from "../common/Logger";
 import mainFrame from './MainFrame';
 
@@ -90,8 +90,8 @@ class BlassedMenuBox extends Widget {
     }
 }
 
-@KeyMapping( KeyMappingInfo.Menu, "Menu" )
-export class BlessedMenu {
+@KeyMapping( KeyMappingInfo.Menu )
+export class BlessedMenu implements IHelpService {
     menuPos: number = 0;
     topMenu: Widget = null;
     menuColor: Color = null;
@@ -106,6 +106,10 @@ export class BlessedMenu {
         this.menuAColor = ColorConfig.instance().getBaseColor("funcA");
         this.menuSelColor = ColorConfig.instance().getBaseColor("funcSel");
         this.opt = opt;
+    }
+
+    viewName() {
+        return "Menu";
     }
 
     init() {

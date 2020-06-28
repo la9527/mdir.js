@@ -7,7 +7,10 @@ import { FuncKeyBox } from './FuncKeyBox';
 import BottomFilesBox from "./BottomFileBox";
 import { readerControl } from '../panel/readerControl';
 import { Widget } from "./widget/Widget";
-import { keyMappingExec, menuKeyMapping, KeyMappingInfo, KeyMapping, RefreshType, Hint, TerminalAllowKeys } from "../config/KeyMapConfig";
+import { keyMappingExec, menuKeyMapping, KeyMappingInfo, 
+    KeyMapping, RefreshType, 
+    Hint, TerminalAllowKeys, 
+    Help, getHelpInfo, IHelpInfo, IHelpService } from "../config/KeyMapConfig";
 import { menuConfig } from "../config/MenuConfig";
 import { BlessedMenu } from "./BlessedMenu";
 import { BlessedMcd } from './BlessedMcd';
@@ -22,7 +25,6 @@ import { StringUtils } from "../common/StringUtils";
 import { Color } from "../common/Color";
 import { inputBox } from "./widget/InputBox";
 import { HintBox } from "./HintBox";
-// import { BlessedTerminal } from "./BlessedTerminal";
 import { BlessedXterm } from "./BlessedXterm";
 import { sprintf } from "sprintf-js";
 
@@ -38,8 +40,8 @@ enum VIEW_TYPE {
     HORIZONTAL_SPLIT = 2
 }
 
-@KeyMapping( KeyMappingInfo.Common, "Common" )
-export class MainFrame {
+@KeyMapping( KeyMappingInfo.Common )
+export class MainFrame implements IHelpService {
     private screen: Widgets.Screen = null;
     private viewType: VIEW_TYPE = VIEW_TYPE.NORMAL;
     private baseWidget = null;
@@ -57,7 +59,12 @@ export class MainFrame {
         menuKeyMapping( KeyMappingInfo, menuConfig );
     }
 
-    @Hint({ hint: "MCD", help: "showing directory structure on this window." })
+    viewName() {
+        return "Common";
+    }
+
+    @Hint({ hint: "MCD" })
+    @Help("showing directory structure on this window.")
     async mcdPromise(isEscape = false) {
         let view = this.blessedFrames[this.activeFrameNum];
         if ( view instanceof BlessedPanel ) {
@@ -110,7 +117,8 @@ export class MainFrame {
         return cmd;
     }
 
-    @Hint({ hint: "Terminal", help: "Run to XTerm(shell command) on this window." })
+    @Hint({ hint: "Terminal" })
+    @Help("run to XTerm(shell command) on this window.")
     async terminalPromise(isEscape = false, shellCmd: string = null ) {
         let view = this.blessedFrames[this.activeFrameNum];        
         let shell: any = this.commandParsing( shellCmd );
@@ -340,7 +348,8 @@ export class MainFrame {
         return RefreshType.ALL;
     }
 
-    @Hint({ hint: "Split", help: "split window", order: 2 })
+    @Hint({ hint: "Split", order: 2 })
+    @Help("split window")
     split() {
         this.viewType++;
         if ( this.viewType > 2 ) {
@@ -351,12 +360,14 @@ export class MainFrame {
         return RefreshType.ALL;
     }
 
-    @Hint({ hint: "Quit", help: "quit this program.", order: 1 })
+    @Hint({ hint: "Quit", order: 1 })
+    @Help("quit this program.")
     quit() {
         process.exit(0);
     }
 
-    @Hint({ hint: "NextWindow", help: "Move focus to next window", order: 2 })
+    @Hint({ hint: "NextWindow", order: 2 })
+    @Help("move focus to next window")
     nextWindow() {
         if ( this.viewType !== VIEW_TYPE.NORMAL ) {
             this.activeFrameNum++;
@@ -384,7 +395,8 @@ export class MainFrame {
         return this.activePanel();
     }
 
-    @Hint({ hint: "Menu", help: "visible the menu", order: 3 })
+    @Hint({ hint: "Menu", order: 3 })
+    @Help("open the menu")
     menu() {
         const activePanel = this.activePanel();
         if ( (activePanel instanceof BlessedXterm) ) {
@@ -392,7 +404,7 @@ export class MainFrame {
         }
         this.menuClose();
 
-        let viewName = this.activeFocusObj().viewName || "Common";
+        let viewName = this.activeFocusObj().viewName() || "Common";
         log.debug( "menuConfig[ viewName ] !!!", viewName, menuConfig[ viewName ] );
         this.blessedMenu.init();
         this.blessedMenu.setMainMenuConfig( menuConfig[ viewName ] );
@@ -410,7 +422,8 @@ export class MainFrame {
         return RefreshType.ALL;
     }
 
-    @Hint({ hint: "Shell", help: "visible the command line at the bottom.", order: 4 })
+    @Hint({ hint: "Shell", order: 4 })
+    @Help("open the shell command on bottom line.")
     commandBoxShow() {
         const activePanel = this.activePanel();
         if ( !(activePanel instanceof BlessedPanel) ) {
@@ -427,6 +440,7 @@ export class MainFrame {
         return RefreshType.ALL;
     }
 
+    @Help("closes the shell command on bottom line.")
     commandBoxClose() {
         if ( this.commandBox ) {
             this.commandBox.destroy();
@@ -437,7 +451,8 @@ export class MainFrame {
         return RefreshType.ALL;
     }
 
-    @Hint({ hint: "Console View", help: "Show the console for a moment." })
+    @Hint({ hint: "Console View" })
+    @Help("shows the console for a moment.")
     consoleViewPromise(): Promise<RefreshType> {
         return new Promise( (resolve, reject) => {
             let program = this.screen.program;
@@ -524,7 +539,7 @@ export class MainFrame {
 
         let result = RefreshType.NONE;
         if ( object && object[ (methodName as string) ] ) {
-            log.info( "methodRun [%s] - method: [ %s.%s(%s) ]", methodString, object.viewName, methodName, param ? param.join(",") : "" );
+            log.info( "methodRun [%s] - method: [ %s.%s(%s) ]", methodString, object.viewName(), methodName, param ? param.join(",") : "" );
 
             if ( /(p|P)romise/.exec(methodName as string) ) {
                 result = await object[ (methodName as string) ].apply(object, param);
@@ -535,7 +550,34 @@ export class MainFrame {
         return result || RefreshType.OBJECT;
     }
 
-    @Hint({ hint: "Remove", help: "Remove the selected file(s)." })
+    aboutPromise(): Promise<RefreshType> {
+        return new Promise( (resolve) => {
+            let about = `{center}{bold}Mdir.js{/bold} is a visual file manager.{/center}
+
+It's a feature rich full-screen text mode application that allows
+you to copy, move and delete files and whole directory trees,
+search for files and run commands in the sub-shell.
+
+For bug reports, comments and questions, please visit the homepage.
+
+ * Homepage : {bold}https://github.com/la9527/mdir.js{/bold}
+ `;
+
+            setTimeout( async () => {
+                await messageBox( {
+                    parent: this.baseWidget,
+                    title: "Mdir.js - v" + process.env.npm_package_version,
+                    msg: about,
+                    textAlign: "left",
+                    button: [ "OK" ]
+                });
+                resolve( RefreshType.ALL );
+            }, 100);
+        });
+    }
+
+    @Hint({ hint: "Remove" })
+    @Help("remove selected file(s) or current file.")
     async removePromise() {
         const activePanel = this.activePanel();
         if ( !(activePanel instanceof BlessedPanel) ) {
@@ -612,7 +654,8 @@ export class MainFrame {
         return RefreshType.ALL;
     }
 
-    @Hint({ hint: "Cut", help: "Cut to clipboard on selected files.", order: 6 })
+    @Hint({ hint: "Cut", order: 6 })
+    @Help("cut to clipboard from the selected file(s) or current file.")
     clipboardCut() {
         const activePanel = this.activePanel();
         if ( !(activePanel instanceof BlessedPanel) ) {
@@ -621,7 +664,8 @@ export class MainFrame {
         selection().set( activePanel.getSelectFiles(), activePanel.currentPath(), ClipBoard.CLIP_CUT );
     }
 
-    @Hint({ hint: "Copy", help: "Copy to clipboard on selected files.", order: 5 })
+    @Hint({ hint: "Copy", order: 5 })
+    @Help("copy to clipboard from the selected file(s) or current file.")
     clipboardCopy() {
         const activePanel = this.activePanel();
         if ( !(activePanel instanceof BlessedPanel) ) {
@@ -630,7 +674,8 @@ export class MainFrame {
         selection().set( activePanel.getSelectFiles(), activePanel.currentPath(), ClipBoard.CLIP_COPY );
     }
 
-    @Hint({ hint: "Paste", help: "From clipboard to paste on current directory.", order: 7 })
+    @Hint({ hint: "Paste", order: 7 })
+    @Help( "paste to this directory from the clipboard." )
     async clipboardPastePromise() {
         const activePanel = this.activePanel();
         const clipSelected = selection();
@@ -789,6 +834,7 @@ export class MainFrame {
         return RefreshType.ALL;
     }
 
+    @Help("create(make) a directory")
     async mkdirPromise() {
         const panel = this.activePanel();
         if ( panel instanceof BlessedPanel ) {
@@ -810,6 +856,7 @@ export class MainFrame {
         return RefreshType.ALL;
     }
 
+    @Help("change the name of a file or directory")
     async renamePromise() {
         const panel = this.activePanel();
         if ( panel instanceof BlessedPanel ) {
@@ -837,7 +884,8 @@ export class MainFrame {
         return RefreshType.ALL;
     }
 
-    @Hint({ hint: "MountList", help: "Change to drive or mount directory.", order: 7 })
+    @Hint({ hint: "MountList", order: 7 })
+    @Help("changes the mount/drive directory.")
     async mountListPromise() {
         const panel = this.activePanel();
         if ( panel instanceof BlessedPanel ) {
@@ -869,24 +917,33 @@ export class MainFrame {
         return RefreshType.NONE;
     }
 
-    aboutPromise(): Promise<RefreshType> {
+    @Help("help")
+    async helpPromise() {
+        const helpInfo: IHelpInfo = getHelpInfo();
+        let viewText = [];
+        for ( const frame of [ "Common", "Panel", "Mcd" ] ) {
+            viewText.push(`${frame})` );
+
+            let subText = [];
+            for ( const item in helpInfo[frame] ) {
+                if ( helpInfo[frame][item].humanKeyName ) {
+                    subText.push( sprintf("{yellow-fg}%14s{/yellow-fg} : %s", helpInfo[frame][item].humanKeyName, helpInfo[frame][item].text ) );
+                }
+            }
+            subText.sort();
+            
+            viewText = viewText.concat( subText );
+            viewText.push( "" );
+        }
+
+        log.debug( "viewText: %s", viewText );
+
         return new Promise( (resolve) => {
-            let about = `{center}{bold}Mdir.js{/bold} is a visual file manager.{/center}
-
-It's a feature rich full-screen text mode application that allows
-you to copy, move and delete files and whole directory trees,
-search for files and run commands in the sub-shell.
-
-For bug reports, comments and questions, please visit the homepage.
-
- * Homepage : {bold}https://github.com/la9527/mdir.js{/bold}
- `;
-
             setTimeout( async () => {
                 await messageBox( {
                     parent: this.baseWidget,
-                    title: "Mdir.js - v" + process.env.npm_package_version,
-                    msg: about,
+                    title: "Help",
+                    msg: viewText.join("\n"),
                     textAlign: "left",
                     button: [ "OK" ]
                 });

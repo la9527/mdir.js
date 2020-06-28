@@ -7,10 +7,11 @@ import { Reader } from '../common/Reader';
 import { File } from "../common/File";
 import { readerControl } from "./readerControl";
 import { Logger } from "../common/Logger";
+import { Help, IHelpService } from "../config/KeyMapConfig";
 
 const log = Logger("blessed-mcd");
 
-export class Mcd {
+export class Mcd implements IHelpService {
     protected sortType: SortType = SortType.COLOR;
 
     protected isSort: boolean = false;
@@ -28,6 +29,10 @@ export class Mcd {
 
     constructor( reader: Reader = null ) {
         this.setReader( reader );
+    }
+
+    viewName() {
+        return "Mcd";
     }
 
     getReader(): Reader {
@@ -100,7 +105,7 @@ export class Mcd {
         return true;
     }
 
-    removeSubDir( node: Dir ) {
+    hideSubDir( node: Dir ) {
         if ( !node ) return;
         if ( !this.arrOrder.length ) return;
 
@@ -317,14 +322,16 @@ export class Mcd {
         }
     }
 
+    @Help("scan one or all subdirectory")
     async subDirScanPromise( depth: number = 1 ) {
         let node = this.currentDir();
-        this.removeSubDir( node );
+        this.hideSubDir( node );
         await this.scan( node, depth );
     }
 
-    subDirRemove() {
+    @Help("hide subdirectory")
+    subDirHide() {
         let node = this.currentDir();
-        this.removeSubDir( node );
+        this.hideSubDir( node );
     }
 }

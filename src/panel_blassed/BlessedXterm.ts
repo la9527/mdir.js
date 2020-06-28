@@ -371,7 +371,6 @@ export class BlessedXterm extends Widget implements IBlessedView {
         super.destroy();
     }
 
-
     getReader() {
         return this.reader;
     }

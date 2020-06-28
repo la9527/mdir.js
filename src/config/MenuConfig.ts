@@ -18,7 +18,7 @@ export const menuConfig: IFrameMenuConfig = {
     Panel: {
         "Mdir.js": [ 
             { name: "About", method: "Common.aboutPromise" },
-            { name: "Help", method: "Panel.help" },
+            { name: "Help", method: "Common.helpPromise" },
             "-",
             { name: "Settings" },
             "-",
@@ -54,7 +54,7 @@ export const menuConfig: IFrameMenuConfig = {
         ],
         View: [
             { name: "Refresh", method: "Common.refreshPromise" },
-            { name: "Column AUTO", method: "Panel.setViewColumn", funcParam: [ 0 ] },            
+            { name: "Column AUTO", method: "Panel.setViewColumn", funcParam: [ 0 ] },
             "-",
             { name: "Column 1", method: "Panel.setViewColumn", funcParam: [ 1 ] },
             { name: "Column 2", method: "Panel.setViewColumn", funcParam: [ 2 ] },

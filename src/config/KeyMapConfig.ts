@@ -51,7 +51,8 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         consoleViewPromise: "escape",
         terminalPromise: "C-o",
         vimPromise: { name: "VIM", key: "f4" },
-        mountListPromise: { name: "MountList", key: "f11" }
+        mountListPromise: { name: "MountList", key: "f11" },
+        helpPromise: { name: "Help", key: "f1" }
     },
     Menu: {
         keyUp: "up",
@@ -137,37 +138,9 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
                 funcParam: [ 1 ]
             }
         ],
-        subDirRemove: "-"
+        subDirHide: "-"
     }
 };
-
-/*
-export const FuncKeyMappingInfo = {
-    Panel: {
-        F1: { name: "Help", func: "Common.help" },
-        F2: { name: "Rename", func: "Panel.rename" },
-        F3: { name: "Editor", func: "Common.editor" },
-        F4: { name: "Vim", func: "Command.vim" },
-        F5: { name: "Refresh", func: "Common.refreshPromise" },
-        F6: { name: "Remote", func: "Common.remote" },
-        F7: { name: "Mkdir", func: "Panel.mkdir", },
-        F8: { name: "Remove", func: "Panel.remove" },
-        F9: { name: "Size", func: "Panel.size" },
-        F10: { name: "MCD", func: "Common.mcdPromise" },
-        F11: { name: "QCD", func: "" },
-        F12: { name: "Menu", func: "Common.menu" }
-    },
-    Mcd: {
-        F1: { name: "Help", func: "Common.help" },
-        F2: { name: "Rename", func: "Mcd.rename" },
-        F5: { name: "Refresh", func: "Common.refreshPromise" },
-        F7: { name: "Mkdir", func: "Mcd.mkdir", },
-        F8: { name: "Remove", func: "Mcd.rename" },
-        F9: { name: "Size", func: "Mcd.size" },
-        F12: { name: "Menu", func: "Common.menu" }
-    }
-}
-*/
 
 interface IFuncMapping {
     [keyName: string]: MethodName | MethodName[] | IMethodParam | IMethodParam[]
@@ -212,13 +185,12 @@ const convertFunctionToKey = ( keyFrame: IKeyMapping ): IFuncMapping => {
     return result;
 }
 
-export function KeyMapping( keyFrame: IKeyMapping, name: string = null ) {
+export function KeyMapping( keyFrame: IKeyMapping ) {
     const keyInfo = convertFunctionToKey(keyFrame);
     log.debug( keyInfo );
     return function <T extends { new(...args: any[]): {} }>(constructor: T) {
         return class extends constructor {
             keyInfo = keyInfo;
-            viewName = name;
         };
     };
 }
@@ -232,7 +204,7 @@ export function methodToKeyname( baseObject, method ) {
         if ( baseObject.keyInfo[key] === method ) {
             try {
                 if ( typeof(key) === "string" && key ) {
-                    return { humanName: keyHumanReadable(key), key };
+                    return { humanKeyName: keyHumanReadable(key), key };
                 }
             } catch ( e ) {
                 log.debug( "METHODTOKEYNAME ERROR !!! - %j", key );
@@ -245,16 +217,67 @@ export function methodToKeyname( baseObject, method ) {
 
 export interface IHintInfo {
     hint?: string;
-    help?: string;
     order?: number;
     key?: string;
 }
 
-export function Hint( { hint, help, order }: IHintInfo ) {
+export function Hint( { hint, order }: IHintInfo ) {
     return function(target: any, propName: string, description: PropertyDescriptor) {
         target.hintInfo = target.hintInfo || {};
-        target.hintInfo[ propName ] = { hint, help, order: order || 10 };
+        target.hintInfo[ propName ] = { hint, order: order || 10 };
     };
+}
+
+export interface IHelpInfo {
+    [ frame: string ]: {
+        [ methodName: string ]: {
+            method ?: string;
+            text ?: string;
+            key ?: string | string[];
+            humanKeyName ?: string;
+        };
+    };
+}
+
+export interface IHelpService {
+    viewName(): string;
+}
+
+let helpInfo = {};
+
+export function Help( helpText: string ) {
+    return function(target: any, propName: string, description: PropertyDescriptor) {
+        let name = target.viewName();
+        if ( name ) {
+            helpInfo[name] = helpInfo[name] || {};
+
+            const keyInfo = () => {
+                const item: any = (KeyMappingInfo[name] && KeyMappingInfo[name][propName]);
+                if ( Array.isArray(item) ) {
+                    return (item as any[]).map( (sub) => sub.key ? sub.key : sub );
+                } else if ( item && item.key ) {
+                    return item.key;
+                }
+                return item;
+            };
+
+            let key = keyInfo();
+            let humanKeyName = "";
+            if ( Array.isArray(key) ) {
+                humanKeyName = key.map( (item1) => {
+                    return keyHumanReadable(item1);
+                }).join(", ");
+            } else if ( key ) {
+                humanKeyName = keyHumanReadable(key);
+            }
+            helpInfo[name][propName] = { method: propName, text: helpText, key, humanKeyName };
+        }
+        // log.debug( "%s - %s", name, helpText );
+    };
+}
+
+export function getHelpInfo(): IHelpInfo {
+    return helpInfo;
 }
 
 export function functionKeyInfo( baseObject ) {
@@ -282,7 +305,7 @@ export async function keyMappingExec( baseObject, keyInfo ): Promise<RefreshType
         return RefreshType.NONE;
     }
 
-    log.debug( "[%s] - keyInfo: %j", baseObject.viewName, keyInfo );
+    log.debug( "[%s] - keyInfo: %j", baseObject.viewName(), keyInfo );
 
     const keyFrame = baseObject.keyInfo as IFuncMapping;
     const keyName = keyInfo.full || keyInfo.name;
@@ -296,7 +319,7 @@ export async function keyMappingExec( baseObject, keyInfo ): Promise<RefreshType
         }
 
         if ( baseObject[ (method as string) ] ) {
-            log.info( "keypress [%s] - method: [ %s.%s(%s) ]", keyName, baseObject.viewName, method, param ? param.join(",") : "" );
+            log.info( "keypress [%s] - method: [ %s.%s(%s) ]", keyName, baseObject.viewName(), method, param ? param.join(",") : "" );
             let result = RefreshType.NONE;
             try {
                 if ( /(p|P)romise/.exec(method as string) ) {
@@ -306,12 +329,12 @@ export async function keyMappingExec( baseObject, keyInfo ): Promise<RefreshType
                 }
                 log.info( "RUNNING SUCCESS : %s", result );
             } catch( e ) {
-                let item = sprintf( "FAIL : %s.%s(%s)\n%s", baseObject.viewName, method, param ? param.join(",") : "", e.stack );
+                let item = sprintf( "FAIL : %s.%s(%s)\n%s", baseObject.viewName(), method, param ? param.join(",") : "", e.stack );
                 throw item;
             }
             return result || RefreshType.OBJECT;
         } else {
-            log.info( "keypress [%s] - METHOD UNDEFINED: %s.%s(%s)", keyName, baseObject.viewName, method, param ? param.join(",") : "" );
+            log.info( "keypress [%s] - METHOD UNDEFINED: %s.%s(%s)", keyName, baseObject.viewName(), method, param ? param.join(",") : "" );
         }
         return RefreshType.NONE;
     } else {

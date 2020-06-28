@@ -8,7 +8,7 @@ import { StringUtils } from "../common/StringUtils";
 import { PanelFileBox } from "./PanelFileBox";
 import { ColorConfig } from "../config/ColorConfig";
 import { Reader } from "../common/Reader";
-import { KeyMapping, RefreshType, SearchDisallowKeys } from '../config/KeyMapConfig';
+import { KeyMapping, RefreshType, SearchDisallowKeys, Hint, Help, IHelpService } from '../config/KeyMapConfig';
 import { KeyMappingInfo } from "../config/KeyMapConfig";
 import { IBlessedView } from "./IBlessedView";
 import mainFrame from './MainFrame';
@@ -68,8 +68,8 @@ class SearchFileInfo {
     }
 }
 
-@KeyMapping(KeyMappingInfo.Panel, "Panel")
-export class BlessedPanel extends Panel implements IBlessedView {
+@KeyMapping(KeyMappingInfo.Panel)
+export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
     public fileBox: PanelFileBox[] = [];
     public baseWidget: Widget = null;
     public panel: Widget = null;
@@ -126,6 +126,10 @@ export class BlessedPanel extends Panel implements IBlessedView {
         });
 
         this.initRender();
+    }
+
+    viewName() {
+        return "Panel";
     }
 
     getReader(): Reader {
@@ -425,24 +429,28 @@ export class BlessedPanel extends Panel implements IBlessedView {
         await mainFrame().consoleViewPromise();
     }
 
+    @Help("sort change")
     async sortChangePromise() {
         super.sortChange();
         await this.refreshPromise();
         return RefreshType.ALL;
     }
 
+    @Help("sort reverse files")
     async sortReversePromise() {
         super.sortReverse();
         await this.refreshPromise();
         return RefreshType.ALL;
     }
 
+    @Help("show/hide hidden files")
     async toggleExcludeHiddenFilePromise() {
         super.toggleExcludeHiddenFile();
         await this.refreshPromise();
         return RefreshType.ALL;
     }
 
+    @Help("reset view type")
     async viewResetPromise() {
         super.viewReset();
         this.viewColumn = 0;
@@ -450,6 +458,7 @@ export class BlessedPanel extends Panel implements IBlessedView {
         return RefreshType.ALL;
     }
 
+    @Help("show/hide file owner")
     async viewOwnerPromise() {
         this._isViewOwner = !this._isViewOwner;
         await this.refreshPromise();
