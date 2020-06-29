@@ -945,6 +945,7 @@ For bug reports, comments and questions, please visit the homepage.
                     title: "Help",
                     msg: viewText.join("\n"),
                     textAlign: "left",
+                    scroll: true,
                     button: [ "OK" ]
                 });
                 resolve( RefreshType.ALL );

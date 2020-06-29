@@ -1,4 +1,4 @@
-import { Widgets, text, button } from "neo-blessed";
+import { Widgets, text, button, BoxElement } from "neo-blessed";
 import { strWidth } from "neo-blessed/lib/unicode";
 
 import { Widget } from "./Widget";
@@ -21,6 +21,7 @@ interface IMessageOption {
     button: string[];
     buttonType ?: MSG_BUTTON_TYPE;
     textAlign ?: string;
+    scroll ?: boolean;
     result?: (button: string, buttonPos ?: number ) => void;
 }
 
@@ -77,7 +78,7 @@ export class MessageBox extends Widget {
 
             if ( this.textWidget ) {
                 this.textWidget.width = this.box.width - 4;
-                this.textWidget.height = msgLines.length;
+                this.textWidget.height = Math.min(msgLines.length, this.box.height - 6);
             }
 
             log.debug( "RESIZE - HORIZONTAL %d (%d, %d)", msgLines.length, this.box.width, this.box.height );
@@ -89,7 +90,8 @@ export class MessageBox extends Widget {
 
             if ( this.textWidget ) {
                 this.textWidget.width = this.box.width - 4;
-                this.textWidget.height = msgLines.length;
+                this.textWidget.height = Math.min(msgLines.length, this.box.height - 6);
+                
             }
         }
 
@@ -128,18 +130,38 @@ export class MessageBox extends Widget {
             style: this.color.blessedReverse, 
             align: "center" } );
 
+
+        log.debug( "init: %s", this.msgOption );
+
         if ( this.msgOption.msg ) {
+            let scrollOption = this.msgOption.scroll ?
+                {
+                    alwaysScroll: true,
+                    scrollable: true,
+                    scrollbar: {
+                        style: {
+                            bg: "blue",
+                            fg: "default"
+                        },
+                        track: this.color.blessedReverse
+                    }
+                } : {};
+
             this.textWidget = new Widget( { 
-                parent: this, 
+                parent: this.box, 
                 top: 2, 
                 left: 1,
                 width: "100%-2", 
                 tags: true, 
+                // ignoreKeys: true,
+                ...scrollOption,
+                style: this.color.blessed, 
                 height: 2, 
                 content: this.msgOption.msg, 
-                style: this.color.blessed, 
                 align: this.msgOption.textAlign || "center"
             } );
+
+            log.debug( "this.msgOption.msg: %s", this.msgOption.msg );
         }
 
         log.debug( "buttonWidth : %d", this.buttonWidth);
@@ -199,15 +221,30 @@ export class MessageBox extends Widget {
                 return;
             }
 
-            if ( [ "tab", "right", "down" ].indexOf(keyInfo.name) > -1 ) {
+            if ( !this.msgOption.scroll ) {
+                if ( keyInfo.name === "up" ) {
+                    keyInfo.name = "right";
+                } else if ( keyInfo.name === "down" ) {
+                    keyInfo.name = "left";
+                } else if ( [ "pageup" ].indexOf(keyInfo.name) > -1 ) {
+                    this.focusBtnNum = 0;
+                } else if ( [ "pagedown" ].indexOf(keyInfo.name) > -1 ) {
+                    this.focusBtnNum = this.buttonWidgets.length - 1;
+                }
+            }
+            if ( [ "tab", "right" ].indexOf(keyInfo.name) > -1 ) {
                 this.focusBtnNum = ++this.focusBtnNum % this.buttonWidgets.length;
-            } else if ( [ "left", "up" ].indexOf(keyInfo.name) > -1 ) {
+            } else if ( [ "left" ].indexOf(keyInfo.name) > -1 ) {
                 this.focusBtnNum = --this.focusBtnNum;
                 this.focusBtnNum = this.focusBtnNum < 0 ? this.buttonWidgets.length - 1 : this.focusBtnNum;
-            } else if ( [ "pageup" ].indexOf(keyInfo.name) > -1 ) {
-                this.focusBtnNum = 0;
-            } else if ( [ "pagedown" ].indexOf(keyInfo.name) > -1 ) {
-                this.focusBtnNum = this.buttonWidgets.length - 1;
+            } else if ( [ "up" ].indexOf(keyInfo.name) > -1 ) {
+                this.textWidget.box.scroll(-1);
+            } if ( [ "down" ].indexOf(keyInfo.name) > -1 ) {
+                this.textWidget.box.scroll(1);
+            } else if ( this.msgOption.scroll && [ "pageup" ].indexOf(keyInfo.name) > -1 ) {
+                this.textWidget.box.scroll(-(this.textWidget.height - 1));
+            } else if ( this.msgOption.scroll && [ "pagedown" ].indexOf(keyInfo.name) > -1 ) {
+                this.textWidget.box.scroll(this.textWidget.height - 1);
             } else if ( [ "return", "space", "escape" ].indexOf(keyInfo.name) > -1 ) {
                 this.destroy();
                 if ( keyInfo.name === "escape" ) {
@@ -234,7 +271,7 @@ export class MessageBox extends Widget {
         this.resize();
 
         this.titleWidget.setContent( this.msgOption.title );
-        this.msgOption.msg && this.textWidget.setContent( this.msgOption.msg );
+        this.msgOption.msg && this.textWidget && this.textWidget.setContent( this.msgOption.msg );
 
         this.buttonWidgets.map( (i, n) => {
             i.box.style = (this.focusBtnNum === n ? this.btnColor.blessedReverse : this.btnColor.blessed);
@@ -253,7 +290,7 @@ export class MessageBox extends Widget {
 
 export function messageBox( msgOpt: IMessageOption, opts: Widgets.BoxOptions = {}): Promise<string> {
     return new Promise(( resolve, reject ) => {
-        const screen = msgOpt.parent.screen || opts.parent.screen;
+        const screen = msgOpt.parent.screen || opts.parent.screen || opts.parent;
         let messgaeBox = null;
         try {
             messgaeBox = new MessageBox({
@@ -262,6 +299,7 @@ export function messageBox( msgOpt: IMessageOption, opts: Widgets.BoxOptions = {
                 msg: msgOpt.msg, button: msgOpt.button,
                 buttonType: msgOpt.buttonType,
                 textAlign: msgOpt.textAlign,
+                scroll: msgOpt.scroll,
                 result: (button, buttonPos) => {
                     screen.render();
                     resolve( button );

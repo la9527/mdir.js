@@ -7,7 +7,7 @@ import { ProgressBox } from "../panel_blassed/widget/ProgressBox";
 import { StringUtils } from '../common/StringUtils';
 import { Color } from "../common/Color";
 import { inputBox } from "../panel_blassed/widget/InputBox";
-import { Hint, KeyMappingInfo, menuKeyMapping, keyMappingExec } from '../config/KeyMapConfig';
+import { Hint, KeyMappingInfo, menuKeyMapping, keyMappingExec, getHelpInfo } from '../config/KeyMapConfig';
 import { BlessedXterm } from "../panel_blassed/BlessedXterm";
 import { menuConfig } from "../config/MenuConfig";
 import { BlessedMenu } from "../panel_blassed/BlessedMenu";
@@ -15,6 +15,7 @@ import { BlessedMcd } from "../panel_blassed/BlessedMcd";
 import { readerControl } from "../panel/readerControl";
 import { Mcd } from "../panel/Mcd";
 import { FileReader } from "../panel/FileReader";
+import { sprintf } from "sprintf-js";
 
 const log = Logger( "TEST" );
 
@@ -25,21 +26,63 @@ const log = Logger( "TEST" );
 
 // console.log( JSON.stringify( menuConfig, null, 4) );
 
-/*
 const screen = blessed.screen({
     smartCSR: true,
     fullUnicode: true,
     dockBorders: true,
     useBCE: true,
     ignoreDockContrast: true,
-    debug: true,
+    // debug: true,
     //dump: true,
     log: process.env.HOME + "/.m/m2.log"
 });
-*/
+
+screen.key("q", () => {
+    process.exit(0);
+});
+    
+screen.key("r", () => {
+    screen.render();
+});
+
+mainFrame();
+
 
 (async () => {
-    /*
+    const helpInfo = getHelpInfo();
+        let viewText = [];
+        for ( const frame of [ "Common", "Panel", "Mcd" ] ) {
+            viewText.push(`${frame})` );
+
+            let subText = [];
+            for ( const item in helpInfo[frame] ) {
+                if ( helpInfo[frame][item].humanKeyName ) {
+                    subText.push( sprintf("{yellow-fg}%14s{/yellow-fg} : %s", helpInfo[frame][item].humanKeyName, helpInfo[frame][item].text ) );
+                }
+            }
+            subText.sort();
+            
+            viewText = viewText.concat( subText );
+            viewText.push( "" );
+        }
+
+        log.debug( "viewText: %s", viewText );
+
+    await messageBox({
+        parent: screen,
+        title: "Help",
+        msg: viewText.join("\n"),
+        textAlign: "left",
+        scroll: false,
+        button: [ "OK" ]
+    }, { parent: screen });
+})();
+
+screen.render();
+
+
+/*
+(async () => {
     const mcd = new BlessedMcd({ parent: screen, top: 1, left: 0, width: "100%", height: "100%-2" });
     mcd.setReader(readerControl("file"));
     await mcd.scanCurrentDir();
@@ -54,19 +97,17 @@ const screen = blessed.screen({
     });
 
     screen.render();
-    */
-
+    
     const mcd = new Mcd(readerControl("file"));
     await mcd.scanCurrentDir();
 
-    /*
-    const fileReader = new FileReader();
+    
+    onst fileReader = new FileReader();
     await fileReader.readdir( fileReader.currentDir() );
-    */
     
     console.log( "END !!! ");
 })();
-
+*/
 /*
 (async () => {
     screen.key("q", () => {
@@ -170,28 +211,6 @@ const screen = blessed.screen({
 });
 
 (async () => {
-    let result = new MessageBox({
-        title: "테스트 타이틀",
-        msg: "테스트 합니다. 확인 바랍니다.",
-        button: [ "OK", "Cancel"],
-        result: ( result ) => {
-            log.debug( result );
-            screen.render();
-        }
-    }, { parent: screen });
-
-    screen.key("q", () => {
-        process.exit(0);
-    });
-
-    screen.key("r", () => {
-        screen.render();
-    });
-
-    screen.render();
-})();
-
-(async () => {
     menuKeyMapping( KeyMappingInfo, menuConfig );
 
     let blessedMenu = new BlessedMenu({ parent: screen });
@@ -213,7 +232,7 @@ const screen = blessed.screen({
 
     screen.render();
 })();
-
+*/
 /*
 (async () => {
 
