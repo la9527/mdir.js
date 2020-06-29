@@ -3,7 +3,7 @@ import { Reader } from "../common/Reader";
 import { Logger } from "../common/Logger";
 import { File } from "../common/File";
 import { SortType } from "../common/Sort";
-import { IHelpService, Help } from "../config/KeyMapConfig";
+import { IHelpService, Help, RefreshType } from '../config/KeyMapConfig';
 
 const log = Logger("main");
 
@@ -80,7 +80,7 @@ export abstract class Panel extends AbstractPanel implements IHelpService {
         }
     }
 
-    @Help("toggle select file.")
+    @Help("select/unselect a file.")
     toggleSelect() {
         this.validCheckPosition();
 
@@ -89,6 +89,16 @@ export abstract class Panel extends AbstractPanel implements IHelpService {
                 this.dirFiles[this.currentPos].select = !this.dirFiles[ this.currentPos ].select;
             }
             this.keyDown();
+        }
+    }
+
+    selectAllFiles() {
+        this.validCheckPosition();
+
+        for ( let i in this.dirFiles ) {
+            if ( this.dirFiles[i].name !== ".." ) {
+                this.dirFiles[i].select = true;
+            }
         }
     }
 

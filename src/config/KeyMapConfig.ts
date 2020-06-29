@@ -83,6 +83,7 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         gotoRootPromise: "\\",
         mkdirPromise: { name: "Mkdir", key: "f7" },
         renamePromise: { name: "Rename", key: "f2" },
+        selectAllFiles: "C-a",
         sortChangePromise: "M-c",
         sortReversePromise: "M-a",
         viewResetPromise: "M-r",

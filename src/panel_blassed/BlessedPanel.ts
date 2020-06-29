@@ -82,6 +82,7 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
     private _lines = [];
 
     private _previousView = null;
+    private _forceViewChange = false;
     private _searchFiles: SearchFileInfo = null;
 
     private _isViewOwner = false;
@@ -427,6 +428,13 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
 
     async consoleViewPromise() {
         await mainFrame().consoleViewPromise();
+    }
+
+    @Help("select all files.")
+    selectAllFiles() {
+        super.selectAllFiles();
+        this.resetViewCache();
+        return RefreshType.OBJECT;
     }
 
     @Help("sort change")

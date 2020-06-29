@@ -7,6 +7,7 @@ import { IBlessedView } from "./IBlessedView";
 import { Reader } from "../common/Reader";
 import { File } from "../common/File";
 import { XTerminal } from "./xterm/XTerminal";
+import { ColorConfig } from "../config/ColorConfig";
 
 const log = Logger("BlassedXTerm");
 
@@ -20,13 +21,39 @@ export class BlessedXterm extends Widget implements IBlessedView {
     termName: string;
 
     term: XTerminal = null;
-    title: string;
     pty: IPty = null;
 
     reader: Reader = null;
 
+    panel: Widget = null;
+    header: Widget = null;
+
     constructor( options: any, reader: Reader, firstPath: File ) {
-        super( { ...options, border: "line", scrollable: false } );
+        super( { ...options, scrollable: false } );
+
+        const statColor = ColorConfig.instance().getBaseColor("stat");
+
+        this.panel = new Widget({
+            parent: this,
+            border: "line",
+            left: 0,
+            top: 1,
+            width: "100%",
+            height: "100%-2",
+            scrollable: false
+        });
+
+        this.header = new Widget({
+            parent: this,
+            left: 0,
+            top: 0,
+            width: "100%",
+            height: 1,
+            style: {
+                bg: statColor.back,
+                fg: statColor.font
+            }
+        });
 
         this.setReader( reader );
         this.options = options;
@@ -46,38 +73,41 @@ export class BlessedXterm extends Widget implements IBlessedView {
         
         this.cursorBlink = options.cursorBlink;
         this.screenKeys = options.screenKeys;
+
         this.box.style = this.box.style || { bg: "default", fg: "default" };
+        this.panel.box.style = this.panel.box.style || { bg: "default", fg: "default" };
         
         this.termName = options.terminal
                 || options.term
                 || process.env.TERM
                 || 'xterm';
 
-        this.on("detach", () => {
+        this.panel.on("detach", () => {
             this.box.screen.program.hideCursor();
         });
-        this.on("render", () => {
+        this.panel.on("render", () => {
             if ( this.box.screen.program.cursorHidden ) {
                 this.box.screen.program.showCursor();
             }
         });
 
-        (this.box as any).render = () => {
+        (this.panel.box as any).render = () => {
             this._render();
         };
         this.bootstrap(firstPath);
     }
 
     bootstrap(firstPath: File) {
+        const box = this.panel.box;
         this.term = new XTerminal({
-            cols: (this.box.width as number) - (this.box.iwidth as number),
-            rows: (this.box.height as number) - (this.box.iheight as number),
+            cols: (box.width as number) - (box.iwidth as number),
+            rows: (box.height as number) - (box.iheight as number),
             cursorBlink: this.cursorBlink
         });
 
-        this.on('resize', () => {
+        this.panel.on('resize', () => {
             process.nextTick(() => {
-                this.term?.resize((this.width as number) - (this.box.iwidth as number), (this.height as number) - (this.box.iheight as number));
+                this.term?.resize((box.width as number) - (box.iwidth as number), (box.height as number) - (box.iheight as number));
             });
         });
 
@@ -89,18 +119,24 @@ export class BlessedXterm extends Widget implements IBlessedView {
         });
         */
 
+        this.panel.on('focus', () => {
+            this.term.focus();
+        });
+
+        this.panel.on('blur', () => {
+            this.term?.blur();
+        });
+
         this.on('focus', () => {
             this.term.focus();
         });
         
         this.on('blur', () => {
-            log.debug( "blur" );
             this.term?.blur();
         });
         
         this.term.onTitleChange((title) => {
-            this.title = title;
-            this.box.emit('title', title);
+            this.header.setContent( title || "" );
         });
 
         this.term.onData( (data) => {
@@ -109,15 +145,14 @@ export class BlessedXterm extends Widget implements IBlessedView {
         });
 
         this.term.onRefreshRows( (startRow, endRow) => {
-            this._render();
-            this.screen.draw( this.box.itop + startRow + 1, this.box.itop + endRow + 1 );
+            this._render(startRow, endRow);
         });
         
-        this.box.once('render', () => {
-            this.term?.resize((this.width as number) - (this.box.iwidth as number), (this.height as number) - (this.box.iheight as number));
+        this.panel.box.once('render', () => {
+            this.term?.resize((box.width as number) - (box.iwidth as number), (box.height as number) - (box.iheight as number));
         });
         
-        this.on('destroy', () => {
+        this.panel.on('destroy', () => {
             this.kill();
         });
 
@@ -125,8 +160,8 @@ export class BlessedXterm extends Widget implements IBlessedView {
         
         this.pty = NodePTY.spawn(this.shell, this.args, {
             name: this.termName,
-            cols: (this.width as number) - (this.box.iwidth as number),
-            rows: (this.height as number) - (this.box.iheight as number),
+            cols: (box.width as number) - (box.iwidth as number),
+            rows: (box.height as number) - (box.iheight as number),
             cwd: firstPath ? firstPath.fullname : process.env.HOME,
             encoding: "utf-8",
             env: this.options.env || process.env
@@ -136,7 +171,7 @@ export class BlessedXterm extends Widget implements IBlessedView {
             process.nextTick(() => {
                 log.debug( "BLESSED RESIZE !!! - TERMINAL");
                 try {
-                    this.pty?.resize((this.width as number) - (this.box.iwidth as number), (this.height as number) - (this.box.iheight as number));
+                    this.pty?.resize((box.width as number) - (box.iwidth as number), (box.height as number) - (box.iheight as number));
                 } catch (e) {
                     log.debug( e );
                 }
@@ -152,13 +187,21 @@ export class BlessedXterm extends Widget implements IBlessedView {
             log.debug( "on exit !!! - %d", code );
             this.box.emit( "process_exit", code );
         });
-        
-        this.box.onScreenEvent('keypress', () => {
+
+        this.panel.box.onScreenEvent('keypress', () => {
             log.error( "onScreenEvent - box keypress !!!" );
-            this.render();
+            this.box.render();
         });
 
         (this.screen as any)._listenKeys(this);
+    }
+
+    hasFocus() {
+        return this.panel.hasFocus();
+    }
+
+    setFocus() {
+        this.panel.setFocus();
     }
 
     ptyKeyWrite( keyInfo ) {
@@ -172,7 +215,7 @@ export class BlessedXterm extends Widget implements IBlessedView {
 
     _onData(data) {
         log.debug( "_onData: %j", data );
-        if (this.screen.focused === this.box && !this._isMouse(data) ) {
+        if (this.screen.focused === this.panel.box && !this._isMouse(data) ) {
             this.pty?.write(data);
         }
     }
@@ -191,11 +234,18 @@ export class BlessedXterm extends Widget implements IBlessedView {
         this._render();
     }
 
-    _render() {
-        const box = this.box as any;
+    _render(startRow = -1, endRow = -1) {
+        const box = this.panel.box as any;
         const screen = this.screen as any;
 
-        const ret = box._render();
+        let ret = null;
+        try {
+            ret = box._render();
+        } catch( e ) {
+            log.error( e );
+            return;
+        }
+
         if (!ret) return;
 
         if ( !this.term ) {
@@ -203,7 +253,7 @@ export class BlessedXterm extends Widget implements IBlessedView {
             return;
         }
 
-        box.dattr = box.sattr(this.box.style);
+        box.dattr = box.sattr(box.style);
       
         let xi = ret.xi + box.ileft
           , xl = ret.xl - box.iright
@@ -223,7 +273,7 @@ export class BlessedXterm extends Widget implements IBlessedView {
             if (!line) break;
 
             if (y === yi + this.term.buffer.y
-                && this.screen.focused === this.box
+                && this.screen.focused === box
                 && (this.term.buffer.ydisp === this.term.buffer.ybase)) {
                 cursor = xi + this.term.buffer.x;
             } else {
@@ -236,26 +286,26 @@ export class BlessedXterm extends Widget implements IBlessedView {
             for (let x = Math.max(xi, 0); x < xl; x++) {
                 if (!line[x]) break;
 
-                line[x][0] = (this.box as any).sattr({
+                line[x][0] = (box as any).sattr({
                     bold: false,
                     underline: false,
                     blink: false,
                     inverse: false,
                     invisible: false,
-                    bg: bufferLine.getBg(x - xi) || this.box.style.bg,
-                    fg: bufferLine.getFg(x - xi) || this.box.style.fg,
+                    bg: bufferLine.getBg(x - xi) || box.style.bg,
+                    fg: bufferLine.getFg(x - xi) || box.style.fg,
                 });
 
                 if (x === cursor) {
                     // if (this.cursor === 'block' || !this.cursor) {
-                      line[x][0] = (this.box as any).sattr({
+                      line[x][0] = (box as any).sattr({
                             bold: false,
                             underline: false,
                             blink: false,
                             inverse: false,
                             invisible: false,
-                            bg: this.box.style.bg,
-                            fg: this.box.style.fg,
+                            bg: box.style.bg,
+                            fg: box.style.fg,
                         }) | (8 << 18);
                     // }
                 }
@@ -265,6 +315,10 @@ export class BlessedXterm extends Widget implements IBlessedView {
 
             line.dirty = true;
             screen.lines[y] = line;
+        }
+
+        if ( startRow !== -1 && endRow !== -1 ) {
+            screen.draw(yi + startRow, yi + endRow);
         }
         return ret;
     }
@@ -290,12 +344,12 @@ export class BlessedXterm extends Widget implements IBlessedView {
 
     setScroll(offset) {
         this.term.buffer.ydisp = offset;
-        return this.box.emit('scroll');
+        return this.panel.box.emit('scroll');
     }
 
     scrollTo(offset) {
         this.term.buffer.ydisp = offset;
-        return this.box.emit('scroll');
+        return this.panel.box.emit('scroll');
     }
 
     getScroll() {
@@ -305,7 +359,7 @@ export class BlessedXterm extends Widget implements IBlessedView {
     resetScroll() {
         this.term.buffer.ydisp = 0;
         this.term.buffer.ybase = 0;
-        return this.box.emit('scroll');
+        return this.panel.box.emit('scroll');
     };
 
     getScrollHeight() {
