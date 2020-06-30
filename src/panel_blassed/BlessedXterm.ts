@@ -249,12 +249,7 @@ export class BlessedXterm extends Widget implements IBlessedView {
     }
 
     _onData(data: string) {
-        log.debug( "_onData: %j", data );
         if (this.screen.focused === this.panel.box && !this._isMouse(data) ) {
-            // printf "\033]1337;ShellIntegrationVersion=11;shell=zsh\007"
-            if ( data.indexOf( "\x1b" ) > -1 ) {
-                log.debug( "%s", data );
-            }
             this.pty?.write(data);
         }
     }
