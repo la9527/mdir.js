@@ -11,6 +11,12 @@ import { ColorConfig } from "../config/ColorConfig";
 
 const log = Logger("BlassedXTerm");
 
+interface IOSC1337 {
+    [ text: string ]: string;
+    RemoteHost?: string;
+    CurrentDir?: string;
+}
+
 export class BlessedXterm extends Widget implements IBlessedView {
     options: any;
     shell: string;
@@ -27,6 +33,8 @@ export class BlessedXterm extends Widget implements IBlessedView {
 
     panel: Widget = null;
     header: Widget = null;
+
+    osc1337: IOSC1337 = {};
 
     constructor( options: any, reader: Reader, firstPath: File ) {
         super( { ...options, scrollable: false } );
@@ -140,7 +148,6 @@ export class BlessedXterm extends Widget implements IBlessedView {
         });
 
         this.term.onData( (data) => {
-            log.debug( "TERM ONDATA : ", data.length );
             this._render();
         });
 
@@ -177,9 +184,10 @@ export class BlessedXterm extends Widget implements IBlessedView {
                 }
             });
         });
-        
+
         this.pty.on('data', (data) => {
             // log.debug( "screen write : [%s] [%d]", data.trim(), data.length );
+            this.parseOSC1337(data); 
             this?.write(data);
         });
 
@@ -194,6 +202,33 @@ export class BlessedXterm extends Widget implements IBlessedView {
         });
 
         (this.screen as any)._listenKeys(this);
+    }
+
+    /**
+     * ref.) 
+     *   1. https://iterm2.com/documentation-escape-codes.html
+     *   2. http://www.iterm2.com/documentation-shell-integration.html
+     */
+    parseOSC1337( data ) {
+        const convertProps = ( text ) => {
+            let j = text.split("=");
+            if (j.length > 1) {
+                this.osc1337[ j[0] ] = j.slice(1).join("=");
+            }
+        };
+
+        const findOSC1337 = ( text ) => {
+            let idx1 = text.indexOf("\x1b]1337;");
+            if ( idx1 > -1 ) {
+                let idx2 = text.indexOf("\x07", idx1);
+                if ( idx2 > -1 ) {
+                    text.substring(idx1 + 7, idx2).split(";").forEach((item) => convertProps(item));
+                    findOSC1337( text.substr(idx2+1) );
+                }
+            }    
+        };
+        findOSC1337(data);
+        // log.debug( this.osc1337 );
     }
 
     hasFocus() {
@@ -213,9 +248,13 @@ export class BlessedXterm extends Widget implements IBlessedView {
         }
     }
 
-    _onData(data) {
+    _onData(data: string) {
         log.debug( "_onData: %j", data );
         if (this.screen.focused === this.panel.box && !this._isMouse(data) ) {
+            // printf "\033]1337;ShellIntegrationVersion=11;shell=zsh\007"
+            if ( data.indexOf( "\x1b" ) > -1 ) {
+                log.debug( "%s", data );
+            }
             this.pty?.write(data);
         }
     }
@@ -438,6 +477,6 @@ export class BlessedXterm extends Widget implements IBlessedView {
     }
 
     getCurrentPath() {
-        
+        return this.osc1337?.CurrentDir;
     }
 }

@@ -47,7 +47,6 @@ export default class BottomFilesBox extends Widget {
             return;
         }
 
-        log.debug("BottomFilesBox draw !!!");
         const d = file.mtime;
         const date = [d.getFullYear(), ("0" + (d.getMonth() + 1)).slice(-2), ("0" + d.getDate()).slice(-2)].join("-");
         const time = [("0" + (d.getHours() + 1)).slice(-2), ("0" + (d.getMinutes() + 1)).slice(-2)].join(":");
@@ -66,7 +65,7 @@ export default class BottomFilesBox extends Widget {
         if ( file.mimetype ) {
             viewText += ` | {bold}${file.mimetype}{/bold}`;
         }
-        log.info( viewText );
+        // log.info( viewText );
         this.box.setContent(viewText);
     }
 }

@@ -67,7 +67,7 @@ export class Widget {
 
     render() {
         let startTime = Date.now();
-        log.debug( "WIDGET RENDER START [%s]", this.constructor.name );
+        // log.debug( "WIDGET RENDER START [%s]", this.constructor.name );
         const result = this._box.render();
         if ( result ) {
             const item: any = (this._box.screen as Widgets.Screen);
@@ -75,7 +75,7 @@ export class Widget {
             let end = Math.min( Math.max(result.yi, result.yl), item.lines.length - 1 );
 
             this._box.screen.draw( start, end );
-            log.debug( "WIDGET RENDER END [%s] [%d,%d] - [%sms]", this.constructor.name, start, end, Date.now() - startTime );
+            log.debug( "WIDGET RENDER [%s] [%d,%d] - [%sms]", this.constructor.name, start, end, Date.now() - startTime );
         }
     }
 

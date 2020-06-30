@@ -328,10 +328,8 @@ export async function keyMappingExec( baseObject, keyInfo ): Promise<RefreshType
                 } else {
                     result = baseObject[ (method as string) ].apply(baseObject, param);
                 }
-                log.info( "RUNNING SUCCESS : %s", result );
             } catch( e ) {
-                let item = sprintf( "FAIL : %s.%s(%s)\n%s", baseObject.viewName(), method, param ? param.join(",") : "", e.stack );
-                throw item;
+                throw sprintf( "FAIL : %s.%s(%s)\n%s", baseObject.viewName(), method, param ? param.join(",") : "", e.stack );
             }
             return result || RefreshType.OBJECT;
         } else {

@@ -163,11 +163,10 @@ export class MainFrame implements IHelpService {
             view.destroy();
 
             const newView = new BlessedPanel( { parent: this.baseWidget, viewCount: viewCount++ }, view.getReader() );
-            await newView.read( view.getReader().currentDir() || "." );
+            await newView.read( view.getCurrentPath() || view.getReader().currentDir() || "." );
             newView.setFocus();
             this.blessedFrames[this.activeFrameNum] = newView;
         }
-        log.debug( "terminal END - COMPLETE" );
         this.viewRender();
         this.baseWidget.render();
         return RefreshType.ALL;
@@ -269,7 +268,7 @@ export class MainFrame implements IHelpService {
                 return;
             }
             const keyName = keyInfo.full || keyInfo.name;
-            log.info( "KEYPRESS [%s] - START", keyName );
+            log.debug( "KEYPRESS [%s] - START", keyName );
 
             let starTime = Date.now();
             this._keyLockScreen = true;
@@ -296,13 +295,13 @@ export class MainFrame implements IHelpService {
                     }
                     panel.ptyKeyWrite(keyInfo);
                 } else {
-                    log.info( "KEYPRESS - KEY START [%s] - (%dms)", keyInfo.name, Date.now() - starTime );
+                    // log.debug( "KEYPRESS - KEY START [%s] - (%dms)", keyInfo.name, Date.now() - starTime );
                     let type: RefreshType = await keyMappingExec( this.activeFocusObj(), keyInfo );
                     if ( type === RefreshType.NONE ) {
                         type = await keyMappingExec( this, keyInfo );
                     }
                     this.execRefreshType( type );
-                    log.info( "KEYPRESS - KEY END [%s] - (%dms)", keyInfo.name, Date.now() - starTime );
+                    // log.info( "KEYPRESS - KEY END [%s] - (%dms)", keyInfo.name, Date.now() - starTime );
                 }
             } catch ( e ) {
                 log.error( e );
