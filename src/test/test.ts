@@ -16,8 +16,27 @@ import { readerControl } from "../panel/readerControl";
 import { Mcd } from "../panel/Mcd";
 import { FileReader } from "../panel/FileReader";
 import { sprintf } from "sprintf-js";
+import i18next from "i18next";
+import I18nextCLILanguageDetector from 'i18next-cli-language-detector';
+import en from "../translation/en.json";
+import ko from "../translation/ko.json";
 
-const log = Logger( "TEST" );
+const log = Logger("test");
+
+(async () => {
+    const t = await i18next.use(I18nextCLILanguageDetector).init({
+        resources: { 
+            en: { 
+                translation: en
+            }, 
+            ko: {
+                translation: ko
+            } 
+        }
+    });
+
+    console.log( t("VIM_NOT_EXECUTED") );
+})();
 
 // console.log( StringUtils.ellipsis("ABCDEFGHJKLMNOPRSTUVWXYZ1234567890", 20) );
 
@@ -26,6 +45,7 @@ const log = Logger( "TEST" );
 
 // console.log( JSON.stringify( menuConfig, null, 4) );
 
+/*
 const screen = blessed.screen({
     smartCSR: true,
     fullUnicode: true,
@@ -79,7 +99,7 @@ mainFrame();
 })();
 
 screen.render();
-
+*/
 
 /*
 (async () => {

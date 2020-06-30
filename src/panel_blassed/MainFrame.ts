@@ -27,6 +27,9 @@ import { inputBox } from "./widget/InputBox";
 import { HintBox } from "./HintBox";
 import { BlessedXterm } from "./BlessedXterm";
 import { sprintf } from "sprintf-js";
+import i18next from "i18next";
+
+const T = i18next.t;
 
 const log = Logger("MainFrame");
 
@@ -64,7 +67,7 @@ export class MainFrame implements IHelpService {
     }
 
     @Hint({ hint: "MCD" })
-    @Help("showing directory structure on this window.")
+    @Help(T("HELP_MCD"))
     async mcdPromise(isEscape = false) {
         let view = this.blessedFrames[this.activeFrameNum];
         if ( view instanceof BlessedPanel ) {
@@ -99,9 +102,9 @@ export class MainFrame implements IHelpService {
         } catch ( e ) {
             await messageBox({
                 parent: this.baseWidget,
-                title: "ERROR",
-                msg: `'VIM' is not executed.\nVIM software must be installed on this system to run it.`,
-                button: [ "OK" ]
+                title: T("ERROR"),
+                msg: T("VIM_NOT_EXECUTED"),
+                button: [ T("OK") ]
             });
         }
     }
@@ -117,8 +120,8 @@ export class MainFrame implements IHelpService {
         return cmd;
     }
 
-    @Hint({ hint: "Terminal" })
-    @Help("run to XTerm(shell command) on this window.")
+    @Hint({ hint: T("Terminal") })
+    @Help(T("HELP_TERMINAL"))
     async terminalPromise(isEscape = false, shellCmd: string = null ) {
         let view = this.blessedFrames[this.activeFrameNum];        
         let shell: any = this.commandParsing( shellCmd );
@@ -348,7 +351,7 @@ export class MainFrame implements IHelpService {
     }
 
     @Hint({ hint: "Split", order: 2 })
-    @Help("split window")
+    @Help(T("HELP_SPLIT_WINDOW"))
     split() {
         this.viewType++;
         if ( this.viewType > 2 ) {
@@ -360,7 +363,7 @@ export class MainFrame implements IHelpService {
     }
 
     @Hint({ hint: "Quit", order: 1 })
-    @Help("quit this program.")
+    @Help(T("HELP_QUIT"))
     quit() {
         process.exit(0);
     }

@@ -92,7 +92,8 @@ export class Widget {
     }
 
     setContent( text ) {
-        // fixed korean(Hangle) alphabet separation (Unicode normalize)
+        // convert to NFC normalize from UTF8
+        // UTF8 separation
         this.box.setContent( text.normalize() );
     }
 
