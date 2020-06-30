@@ -1,0 +1,9 @@
+{
+    "OK": "확인",
+    "ERROR": "에러",
+    "VIM_NOT_EXECUTED": "'VIM' 이 설치되지 않았습니다.\n'VIM'이 설치되어야 정상적으로 실행됩니다.",
+    "HELP_MCD": "디렉토리 구조를 보여줍니다.",
+    "HELP_TERMINAL": "터미널을 이 윈도우에서 실행합니다.",
+    "HELP_SPLIT_WINDOW": "2개의 윈도우로 분할합니다.",
+    "HELP_QUIT": "프로그램을 종료합니다."
+}

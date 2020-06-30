@@ -1,0 +1,9 @@
+{
+    "OK": "OK",
+    "ERROR": "ERROR",
+    "VIM_NOT_EXECUTED": "'VIM' is not executed.\nVIM software must be installed on this system to run it.",
+    "HELP_MCD": "showing directory structure on this window.",
+    "HELP_TERMINAL": "run to XTerm(shell command) on this window.",
+    "HELP_SPLIT_WINDOW": "split window",
+    "HELP_QUIT": "quit this program."
+}
