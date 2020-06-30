@@ -1,5 +1,4 @@
-import * as blessed from "neo-blessed";
-import * as which from "which";
+import which from "which";
 import { BlessedProgram, Widgets, box, text, screen } from "neo-blessed";
 import { Logger } from "../common/Logger";
 import { BlessedPanel } from './BlessedPanel';
@@ -16,7 +15,7 @@ import { BlessedMenu } from "./BlessedMenu";
 import { BlessedMcd } from './BlessedMcd';
 import { CommandBox } from './CommandBox';
 import { exec } from "child_process";
-import * as colors from "colors";
+import colors from "colors";
 import selection, { Selection, ClipBoard } from "../panel/Selection";
 import { ProgressFunc, IMountList } from "../common/Reader";
 import { messageBox, MSG_BUTTON_TYPE } from "./widget/MessageBox";
@@ -29,7 +28,9 @@ import { BlessedXterm } from "./BlessedXterm";
 import { sprintf } from "sprintf-js";
 import i18next from "i18next";
 
-const T = i18next.t;
+const T = ( ...a ) => {
+    return i18next.t.apply( i18next, a );
+};
 
 const log = Logger("MainFrame");
 
@@ -66,8 +67,8 @@ export class MainFrame implements IHelpService {
         return "Common";
     }
 
-    @Hint({ hint: "MCD" })
-    @Help(T("HELP_MCD"))
+    @Hint({ hint: "Hint.Mcd" })
+    @Help(T("Help.Mcd"))
     async mcdPromise(isEscape = false) {
         let view = this.blessedFrames[this.activeFrameNum];
         if ( view instanceof BlessedPanel ) {
@@ -100,10 +101,11 @@ export class MainFrame implements IHelpService {
                 await this.terminalPromise( false, `vim %1` );
             }
         } catch ( e ) {
+            log.error( e );
             await messageBox({
                 parent: this.baseWidget,
-                title: T("ERROR"),
-                msg: T("VIM_NOT_EXECUTED"),
+                title: T("Error"),
+                msg: T("Message.VIM_NOT_EXECUTED"),
                 button: [ T("OK") ]
             });
         }
@@ -120,8 +122,8 @@ export class MainFrame implements IHelpService {
         return cmd;
     }
 
-    @Hint({ hint: T("Terminal") })
-    @Help(T("HELP_TERMINAL"))
+    @Hint({ hint: T("Hint.Terminal") })
+    @Help(T("Help.Terminal"))
     async terminalPromise(isEscape = false, shellCmd: string = null ) {
         let view = this.blessedFrames[this.activeFrameNum];        
         let shell: any = this.commandParsing( shellCmd );
@@ -204,7 +206,7 @@ export class MainFrame implements IHelpService {
     }
 
     async start() {
-        this.screen = blessed.screen({
+        this.screen = screen({
             smartCSR: true,
             fullUnicode: true,
             dockBorders: false,
@@ -310,10 +312,10 @@ export class MainFrame implements IHelpService {
                 log.error( e );
                 await messageBox( {
                     parent: this.baseWidget,
-                    title: "ERROR", 
+                    title: T("Error"), 
                     msg: e.toString(), 
                     textAlign: "left",
-                    button: [ "OK" ] 
+                    button: [ T("OK") ] 
                 });
             } finally {
                 this._keyLockScreen = false;
@@ -350,8 +352,8 @@ export class MainFrame implements IHelpService {
         return RefreshType.ALL;
     }
 
-    @Hint({ hint: "Split", order: 2 })
-    @Help(T("HELP_SPLIT_WINDOW"))
+    @Hint({ hint: T("Hint.Split"), order: 2 })
+    @Help(T("Help.SplitWindow"))
     split() {
         this.viewType++;
         if ( this.viewType > 2 ) {
@@ -362,14 +364,14 @@ export class MainFrame implements IHelpService {
         return RefreshType.ALL;
     }
 
-    @Hint({ hint: "Quit", order: 1 })
-    @Help(T("HELP_QUIT"))
+    @Hint({ hint: T("Hint.Quit"), order: 1 })
+    @Help(T("Help.Quit"))
     quit() {
         process.exit(0);
     }
 
-    @Hint({ hint: "NextWindow", order: 2 })
-    @Help("move focus to next window")
+    @Hint({ hint: T("Hint.NextWindow"), order: 2 })
+    @Help( T("Help.NextWindow") )
     nextWindow() {
         if ( this.viewType !== VIEW_TYPE.NORMAL ) {
             this.activeFrameNum++;
@@ -397,8 +399,8 @@ export class MainFrame implements IHelpService {
         return this.activePanel();
     }
 
-    @Hint({ hint: "Menu", order: 3 })
-    @Help("open the menu")
+    @Hint({ hint: T("Hint.Menu"), order: 3 })
+    @Help(T("Help.Menu"))
     menu() {
         const activePanel = this.activePanel();
         if ( (activePanel instanceof BlessedXterm) ) {
@@ -424,8 +426,8 @@ export class MainFrame implements IHelpService {
         return RefreshType.ALL;
     }
 
-    @Hint({ hint: "Shell", order: 4 })
-    @Help("open the shell command on bottom line.")
+    @Hint({ hint: T("Hint.Shell"),  order: 4 })
+    @Help( T("Help.CommandBox") )
     commandBoxShow() {
         const activePanel = this.activePanel();
         if ( !(activePanel instanceof BlessedPanel) ) {
@@ -442,7 +444,7 @@ export class MainFrame implements IHelpService {
         return RefreshType.ALL;
     }
 
-    @Help("closes the shell command on bottom line.")
+    @Help(T("Help.CommandBoxClose"))
     commandBoxClose() {
         if ( this.commandBox ) {
             this.commandBox.destroy();
@@ -453,8 +455,8 @@ export class MainFrame implements IHelpService {
         return RefreshType.ALL;
     }
 
-    @Hint({ hint: "Console View" })
-    @Help("shows the console for a moment.")
+    @Hint({ hint: T("Hint.ConsoleView") })
+    @Help(T("Help.ConsoleView"))
     consoleViewPromise(): Promise<RefreshType> {
         return new Promise( (resolve, reject) => {
             let program = this.screen.program;
@@ -517,7 +519,7 @@ export class MainFrame implements IHelpService {
                     stderr && process.stderr.write(stderr);
                     stdout && process.stdout.write(stdout);
                 }
-                process.stdout.write( colors.white("Press any key to return m.js") );
+                process.stdout.write( colors.white(T("Message.ANY_KEY_RETURN_M_JS") ));
                 program.once( 'keypress', async () => {
                     this.screen.enter();
                     await this.refreshPromise();
@@ -554,32 +556,21 @@ export class MainFrame implements IHelpService {
 
     aboutPromise(): Promise<RefreshType> {
         return new Promise( (resolve) => {
-            let about = `{center}{bold}Mdir.js{/bold} is a visual file manager.{/center}
-
-It's a feature rich full-screen text mode application that allows
-you to copy, move and delete files and whole directory trees,
-search for files and run commands in the sub-shell.
-
-For bug reports, comments and questions, please visit the homepage.
-
- * Homepage : {bold}https://github.com/la9527/mdir.js{/bold}
- `;
-
             setTimeout( async () => {
                 await messageBox( {
                     parent: this.baseWidget,
                     title: "Mdir.js - v" + process.env.npm_package_version,
-                    msg: about,
+                    msg: T("About", { joinArrays: '\n' }),
                     textAlign: "left",
-                    button: [ "OK" ]
+                    button: [ T("OK") ]
                 });
                 resolve( RefreshType.ALL );
             }, 100);
         });
     }
 
-    @Hint({ hint: "Remove" })
-    @Help("remove selected file(s) or current file.")
+    @Hint({ hint: T("Hint.Remove") })
+    @Help( T("Help.Remove") )
     async removePromise() {
         const activePanel = this.activePanel();
         if ( !(activePanel instanceof BlessedPanel) ) {
@@ -588,9 +579,9 @@ For bug reports, comments and questions, please visit the homepage.
 
         let result = await messageBox( { 
                     parent: this.baseWidget, 
-                    title: "Question", 
-                    msg: "Do you want to remove the selected file(s)?", 
-                    button: [ "OK", "Cancel" ] 
+                    title: T("Question"), 
+                    msg: T("Message.REMOVE_SELECTED_FILES"), 
+                    button: [ T("OK"), T("Cancel") ] 
                 });
         if ( result === "Cancel" ) {
             return RefreshType.NONE;
@@ -602,7 +593,7 @@ For bug reports, comments and questions, please visit the homepage.
         const reader = activePanel.getReader();
         reader.isUserCanceled = false;
 
-        const progressBox = new ProgressBox( { title: "Remove", msg: "Calculating...", cancel: () => {
+        const progressBox = new ProgressBox( { title: T("Message.Remove"), msg: T("Message.Calculating"), cancel: () => {
             reader.isUserCanceled = true;
         }}, { parent: this.baseWidget } );
         this.screen.render();
@@ -642,11 +633,11 @@ For bug reports, comments and questions, please visit the homepage.
             } catch ( err ) {
                 let result = await messageBox( {
                     parent: this.baseWidget,
-                    title: "Remove Error",
+                    title: T("Error"),
                     msg: err,
-                    button: [ "Continue", "Cancel" ]
+                    button: [ T("Continue"), T("Cancel") ]
                 });
-                if ( result === "Cancel" ) {
+                if ( result === T("Cancel") ) {
                     break;
                 }
             }
@@ -656,8 +647,8 @@ For bug reports, comments and questions, please visit the homepage.
         return RefreshType.ALL;
     }
 
-    @Hint({ hint: "Cut", order: 6 })
-    @Help("cut to clipboard from the selected file(s) or current file.")
+    @Hint({ hint: T("Hint.Cut"), order: 6 })
+    @Help( T("Help.Cut") )
     clipboardCut() {
         const activePanel = this.activePanel();
         if ( !(activePanel instanceof BlessedPanel) ) {
@@ -666,8 +657,8 @@ For bug reports, comments and questions, please visit the homepage.
         selection().set( activePanel.getSelectFiles(), activePanel.currentPath(), ClipBoard.CLIP_CUT );
     }
 
-    @Hint({ hint: "Copy", order: 5 })
-    @Help("copy to clipboard from the selected file(s) or current file.")
+    @Hint({ hint: T("Hint.Copy"), order: 5 })
+    @Help( T("Help.Copy") )
     clipboardCopy() {
         const activePanel = this.activePanel();
         if ( !(activePanel instanceof BlessedPanel) ) {
@@ -676,8 +667,8 @@ For bug reports, comments and questions, please visit the homepage.
         selection().set( activePanel.getSelectFiles(), activePanel.currentPath(), ClipBoard.CLIP_COPY );
     }
 
-    @Hint({ hint: "Paste", order: 7 })
-    @Help( "paste to this directory from the clipboard." )
+    @Hint({ hint: T("Hint.Paste"), order: 7 })
+    @Help( T("Help.Paste") )
     async clipboardPastePromise() {
         const activePanel = this.activePanel();
         const clipSelected = selection();
@@ -695,7 +686,7 @@ For bug reports, comments and questions, please visit the homepage.
         const reader = activePanel.getReader();
         reader.isUserCanceled = false;
 
-        const progressBox = new ProgressBox( { title: "Copy", msg: "Calculating...", cancel: () => {
+        const progressBox = new ProgressBox( { title: T("Message.Copy"), msg: T("Message.Calculating"), cancel: () => {
             reader.isUserCanceled = true;
         }}, { parent: this.baseWidget } );
         this.screen.render();
@@ -738,9 +729,9 @@ For bug reports, comments and questions, please visit the homepage.
                 progressBox.destroy();
                 await messageBox( {
                     parent: this.baseWidget,
-                    title: "ERROR", 
-                    msg: "source and target directory are the same.", 
-                    button: [ "OK" ] 
+                    title: T("Error"), 
+                    msg: T("Message.SAME_SOURCE_AND_TARGET"), 
+                    button: [ T("OK") ] 
                 });
                 return RefreshType.NONE;
             }
@@ -757,11 +748,11 @@ For bug reports, comments and questions, please visit the homepage.
                     if ( !reader.exist(src.fullname) ) {
                         let result = await messageBox( {
                             parent: this.baseWidget,
-                            title: "ERROR",
-                            msg: `'${src.name}' file NOT exists. What would you do want?`,
-                            button: [ "Skip", "Cancel" ]
+                            title: T("Error"),
+                            msg: T("{{filename}}_FILE_NOT_EXISTS", { filename: src.name }),
+                            button: [ T("Skip"), T("Cancel") ]
                         });
-                        if ( result === "Cancel" ) {
+                        if ( result === T("Cancel") ) {
                             break;
                         }
                         continue;
@@ -775,28 +766,28 @@ For bug reports, comments and questions, please visit the homepage.
                     if ( !overwriteAll && reader.exist( target.fullname ) ) {
                         let result = await messageBox( {
                             parent: this.baseWidget,
-                            title: "Copy",
-                            msg: `'${src.name}' file exists. What would you do want?`,
-                            button: [ "Overwrite", "Skip", "Rename", "Overwrite All", "Skip All" ]
+                            title: T("Copy"),
+                            msg: T("Message.{{filename}}_FILE_NOT_EXISTS", { filename: src.name }),
+                            button: [ T("Overwrite"), T("Skip"), T("Rename"), T("Overwrite All"), T("Skip All") ]
                         });
                         
-                        if ( result === "Skip" ) {
+                        if ( result === T("Skip") ) {
                             continue;
                         }
-                        if ( result === "Overwrite All") {
+                        if ( result === T("Overwrite All") ) {
                             overwriteAll = true;
                         }
-                        if ( result === "Skip All") {
+                        if ( result === T("Skip All") ) {
                             break;
                         }
-                        if ( result === "Rename" ) {
+                        if ( result === T("Rename") ) {
                             const result = await inputBox( { 
                                 parent: this.baseWidget,
-                                title: "Rename",
+                                title: T("Rename"),
                                 defaultText: src.name,
-                                button: [ "OK", "Cancel" ]
+                                button: [ T("OK"), T("Cancel") ]
                             });
-                            if ( result && result[1] === "OK" && result[0] ) {
+                            if ( result && result[1] === T("OK") && result[0] ) {
                                 target.fullname = targetBasePath + reader.sep() + result[0];
                             } else {
                                 continue;   
@@ -818,11 +809,11 @@ For bug reports, comments and questions, please visit the homepage.
                         } else {
                             let result = await messageBox( {
                                 parent: this.baseWidget,
-                                title: "Copy",
-                                msg: `ERROR: ${src.name} - ${err}`,
-                                button: [ "OK", "Cancel" ]
+                                title: T("Copy"),
+                                msg: `${T("Error")}: ${src.name} - ${err}`,
+                                button: [ T("OK"), T("Cancel") ]
                             });
-                            if ( result === "Cancel" ) {
+                            if ( result === T("Cancel") ) {
                                 break;
                             }
                         }
@@ -836,21 +827,21 @@ For bug reports, comments and questions, please visit the homepage.
         return RefreshType.ALL;
     }
 
-    @Help("create(make) a directory")
+    @Help(T("Help.Mkdir"))
     async mkdirPromise() {
         const panel = this.activePanel();
         if ( panel instanceof BlessedPanel ) {
             const reader = panel.getReader();
             const result = await inputBox( {
                 parent: this.baseWidget,
-                title: "Make Directory",
-                button: [ "OK", "Cancel" ]
+                title: T("Message.MakeDirectory"),
+                button: [ T("OK"), T("Cancel") ]
             }, {  });
-            if ( result && result[1] === "OK" && result[0] ) {
+            if ( result && result[1] === T("OK") && result[0] ) {
                 try {
                     reader.mkdir( panel.currentPath().fullname + reader.sep() + result[0] );
                 } catch( e ) {
-                    await messageBox( { parent: this.baseWidget, title: "ERROR", msg: e, button: [ "OK" ] } );
+                    await messageBox( { parent: this.baseWidget, title: T("Error"), msg: e, button: [ T("OK") ] } );
                 }
             }
         }
@@ -858,7 +849,7 @@ For bug reports, comments and questions, please visit the homepage.
         return RefreshType.ALL;
     }
 
-    @Help("change the name of a file or directory")
+    @Help(T("Help.Rename"))
     async renamePromise() {
         const panel = this.activePanel();
         if ( panel instanceof BlessedPanel ) {
@@ -870,15 +861,15 @@ For bug reports, comments and questions, please visit the homepage.
 
             const result = await inputBox( {
                 parent: this.baseWidget,
-                title: "Rename",
+                title: T("Message.Rename"),
                 defaultText: file.name,
-                button: [ "OK", "Cancel" ]
+                button: [ T("OK"), T("Cancel") ]
             }, {  });
-            if ( result && result[1] === "OK" && result[0] ) {
+            if ( result && result[1] === T("OK") && result[0] ) {
                 try {
                     reader.rename( file, panel.currentPath().fullname + reader.sep() + result[0] );
                 } catch( e ) {
-                    await messageBox( { parent: this.baseWidget, title: "ERROR", msg: e, button: [ "OK" ] } );
+                    await messageBox( { parent: this.baseWidget, title: T("Error"), msg: e, button: [ T("OK") ] } );
                 }
             }
         }
@@ -886,8 +877,8 @@ For bug reports, comments and questions, please visit the homepage.
         return RefreshType.ALL;
     }
 
-    @Hint({ hint: "MountList", order: 7 })
-    @Help("changes the mount/drive directory.")
+    @Hint({ hint: T("Hint.MountList"), order: 7 })
+    @Help( T("Help.MountList") )
     async mountListPromise() {
         const panel = this.activePanel();
         if ( panel instanceof BlessedPanel ) {
@@ -906,7 +897,7 @@ For bug reports, comments and questions, please visit the homepage.
                 log.debug( viewMountInfo );
 
                 try {
-                    const result = await messageBox( { parent: this.baseWidget, title: "MOUNT LIST", msg: "", button: viewMountInfo, buttonType: MSG_BUTTON_TYPE.VERTICAL } );
+                    const result = await messageBox( { parent: this.baseWidget, title: T("Message.MountList"), msg: "", button: viewMountInfo, buttonType: MSG_BUTTON_TYPE.VERTICAL } );
                     if ( result && viewMountInfo.indexOf(result) > -1 ) {
                         await panel.read( mountList[ viewMountInfo.indexOf(result) ].mountPath );
                         return RefreshType.ALL;
@@ -919,12 +910,12 @@ For bug reports, comments and questions, please visit the homepage.
         return RefreshType.NONE;
     }
 
-    @Help("help")
+    @Help(T("Help.Help"))
     async helpPromise() {
         const helpInfo: IHelpInfo = getHelpInfo();
         let viewText = [];
         for ( const frame of [ "Common", "Panel", "Mcd" ] ) {
-            viewText.push(`${frame})` );
+            viewText.push(`${T(frame)})` );
 
             let subText = [];
             for ( const item in helpInfo[frame] ) {
@@ -944,11 +935,11 @@ For bug reports, comments and questions, please visit the homepage.
             setTimeout( async () => {
                 await messageBox( {
                     parent: this.baseWidget,
-                    title: "Help",
+                    title: T("HELP"),
                     msg: viewText.join("\n"),
                     textAlign: "left",
                     scroll: true,
-                    button: [ "OK" ]
+                    button: [ T("OK") ]
                 });
                 resolve( RefreshType.ALL );
             }, 100);
@@ -957,6 +948,7 @@ For bug reports, comments and questions, please visit the homepage.
 
     static instance() {
         if ( !gMainFrame ) {
+            log.debug( "MAINFRAME() START !!!");
             gMainFrame = new MainFrame();
         }
         return gMainFrame;

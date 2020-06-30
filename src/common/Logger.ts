@@ -1,8 +1,8 @@
 // import { createLogger, format, transports, Logger } from "winston";
 import path from "path";
-import * as os from "os";
-import * as moment from "moment";
-import * as winston from "winston";
+import os from "os";
+import moment from "moment";
+import winston from "winston";
 
 const { combine, timestamp, label, printf, prettyPrint } = winston.format;
 

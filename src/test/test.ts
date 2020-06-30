@@ -16,26 +16,28 @@ import { readerControl } from "../panel/readerControl";
 import { Mcd } from "../panel/Mcd";
 import { FileReader } from "../panel/FileReader";
 import { sprintf } from "sprintf-js";
-import i18next from "i18next";
+import i18n from "i18next";
 import I18nextCLILanguageDetector from 'i18next-cli-language-detector';
 import en from "../translation/en.json";
 import ko from "../translation/ko.json";
 
 const log = Logger("test");
 
-(async () => {
-    const t = await i18next.use(I18nextCLILanguageDetector).init({
-        resources: { 
-            en: { 
-                translation: en
-            }, 
-            ko: {
-                translation: ko
-            } 
-        }
-    });
+const T = ( ...a ) => {
+    return i18n.t.apply( i18n, a );
+};
 
-    console.log( t("VIM_NOT_EXECUTED") );
+(async () => {
+    const T = await i18n.use(I18nextCLILanguageDetector).init({
+        debug: true,
+        resources: { 
+            en: { translation: en }, 
+            ko: { translation: ko }
+        },
+        // lng: "ko",
+    });
+    
+    console.log( T("Hint.Paste") );
 })();
 
 // console.log( StringUtils.ellipsis("ABCDEFGHJKLMNOPRSTUVWXYZ1234567890", 20) );
