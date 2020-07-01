@@ -1,4 +1,5 @@
 import { BlessedProgram, Widgets, box, text, line, colors } from "neo-blessed";
+import { strWidth } from "neo-blessed/lib/unicode";
 import { Color } from '../common/Color';
 import { ColorConfig } from '../config/ColorConfig';
 import { ISubMenuConfig, menuConfig, IMainMenuConfig } from '../config/MenuConfig';
@@ -7,6 +8,7 @@ import { sprintf } from "sprintf-js";
 import { KeyMapping, KeyMappingInfo, keyHumanReadable, RefreshType, IHelpService } from '../config/KeyMapConfig';
 import { Logger } from "../common/Logger";
 import mainFrame from './MainFrame';
+import { T } from "../common/Translation";
 
 const log = Logger("blessed-menu");
 
@@ -162,13 +164,14 @@ export class BlessedMenu implements IHelpService {
         let menuBoxPos = 4;
         let prefix = Array(menuBoxPos).join(" ");
         let viewText = Object.keys(this.menuConfig).map( (name, i) => {
+            let nm = T("Menu." + name);
             if ( i < this.menuPos )  {
-                menuBoxPos += name.length + 2;
+                menuBoxPos += strWidth(nm) + 2;
             }
             if ( i === this.menuPos ) {
-                return " " + this.menuSelColor.hexBlessFormat(name) + " ";
+                return " " + this.menuSelColor.hexBlessFormat(nm) + " ";
             }
-            return " " + this.menuAColor.fontHexBlessFormat(name.substr(0, 1)) + this.menuColor.fontHexBlessFormat(name.substr(1)) + " ";
+            return " " + this.menuAColor.fontHexBlessFormat(nm.substr(0, 1)) + this.menuColor.fontHexBlessFormat(nm.substr(1)) + " ";
         }).join("");
         this.menuBox.left = menuBoxPos;
         this.menuBox.draw();

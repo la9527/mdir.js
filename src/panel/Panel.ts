@@ -4,6 +4,7 @@ import { Logger } from "../common/Logger";
 import { File } from "../common/File";
 import { SortType } from "../common/Sort";
 import { IHelpService, Help, RefreshType } from '../config/KeyMapConfig';
+import { T } from "../common/Translation";
 
 const log = Logger("main");
 
@@ -80,7 +81,7 @@ export abstract class Panel extends AbstractPanel implements IHelpService {
         }
     }
 
-    @Help("select/unselect a file.")
+    @Help(T("select/unselect a file."))
     toggleSelect() {
         this.validCheckPosition();
 
@@ -158,17 +159,17 @@ export abstract class Panel extends AbstractPanel implements IHelpService {
         return null;
     }
 
-    @Help("go to home directory.")
+    @Help(T("go to home directory."))
     async gotoHomePromise() {
         await this.read( this.reader.homeDir() );
     }
 
-    @Help("go to root directory.")
+    @Help(T("go to root directory."))
     async gotoRootPromise() {
         await this.read( this.reader.rootDir() );
     }
 
-    @Help("go to parent directory.")
+    @Help(T("go to parent directory."))
     async gotoParentPromise() {
         await this.read( ".." );
     }

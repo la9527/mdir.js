@@ -6,6 +6,7 @@ import { strWidth } from "neo-blessed/lib/unicode";
 import { Logger } from '../common/Logger';
 import { Color } from "../common/Color";
 import { BlessedXterm } from "./BlessedXterm";
+import { T } from "../common/Translation";
 
 const log = Logger("HintBox");
 
@@ -43,7 +44,7 @@ export class HintBox extends Widget {
 
     draw() {
         let width = this.box.screen.width;
-        let hintText = "Hint: ";
+        let hintText = T("HINT") + ": ";
         let colorHintText = hintText;
         this.hintInfo().map( (item: IHintInfo) => {
             if ( item.key ) {

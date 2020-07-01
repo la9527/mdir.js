@@ -15,6 +15,7 @@ import mainFrame from './MainFrame';
 import { SearchFileBox } from './SearchFileBox';
 import { File } from "../common/File";
 import { messageBox } from "./widget/MessageBox";
+import { T } from "../common/Translation";
 
 const log = Logger("blessedpanel");
 
@@ -194,8 +195,8 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
             const fileSize = this.dirFiles.filter(i => !i.dir).length;
             const allFileSize = this.dirFiles.filter(i => !i.dir).reduce((v, t) => v + t.size, 0);
 
-            this.tailer.setContentFormat("{bold}%5s{/bold} Files {bold}%5s{/bold} Dir {bold}%20s{/bold} Byte",
-                StringUtils.toregular(fileSize), StringUtils.toregular(dirSize), StringUtils.toregular(allFileSize));
+            this.tailer.setContentFormat("{bold}%5s{/bold} %s {bold}%5s{/bold} %s {bold}%20s{/bold} %s",
+                StringUtils.toregular(fileSize), T("Files"), StringUtils.toregular(dirSize), T("Dir"), StringUtils.toregular(allFileSize), T("Byte"));
         });
 
         this.baseWidget.on("detach", () => {
@@ -244,7 +245,7 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
             await super.read(path);
         } catch (e) {
             log.error(e.stack);
-            await messageBox({ parent: this.baseWidget, title: "ERROR", msg: e.toString(), button: ["OK"] });
+            await messageBox({ parent: this.baseWidget, title: T("Error"), msg: e.toString(), button: [ T("OK") ] });
         }
     }
 
@@ -414,6 +415,8 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
         }
     }
 
+    @Hint({ hint: T("Hint.Shell"),  order: 4 })
+    @Help( T("Help.CommandBox") )
     commandBoxShow() {
         mainFrame().commandBoxShow();
     }
@@ -430,43 +433,43 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
         await mainFrame().consoleViewPromise();
     }
 
-    @Help("select all files.")
+    @Help( T("Help.SelectAll") )
     selectAllFiles() {
         super.selectAllFiles();
         this.resetViewCache();
         return RefreshType.OBJECT;
     }
 
-    @Help("sort change")
+    @Help( T("Help.SortChange") )
     async sortChangePromise() {
         super.sortChange();
         await this.refreshPromise();
         return RefreshType.ALL;
     }
 
-    @Help("sort reverse files")
+    @Help( T("Help.SortReverse") )
     async sortReversePromise() {
         super.sortReverse();
         await this.refreshPromise();
         return RefreshType.ALL;
     }
 
-    @Help("show/hide hidden files")
+    @Help( T("Help.HiddenFiles") )
     async toggleExcludeHiddenFilePromise() {
         super.toggleExcludeHiddenFile();
         await this.refreshPromise();
         return RefreshType.ALL;
     }
 
-    @Help("reset view type")
-    async viewResetPromise() {
+    @Help( T("Help.SortReset") )
+    async sortResetPromise() {
         super.viewReset();
         this.viewColumn = 0;
         await this.refreshPromise();
         return RefreshType.ALL;
     }
 
-    @Help("show/hide file owner")
+    @Help( T("Help.ShowOwner") )
     async viewOwnerPromise() {
         this._isViewOwner = !this._isViewOwner;
         await this.refreshPromise();

@@ -7,6 +7,7 @@ import { StringUtils } from "../common/StringUtils";
 import { Logger } from "../common/Logger";
 import { BlessedPanel } from "./BlessedPanel";
 import { scrstrncpy } from "./ScreenUtils";
+import { T } from "../common/Translation";
 
 const log = Logger("filebox");
 
@@ -68,7 +69,7 @@ export class PanelFileBox extends Widget {
     }
 
     convertFileSize() {
-        let tailview = "[ SubDir ]";
+        let tailview = T("[ SubDir ]");
         if ( !this._file.dir ) {
             if ( this._file.size >= 1000000000) {
                 tailview = sprintf("%9.2f{yellow-fg}G{/yellow-fg}", this._file.size / 1073741824);

@@ -1,6 +1,8 @@
 import { Logger } from "../common/Logger";
 import { IFrameMenuConfig, ISubMenuConfig } from "./MenuConfig";
 import { sprintf } from "sprintf-js";
+import { T } from "../common/Translation";
+import * as os from 'os';
 
 const log = Logger("MainFrame");
 
@@ -38,11 +40,11 @@ export const TerminalAllowKeys = [ "C-e", "C-w", "C-o" ];
 
 export const KeyMappingInfo: IAllKeyMappingInfo = {
     Common: {
-        refreshPromise: { name: "Refresh", key: "f5" },
+        refreshPromise: { name: T("Func.Refresh"), key: "f5" },
         split: [ "C-w" ],
         nextWindow: [ "C-e", "tab" ],
-        mcdPromise: { name: "MCD", key: "f10" },
-        menu: { name: "Menu", key: "f12" },
+        mcdPromise: { name: T("Func.MCD"), key: "f10" },
+        menu: { name: T("Func.Menu"), key: "f12" },
         quit: "C-q",
         clipboardCopy: "C-c",
         clipboardCut: "C-x",
@@ -50,9 +52,9 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         removePromise: "C-d",
         consoleViewPromise: "escape",
         terminalPromise: "C-o",
-        vimPromise: { name: "VIM", key: "f4" },
-        mountListPromise: { name: "MountList", key: "f11" },
-        helpPromise: { name: "Help", key: "f1" }
+        vimPromise: { name: T("Func.VIM"), key: "f4" },
+        mountListPromise: { name: T( os.platform() === "win32" ? "Func.DriveList" : "Func.MountList"), key: "f11" },
+        helpPromise: { name: T("Func.Help"), key: "f1" }
     },
     Menu: {
         keyUp: "up",
@@ -81,12 +83,12 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         gotoHomePromise: "~",
         gotoParentPromise: "backspace",
         gotoRootPromise: "\\",
-        mkdirPromise: { name: "Mkdir", key: "f7" },
-        renamePromise: { name: "Rename", key: "f2" },
+        mkdirPromise: { name: T("Func.Mkdir"), key: "f7" },
+        renamePromise: { name: T("Func.Rename"), key: "f2" },
         selectAllFiles: "C-a",
         sortChangePromise: "M-c",
         sortReversePromise: "M-a",
-        viewResetPromise: "M-r",
+        sortResetPromise: "M-r",
         viewOwnerPromise: "M-o",
         toggleExcludeHiddenFilePromise: "M-z",
         setViewColumn: [

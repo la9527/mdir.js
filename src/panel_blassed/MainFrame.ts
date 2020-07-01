@@ -26,11 +26,9 @@ import { inputBox } from "./widget/InputBox";
 import { HintBox } from "./HintBox";
 import { BlessedXterm } from "./BlessedXterm";
 import { sprintf } from "sprintf-js";
-import i18next from "i18next";
-
-const T = ( ...a ) => {
-    return i18next.t.apply( i18next, a );
-};
+import { T } from "../common/Translation";
+import { platform } from "os";
+import * as os from 'os';
 
 const log = Logger("MainFrame");
 
@@ -67,7 +65,7 @@ export class MainFrame implements IHelpService {
         return "Common";
     }
 
-    @Hint({ hint: "Hint.Mcd" })
+    @Hint({ hint: T("Hint.Mcd") })
     @Help(T("Help.Mcd"))
     async mcdPromise(isEscape = false) {
         let view = this.blessedFrames[this.activeFrameNum];
@@ -122,7 +120,7 @@ export class MainFrame implements IHelpService {
         return cmd;
     }
 
-    @Hint({ hint: T("Hint.Terminal") })
+    @Hint({ hint: T("Hint.Terminal"), order: 4 })
     @Help(T("Help.Terminal"))
     async terminalPromise(isEscape = false, shellCmd: string = null ) {
         let view = this.blessedFrames[this.activeFrameNum];        
@@ -426,8 +424,6 @@ export class MainFrame implements IHelpService {
         return RefreshType.ALL;
     }
 
-    @Hint({ hint: T("Hint.Shell"),  order: 4 })
-    @Help( T("Help.CommandBox") )
     commandBoxShow() {
         const activePanel = this.activePanel();
         if ( !(activePanel instanceof BlessedPanel) ) {
@@ -519,7 +515,7 @@ export class MainFrame implements IHelpService {
                     stderr && process.stderr.write(stderr);
                     stdout && process.stdout.write(stdout);
                 }
-                process.stdout.write( colors.white(T("Message.ANY_KEY_RETURN_M_JS") ));
+                process.stdout.write( colors.white(T("Message.ANY_KEY_RETURN_M_JS")) + "\n" );
                 program.once( 'keypress', async () => {
                     this.screen.enter();
                     await this.refreshPromise();
@@ -877,8 +873,8 @@ export class MainFrame implements IHelpService {
         return RefreshType.ALL;
     }
 
-    @Hint({ hint: T("Hint.MountList"), order: 7 })
-    @Help( T("Help.MountList") )
+    @Hint({ hint: T( (os.platform() === "win32" ? "Hint.DriveList" : "Hint.MountList")), order: 7 })
+    @Help( T(os.platform() === "win32" ? "Help.DriveList" : "Help.MountList") )
     async mountListPromise() {
         const panel = this.activePanel();
         if ( panel instanceof BlessedPanel ) {

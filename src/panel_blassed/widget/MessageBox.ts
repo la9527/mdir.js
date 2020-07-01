@@ -223,9 +223,9 @@ export class MessageBox extends Widget {
 
             if ( !this.msgOption.scroll ) {
                 if ( keyInfo.name === "up" ) {
-                    keyInfo.name = "right";
-                } else if ( keyInfo.name === "down" ) {
                     keyInfo.name = "left";
+                } else if ( keyInfo.name === "down" ) {
+                    keyInfo.name = "right";
                 } else if ( [ "pageup" ].indexOf(keyInfo.name) > -1 ) {
                     this.focusBtnNum = 0;
                 } else if ( [ "pagedown" ].indexOf(keyInfo.name) > -1 ) {

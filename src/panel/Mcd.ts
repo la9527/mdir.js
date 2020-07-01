@@ -8,6 +8,7 @@ import { File } from "../common/File";
 import { readerControl } from "./readerControl";
 import { Logger } from "../common/Logger";
 import { Help, IHelpService } from "../config/KeyMapConfig";
+import { T } from "../common/Translation";
 
 const log = Logger("blessed-mcd");
 
@@ -322,14 +323,14 @@ export class Mcd implements IHelpService {
         }
     }
 
-    @Help("scan one or all subdirectory")
+    @Help(T("scan one or all subdirectory"))
     async subDirScanPromise( depth: number = 1 ) {
         let node = this.currentDir();
         this.hideSubDir( node );
         await this.scan( node, depth );
     }
 
-    @Help("hide subdirectory")
+    @Help(T("hide subdirectory"))
     subDirHide() {
         let node = this.currentDir();
         this.hideSubDir( node );

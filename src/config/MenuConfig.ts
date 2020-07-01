@@ -1,3 +1,4 @@
+import { T } from "../common/Translation";
 
 export interface ISubMenuConfig {
     name: string;
@@ -16,65 +17,65 @@ export interface IFrameMenuConfig {
 
 export const menuConfig: IFrameMenuConfig = {
     Panel: {
-        "Mdir.js": [ 
-            { name: "About", method: "Common.aboutPromise" },
-            { name: "Help", method: "Common.helpPromise" },
+        Mdir: [ 
+            { name: T("Menu.About"), method: "Common.aboutPromise" },
+            { name: T("Menu.Help"), method: "Common.helpPromise" },
             "-",
-            { name: "Settings" },
+            { name: T("Menu.Settings") },
             "-",
-            { name: "Quit", method: "Common.quit" }
+            { name: T("Menu.Quit"), method: "Common.quit" }
         ],
         Run: [
-            { name: "Run", method: "Panel.keyEnterPromise" },
-            { name: "Run(select)" },
+            { name: T("Menu.Run"), method: "Panel.keyEnterPromise" },
+            { name: T("Menu.Run(select)") },
             "-",
-            { name: "View Console", method: "Common.consoleViewPromise" }
+            { name: T("Menu.View Console"), method: "Common.consoleViewPromise" }
         ],
         File: [
-            { name : "New" },
+            { name : T("Menu.New") },
             "-",
-            { name: "Copy", method: "Common.clipboardCopy" },
-            { name: "Cut", method: "Common.clipboardCut" },
-            { name: "Paste", method: "Common.clipboardPastePromise" },
+            { name: T("Menu.Copy"), method: "Common.clipboardCopy" },
+            { name: T("Menu.Cut"), method: "Common.clipboardCut" },
+            { name: T("Menu.Paste"), method: "Common.clipboardPastePromise" },
             "-",
-            { name: "Find" },
-            { name: "Diff" }
+            { name: T("Menu.Find") },
+            { name: T("Menu.Diff") }
         ],
         Directory: [
-            { name: "Mcd", method: "Common.mcdPromise" },
-            { name: "Mount List", method: "Common.mountListPromise" },
+            { name: T("Menu.Mcd"), method: "Common.mcdPromise" },
+            { name: T("Menu.MountList"), method: "Common.mountListPromise" },
             "-",
-            { name: "Mkdir", method: "Panel.mkdirPromise" },
-            { name: "To parent", method: "Panel.gotoParentPromise" },
-            { name: "To root" , method: "Panel.gotoRootPromise" },
-            { name: "To home", method: "Panel.gotoHomePromise" },
+            { name: T("Menu.Mkdir"), method: "Panel.mkdirPromise" },
+            { name: T("Menu.To parent"), method: "Panel.gotoParentPromise" },
+            { name: T("Menu.To root") , method: "Panel.gotoRootPromise" },
+            { name: T("Menu.To home"), method: "Panel.gotoHomePromise" },
             "-",
-            { name: "Back" },
-            { name: "Forward" }
+            { name: T("Menu.Back") },
+            { name: T("Menu.Forward") }
         ],
         View: [
-            { name: "Refresh", method: "Common.refreshPromise" },
-            { name: "Column AUTO", method: "Panel.setViewColumn", funcParam: [ 0 ] },
+            { name: T("Menu.Refresh"), method: "Common.refreshPromise" },
+            { name: T("Menu.Column AUTO"), method: "Panel.setViewColumn", funcParam: [ 0 ] },
             "-",
-            { name: "Column 1", method: "Panel.setViewColumn", funcParam: [ 1 ] },
-            { name: "Column 2", method: "Panel.setViewColumn", funcParam: [ 2 ] },
-            { name: "Column 3", method: "Panel.setViewColumn", funcParam: [ 3 ] },
-            { name: "Column 4", method: "Panel.setViewColumn", funcParam: [ 4 ] },
+            { name: T("Menu.Column 1"), method: "Panel.setViewColumn", funcParam: [ 1 ] },
+            { name: T("Menu.Column 2"), method: "Panel.setViewColumn", funcParam: [ 2 ] },
+            { name: T("Menu.Column 3"), method: "Panel.setViewColumn", funcParam: [ 3 ] },
+            { name: T("Menu.Column 4"), method: "Panel.setViewColumn", funcParam: [ 4 ] },
             "-",
-            { name: "Hidden file on/off", method: "Panel.toggleExcludeHiddenFilePromise" },
-            (process.platform !== 'win32' ? { name: "Owner show on/off", method: "Panel.viewOwnerPromise" } : null),
-            { name: "Sort change", method: "Panel.sortChangePromise" },
-            { name: "Sort Asc/Descend", method: "Panel.sortReversePromise" },
+            { name: T("Menu.Hidden file on/off"), method: "Panel.toggleExcludeHiddenFilePromise" },
+            (process.platform !== 'win32' ? { name: T("Menu.Owner show on/off"), method: "Panel.viewOwnerPromise" } : null),
+            { name: T("Menu.Sort change"), method: "Panel.sortChangePromise" },
+            { name: T("Menu.Sort Asc/Descend"), method: "Panel.sortReversePromise" },
             "-",
-            { name: "Reset", method: "Panel.viewResetPromise" },
+            { name: T("Menu.Sort Reset"), method: "Panel.sortResetPromise" },
             "-",
-            { name: "Split", method: "Common.split" },
-            { name: "Next Window", method: "Common.nextWindow" }
+            { name: T("Menu.Split"), method: "Common.split" },
+            { name: T("Menu.Next Window"), method: "Common.nextWindow" }
         ],
         Terminal: [
-            { name: "Shell", method: "Common.terminalPromise" },
+            { name: T("Menu.Terminal"), method: "Common.terminalPromise" },
             "-",
-            { name: "Vim", method: "Common.vimPromise" }
+            { name: T("Menu.Vim"), method: "Common.vimPromise" }
         ]
     }
 };
