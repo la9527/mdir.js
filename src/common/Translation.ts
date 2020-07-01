@@ -3,14 +3,14 @@ import I18nextCLILanguageDetector from "i18next-cli-language-detector";
 import en from "../translation/en.json";
 import ko from "../translation/ko.json";
 
-export async function i18nInit() {
+export async function i18nInit( defaultLang: string = null ) {
     await i18n.use(I18nextCLILanguageDetector).init({
         fallbackLng: "en",
         resources: { 
             en: { translation: en }, 
             ko: { translation: ko }
         },
-        // lng: "ko",
+        lng: defaultLang
     });
 }
 

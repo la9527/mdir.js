@@ -6,6 +6,11 @@ import winston from "winston";
 
 const { combine, timestamp, label, printf, prettyPrint } = winston.format;
 
+let DEBUG_FILE = null;
+export function updateDebugFile( filePath: string = "" ) {
+    DEBUG_FILE = filePath || os.homedir() + "/.m/m.log";
+}
+
 const myFormat = printf( (info) => {
     const level = {
         error: "E",
@@ -26,25 +31,23 @@ const myFormat = printf( (info) => {
   });
 
 export function Logger( labelName: string ): winston.Logger {
-    const logger = winston.createLogger({
-        format: combine(
-            label({ label: labelName }),
-            winston.format.splat(),
-            myFormat
-        ),
-        transports: [
-            new winston.transports.File({
-                level: "debug",
-                filename: os.homedir() + "/.m/m.log"
-            })
-        ]
-    });
-
-    /*
-    const buildType = process.env.BUILD_TYPE || "release";
-    if ( buildType === "release" ) {
-        logger.add( new winston.transports.Console( { level: "debug", handleExceptions: true, debugStdout: true }) );
+    let logger = null;
+    if ( DEBUG_FILE ) {
+        logger = winston.createLogger({
+            format: combine(
+                label({ label: labelName }),
+                winston.format.splat(),
+                myFormat
+            ),
+            transports: [
+                new winston.transports.File({
+                    level: "debug",
+                    filename: DEBUG_FILE
+                })
+            ]
+        });
+    } else {
+        logger = winston.createLogger( { silent: true } );
     }
-    */
     return logger;
 }
