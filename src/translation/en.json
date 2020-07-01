@@ -122,7 +122,13 @@
         "SortReverse": "sort reverse files",
         "HiddenFiles": "show/hide hidden files",
         "SortReset": "reset sort type",
-        "ShowOwner": "show/hide file owner"
+        "ShowOwner": "show/hide file owner",
+        "SubDirScan": "scan one or all subdirectory",
+        "SubDirHide": "hide subdirectory",
+        "ToggleSelect": "select/unselect a file.",
+        "GotoHome": "go to home directory.",
+        "GotoRoot": "go to root directory.",
+        "GotoParent": "go to parent directory."
     },
     "About": [
         "{center}{bold}Mdir.js{/bold} is a visual file manager.{/center}\n",

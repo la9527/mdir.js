@@ -81,7 +81,7 @@ export abstract class Panel extends AbstractPanel implements IHelpService {
         }
     }
 
-    @Help(T("select/unselect a file."))
+    @Help(T("Help.ToggleSelect"))
     toggleSelect() {
         this.validCheckPosition();
 
@@ -159,17 +159,17 @@ export abstract class Panel extends AbstractPanel implements IHelpService {
         return null;
     }
 
-    @Help(T("go to home directory."))
+    @Help(T("Help.GotoHome"))
     async gotoHomePromise() {
         await this.read( this.reader.homeDir() );
     }
 
-    @Help(T("go to root directory."))
+    @Help(T("Help.GotoRoot"))
     async gotoRootPromise() {
         await this.read( this.reader.rootDir() );
     }
 
-    @Help(T("go to parent directory."))
+    @Help(T("Help.GotoParent"))
     async gotoParentPromise() {
         await this.read( ".." );
     }

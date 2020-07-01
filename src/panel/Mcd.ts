@@ -323,14 +323,14 @@ export class Mcd implements IHelpService {
         }
     }
 
-    @Help(T("scan one or all subdirectory"))
+    @Help(T("Help.SubDirScan"))
     async subDirScanPromise( depth: number = 1 ) {
         let node = this.currentDir();
         this.hideSubDir( node );
         await this.scan( node, depth );
     }
 
-    @Help(T("hide subdirectory"))
+    @Help(T("Help.SubDirHide"))
     subDirHide() {
         let node = this.currentDir();
         this.hideSubDir( node );
