@@ -14,6 +14,10 @@ export async function i18nInit( defaultLang: string = null ) {
     });
 }
 
+export async function changeLanguage( lang: string ) {
+    await i18n.changeLanguage( lang );
+}
+
 export function T( ...a ) {
     return i18n.t.apply( i18n, a );
 };

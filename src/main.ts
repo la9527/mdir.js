@@ -1,19 +1,21 @@
 import { Logger, updateDebugFile } from "./common/Logger";
-import { i18nInit } from "./common/Translation";
+import { i18nInit, T } from "./common/Translation";
 import yargs from "yargs";
 
 (async () => {
+    await i18nInit();
+
     let argv = yargs
         .usage("Mdir.js is user-friendly graphic shell.")
         .options({
             "lang": {
                 alias: "l",
-                describe: "set a language. (default: auto detect locale)",
+                describe: T("Args.Lang"),
                 choices: [ "en", "ko" ]
             },
             "logfile": {
                 alias: "d",
-                describe: "Saves debugging messages to a file. (default: ~/.m/m.log)",
+                describe: T("Args.LogFile"),
                 type: "string"
             }
         })
@@ -24,9 +26,13 @@ import yargs from "yargs";
         updateDebugFile( argv.logfile );
     }
 
+    if ( argv.lang ) {
+        await i18nInit(argv.lang);
+    }
+
     const log = Logger("main");
     log.debug( argv );
 
-    await i18nInit(argv.lang);
-    (await import("./panel_blassed/MainFrame")).default().start();
+    let mainFrame = (await import("./panel_blassed/MainFrame")).default();
+    await mainFrame.start();
 })();

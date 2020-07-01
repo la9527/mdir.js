@@ -140,5 +140,9 @@
         "For bug reports, comments and questions, please visit the homepage. ",
         "",
         " * Homepage : {bold}https://github.com/la9527/mdir.js{/bold}"
-    ]
+    ],
+    "Args": {
+        "Lang": "set a language.\n(default: auto detect locale)",
+        "LogFile": "Saves debugging messages to a file.\n(default: ~/.m/m.log)"
+    }
 }

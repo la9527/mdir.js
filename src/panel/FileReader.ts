@@ -14,8 +14,14 @@ import * as FileType from "file-type";
 const log = Logger("FileReader");
 
 const convertAttr = ( stats: fs.Stats ): string => {
-    const fileMode: string[] = "----------".split("");
-    fileMode[0] = stats.isSymbolicLink() ? "l" : (stats.isDirectory() ? "d" : "-");
+    const fileMode: string[] = "----------".split("");    
+    fileMode[0] = stats.isSocket() ? "s" : fileMode[0];
+    fileMode[0] = stats.isBlockDevice() ? "b" : fileMode[0];
+    fileMode[0] = stats.isCharacterDevice() ? "c" : fileMode[0];
+    fileMode[0] = stats.isFIFO() ? "p" : fileMode[0];
+    fileMode[0] = stats.isDirectory() ? "d" : fileMode[0];
+    fileMode[0] = stats.isSymbolicLink() ? "l" : fileMode[0];
+    
     fileMode[1] = stats.mode & fs.constants.S_IRUSR ? "r" : "-";
     fileMode[2] = stats.mode & fs.constants.S_IWUSR ? "w" : "-";
     fileMode[3] = stats.mode & fs.constants.S_IXUSR ? "x" : "-";

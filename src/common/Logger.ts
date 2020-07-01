@@ -3,6 +3,7 @@ import path from "path";
 import os from "os";
 import moment from "moment";
 import winston from "winston";
+import * as fs from 'fs';
 
 const { combine, timestamp, label, printf, prettyPrint } = winston.format;
 
@@ -33,10 +34,16 @@ const myFormat = printf( (info) => {
 export function Logger( labelName: string ): winston.Logger {
     let logger = null;
     if ( DEBUG_FILE ) {
+        let isColor = false;
+        let stats = fs.lstatSync(DEBUG_FILE);
+        if ( !stats.isFile() && stats.isCharacterDevice() ) {
+            isColor = true;
+        }
         logger = winston.createLogger({
             format: combine(
                 label({ label: labelName }),
                 winston.format.splat(),
+                isColor && winston.format.colorize(),
                 myFormat
             ),
             transports: [
