@@ -11,6 +11,8 @@ import { ColorConfig } from "../config/ColorConfig";
 import { Transform } from "stream";
 import * as FileType from "file-type";
 
+import fswin from "fswin";
+
 const log = Logger("FileReader");
 
 const convertAttr = ( stats: fs.Stats ): string => {
@@ -38,6 +40,37 @@ const convertAttrFsDirect = ( dirent: fs.Dirent ): string => {
     const fileMode: string[] = "----------".split("");
     fileMode[0] = dirent.isSymbolicLink() ? "l" : (dirent.isDirectory() ? "d" : "-");
     return fileMode.join("");
+};
+
+interface Win32Attributes {
+    CREATION_TIME: Date,
+    LAST_ACCESS_TIME: Date,
+    LAST_WRITE_TIME: Date,
+    SIZE: number,
+    IS_ARCHIVED: boolean;
+    IS_COMPRESSED: boolean;
+    IS_DEVICE: boolean;
+    IS_DIRECTORY: boolean;
+    IS_ENCRYPTED: boolean;
+    IS_HIDDEN: boolean;
+    IS_NOT_CONTENT_INDEXED: boolean;
+    IS_OFFLINE: boolean;
+    IS_READ_ONLY: boolean;
+    IS_SPARSE_FILE: boolean;
+    IS_SYSTEM: boolean;
+    IS_TEMPORARY: boolean;
+    IS_INTEGRITY_STREAM: boolean;
+    IS_NO_SCRUB_DATA: boolean;
+    IS_REPARSE_POINT: boolean;
+}
+
+const convertAttrWin32 = ( fullPathname: string ): void => {
+    try {
+        const item: Win32Attributes = fswin.getAttributesSync(fullPathname);
+        log.debug( "%s, %j", fullPathname, JSON.stringify( item ) );
+    } catch ( e ) {
+        log.error( e );
+    }
 };
 
 const PASSWD_FILE = "/etc/passwd";
@@ -166,6 +199,7 @@ export class FileReader extends Reader {
             file.size = stat.size;
             if ( process.platform === "win32" ) {
                 file.attr = convertAttr( stat );
+                // convertAttrWin32(filePath);
             } else {
                 file.attr = convertAttr( stat );
                 file.uid = stat.uid;

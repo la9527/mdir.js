@@ -9,7 +9,7 @@ const { combine, timestamp, label, printf, prettyPrint } = winston.format;
 
 let DEBUG_FILE = null;
 export function updateDebugFile( filePath: string = "" ) {
-    DEBUG_FILE = filePath || os.homedir() + "/.m/m.log";
+    DEBUG_FILE = filePath || os.homedir() + path.sep + ".m" + path.sep + "m.log";
 }
 
 const myFormat = printf( (info) => {
@@ -43,7 +43,6 @@ export function Logger( labelName: string ): winston.Logger {
             format: combine(
                 label({ label: labelName }),
                 winston.format.splat(),
-                isColor && winston.format.colorize(),
                 myFormat
             ),
             transports: [
