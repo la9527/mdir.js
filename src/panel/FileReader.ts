@@ -59,11 +59,10 @@ const convertAttr = ( stats: fs.Stats ): string => {
 };
 
 const convertAttrFsDirect = ( dirent: fs.Dirent ): string => {
-    const fileMode: string[] = "----------".split("");
+    const fileMode: string[] = os.platform() === "win32" ? "------".split("") : "----------".split("");
     fileMode[0] = dirent.isSymbolicLink() ? "l" : (dirent.isDirectory() ? "d" : "-");
     return fileMode.join("");
 };
-
 
 const convertAttrWin32 = ( stat: Win32Attributes ): string => {
     const fileMode: string[] = "------".split("");

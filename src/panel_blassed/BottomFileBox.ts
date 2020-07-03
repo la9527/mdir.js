@@ -56,10 +56,10 @@ export default class BottomFilesBox extends Widget {
         const textFileName = this.convertFilename(file, this.width as number - 50);
         let viewText = null;
         if ( process.platform === "win32" ) {
-            viewText = sprintf(`{bold}%10s{/bold} | {bold}%s{/bold} {bold}%s{/bold} | {bold}%20s{/bold} | {bold}%s{/bold}`, 
+            viewText = sprintf(`{bold}%-10s{/bold} | {bold}%s{/bold} {bold}%s{/bold} | {bold}%20s{/bold} | {bold}%s{/bold}`, 
                                 file.attr, date, time, StringUtils.toregular(file.size), textFileName);
         } else {
-            viewText = sprintf(`{bold}%10s{/bold} | {bold}%s{/bold} {bold}%s{/bold} | {bold}%10s{/bold} | {bold}%s %s{/bold} | {bold}%s{/bold}`, 
+            viewText = sprintf(`{bold}%-10s{/bold} | {bold}%s{/bold} {bold}%s{/bold} | {bold}%10s{/bold} | {bold}%s %s{/bold} | {bold}%s{/bold}`, 
                                 file.attr, (file.owner || file.uid), (file.group || file.gid), StringUtils.toregular(file.size), date, time, textFileName);
         }
         if ( file.mimetype ) {

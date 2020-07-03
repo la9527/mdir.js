@@ -103,9 +103,9 @@ export class PanelFileBox extends Widget {
         }
 
         if ( this._viewFocus ) {
-            viewText = sprintf(`%10s %16s%s%s %10s`, this._file.attr, viewDateTime, select, textFileName, tailview);
+            viewText = sprintf(`%-10s %16s%s%s %10s`, this._file.attr, viewDateTime, select, textFileName, tailview);
         } else {
-            viewText = sprintf(`%10s %16s%s{${fontColorName}-fg}%s %10s{/}`, this._file.attr, viewDateTime, select, textFileName, tailview);
+            viewText = sprintf(`%-10s %16s%s{${fontColorName}-fg}%s %10s{/}`, this._file.attr, viewDateTime, select, textFileName, tailview);
         }
         // log.debug( viewText );
         this.box.setContent(viewText);
