@@ -268,12 +268,12 @@ export class FileReader extends Reader {
                 log.info( "READDIR: PATH: [%s], FILES: %j", dirFile.fullname, fileList );
                 for ( let file of fileList ) {
                     let dirPath = dirFile.fullname;
-                    if ( dirPath.length > 1 && dirPath.substr(0, dirPath.length - 1) !== path.sep) {
+                    if ( dirPath.substr(dirPath.length - 1, 1) !== path.sep) {
                         dirPath += path.sep;
                     }
 
                     const item = this.convertFile(dirPath + file.name, file );
-                    // log.info( "dirInfo [%s][%s][%s]", dirPath, file.name, item.fullname );
+                    //log.info( "dirInfo [%s][%s][%s]", dirPath, file.name, item.fullname );
                     if ( option?.isExcludeHiddenFile ) {
                         if ( process.platform !== "win32" && item.name !== ".." && item.name[0] === "." ) {
                             continue;
