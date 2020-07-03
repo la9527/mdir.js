@@ -327,7 +327,7 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
     onFileBoxClick( clicked: PanelFileBox ) {
         log.debug( "clicked : %s", clicked.getFile().fullname );
         this.focusFile( clicked.getFile() );
-        // this.box.emit("refresh");
+        this.resetViewCache();
         mainFrame().execRefreshType( RefreshType.OBJECT );
     }
 
