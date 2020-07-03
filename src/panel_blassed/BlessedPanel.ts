@@ -318,10 +318,17 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
             });
             this.fileBox = [];
             for (let n = 0; n < this.column * this.row; n++) {
-                this.fileBox.push(new PanelFileBox({ parent: this.panel as any, focusable: true }, this._fileViewType, this._isViewOwner));
+                this.fileBox.push(new PanelFileBox({ parent: this.panel as any, focusable: true }, this._fileViewType, this._isViewOwner, this));
             }
             log.info("init Render : COL:%d, ROW:%d, PAGE:%d, currentPos:%d fileBoxLen: %d - viewHeight: %d", this.column, this.row, this.page, this.currentPos, this.fileBox.length, viewHeight);
         }
+    }
+
+    onFileBoxClick( clicked: PanelFileBox ) {
+        log.debug( "clicked : %s", clicked.getFile().fullname );
+        this.focusFile( clicked.getFile() );
+        // this.box.emit("refresh");
+        mainFrame().execRefreshType( RefreshType.OBJECT );
     }
 
     beforeRender() {

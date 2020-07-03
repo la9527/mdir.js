@@ -1,4 +1,5 @@
 import which from "which";
+import blessed from "neo-blessed";
 import { BlessedProgram, Widgets, box, text, screen } from "neo-blessed";
 import { Logger } from "../common/Logger";
 import { BlessedPanel } from './BlessedPanel';
@@ -27,7 +28,6 @@ import { HintBox } from "./HintBox";
 import { BlessedXterm } from "./BlessedXterm";
 import { sprintf } from "sprintf-js";
 import { T } from "../common/Translation";
-import { platform } from "os";
 import * as os from 'os';
 
 const log = Logger("MainFrame");
@@ -214,6 +214,8 @@ export class MainFrame implements IHelpService {
             // dump: true,
             // log: process.env.HOME + "/.m/m2.log"
         });
+
+        this.screen.enableMouse();
 
         this.screen.title = "MDIR.js v" + require("../../package.json").version;
         
@@ -519,6 +521,7 @@ export class MainFrame implements IHelpService {
                 program.once( 'keypress', async () => {
                     this.screen.enter();
                     await this.refreshPromise();
+                    
                     resolve();
                 });
             });

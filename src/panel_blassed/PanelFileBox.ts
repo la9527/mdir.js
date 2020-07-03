@@ -13,21 +13,28 @@ const log = Logger("filebox");
 
 export class PanelFileBox extends Widget {
     public fileViewType: number = 0;
-
+    
+    private parentPanel: BlessedPanel = null;
     private _viewOwner: boolean = false;
     private _viewFocus: boolean = false;
     private _file: File = null;
     private _positionNo: number = -1;    
     
-    constructor( opts: Widgets.BoxOptions, fileViewType: number, viewOwner: boolean ) {
+    constructor( opts: Widgets.BoxOptions, fileViewType: number, viewOwner: boolean, parentPanel: BlessedPanel ) {
         super({
             ...opts,
+            clickable: true,
             wrap: false
         });
+        this.parentPanel = parentPanel;
         this.fileViewType = fileViewType;
         this._viewOwner = viewOwner;
-    }
 
+        this.on( "click", (e) => {
+            this.parentPanel?.onFileBoxClick( this );
+        });
+    }
+    
     getPosNo() {
         return this._positionNo;
     }
