@@ -1,6 +1,6 @@
 {
   "name": "mdir.js",
-  "version": "0.5.5-alpha+012",
+  "version": "0.5.6-alpha+013",
   "description": "Mdir.js is visual file manager. (text mode application)",
   "main": "./build/main.js",
   "scripts": {
@@ -42,7 +42,7 @@
     "colors": "^1.4.0",
     "drivelist": "^9.0.2",
     "file-type": "^14.6.2",
-    "fswin": "^3.19.908",
+    "fswin": "^3.18.918",
     "i18next": "^19.5.1",
     "i18next-cli-language-detector": "^1.0.0",
     "i18next-fs-backend": "^1.0.6",

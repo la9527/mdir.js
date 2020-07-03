@@ -54,7 +54,7 @@ export abstract class Panel extends AbstractPanel implements IHelpService {
         if ( previousDir ) {
             // search directory
             const befPos = this.dirFiles.findIndex( (file: File) => {
-                log.debug( "file.fullname: [%s]", file.fullname );
+                // log.debug( "file.fullname: [%s]", file.fullname );
                 return file.fullname === previousDir.fullname;
             });
             log.debug( "BEFORE DIR: %s, befPos: %d", previousDir.fullname, befPos );

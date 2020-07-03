@@ -880,14 +880,18 @@ export class MainFrame implements IHelpService {
         if ( panel instanceof BlessedPanel ) {
             const mountList: IMountList[] = await panel.getReader().mountList();
             if ( mountList ) {
+                let maxLength = [ 0, 0 ];
                 mountList.sort( (a, b) => {
+                    maxLength[0] = Math.max( maxLength[0], a.mountPath.fullname.length );
+                    maxLength[1] = Math.max( maxLength[0], a.description.length );
+
                     if ( a.mountPath.fullname > b.mountPath.fullname ) return 1;
                     if ( b.mountPath.fullname > a.mountPath.fullname ) return -1;
                     return 0;
                 });
 
                 let viewMountInfo = mountList.map( (item) => {
-                    return sprintf("%-10s | %-30s | %s", item.mountPath.fullname, item.description, StringUtils.sizeConvert(item.size, true));
+                    return sprintf(`%-${maxLength[0] + 2}s | %-${maxLength[1] + 2}s | %s`, item.mountPath.fullname, item.description, StringUtils.sizeConvert(item.size, true));
                 });
 
                 log.debug( viewMountInfo );

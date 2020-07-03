@@ -15,6 +15,28 @@ import fswin from "fswin";
 
 const log = Logger("FileReader");
 
+interface Win32Attributes {
+    CREATION_TIME: Date,
+    LAST_ACCESS_TIME: Date,
+    LAST_WRITE_TIME: Date,
+    SIZE: number,
+    IS_ARCHIVED: boolean;
+    IS_COMPRESSED: boolean;
+    IS_DEVICE: boolean;
+    IS_DIRECTORY: boolean;
+    IS_ENCRYPTED: boolean;
+    IS_HIDDEN: boolean;
+    IS_NOT_CONTENT_INDEXED: boolean;
+    IS_OFFLINE: boolean;
+    IS_READ_ONLY: boolean;
+    IS_SPARSE_FILE: boolean;
+    IS_SYSTEM: boolean;
+    IS_TEMPORARY: boolean;
+    IS_INTEGRITY_STREAM: boolean;
+    IS_NO_SCRUB_DATA: boolean;
+    IS_REPARSE_POINT: boolean;
+}
+
 const convertAttr = ( stats: fs.Stats ): string => {
     const fileMode: string[] = "----------".split("");    
     fileMode[0] = stats.isSocket() ? "s" : fileMode[0];
@@ -42,35 +64,15 @@ const convertAttrFsDirect = ( dirent: fs.Dirent ): string => {
     return fileMode.join("");
 };
 
-interface Win32Attributes {
-    CREATION_TIME: Date,
-    LAST_ACCESS_TIME: Date,
-    LAST_WRITE_TIME: Date,
-    SIZE: number,
-    IS_ARCHIVED: boolean;
-    IS_COMPRESSED: boolean;
-    IS_DEVICE: boolean;
-    IS_DIRECTORY: boolean;
-    IS_ENCRYPTED: boolean;
-    IS_HIDDEN: boolean;
-    IS_NOT_CONTENT_INDEXED: boolean;
-    IS_OFFLINE: boolean;
-    IS_READ_ONLY: boolean;
-    IS_SPARSE_FILE: boolean;
-    IS_SYSTEM: boolean;
-    IS_TEMPORARY: boolean;
-    IS_INTEGRITY_STREAM: boolean;
-    IS_NO_SCRUB_DATA: boolean;
-    IS_REPARSE_POINT: boolean;
-}
 
-const convertAttrWin32 = ( fullPathname: string ): void => {
-    try {
-        const item: Win32Attributes = fswin.getAttributesSync(fullPathname);
-        log.debug( "%s, %j", fullPathname, JSON.stringify( item ) );
-    } catch ( e ) {
-        log.error( e );
-    }
+const convertAttrWin32 = ( stat: Win32Attributes ): string => {
+    const fileMode: string[] = "------".split("");
+    fileMode[0] = stat.IS_DIRECTORY ? "d" : "-";
+    fileMode[1] = stat.IS_ARCHIVED ? "a" : "-";
+    fileMode[2] = stat.IS_READ_ONLY ? "r" : "-";
+    fileMode[3] = stat.IS_HIDDEN ? "h" : "-";
+    fileMode[4] = stat.IS_SYSTEM ? "s" : "-";
+    return fileMode.join("");
 };
 
 const PASSWD_FILE = "/etc/passwd";
@@ -194,21 +196,26 @@ export class FileReader extends Reader {
         }
 
         try {
-            const stat = fs.lstatSync( filePath );
-            file.dir = stat.isDirectory();
-            file.size = stat.size;
             if ( process.platform === "win32" ) {
-                file.attr = convertAttr( stat );
-                // convertAttrWin32(filePath);
+                const item: Win32Attributes = fswin.getAttributesSync(file.fullname);
+                // log.debug( "%s, %j", fullPathname, JSON.stringify( item ) );
+                file.attr = convertAttrWin32( item );
+                file.dir = item.IS_DIRECTORY;
+                file.size = item.SIZE;
+                file.ctime = item.CREATION_TIME;
+                file.mtime = item.LAST_WRITE_TIME;
             } else {
+                const stat = fs.lstatSync( filePath );
+                file.dir = stat.isDirectory();
+                file.size = stat.size;
                 file.attr = convertAttr( stat );
                 file.uid = stat.uid;
                 file.gid = stat.gid;
                 file.owner = this.systemUserInfo.findUid(stat.uid, "name");
                 file.group = this.systemUserInfo.findGid(stat.gid, "name");
+                file.ctime = stat.ctime;
+                file.mtime = stat.mtime;
             }
-            file.ctime = stat.ctime;
-            file.mtime = stat.mtime;
         } catch ( e ) {
             log.error( "convertfile - FAIL 2 : [%s] %j", filePath, e);
             if ( fileInfo ) {
@@ -226,7 +233,7 @@ export class FileReader extends Reader {
             }
         }
 
-        if ( file.attr && file.attr[0] === "l" ) {
+        if ( (file.attr && file.attr[0] === "l") || (fileInfo && fileInfo.isSymbolicLink()) ) {
             try {
                 const linkOrgName = fs.readlinkSync( file.fullname );
                 file.link = new FileLink( path.basename( linkOrgName ) );
@@ -248,7 +255,7 @@ export class FileReader extends Reader {
     }
 
     readdir( dirFile: File, option ?: { isExcludeHiddenFile ?: boolean } ): Promise<File[]> {
-        return new Promise<File[]>( async (resolve, reject ) => {
+        return new Promise<File[]>( (resolve, reject ) => {
             if ( !dirFile.dir ) {
                 reject(`Not directory. ${dirFile.name}`);
                 return;
@@ -262,29 +269,17 @@ export class FileReader extends Reader {
                 log.info( "READDIR: PATH: [%s], FILES: %j", dirFile.fullname, fileList );
                 for ( let file of fileList ) {
                     let dirPath = dirFile.fullname;
-                    if ( dirPath.substr(0, dirPath.length - 1) !== path.sep) {
+                    if ( dirPath.length > 1 && dirPath.substr(0, dirPath.length - 1) !== path.sep) {
                         dirPath += path.sep;
                     }
 
                     const item = this.convertFile(dirPath + file.name, file );
-                    // console.log( "dirInfo", dirPath, file.name, item.fullname );
+                    // log.info( "dirInfo [%s][%s][%s]", dirPath, file.name, item.fullname );
                     if ( option?.isExcludeHiddenFile ) {
                         if ( process.platform !== "win32" && item.name !== ".." && item.name[0] === "." ) {
                             continue;
                         }
                     }
-                    /*
-                    if ( !item.dir && !item.link ) {
-                        try {
-                            const fileType = await FileType.fromFile( item.fullname );
-                            if ( fileType ) {
-                                item.mimetype = fileType.mime;
-                            }
-                        } catch( e ) {
-                            log.debug( e );
-                        }
-                    }
-                    */
                     if ( item ) {
                         fileItem.push( item );
                     }
@@ -294,8 +289,26 @@ export class FileReader extends Reader {
                 reject(e);
                 return;
             }
-            resolve( fileItem );
+
+            this.fileTypeUpdate(fileItem).finally( () => {
+                resolve( fileItem );
+            });
         });
+    }
+
+    async fileTypeUpdate( fileItem: File[] ) {
+        for ( let item of fileItem ) {
+            if ( !item.dir && !item.link ) {
+                try {
+                    const fileType = await FileType.fromFile( item.fullname );
+                    if ( fileType ) {
+                        item.mimetype = fileType.mime;
+                    }
+                } catch( e ) {
+                    log.debug( e );
+                }
+            }
+        }
     }
 
     sep() {

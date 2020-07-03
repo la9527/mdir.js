@@ -8,6 +8,7 @@ import { Reader } from "../common/Reader";
 import { File } from "../common/File";
 import { XTerminal } from "./xterm/XTerminal";
 import { ColorConfig } from "../config/ColorConfig";
+import which from 'which';
 
 const log = Logger("BlassedXTerm");
 
@@ -72,11 +73,12 @@ export class BlessedXterm extends Widget implements IBlessedView {
         }
 
         const osShell = {
-            "win32": "powershell.exe",
-            "darwin": "zsh",
-            "linux": "sh"
+            "win32": [ "powershell.exe", "cmd.exe" ],
+            "darwin": [ "zsh", "bash", "sh" ],
+            "linux": [ "zsh", "bash", "sh" ]
         };
-        this.shell = options.shell || osShell[os.platform()] || process.env.SHELL || "sh";
+        
+        this.shell = options.shell || this.shellCheck(osShell[os.platform()]) || process.env.SHELL || "sh";
         this.args = options.args || [];
         
         this.cursorBlink = options.cursorBlink;
@@ -103,6 +105,17 @@ export class BlessedXterm extends Widget implements IBlessedView {
             this._render();
         };
         this.bootstrap(firstPath);
+    }
+
+    shellCheck( cmd: string[] ) {
+        for ( let item of cmd ) {
+            try {
+                if ( which.sync(item) ) {
+                    return item;
+                }
+            } catch ( e ) {}
+        }
+        return null;
     }
 
     bootstrap(firstPath: File) {

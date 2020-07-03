@@ -6,6 +6,9 @@ node_modules
 npm-debug.log*
 package-lock.json
 
+tsconfig.json
+src
+
 # VS CODE
 .vscode
 images

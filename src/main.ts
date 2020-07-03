@@ -1,5 +1,5 @@
 import { Logger, updateDebugFile } from "./common/Logger";
-import { i18nInit, T } from "./common/Translation";
+import { i18nInit, T, changeLanguage } from "./common/Translation";
 import yargs from "yargs";
 
 (async () => {
@@ -27,7 +27,7 @@ import yargs from "yargs";
     }
 
     if ( argv.lang ) {
-        await i18nInit(argv.lang);
+        await changeLanguage(argv.lang);
     }
 
     const log = Logger("main");
