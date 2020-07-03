@@ -580,7 +580,8 @@ export class MainFrame implements IHelpService {
                     msg: T("Message.REMOVE_SELECTED_FILES"), 
                     button: [ T("OK"), T("Cancel") ] 
                 });
-        if ( result === "Cancel" ) {
+
+        if ( result !== T("OK") ) {
             return RefreshType.NONE;
         }
 
