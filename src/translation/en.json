@@ -97,7 +97,8 @@
         "{{filename}}_FILE_NOT_EXISTS": "'{{filename}}' file NOT exists. What would you do want?",
         "MakeDirectory": "Make Directory",
         "Rename": "Rename",
-        "MountList": "Mount List"
+        "MountList": "Mount List",
+        "QuitProgram": "Do you want to quit the program?"
     },
     "Help": {
         "Help": "help",

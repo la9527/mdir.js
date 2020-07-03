@@ -96,7 +96,8 @@
         "SAME_SOURCE_AND_TARGET": "원본과 복사할 디렉토리가 같습니다.",
         "{{filename}}_FILE_NOT_EXISTS": "'{{filename}}' 파일이 존재합니다.",
         "Make Directory": "디렉토리 생성",
-        "Rename": "이름변경"
+        "Rename": "이름변경",
+        "QuitProgram": "이 프로그램을 종료할까요?"
     },
     "Help": {
         "Help": "도움말",

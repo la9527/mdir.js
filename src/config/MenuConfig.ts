@@ -23,7 +23,7 @@ export const menuConfig: IFrameMenuConfig = {
             "-",
             { name: T("Menu.Settings") },
             "-",
-            { name: T("Menu.Quit"), method: "Common.quit" }
+            { name: T("Menu.Quit"), method: "Common.quitPromise" }
         ],
         Run: [
             { name: T("Menu.Run"), method: "Panel.keyEnterPromise" },

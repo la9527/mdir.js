@@ -366,7 +366,17 @@ export class MainFrame implements IHelpService {
 
     @Hint({ hint: T("Hint.Quit"), order: 1 })
     @Help(T("Help.Quit"))
-    quit() {
+    async quitPromise() {
+        let result = await messageBox( { 
+            parent: this.baseWidget, 
+            title: T("Question"), 
+            msg: T("Message.QuitProgram"), 
+            button: [ T("OK"), T("Cancel") ] 
+        });
+
+        if ( result !== T("OK") ) {
+            return RefreshType.NONE;
+        }
         process.exit(0);
     }
 
@@ -467,7 +477,7 @@ export class MainFrame implements IHelpService {
         });
     }
 
-    commandRun(cmd, fileRunMode = false ): Promise<void> {
+    commandRun(cmd, fileRunMode = false ): Promise<void | RefreshType> {
         const activePanel = this.activePanel();
         if ( !(activePanel instanceof BlessedPanel) ) {
             return new Promise( resolve => resolve() );
@@ -481,15 +491,15 @@ export class MainFrame implements IHelpService {
             }
         }
 
+        if ( cmd === "quit" || cmd === "exit" ) {
+            return this.quitPromise();
+        }
+
         return new Promise( (resolve, reject) => {
             let program = this.screen.program;
             if ( !cmd ) {
                 resolve();
                 return;
-            }
-
-            if ( cmd === "quit" || cmd === "exit" ) {
-                process.exit(0);
             }
 
             this.screen.leave();
@@ -521,7 +531,6 @@ export class MainFrame implements IHelpService {
                 program.once( 'keypress', async () => {
                     this.screen.enter();
                     await this.refreshPromise();
-                    
                     resolve();
                 });
             });

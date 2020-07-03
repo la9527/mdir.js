@@ -45,7 +45,7 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         nextWindow: [ "C-e", "tab" ],
         mcdPromise: { name: T("Func.MCD"), key: "f10" },
         menu: { name: T("Func.Menu"), key: "f12" },
-        quit: "C-q",
+        quitPromise: "C-q",
         clipboardCopy: "C-c",
         clipboardCut: "C-x",
         clipboardPastePromise: "C-v",
