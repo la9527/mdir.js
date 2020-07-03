@@ -290,9 +290,12 @@ export class FileReader extends Reader {
                 return;
             }
 
+            /*
             this.fileTypeUpdate(fileItem).finally( () => {
                 resolve( fileItem );
             });
+            */
+            resolve( fileItem );
         });
     }
 
