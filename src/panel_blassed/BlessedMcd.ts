@@ -12,7 +12,7 @@ import { Dir } from "../common/Dir";
 import { Color } from '../common/Color';
 import { ColorConfig } from '../config/ColorConfig';
 import { Logger } from "../common/Logger";
-import { KeyMapping, IHelpService } from "../config/KeyMapConfig";
+import { KeyMapping, IHelpService, RefreshType } from "../config/KeyMapConfig";
 import { KeyMappingInfo } from "../config/KeyMapConfig";
 import { IBlessedView } from "./IBlessedView";
 import mainFrame from './MainFrame';
@@ -27,7 +27,9 @@ class McdDirButton extends Widget {
     mcdColor: Color;
     lineColor: Color;
 
-    constructor( opts: Widgets.BoxOptions | any, node: Dir ) {
+    parentMcd: BlessedMcd;
+
+    constructor( opts: Widgets.BoxOptions | any, node: Dir, parent: BlessedMcd ) {
         super(opts);
 
         this.mcdColor = ColorConfig.instance().getBaseColor("mcd");
@@ -36,6 +38,11 @@ class McdDirButton extends Widget {
         this.node = node;
         this.select = false;
         this.showCheck = false;
+        this.parentMcd = parent;
+
+        this.on("click", () => {
+            this.parentMcd?.onDirButtonClick(this);
+        });
     }
 
     draw() {
@@ -273,7 +280,7 @@ export class BlessedMcd extends Mcd implements IBlessedView, IHelpService {
             if ( col - this.scrollCol > this.viewDepthSize ) continue;
             if ( this.scrollCol !== 0 && col - this.scrollCol < 1 ) continue;
 
-            let dirButton: McdDirButton = new McdDirButton( { parent: this.mcdWidget, width: MCD_TEXT_SIZE, height: 1 }, node );
+            let dirButton: McdDirButton = new McdDirButton( { parent: this.mcdWidget, width: MCD_TEXT_SIZE, height: 1 }, node, this );
             if ( node.depth === 0 ) {
                 dirButton.left = row - this.scrollRow + 1;
                 dirButton.top = 0;
@@ -321,6 +328,13 @@ export class BlessedMcd extends Mcd implements IBlessedView, IHelpService {
         this.pathWidget.left = 2;
         this.pathWidget.width = curDir.file.fullname.length + 9;
         this.pathWidget.setContentFormat( "Path [ {bold}%s{/bold} ]", curDir.file.fullname );
+    }
+
+    onDirButtonClick( button: McdDirButton ) {
+        if ( button?.node?.index ) {
+            this.curDirInx = button.node.index;
+            mainFrame().execRefreshType( RefreshType.OBJECT );
+        }
     }
 
     afterRender() {
