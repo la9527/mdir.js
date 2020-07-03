@@ -215,7 +215,7 @@ export class MainFrame implements IHelpService {
             // log: process.env.HOME + "/.m/m2.log"
         });
 
-        this.screen.title = "MDIR.js v" + process.env.npm_package_version;
+        this.screen.title = "MDIR.js v" + require("../../package.json").version;
         
         this.baseWidget = new Widget( { parent: this.screen, left: 0, top: 0, width: "100%", height: "100%" } );
         this.blessedMenu = new BlessedMenu({ parent: this.baseWidget });
@@ -553,9 +553,10 @@ export class MainFrame implements IHelpService {
     aboutPromise(): Promise<RefreshType> {
         return new Promise( (resolve) => {
             setTimeout( async () => {
+                let version = require("../../package.json").version;
                 await messageBox( {
                     parent: this.baseWidget,
-                    title: "Mdir.js - v" + process.env.npm_package_version,
+                    title: "Mdir.js - v" + version,
                     msg: T("About", { joinArrays: '\n' }),
                     textAlign: "left",
                     button: [ T("OK") ]
