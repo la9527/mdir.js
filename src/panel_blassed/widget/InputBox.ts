@@ -41,7 +41,7 @@ export class InputBox extends Widget {
 
         this.inputBoxOption = inputBoxOpts;
         this.value = inputBoxOpts.defaultText || "";
-        this.cursorPos = this.value.length;
+        this.cursorPos = strWidth(this.value);
 
         const defaultColor = ColorConfig.instance().getBaseColor("mcd");
         this.box.style = defaultColor.blessed;
@@ -87,7 +87,7 @@ export class InputBox extends Widget {
 
     resize() {
         const maxWidth = this.box.screen.width as number;
-        this.buttonWidth = this.inputBoxOption.button.reduce( (pre, item) => pre < item.length + 2 ? item.length + 2 : pre, MIN_BUTTON_WIDTH);
+        this.buttonWidth = this.inputBoxOption.button.reduce( (pre, item) => pre < strWidth(item) + 2 ? strWidth(item) + 2 : pre, MIN_BUTTON_WIDTH);
 
         let buttonAllWidth = this.inputBoxOption.button.length * (this.buttonWidth + 2);
         
@@ -214,14 +214,14 @@ export class InputBox extends Widget {
         }
         this.value = this.value.substr(0, this.cursorPos - 1) + this.value.substr(this.cursorPos);
         this.keyLeft();
-        log.debug( "BS - pos:[%d], this.value [%d]", this.cursorPos, this.value.length );
+        // log.debug( "BS - pos:[%d], this.value [%d]", this.cursorPos, this.value.length );
     }
 
     keyDelete() {
         if ( this.focusBtnNum > -1 ) {
             return;
         }
-        log.debug( "DEL - pos:%d", this.cursorPos );
+        // log.debug( "DEL - pos:%d", this.cursorPos );
         this.value = this.value.substr(0, this.cursorPos) + this.value.substr(this.cursorPos+1);
     }
 

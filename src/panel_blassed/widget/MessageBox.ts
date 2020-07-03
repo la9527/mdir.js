@@ -67,9 +67,10 @@ export class MessageBox extends Widget {
 
         log.debug( "widthMsg : %s MIN %d MAX %d ", widthMsg, MIN_WIDTH, MAX_WIDTH );
 
-        this.buttonType = this.msgOption.buttonType;
+        this.buttonType = this.msgOption.buttonType || MSG_BUTTON_TYPE.AUTO;
         if ( this.buttonType === MSG_BUTTON_TYPE.AUTO ) {
             this.buttonType = buttonAllWidth < MAX_WIDTH ? MSG_BUTTON_TYPE.HORIZONTAL : MSG_BUTTON_TYPE.VERTICAL;
+            log.debug( "%s", this.buttonType === MSG_BUTTON_TYPE.HORIZONTAL ? "MSG_BUTTON_TYPE.HORIZONTAL" : "MSG_BUTTON_TYPE.VERTICAL" );
         }
 
         if ( this.buttonType === MSG_BUTTON_TYPE.HORIZONTAL ) {
@@ -100,7 +101,7 @@ export class MessageBox extends Widget {
             if ( this.buttonType === MSG_BUTTON_TYPE.HORIZONTAL ) {
                 let left = (Math.floor((this.box.width as number) / (len+1)) * (i+1)) - Math.floor(this.buttonWidth / 2);
                 item.bottom = 1;
-                item.left = left - 1;
+                item.left = left;
                 item.width = this.buttonWidth;
             } else {
                 // VERITCAL

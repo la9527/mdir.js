@@ -1,7 +1,7 @@
 import * as blessed from "neo-blessed";
 import { BlessedProgram, Widgets, box, text, colors } from "neo-blessed";
-import { Logger } from "../common/Logger";
-import { messageBox } from "../panel_blassed/widget/MessageBox";
+import { Logger, updateDebugFile } from "../common/Logger";
+import { messageBox, MSG_BUTTON_TYPE } from '../panel_blassed/widget/MessageBox';
 import mainFrame from "../panel_blassed/MainFrame";
 import { ProgressBox } from "../panel_blassed/widget/ProgressBox";
 import { StringUtils } from '../common/StringUtils';
@@ -20,9 +20,9 @@ import i18n from "i18next";
 import I18nextCLILanguageDetector from 'i18next-cli-language-detector';
 import en from "../translation/en.json";
 import ko from "../translation/ko.json";
+import { button } from '../../@types/blessed';
 
-const log = Logger("test");
-
+/*
 const T = ( ...a ) => {
     return i18n.t.apply( i18n, a );
 };
@@ -39,6 +39,7 @@ const T = ( ...a ) => {
     
     console.log( T("Hint.Paste") );
 })();
+*/
 
 // console.log( StringUtils.ellipsis("ABCDEFGHJKLMNOPRSTUVWXYZ1234567890", 20) );
 
@@ -47,7 +48,6 @@ const T = ( ...a ) => {
 
 // console.log( JSON.stringify( menuConfig, null, 4) );
 
-/*
 const screen = blessed.screen({
     smartCSR: true,
     fullUnicode: true,
@@ -56,20 +56,28 @@ const screen = blessed.screen({
     ignoreDockContrast: true,
     // debug: true,
     //dump: true,
-    log: process.env.HOME + "/.m/m2.log"
+    //log: process.env.HOME + "/.m/m2.log"
 });
 
 screen.key("q", () => {
     process.exit(0);
 });
     
-screen.key("r", () => {
-    screen.render();
+screen.key("t", async () => {
+    const result = await messageBox({
+        parent: screen,
+        title: "TEST",
+        msg: "TEST 합니다.",
+        textAlign: "left",
+        buttonType: MSG_BUTTON_TYPE.AUTO,
+        scroll: false,
+        button: [ "OK", "Cancel", "ITEM1", "ITEM2" ]
+    }, { parent: screen });
 });
 
-mainFrame();
+screen.render();
 
-
+/*
 (async () => {
     const helpInfo = getHelpInfo();
         let viewText = [];
