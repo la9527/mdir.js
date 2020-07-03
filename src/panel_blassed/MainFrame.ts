@@ -888,7 +888,7 @@ export class MainFrame implements IHelpService {
                 let maxLength = [ 0, 0 ];
                 mountList.sort( (a, b) => {
                     maxLength[0] = Math.max( maxLength[0], a.mountPath.fullname.length );
-                    maxLength[1] = Math.max( maxLength[0], a.description.length );
+                    maxLength[1] = Math.max( maxLength[1], a.description.length );
 
                     if ( a.mountPath.fullname > b.mountPath.fullname ) return 1;
                     if ( b.mountPath.fullname > a.mountPath.fullname ) return -1;
