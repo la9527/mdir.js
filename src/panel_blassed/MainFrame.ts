@@ -291,11 +291,14 @@ export class MainFrame implements IHelpService {
                 
                 if ( panel instanceof BlessedXterm ) {
                     if ( TerminalAllowKeys.indexOf( keyName ) > -1 ) {
-                        let type = await keyMappingExec( this, keyInfo );
-                        if ( type !== RefreshType.NONE ) {
-                            this.execRefreshType( type );
-                            this._keyLockScreen = false;
-                            return;
+                        let type: RefreshType = await keyMappingExec( this.activeFocusObj(), keyInfo );
+                        if ( type === RefreshType.NONE ) {
+                            type = await keyMappingExec( this, keyInfo );
+                            if ( type !== RefreshType.NONE ) {
+                                this.execRefreshType( type );
+                                this._keyLockScreen = false;
+                                return;
+                            }
                         }
                     }
                     panel.ptyKeyWrite(keyInfo);

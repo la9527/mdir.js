@@ -9,6 +9,7 @@ import { File } from "../common/File";
 import { XTerminal } from "./xterm/XTerminal";
 import { ColorConfig } from "../config/ColorConfig";
 import which from 'which';
+import { KeyMappingInfo, KeyMapping, IHelpService } from "../config/KeyMapConfig";
 
 const log = Logger("BlassedXTerm");
 
@@ -18,7 +19,8 @@ interface IOSC1337 {
     CurrentDir?: string;
 }
 
-export class BlessedXterm extends Widget implements IBlessedView {
+@KeyMapping(KeyMappingInfo.XTerm)
+export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
     options: any;
     shell: string;
     args: string[];
@@ -49,7 +51,7 @@ export class BlessedXterm extends Widget implements IBlessedView {
             top: 1,
             width: "100%",
             height: "100%-2",
-            scrollable: false
+            scrollable: true
         });
 
         this.header = new Widget({
@@ -105,6 +107,10 @@ export class BlessedXterm extends Widget implements IBlessedView {
             this._render();
         };
         this.bootstrap(firstPath);
+    }
+
+    viewName() {
+        return "XTerm";
     }
 
     shellCheck( cmd: string[] ) {
@@ -309,6 +315,7 @@ export class BlessedXterm extends Widget implements IBlessedView {
           , cursor;
       
         let scrollback = this.term.buffer.lines.length - (yl - yi);
+        // let scrollback = this.term.buffer.ydisp - (yl - yi);
 
         for (let y = Math.max(yi, 0); y < yl; y++) {
             let line = screen.lines[y];
@@ -486,5 +493,25 @@ export class BlessedXterm extends Widget implements IBlessedView {
 
     getCurrentPath() {
         return this.osc1337?.CurrentDir;
+    }
+
+    keyScrollUp() {
+        this.term.buffer.ydisp += -2;
+
+        if ( this.term.buffer.ydisp < 0 ) {
+            this.term.buffer.ydisp = 0;
+        }
+        log.debug( "%d / %d", this.term.buffer.ydisp, this.term.buffer.ybase );
+        this._render();
+    }
+
+    keyScrollDown() {
+        this.term.buffer.ydisp += 2;
+
+        if ( this.term.buffer.ydisp > this.term.buffer.ybase ) {
+            this.term.buffer.ydisp = this.term.buffer.ybase;
+        }
+        log.debug( "%d / %d", this.term.buffer.ydisp, this.term.buffer.ybase );
+        this._render();
     }
 }
