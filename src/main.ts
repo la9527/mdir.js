@@ -30,8 +30,10 @@ import yargs from "yargs";
         await changeLanguage(argv.lang);
     }
 
+    /*
     const log = Logger("main");
     log.debug( argv );
+    */
 
     let mainFrame = (await import("./panel_blassed/MainFrame")).default();
     await mainFrame.start();
