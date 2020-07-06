@@ -84,7 +84,9 @@
         "Cut": "잘라내기",
         "Copy": "복사",
         "Paste": "붙여넣기",
-        "Remove": "삭제"
+        "Remove": "삭제",
+        "TermScrollUp": "스크롤 위로",
+        "TermScrollDown": "스크롤 아래로"
     },
     "Message": {
         "ANY_KEY_RETURN_M_JS": "아무 키를 누르면 복귀합니다.",
@@ -128,7 +130,11 @@
         "ToggleSelect": "파일을 선택합니다.",
         "GotoHome": "홈 디렉토리로 이동합니다.",
         "GotoRoot": "최상위 디렉토리로 이동합니다.",
-        "GotoParent": "상위 디렉토리로 이동합니다."
+        "GotoParent": "상위 디렉토리로 이동합니다.",
+        "TermScrollUp": "터미널 스크롤 위로",
+        "TermScrollDown": "터미널 스크롤 아래로",
+        "TermScrollPageUp": "터미널 스크롤 페이지 위로",
+        "TermScrollPageDown":  "터미널 스크롤 페이지 아래로"
     },
     "About": [ 
         "{center}{bold}Mdir.js{/bold}은 심플한 파일 관리자 입니다.{/center}\n",

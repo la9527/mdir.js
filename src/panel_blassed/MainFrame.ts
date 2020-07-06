@@ -931,7 +931,7 @@ export class MainFrame implements IHelpService {
     async helpPromise() {
         const helpInfo: IHelpInfo = getHelpInfo();
         let viewText = [];
-        for ( const frame of [ "Common", "Panel", "Mcd" ] ) {
+        for ( const frame of [ "Common", "Panel", "Mcd", "XTerm" ] ) {
             viewText.push(`${T(frame)})` );
 
             let subText = [];

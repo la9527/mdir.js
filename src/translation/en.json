@@ -84,7 +84,9 @@
         "Cut": "Cut",
         "Copy": "Copy",
         "Paste": "Paste",
-        "Remove": "Remove"
+        "Remove": "Remove",
+        "TermScrollUp": "Scroll Up",
+        "TermScrollDown": "Scroll Down"
     },
     "Message": {
         "VIM_NOT_EXECUTED": "'VIM' is not executed.\nVIM software must be installed on this system to run it.",
@@ -129,7 +131,11 @@
         "ToggleSelect": "select/unselect a file.",
         "GotoHome": "go to home directory.",
         "GotoRoot": "go to root directory.",
-        "GotoParent": "go to parent directory."
+        "GotoParent": "go to parent directory.",
+        "TermScrollUp": "terminal scroll up",
+        "TermScrollDown": "terminal scroll down",
+        "TermScrollPageUp": "terminal scroll page up",
+        "TermScrollPageDown": "terminal scroll page down"
     },
     "About": [
         "{center}{bold}Mdir.js{/bold} is a visual file manager.{/center}\n",

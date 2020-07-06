@@ -9,7 +9,8 @@ import { File } from "../common/File";
 import { XTerminal } from "./xterm/XTerminal";
 import { ColorConfig } from "../config/ColorConfig";
 import which from 'which';
-import { KeyMappingInfo, KeyMapping, IHelpService } from "../config/KeyMapConfig";
+import { KeyMappingInfo, KeyMapping, IHelpService, Hint, Help } from '../config/KeyMapConfig';
+import { T } from "../common/Translation";
 
 const log = Logger("BlassedXTerm");
 
@@ -314,8 +315,9 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
           , yl = ret.yl - box.ibottom
           , cursor;
       
-        let scrollback = this.term.buffer.lines.length - (yl - yi);
+        //let scrollback = this.term.buffer.lines.length - (yl - yi);
         // let scrollback = this.term.buffer.ydisp - (yl - yi);
+        let scrollback = this.term.buffer.ydisp;
 
         for (let y = Math.max(yi, 0); y < yl; y++) {
             let line = screen.lines[y];
@@ -495,23 +497,41 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         return this.osc1337?.CurrentDir;
     }
 
+    @Help( T("Help.TermScrollUp") )
+    @Hint({ hint: T("Hint.TermScrollUp"), order: 3 })
     keyScrollUp() {
         this.term.buffer.ydisp += -2;
-
         if ( this.term.buffer.ydisp < 0 ) {
             this.term.buffer.ydisp = 0;
         }
-        log.debug( "%d / %d", this.term.buffer.ydisp, this.term.buffer.ybase );
-        this._render();
+        this.box.screen.render();
     }
 
+    @Help( T("Help.TermScrollDown") )
+    @Hint({ hint: T("Hint.TermScrollDown"), order: 3 })
     keyScrollDown() {
         this.term.buffer.ydisp += 2;
-
         if ( this.term.buffer.ydisp > this.term.buffer.ybase ) {
             this.term.buffer.ydisp = this.term.buffer.ybase;
         }
-        log.debug( "%d / %d", this.term.buffer.ydisp, this.term.buffer.ybase );
-        this._render();
+        this.box.screen.render();
+    }
+
+    @Help( T("Help.TermScrollPageUp") )
+    keyScrollPageUp() {
+        this.term.buffer.ydisp += -this.term.rows;
+        if ( this.term.buffer.ydisp < 0 ) {
+            this.term.buffer.ydisp = 0;
+        }
+        this.box.screen.render();
+    }
+
+    @Help( T("Help.TermScrollPageDown") )
+    keyScrollPageDown() {
+        this.term.buffer.ydisp += this.term.rows;
+        if ( this.term.buffer.ydisp > this.term.buffer.ybase ) {
+            this.term.buffer.ydisp = this.term.buffer.ybase;
+        }
+        this.box.screen.render();
     }
 }

@@ -36,7 +36,7 @@ interface IAllKeyMappingInfo {
 }
 
 export const SearchDisallowKeys = [ "escape", "tab", "~", "/", "space", "delete", "home", "end", "backspace", "\\" ];
-export const TerminalAllowKeys = [ "C-e", "C-w", "C-o", "C-up", "C-down" ];
+export const TerminalAllowKeys = [ "C-e", "C-w", "C-o", "C-b", "C-f", "C-up", "C-down", "S-up", "S-down", "M-f", "M-b" ];
 
 export const KeyMappingInfo: IAllKeyMappingInfo = {
     Common: {
@@ -144,8 +144,10 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         subDirHide: "-"
     },
     XTerm: {
-        keyScrollUp: [ "C-up", "S-up" ],
-        keyScrollDown: [ "C-down", "S-down" ]
+        keyScrollUp: [ "C-b", "C-up", "S-up" ],
+        keyScrollDown: [ "C-f", "C-down", "S-down" ],
+        keyScrollPageUp: [ "M-b" ],
+        keyScrollPageDown: [ "M-f" ]
     }
 };
 
