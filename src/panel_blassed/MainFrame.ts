@@ -29,10 +29,9 @@ import { BlessedXterm } from "./BlessedXterm";
 import { sprintf } from "sprintf-js";
 import { T } from "../common/Translation";
 import * as os from 'os';
+import { chdir } from "process";
 
 const log = Logger("MainFrame");
-
-let gMainFrame = null;
 
 let viewCount = 0;
 
@@ -380,6 +379,11 @@ export class MainFrame implements IHelpService {
         if ( result !== T("OK") ) {
             return RefreshType.NONE;
         }
+
+        if ( this.activePanel()?.getReader()?.currentDir()?.fullname ) {
+            log.debug( "CHDIR : %s", this.activePanel().getReader().currentDir().fullname );
+            process.chdir( this.activePanel().getReader().currentDir().fullname );
+        }
         process.exit(0);
     }
 
@@ -490,6 +494,9 @@ export class MainFrame implements IHelpService {
             let cmds = cmd.split(" ");
             if ( cmds[0] === "cd" && cmds[1] ) {
                 let chdirPath = cmds[1] === "-" ? activePanel.previousDir : cmds[1];
+                if ( cmds[1] === "~" ) {
+                    return activePanel.gotoHomePromise();
+                }
                 return activePanel.read(chdirPath);
             }
         }
@@ -964,11 +971,11 @@ export class MainFrame implements IHelpService {
     }
 
     static instance() {
-        if ( !gMainFrame ) {
+        if ( !(global as any).gMainFrame ) {
             log.debug( "MAINFRAME() START !!!");
-            gMainFrame = new MainFrame();
+            (global as any).gMainFrame = new MainFrame();
         }
-        return gMainFrame;
+        return (global as any).gMainFrame;
     }
 }
 

@@ -10,7 +10,7 @@ For bug reports, comments and questions, please email to la9527@daum.net
 
 # Requirements
 
- - Node.js >= 12.x
+ - Node.js >= 10.x
 
 # Tested OS
 

@@ -5,7 +5,12 @@ import yargs from "yargs";
 (async () => {
     await i18nInit();
 
-    let argv = yargs
+    let reargv = process.argv;
+    if ( [ ".", "source" ].indexOf(reargv[0]) ) {
+        reargv = process.argv.slice(2);
+    }
+
+    let argv = yargs( reargv )
         .usage("Mdir.js is user-friendly graphic shell.")
         .options({
             "lang": {
