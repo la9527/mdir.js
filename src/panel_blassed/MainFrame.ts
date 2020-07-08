@@ -30,6 +30,7 @@ import { sprintf } from "sprintf-js";
 import { T } from "../common/Translation";
 import * as os from 'os';
 import { chdir } from "process";
+import * as fs from 'fs';
 
 const log = Logger("MainFrame");
 
@@ -381,8 +382,15 @@ export class MainFrame implements IHelpService {
         }
 
         if ( this.activePanel()?.getReader()?.currentDir()?.fullname ) {
-            log.debug( "CHDIR : %s", this.activePanel().getReader().currentDir().fullname );
-            process.chdir( this.activePanel().getReader().currentDir().fullname );
+            let lastPath = this.activePanel().getReader().currentDir().fullname;
+            log.debug( "CHDIR : %s", lastPath );
+            process.chdir( lastPath );
+            try {
+                fs.mkdirSync( os.homedir() + "/.m ", { recursive: true, mode: 0o755 });
+                fs.writeFileSync( os.homedir() + "/.m/path", lastPath, { mode: 0o644 } );
+            } catch( e ) {
+                log.error( e );
+            }
         }
         process.exit(0);
     }
