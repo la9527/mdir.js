@@ -31,6 +31,7 @@ import { T } from "../common/Translation";
 import * as os from 'os';
 import { chdir } from "process";
 import * as fs from 'fs';
+import * as path from 'path';
 
 const log = Logger("MainFrame");
 
@@ -203,6 +204,15 @@ export class MainFrame implements IHelpService {
         }
     }
 
+    getLastPath() {
+        try {
+            return fs.readFileSync(os.homedir() + path.sep + ".m" + path.sep + "path", "utf8");
+        } catch ( e ) {
+            log.error( e );
+        }
+        return null;
+    }
+
     async start() {
         this.screen = screen({
             smartCSR: true,
@@ -218,7 +228,7 @@ export class MainFrame implements IHelpService {
         this.screen.enableMouse();
 
         this.screen.title = "MDIR.js v" + require("../../package.json").version;
-        
+
         this.baseWidget = new Widget( { parent: this.screen, left: 0, top: 0, width: "100%", height: "100%" } );
         this.blessedMenu = new BlessedMenu({ parent: this.baseWidget });
         this.funcKeyBox = new FuncKeyBox( { parent: this.baseWidget } );
@@ -231,18 +241,22 @@ export class MainFrame implements IHelpService {
 
         this.hintBox = new HintBox( { parent: this.baseWidget } );
 
+        let lastPath = this.getLastPath();
         for ( var i = 0; i < this.blessedFrames.length; i++ ) {
             const panel = this.blessedFrames[i];
             if ( panel instanceof BlessedPanel ) {
                 try {
                     panel.setReader(readerControl("file"));
-                    await panel.read( "." );
+                    await panel.read( i !== 0 ? (lastPath || ".") : "." );
                 } catch ( e ) {
                     log.error( e );
                 }
             }
         }
 
+        if ( lastPath ) {
+            this.viewType = VIEW_TYPE.VERTICAL_SPLIT;
+        }
         this.viewRender();
 
         /*
@@ -386,8 +400,8 @@ export class MainFrame implements IHelpService {
             log.debug( "CHDIR : %s", lastPath );
             process.chdir( lastPath );
             try {
-                fs.mkdirSync( os.homedir() + "/.m", { recursive: true, mode: 0o755 });
-                fs.writeFileSync( os.homedir() + "/.m/path", lastPath, { mode: 0o644 } );
+                fs.mkdirSync( os.homedir() + path.sep + ".m", { recursive: true, mode: 0o755 });
+                fs.writeFileSync( os.homedir() + path.sep + ".m" + path.sep + "path", lastPath, { mode: 0o644 } );
             } catch( e ) {
                 log.error( e );
             }
