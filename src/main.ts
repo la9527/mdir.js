@@ -6,6 +6,10 @@ import yargs from "yargs";
     await i18nInit();
 
     let reargv = process.argv;
+    if ( [ ".", "source" ].indexOf(reargv[0]) > -1 ) {
+        reargv = process.argv.slice(2);
+    }
+
     let argv = yargs( reargv )
         .usage("Mdir.js is user-friendly graphic shell.")
         .options({

@@ -386,7 +386,7 @@ export class MainFrame implements IHelpService {
             log.debug( "CHDIR : %s", lastPath );
             process.chdir( lastPath );
             try {
-                fs.mkdirSync( os.homedir() + "/.m ", { recursive: true, mode: 0o755 });
+                fs.mkdirSync( os.homedir() + "/.m", { recursive: true, mode: 0o755 });
                 fs.writeFileSync( os.homedir() + "/.m/path", lastPath, { mode: 0o644 } );
             } catch( e ) {
                 log.error( e );

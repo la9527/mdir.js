@@ -10,5 +10,8 @@ tsconfig.json
 src
 
 # VS CODE
+binary
 .vscode
 images
+*.tgz
+build/**/*.map
