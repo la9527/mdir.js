@@ -9,6 +9,7 @@ import { Logger } from "../common/Logger";
 import { IBlessedView } from './IBlessedView';
 import mainFrame from './MainFrame';
 import { ColorConfig } from '../config/ColorConfig';
+import { BlessedPanel } from './BlessedPanel';
 
 const log = Logger("BottomFilesBox");
 
@@ -153,9 +154,10 @@ export class CommandBox extends Widget {
     }
 
     draw() {
-        let dir: File = this.panelView?.getReader()?.currentDir();
+        let dir: File = (mainFrame().activePanel() as BlessedPanel)?.currentPath();
         if ( dir ) {
-            this.promptText = this.prompt( dir?.dirname );
+            //log.debug( "CommandBox - PATH: [%s]", dir.fullname );
+            this.promptText = this.prompt( dir?.fullname );
             this.setContent( this.promptText + this.commandValue );
         }
     }

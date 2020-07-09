@@ -194,7 +194,6 @@ export class MainFrame implements IHelpService {
             const deActiveNum = (this.activeFrameNum + 1) % 2;
             updateWidget( this.blessedFrames[this.activeFrameNum].getWidget(), { top: 1, left: 0, width: "100%", height: "100%-3" } );
             this.blessedFrames[deActiveNum].hide();
-            this.blessedFrames[this.activeFrameNum].setFocus();
         } else if ( this.viewType === VIEW_TYPE.VERTICAL_SPLIT ) {
             updateWidget( this.blessedFrames[0].getWidget(), { top: 1, left: 0, width: "50%", height: "100%-3" } );
             updateWidget( this.blessedFrames[1].getWidget(), { top: 1, left: "50%", width: "50%", height: "100%-3" } );
@@ -202,6 +201,7 @@ export class MainFrame implements IHelpService {
             updateWidget( this.blessedFrames[0].getWidget(), { top: 1, left: 0, width: "100%", height: "50%-1" } );
             updateWidget( this.blessedFrames[1].getWidget(), { top: "50%", left: 0, width: "100%", height: "50%-1" } );
         }
+        this.blessedFrames[this.activeFrameNum].setFocus();
     }
 
     getLastPath() {
@@ -266,7 +266,6 @@ export class MainFrame implements IHelpService {
         */
         
         this.eventStart();
-        this.blessedFrames[0].setFocus();
         this.screen.render();
     }
 
@@ -427,7 +426,7 @@ export class MainFrame implements IHelpService {
     }
 
     activePanel(): BlessedPanel | BlessedMcd | BlessedXterm {
-        // log.debug( "activePanel %d", this.activeFrameNum );
+        log.debug( "activePanel %d", this.activeFrameNum );
         return this.blessedFrames[ this.activeFrameNum ];
     }
 
