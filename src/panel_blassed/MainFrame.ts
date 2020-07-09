@@ -522,6 +522,8 @@ export class MainFrame implements IHelpService {
             }
         }
 
+        process.chdir( activePanel.currentPath().fullname );
+
         if ( cmd === "quit" || cmd === "exit" ) {
             return this.quitPromise();
         }
