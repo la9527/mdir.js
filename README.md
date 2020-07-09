@@ -34,7 +34,7 @@ $ npm install mdir.js -g
 ### 2. Run 
 
 ```bash
-$ npx mdir
+$ mdir
 ```
 
 # Gallery
