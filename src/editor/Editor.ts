@@ -2,6 +2,9 @@ import { IDecPrivateModes } from "panel_blassed/xterm/common/Types";
 import { DoData } from "./EditorClipboard";
 import { File } from "../common/File";
 import fs from "fs";
+import { Logger } from "../common/Logger";
+
+const log = Logger( "editor" );
 
 interface IEditorBuffer {
     textLine: number;       // Text Position
@@ -139,8 +142,37 @@ export abstract class Editor {
         return true;
     }
 
-    save( file: string | File, encoding: string = null, backup: boolean = false ) {
+    save( file: string | File, encoding: string = null, isBackup: boolean = false ): boolean {
+        let fileName = (file instanceof File) ? file.fullname : file;
+        if ( !fileName ) {
+            return false;
+        }
 
+        let tmpFileName = fileName + ".tmp";
+
+        try {
+            fs.writeFileSync( tmpFileName, this.encoding, this.buffers.join( this.isDosMode ? "\r\n" : "\n" ) );
+        } catch( e ) {
+            log.error( e );
+            return false;
+        }
+
+        if ( isBackup ) {
+            try {
+                fs.renameSync( fileName, fileName + ".back" );
+            } catch( e ) {
+                log.error( e );
+            }
+        }
+
+        try {
+            fs.renameSync( tmpFileName, fileName );
+            fs.chmodSync( fileName, 0o644 );
+        } catch( e ) {
+            log.error( e );
+            return false;
+        }
+        return true;
     }
 
     tabToEdit( text: string, tabChar: string, tabSize: number ): string {
