@@ -253,7 +253,7 @@ export class FileReader extends Reader {
         return this.convertFile(process.cwd());
     }
 
-    readdir( dirFile: File, option ?: { isExcludeHiddenFile ?: boolean } ): Promise<File[]> {
+    readdir( dirFile: File, option ?: { isExcludeHiddenFile ?: boolean, noChangeDir ?: boolean } ): Promise<File[]> {
         return new Promise<File[]>( (resolve, reject ) => {
             if ( !dirFile.dir ) {
                 reject(`Not directory. ${dirFile.name}`);
@@ -262,7 +262,9 @@ export class FileReader extends Reader {
 
             const fileItem: File[] = [];
             try {
-                process.chdir(dirFile.fullname);
+                if ( !(option && option.noChangeDir) ) {
+                    process.chdir(dirFile.fullname);
+                }
 
                 const fileList: fs.Dirent[] = (fs as any).readdirSync( dirFile.fullname, { encoding: "utf8", withFileTypes: true  } );
                 log.info( "READDIR: PATH: [%s], FILES: %j", dirFile.fullname, fileList );

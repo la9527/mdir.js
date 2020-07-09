@@ -2,7 +2,8 @@
 
 realpath() {
   OURPWD=$PWD
-  cd "$(dirname "$1")"
+  ORGFILE=$(which $1)
+  cd "$(dirname "$ORGFILE")"
   LINK=$(readlink "$(basename "$1")")
   while [ "$LINK" ]; do
     cd "$(dirname "$LINK")"

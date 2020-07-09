@@ -20,7 +20,7 @@ export abstract class Reader {
     public isUserCanceled = false;
 
     abstract convertFile( path: string, fileInfo ?: any, useThrow ?: boolean ): File;
-    abstract readdir( dir: File, option ?: { isExcludeHiddenFile ?: boolean } ): Promise<File[]>;
+    abstract readdir( dir: File, option ?: { isExcludeHiddenFile ?: boolean, noChangeDir ?: boolean } ): Promise<File[]>;
     abstract homeDir(): File;
 
     abstract rootDir(): File;

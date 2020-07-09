@@ -139,7 +139,7 @@ export class CommandBox extends Widget {
             if ( !pathFile ) {
                 return [];
             }
-            let pathFiles = await reader.readdir( pathFile );
+            let pathFiles = await reader.readdir( pathFile, { noChangeDir: true } );
             return pathFiles.filter( (item) => {
                 if ( item.name.indexOf(pathInfo.name) > -1 ) {
                     return true;
