@@ -425,6 +425,17 @@ export class MainFrame implements IHelpService {
         return RefreshType.ALL;
     }
 
+    setActivePanel( frame: BlessedPanel | BlessedMcd | BlessedXterm ) {
+        for ( let i = 0; i < this.blessedFrames.length; i++ ) {
+            if ( Object.is( this.blessedFrames[i], frame ) && this.activeFrameNum !== i ) {
+                this.activeFrameNum = i;
+                this.blessedFrames[ this.activeFrameNum ].setFocus();
+                this.baseWidget.render();
+                break;
+            }
+        }
+    }
+
     activePanel(): BlessedPanel | BlessedMcd | BlessedXterm {
         log.debug( "activePanel %d", this.activeFrameNum );
         return this.blessedFrames[ this.activeFrameNum ];
@@ -477,6 +488,9 @@ export class MainFrame implements IHelpService {
 
         this.commandBox = new CommandBox( { parent: this.baseWidget }, this.activePanel() );
         this.commandBox.setFocus();
+        this.commandBox.on("blur", () => {
+            this.commandBoxClose();
+        });
         return RefreshType.ALL;
     }
 

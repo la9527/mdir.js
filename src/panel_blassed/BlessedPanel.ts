@@ -86,6 +86,8 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
     private _forceViewChange = false;
     private _searchFiles: SearchFileInfo = null;
 
+    private _befClickData = { x: 0, y: 0, now: 0 };
+
     private _isViewOwner = false;
 
     constructor(opts: Widgets.BoxOptions | any, reader: Reader = null) {
@@ -324,11 +326,26 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
         }
     }
 
-    onFileBoxClick( clicked: PanelFileBox ) {
+    checkDoubleClick(e) {
+        let isDoubleClick = false;
+        let clickTime = Date.now() - this._befClickData.now;
+        if ( e.x === this._befClickData.x && e.y === this._befClickData.y && clickTime < 600 ) {
+            isDoubleClick = true;
+        }
+        this._befClickData = { x: e.x, y: e.y, now: Date.now() };
+        return isDoubleClick;
+    }
+
+    async onFileBoxClick( clicked: PanelFileBox, e ) {
         log.debug( "clicked : %s", clicked.getFile().fullname );
+        this.setFocus();
         this.focusFile( clicked.getFile() );
         this.resetViewCache();
-        mainFrame().execRefreshType( RefreshType.OBJECT );
+        if ( this.checkDoubleClick(e) ) {
+            await this.keyEnterPromise();
+        }
+        mainFrame().setActivePanel(this);
+        mainFrame().execRefreshType( RefreshType.ALL );
     }
 
     beforeRender() {

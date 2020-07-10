@@ -18,7 +18,7 @@ export class PanelFileBox extends Widget {
     private _viewOwner: boolean = false;
     private _viewFocus: boolean = false;
     private _file: File = null;
-    private _positionNo: number = -1;    
+    private _positionNo: number = -1;
     
     constructor( opts: Widgets.BoxOptions, fileViewType: number, viewOwner: boolean, parentPanel: BlessedPanel ) {
         super({
@@ -30,11 +30,12 @@ export class PanelFileBox extends Widget {
         this.fileViewType = fileViewType;
         this._viewOwner = viewOwner;
 
-        this.on( "click", (e) => {
-            this.parentPanel?.onFileBoxClick( this );
+        this.on( "click", async (e) => {
+            log.debug( e );            
+            await this.parentPanel?.onFileBoxClick( this, e );
         });
     }
-    
+
     getPosNo() {
         return this._positionNo;
     }

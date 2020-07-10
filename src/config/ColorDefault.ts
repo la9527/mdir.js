@@ -25,7 +25,7 @@ export const ColorDefault = {
         help: "15,4",
         quick: "15,4",
         quick_mcd: "15,4",
-        dialog: "7,6",
+        dialog: "7,4",
         input_box: "3,4",
         select_box: "7,6",
         edit: "7,-1",

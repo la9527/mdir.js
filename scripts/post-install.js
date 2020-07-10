@@ -41,7 +41,7 @@ function scriptUpdate() {
 
         [ os.homedir() + "/.bashrc", os.homedir() + "/.zshrc" ].forEach( item => {
             if ( fileAppendText( `alias mdir=". ${basePath}/bin/mdir"`, item, /^alias mdir/ ) ) {
-                console.log( `Update: alias mdir -> ${item}` );
+                console.log( `Update: alias mdir >> ${item}` );
             }
         });
     } catch( e ) {
