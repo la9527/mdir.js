@@ -36,6 +36,7 @@ import { draw } from "./widget/BlessedDraw";
 import { ImageViewBox } from "./widget/ImageBox";
 import * as FileType from "file-type";
 import { File } from "../common/File";
+import { number } from "yargs";
 
 const log = Logger("MainFrame");
 
@@ -1016,18 +1017,52 @@ export class MainFrame implements IHelpService {
     }
 
     async imageViewPromise( file: File ) {
-        setTimeout( async () => {
-            let imageViewBox = new ImageViewBox( { parent: this.baseWidget } );
-            this.screen.render();
-            await imageViewBox.setImageOption({
-                file: file,
-                closeFunc: async () => {
-                    log.debug( "CLOSE !!!");
-                    this.execRefreshType( RefreshType.ALL );
+        if (process.env.TERM_PROGRAM === 'iTerm.app') {
+            const buffer = await fs.promises.readFile(file.fullname);
+
+            let iTermImage = (buffer, options: { width?: number | string, height?: number | string, preserveAspectRatio?: boolean } = {}) => {
+                const OSC = '\u001B]';
+                const BEL = '\u0007';
+                let ret = `${OSC}1337;File=inline=1`;            
+                if (options.width) {
+                    ret += `;width=${options.width}`;
                 }
+            
+                if (options.height) {
+                    ret += `;height=${options.height}`;
+                }
+            
+                if (options.preserveAspectRatio === false) {
+                    ret += ';preserveAspectRatio=0';
+                }
+            
+                return ret + ':' + buffer.toString('base64') + BEL;
+            };
+
+            await new Promise( (resolve, reject) => {
+                let program = this.screen.program;
+                this.screen.leave();
+                process.stdout.write( iTermImage(buffer, { width: "100%" }) );
+                program.once( 'keypress', async () => {
+                    this.screen.enter();
+                    await this.refreshPromise();
+                    resolve(RefreshType.ALL);
+                });
             });
-            this.screen.render();
-        }, 100);
+        } else {
+            setTimeout( async () => {
+                let imageViewBox = new ImageViewBox( { parent: this.baseWidget } );
+                this.screen.render();
+                await imageViewBox.setImageOption({
+                    file: file,
+                    closeFunc: async () => {
+                        log.debug( "CLOSE !!!");
+                        this.execRefreshType( RefreshType.ALL );
+                    }
+                });
+                this.screen.render();
+            }, 100);
+        }
     }
 
     static instance() {
