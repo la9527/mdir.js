@@ -32,6 +32,10 @@ import * as os from 'os';
 import { chdir } from "process";
 import * as fs from 'fs';
 import * as path from 'path';
+import { draw } from "./widget/BlessedDraw";
+import { ImageViewBox } from "./widget/ImageBox";
+import * as FileType from "file-type";
+import { File } from "../common/File";
 
 const log = Logger("MainFrame");
 
@@ -225,6 +229,10 @@ export class MainFrame implements IHelpService {
             // log: process.env.HOME + "/.m/m2.log"
         });
 
+        this.screen.draw = (start, end) => {
+            log.debug( "draw: %d / %d", start, end );
+            draw.call( this.screen, start, end );
+        };
         this.screen.enableMouse();
 
         this.screen.title = "MDIR.js v" + require("../../package.json").version;
@@ -1005,6 +1013,21 @@ export class MainFrame implements IHelpService {
                 resolve( RefreshType.ALL );
             }, 100);
         });
+    }
+
+    async imageViewPromise( file: File ) {
+        setTimeout( async () => {
+            let imageViewBox = new ImageViewBox( { parent: this.baseWidget } );
+            this.screen.render();
+            await imageViewBox.setImageOption({
+                file: file,
+                closeFunc: async () => {
+                    log.debug( "CLOSE !!!");
+                    this.execRefreshType( RefreshType.ALL );
+                }
+            });
+            this.screen.render();
+        }, 100);
     }
 
     static instance() {

@@ -6,11 +6,13 @@ import fs from "fs";
 import Jimp from "jimp";
 import chalk from "chalk";
 import * as colors from "neo-blessed/lib/colors";
+import { ColorConfig } from "../../config/ColorConfig";
+import mainFrame from "../MainFrame";
 
 const log = Logger("InputBox");
 const PIXEL = '\u2584';
 
-export class ImageBox extends Widget {
+export class ImageWidget extends Widget {
     imageBuffer: Jimp = null;
     originalSize = { width: 0, height: 0 };
 
@@ -22,32 +24,16 @@ export class ImageBox extends Widget {
         };
     }
 
-    
-    getOutch( pixel ) {
-        const dchars = '????8@8@#8@8##8#MKXWwz$&%x><\\/xo;+=|^-:i\'.`,  `.        ';
-        let luminance = (pixel) => {
-            let a = pixel.a / 255
-              , r = pixel.r * a
-              , g = pixel.g * a
-              , b = pixel.b * a
-              , l = 0.2126 * r + 0.7152 * g + 0.0722 * b;        
-            return l / 255;
-        };
-        let lumi = luminance(pixel);
-        let outch = dchars[lumi * (dchars.length - 1) | 0];
-        return outch;
-    }
-    
-    pixelToCell(pixel, pixel2, ch ?: any ) {
+    pixelToCell(pixel, pixel2 ?: any, ch ?: any ) {
         let bga = 1.0
           , fga = 0.5
           , a = pixel.a / 255
           , bg
           , fg;
       
-        bg = colors.match(pixel.r * bga | 0, pixel.g * bga | 0, pixel.b * bga | 0);
-      
-        if (ch) {
+        bg = colors.match(pixel.r * bga | 0, pixel.g * bga | 0, pixel.b * bga | 0);      
+
+        if (ch && pixel2) {
             fg = colors.match( pixel2.r * fga | 0, pixel2.g * fga | 0, pixel2.b * fga | 0);
         } else {
             fg = 0x1ff;
@@ -81,6 +67,7 @@ export class ImageBox extends Widget {
     }
 
     scale(width, height, originalWidth, originalHeight) {
+        log.debug( "scale [%s,%s,%s,%s]", width, height, originalWidth, originalHeight );
         const originalRatio = originalWidth / originalHeight;
         const factor = (width / height > originalRatio ? height / originalHeight : width / originalWidth);
         width = factor * originalWidth;
@@ -89,9 +76,9 @@ export class ImageBox extends Widget {
     }
 
     draw() {
-        const { width, height } = this.scale(this.width, this.height, this.originalSize.width, this.originalSize.height);
-        log.debug( "image size [%d, %d]", width, height)
-        this.imageBuffer.resize( width, height );
+        // const { width, height } = this.scale(this.width, this.height, this.originalSize.width, this.originalSize.height);
+        // log.debug( "image size [%s, %s]", width, height)
+        this.imageBuffer.resize( this.width, this.height * 2);
     }
 
     _render(startRow = -1, endRow = -1) {
@@ -120,12 +107,14 @@ export class ImageBox extends Widget {
             if (!line) break;
             for (let x = Math.max(xi, 0); x < xl; x++) {
                 if (!line[x]) break;
-                if ( x - xi < this.imageBuffer.getWidth() && y - yi < this.imageBuffer.getHeight() ) {
-                    const {r, g, b, a} = Jimp.intToRGBA(this.imageBuffer.getPixelColor(x - xi, y - yi));
-                    const {r: r2, g: g2, b: b2} = Jimp.intToRGBA(this.imageBuffer.getPixelColor(x - xi, (y - yi) + 1));
-                    const cell = this.pixelToCell( { r, g, b, a }, { r2, g2, b2, a } ); // this.getOutch( pixel )
+                let iy = (y - yi) * 2;
+                if ( x - xi < this.imageBuffer.getWidth() && iy < this.imageBuffer.getHeight() ) {
+                    const {r, g, b, a} = Jimp.intToRGBA(this.imageBuffer.getPixelColor(x - xi, iy));
+                    const {r: r2, g: g2, b: b2} = Jimp.intToRGBA(this.imageBuffer.getPixelColor(x - xi, iy + 1));
+                    const cell = this.pixelToCell( { r, g, b, a } );
                     line[x][0] = cell[0];
-                    line[x][1] = '\u2584'; // cell[1];
+                    line[x][1] = '\u2584';
+                    line[x][2] = { bg: {r, g, b, a}, fg: {r: r2, g: g2, b: b2} };
                 }
             }
             line.dirty = true;
@@ -136,5 +125,103 @@ export class ImageBox extends Widget {
             screen.draw(yi + startRow, yi + endRow);
         }
         return ret;
+    }
+}
+
+interface IImageBoxOptions {
+    file: File;
+    closeFunc: () => void;
+}
+
+export class ImageViewBox extends Widget {
+    private imageWidget: ImageWidget = null;
+    private titleWidget: Widget = null;
+    private color = null;
+    private btnColor = null;
+    private focusBtnNum: number = 0;
+    private file: File = null;
+    private option: IImageBoxOptions = null;
+
+    constructor( opts: Widgets.BoxOptions | any ) {
+        super( { parent: opts.parent, ...opts, top: "center", left: "center", width: "50%", height: "80%", border: "line", clickable: true });
+
+        this.box.enableMouse();
+        this.init();
+    }
+
+    async setImageOption( option: IImageBoxOptions ) {
+        this.option = option;
+        await this.imageWidget?.setImage( option.file );
+    }
+
+    resize() {
+        
+    }
+
+    init() {
+        this.color = ColorConfig.instance().getBaseColor("dialog");
+        this.btnColor = ColorConfig.instance().getBaseTwoColor("dialog", "func");
+
+        log.debug( "this.color : %s", this.color);
+
+        this.box.style = { ...this.color.blessed, border: this.color.blessed };
+        this.titleWidget = new Widget( { 
+            parent: this, 
+            top: 0, 
+            width: "100%-2", 
+            height: 1, 
+            tags: true, 
+            content: "", 
+            style: this.color.blessedReverse, 
+            align: "center" } );
+
+        this.imageWidget = new ImageWidget( {
+            parent: this.box, 
+            top: 1, 
+            left: "center",
+            width: "100%-2", 
+            style: this.color.blessed, 
+            height: "100%-3", 
+            align: "center"
+        });
+
+        this.resize();
+
+        this.box.off("keypress");
+        this.box.on("element click", (el, name) => {
+            this.destroy();
+            this.option?.closeFunc();
+        });
+        this.box.on("keypress", async (ch, keyInfo) => {
+            log.info( "KEYPRESS [%s]", keyInfo.name );
+            if ( "enter" === keyInfo.name ) {
+                return;
+            }
+
+            if ( [ "return", "space", "escape" ].indexOf(keyInfo.name) > -1 ) {
+                this.destroy();
+                this.option?.closeFunc();
+                return;
+            }
+            this.render();
+            this.box.screen.render();
+        });
+
+        mainFrame().keyLock = true;
+        this.setFocus();
+        this.box.screen.render();
+    }
+
+    draw() {
+        this.resize();
+
+        this.option?.file?.name && this.titleWidget.setContent( this.option.file.name );
+    }
+
+    destroy() {
+        mainFrame().keyLock = false;
+        this.imageWidget.destroy();
+        this.titleWidget.destroy();
+        super.destroy();
     }
 }

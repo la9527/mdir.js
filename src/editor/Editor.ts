@@ -192,7 +192,7 @@ export abstract class Editor {
     keyUp() {}
     keyDown() {}
     keyShiftLeft() {}
-    keyShiftRight() {}
+    keyShiftRight() {} 
     keyShiftUp() {}
     keyShiftDown() {}
 
