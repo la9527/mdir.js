@@ -55,6 +55,7 @@
     "neo-blessed": "^0.2.0",
     "node-pty": "^0.9.0",
     "sprintf-js": "^1.1.2",
+    "supports-color": "^7.1.0",
     "term.js": "0.0.7",
     "which": "^2.0.2",
     "winston": "^3.2.1",

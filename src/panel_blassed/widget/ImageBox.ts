@@ -8,9 +8,12 @@ import chalk from "chalk";
 import * as colors from "neo-blessed/lib/colors";
 import { ColorConfig } from "../../config/ColorConfig";
 import mainFrame from "../MainFrame";
+import { supportsColor } from "supports-color";
 
 const log = Logger("InputBox");
 const PIXEL = '\u2584';
+
+const supportColorLevel = supportsColor(process.stdout);
 
 export class ImageWidget extends Widget {
     imageBuffer: Jimp = null;
@@ -78,7 +81,7 @@ export class ImageWidget extends Widget {
     draw() {
         // const { width, height } = this.scale(this.width, this.height, this.originalSize.width, this.originalSize.height);
         // log.debug( "image size [%s, %s]", width, height)
-        this.imageBuffer.resize( this.width, this.height * 2);
+        this.imageBuffer.resize( this.width, supportColorLevel.level > 2 ? this.height * 2 : this.height );
     }
 
     _render(startRow = -1, endRow = -1) {
@@ -107,14 +110,25 @@ export class ImageWidget extends Widget {
             if (!line) break;
             for (let x = Math.max(xi, 0); x < xl; x++) {
                 if (!line[x]) break;
-                let iy = (y - yi) * 2;
-                if ( x - xi < this.imageBuffer.getWidth() && iy < this.imageBuffer.getHeight() ) {
-                    const {r, g, b, a} = Jimp.intToRGBA(this.imageBuffer.getPixelColor(x - xi, iy));
-                    const {r: r2, g: g2, b: b2} = Jimp.intToRGBA(this.imageBuffer.getPixelColor(x - xi, iy + 1));
-                    const cell = this.pixelToCell( { r, g, b, a } );
-                    line[x][0] = cell[0];
-                    line[x][1] = '\u2584';
-                    line[x][2] = { bg: {r, g, b, a}, fg: {r: r2, g: g2, b: b2} };
+
+                if ( supportColorLevel.level > 2 ) { // true color support
+                    let iy = (y - yi) * 2;
+                    if ( x - xi < this.imageBuffer.getWidth() && iy < this.imageBuffer.getHeight() ) {
+                        const {r, g, b, a} = Jimp.intToRGBA(this.imageBuffer.getPixelColor(x - xi, iy));
+                        const {r: r2, g: g2, b: b2} = Jimp.intToRGBA(this.imageBuffer.getPixelColor(x - xi, iy + 1));
+                        const cell = this.pixelToCell( { r, g, b, a }, {r: r2, g: g2, b: b2} );
+                        line[x][0] = cell[0];
+                        line[x][1] = '\u2584';
+                        line[x][2] = { bg: {r, g, b, a}, fg: {r: r2, g: g2, b: b2} };
+                    }
+                } else {
+                    let iy = (y - yi);
+                    if ( x - xi < this.imageBuffer.getWidth() && iy < this.imageBuffer.getHeight() ) {
+                        const {r, g, b, a} = Jimp.intToRGBA(this.imageBuffer.getPixelColor(x - xi, iy));
+                        const cell = this.pixelToCell( { r, g, b, a } );
+                        line[x][0] = cell[0];
+                        line[x][1] = ' ';
+                    }
                 }
             }
             line.dirty = true;

@@ -1,5 +1,5 @@
 const unicode = require("neo-blessed/lib/unicode");
-
+const { supportsColor } = require("supports-color");
 
 var angles = {
   '\u2518': true, // '┘'
@@ -15,7 +15,9 @@ var angles = {
   '\u2500': true  // '─'
 };
 
+const supportColorLevel = supportsColor(process.stdout);
 
+// blessed screen.draw() redesign - true(rgb) color support
 exports.draw = function(start, end) {
     let item = this;
 
@@ -172,8 +174,8 @@ exports.draw = function(start, end) {
               out += '8;';
             }
 
-            // rgb color support
-            if ( rgbColors ) {
+            // rgb(true) color support
+            if ( supportColorLevel.level > 2 && rgbColors ) {
               const rgbText = ( num, { r, g, b } ) => {
                 return `${num};2;${r};${g};${b}`;
               };

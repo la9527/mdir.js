@@ -1042,13 +1042,15 @@ export class MainFrame implements IHelpService {
             await new Promise( (resolve, reject) => {
                 let program = this.screen.program;
                 this.screen.leave();
-                process.stdout.write( iTermImage(buffer, { width: "100%" }) );
-                program.once( 'keypress', async () => {
-                    this.screen.enter();
-                    await this.refreshPromise();
-                    resolve(RefreshType.ALL);
+                process.stdout.write( iTermImage(buffer, { height: "95%" }) );
+                process.stdout.write( "\n" + colors.white(T("Message.ANY_KEY_RETURN_M_JS")) + "\n" );
+                program.once( 'keypress', () => {
+                    resolve();
                 });
             });
+            this.screen.enter();
+            await this.refreshPromise();
+            this.execRefreshType( RefreshType.ALL );
         } else {
             setTimeout( async () => {
                 let imageViewBox = new ImageViewBox( { parent: this.baseWidget } );
