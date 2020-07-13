@@ -116,7 +116,7 @@ export class MessageBox extends Widget {
 
     init() {
         this.color = ColorConfig.instance().getBaseColor("dialog");
-        this.btnColor = ColorConfig.instance().getBaseTwoColor("dialog", "func");
+        this.btnColor = ColorConfig.instance().getBaseColor("dialog");
 
         log.debug( "this.color : %s", this.color);
 
