@@ -32,7 +32,7 @@ export abstract class Panel extends AbstractPanel implements IHelpService {
     async read( path: string | File ): Promise<void> {
         const previousDir: File = this._currentDir;
 
-        const file = (path instanceof File) ? path : this.reader.convertFile( path, null, true );
+        const file = (path instanceof File) ? path : this.reader.convertFile( path, { useThrow: true, checkRealPath: true } );
         log.info( "Panel: %s", file.fullname );
         this.dirFiles = await this.reader.readdir( file, { isExcludeHiddenFile: this._excludeHiddenFile } );
 

@@ -1,6 +1,6 @@
 {
   "name": "mdir.js",
-  "version": "0.6.0-alpha+025",
+  "version": "0.6.1-alpha+026",
   "description": "Mdir.js is visual file manager. (text mode application)",
   "main": "./build/main.js",
   "scripts": {

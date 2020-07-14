@@ -15,11 +15,10 @@ export interface IMountList {
 export type ProgressFunc = ( source: File, copySize: number, size: number, chunkLength: number) => void;
 
 export abstract class Reader {
-    protected curDir: File = null;
     protected _readerFsType: string = null;
     public isUserCanceled = false;
 
-    abstract convertFile( path: string, fileInfo ?: any, useThrow ?: boolean ): File;
+    abstract convertFile( path: string, option ?: { fileInfo ?: any, useThrow ?: boolean, checkRealPath ?: boolean } ): File;
     abstract readdir( dir: File, option ?: { isExcludeHiddenFile ?: boolean, noChangeDir ?: boolean } ): Promise<File[]>;
     abstract homeDir(): File;
 
@@ -31,9 +30,8 @@ export abstract class Reader {
         return this._readerFsType;
     }
 
-    currentDir(): File {
-        return this.curDir;
-    }
+    abstract changeDir( dirFile: File );
+    abstract currentDir(): File;
     
     abstract sep(): string;
     abstract exist( source: File | string ): boolean;

@@ -11,7 +11,7 @@ import mainFrame from './MainFrame';
 import { ColorConfig } from '../config/ColorConfig';
 import { BlessedPanel } from './BlessedPanel';
 
-const log = Logger("BottomFilesBox");
+const log = Logger("CommandBox");
 
 class CmdHistory {
     private cmdHistory: string[] = [];
@@ -80,6 +80,12 @@ export class CommandBox extends Widget {
     private promptText: string = "";
     private commandValue: string = "";
     private cursorPos = 0;
+    private tabFilesView: number = -1;
+    private tabFileInfo: {
+        path: File;
+        index: number;
+        files: File[];
+    } = null;
     private keylock = false;
 
     constructor( opts: Widgets.BoxOptions, panelView: IBlessedView ) {
@@ -131,25 +137,28 @@ export class CommandBox extends Widget {
         }
     }
 
-    async pathComplatePromise( pathStr ): Promise<File[]> {
+    async pathComplatePromise( pathStr ): Promise<{ path: File, files: File[] }> {
         try {
             let reader = this.panelView?.getReader();
 
             let pathInfo = path.parse(pathStr);
-            let pathFile = reader?.convertFile( pathInfo.dir ); 
+            let pathFile = reader?.convertFile( pathInfo.dir, { checkRealPath: true } );
             if ( !pathFile ) {
-                return [];
+                return null;
             }
-            let pathFiles = await reader.readdir( pathFile, { noChangeDir: true } );
-            return pathFiles.filter( (item) => {
-                if ( item.name.indexOf(pathInfo.name) > -1 ) {
-                    return true;
-                }
-                return false;
-            });
+            let pathFiles = await reader.readdir( pathFile );
+            return {
+                path: pathFile,
+                files: pathFiles.filter( (item) => {
+                    if ( item.name.match(new RegExp("^" + pathInfo.name, "i") ) ) {
+                        return true;
+                    }
+                    return false;
+                })
+            };
         } catch( e ) {
-            log.error( e );
-            return [];
+            log.error( e.stack );
+            return null;
         }
     }
 
@@ -228,9 +237,36 @@ export class CommandBox extends Widget {
         this.cursorPos = unicode.strWidth(this.commandValue);
     }
 
-    // TODO: Need Implementation - tab key to search a matching files.
-    keyTab() {  
+    async keyTabPromise() {
+        try {
+            let cmd = this.commandValue;
+            let lastIndex = cmd.lastIndexOf(" ");
+            let firstText = cmd.substr(0, lastIndex > -1 ? (lastIndex + 1) : cmd.length );
+            let lastPath = cmd.substr(lastIndex+1);
+            let currentPath: File = (mainFrame().activePanel() as BlessedPanel)?.currentPath();
 
+            if ( this.tabFileInfo ) {
+                this.tabFileInfo.index++;
+                if ( this.tabFileInfo.files.length <= this.tabFileInfo.index ) {
+                    this.tabFileInfo.index = 0;
+                }
+            } else if ( currentPath ) {
+                const { path: curpath, files } = await this.pathComplatePromise( currentPath.fullname + (lastPath ? (path.sep + lastPath) : "") );
+                if ( files && files.length > 0 ) {
+                    this.tabFileInfo = { path: curpath, files, index: 0 };
+                } else {
+                    this.tabFileInfo = null;
+                }
+            }
+
+            if ( this.tabFileInfo ) {
+                let pathInfo = path.parse(lastPath);
+                this.commandValue = firstText + (pathInfo.dir ? (pathInfo.dir + path.sep) : "") + this.tabFileInfo.files[this.tabFileInfo.index].name;
+                this.cursorPos = unicode.strWidth(this.commandValue);
+            }
+        } catch( e ) {
+            log.debug( e.stack );
+        }
     }
 
     async listener(ch, key) {
@@ -246,6 +282,10 @@ export class CommandBox extends Widget {
         };
 
         if ( key?.name ) {
+            if ( key.name !== "tab" ) {
+                this.tabFileInfo = null;
+            }
+
             let methodName = camelize("key " + key.name);
             log.debug( "CommandBox.%s()", methodName );
             if ( this[methodName] ) {

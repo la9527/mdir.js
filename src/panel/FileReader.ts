@@ -173,7 +173,8 @@ export class FileReader extends Reader {
         return mounts;
     }
 
-    convertFile( filePath: string, fileInfo ?: fs.Dirent, useThrow ?: boolean ): File {
+    convertFile( filePath: string, option ?: { fileInfo ?: any, useThrow ?: boolean, checkRealPath ?: boolean } ): File {
+        const { fileInfo, useThrow, checkRealPath } = option || {};
         const file = new File();
         file.fstype = this._readerFsType;
 
@@ -181,7 +182,7 @@ export class FileReader extends Reader {
             if ( filePath === ".." || filePath === "." ) {
                 file.fullname = fs.realpathSync( filePath );
             } else {
-                file.fullname = filePath;
+                file.fullname = checkRealPath ? fs.realpathSync(filePath) : filePath;
             }
             const pathInfo = path.parse( file.fullname );
             file.root = pathInfo.root;
@@ -204,7 +205,7 @@ export class FileReader extends Reader {
                 file.ctime = item.CREATION_TIME;
                 file.mtime = item.LAST_WRITE_TIME;
             } else {
-                const stat = fs.lstatSync( filePath );
+                const stat = fs.lstatSync( file.fullname );
                 file.dir = stat.isDirectory();
                 file.size = stat.size;
                 file.attr = convertAttr( stat );
@@ -249,6 +250,12 @@ export class FileReader extends Reader {
         return file;
     }
 
+    changeDir( dirFile: File ) {
+        if ( dirFile?.fullname ) {
+            process.chdir( dirFile.fullname );
+        }
+    }
+
     currentDir(): File {
         return this.convertFile(process.cwd());
     }
@@ -274,7 +281,7 @@ export class FileReader extends Reader {
                         dirPath += path.sep;
                     }
 
-                    const item = this.convertFile(dirPath + file.name, file );
+                    const item = this.convertFile(dirPath + file.name, { fileInfo: file } );
                     //log.info( "dirInfo [%s][%s][%s]", dirPath, file.name, item.fullname );
                     if ( option?.isExcludeHiddenFile ) {
                         if ( process.platform !== "win32" && item.name !== ".." && item.name[0] === "." ) {
