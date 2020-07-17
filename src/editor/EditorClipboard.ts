@@ -4,8 +4,6 @@ export enum STATE_CLIPBOARD {
     None
 };
 
-let gEditorClipboard: EditorClipboard = null;
-
 export class EditorClipboard {
     clips: string[];
     clipStatus: STATE_CLIPBOARD;
@@ -19,11 +17,11 @@ export class EditorClipboard {
         return this.clips;
     }
     
-    static instance() {
-        if ( !gEditorClipboard ) {
-            gEditorClipboard = new EditorClipboard();
+    static instance(): EditorClipboard {
+        if ( !(global as any).editorClipboard ) {
+            (global as any).editorClipboard = new EditorClipboard();
         }
-        return gEditorClipboard;
+        return (global as any).editorClipboard;
     }
 };
 

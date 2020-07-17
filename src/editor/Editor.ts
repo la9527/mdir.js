@@ -1,5 +1,5 @@
 import { strWidth } from "neo-blessed/lib/unicode";
-import { DoData } from "./EditorClipboard";
+import { DoData, EditorClipboard, STATE_CLIPBOARD } from './EditorClipboard';
 import { File } from "../common/File";
 import fs from "fs";
 import { Logger } from "../common/Logger";
@@ -110,7 +110,7 @@ export abstract class Editor {
         }
     }
 
-    public selectDel() {
+    public selectedDel() {
         if ( this.isReadOnly ) return;
         
         this.selectSort(this.editSelect);
@@ -449,7 +449,7 @@ export abstract class Editor {
         if ( this.isReadOnly ) return;
 
         if ( this.editMode !== EDIT_MODE.EDIT ) {
-            this.selectDel();
+            this.selectedDel();
             this.editMode = EDIT_MODE.EDIT;
         }
 
@@ -481,7 +481,7 @@ export abstract class Editor {
         if ( this.isReadOnly ) return;
 
         if ( this.editMode !== EDIT_MODE.EDIT ) {
-            this.selectDel();
+            this.selectedDel();
             this.editMode = EDIT_MODE.EDIT;
 
             this.curLine = this.editSelect.y1;
@@ -593,7 +593,7 @@ export abstract class Editor {
         if ( this.isReadOnly ) return;
 
         if ( this.editMode !== EDIT_MODE.EDIT ) {
-            this.selectDel();
+            this.selectedDel();
             this.editMode = EDIT_MODE.EDIT;
         }
 
@@ -701,7 +701,7 @@ export abstract class Editor {
         if ( this.isReadOnly ) return;
 
         if ( this.editMode !== EDIT_MODE.EDIT ) {
-            this.selectDel();
+            this.selectedDel();
             this.editMode = EDIT_MODE.EDIT;
         }
 
@@ -771,15 +771,146 @@ export abstract class Editor {
     }
 
     cut() {
+        if ( this.editMode === EDIT_MODE.EDIT ) return;
 
+        this.selectSort( this.editSelect );
+
+        if ( this.editSelect.y2 >= this.buffers.length ) {
+            this.editMode = EDIT_MODE.EDIT;
+            return;
+        }
+
+        let strTexts = [];
+
+        if ( this.editSelect.y1 === this.editSelect.y2 ) {
+            let str = StringUtils.scrSubstr(this.buffers[ this.editSelect.y1 ], this.editSelect.x1, this.editSelect.x2 - this.editSelect.x1 );
+            strTexts.push( str );
+        } else {
+            for ( let y = this.editSelect.y1; y <= this.editSelect.y2; y++ ) {
+                let str = "";
+                if ( this.editSelect.y1 === y ) {
+                    str = StringUtils.scrSubstr(this.buffers[y], this.editSelect.x1 );
+                } else if ( this.editSelect.y2 === y ) {
+                    str = StringUtils.scrSubstr(this.buffers[y], 0, this.editSelect.x2 );
+                } else {
+                    str = this.buffers[y];
+                }
+                strTexts.push( str );
+            }
+        }
+        EditorClipboard.instance().set( strTexts, STATE_CLIPBOARD.Cut );
+
+        this.selectedDel();
+
+        this.curColumnMax = this.curColumn;
+        this.editMode = EDIT_MODE.EDIT;
     }
 
     paste() {
+        if ( this.isReadOnly ) return;
 
+        if ( this.editMode !== EDIT_MODE.EDIT ) this.selectedDel();
+
+        let clips = EditorClipboard.instance().get();
+
+        let str = this.buffers[this.curLine];
+        let str1 = StringUtils.scrSubstr(str, 0, this.curColumn );
+        let str2 = StringUtils.scrSubstr(str, this.curColumn );
+
+        if ( clips.length === 1 ) {
+            let clipStr = clips[0];
+            
+            this.doInfo.push( new DoData(this.curLine, this.curColumn, [this.buffers[this.curLine]]) );
+            
+            this.buffers[ this.curLine] = str1 + clips[0] + str2;
+            this.curColumn += strWidth(clipStr);
+            this.postUpdateLines( this.curLine );
+        } else {
+            this.doInfo.push( new DoData(this.curLine, this.curColumn, [ this.buffers[this.curLine] ], clips.length ) );
+
+            for ( let y = 0; y < clips.length; y++ ) {
+                if ( y === 0 ) {
+                    this.buffers[ this.curLine ] = str + clips[y];
+                } else if ( y === clips.length - 1 ) {
+                    let clip = clips[y];
+                    let clip2 = clip + str2;
+                    this.buffers.splice( this.curLine + y, 0, clip2 );
+                    this.curColumn = strWidth(clip2);
+                    this.curLine += clips.length - 1;
+                } else {
+                    this.buffers.splice( this.curLine + y, 0, clips[y] );
+                }
+            }
+
+            this.postUpdateLines( this.curLine, clips.length + 1 );
+        }
+
+        if ( this.curLine > this.lastLine ) {
+            this.screenMemSave( this.curLine, this.curColumn );
+        }
+        this.curColumnMax = this.curColumn;
+        this.editMode = EDIT_MODE.EDIT;
     }
 
     undo() {
-        
+        let doData: DoData = null;
+
+        if ( !this.doInfo.length ) return;
+
+        doData = this.doInfo[ this.doInfo.length - 1 ];
+        if ( !doData ) return;
+
+        let line = doData.line;
+
+        if ( doData.delSize === -1 ) { // paste tab
+            for ( let n = 0; n < doData.texts.length; n++ ) {
+                this.buffers[ line + n ] = doData.texts[n];
+            }
+            this.postUpdateLines( line, doData.texts.length );
+        } else if ( doData.delSize === 0 ) { // removed data (insert)
+            for( let n = 0; n < doData.texts.length; n++ ) {
+                if ( n === 0 ) {
+                    this.buffers[line] = doData.texts[n];
+                } else {
+                    this.buffers.splice( line + n, 0, doData.texts[n] );
+                }
+            }
+            this.postUpdateLines( line, doData.texts.length );
+
+            if ( doData.texts.length > 0 ) {
+                this.curLine = line + doData.texts.length - 1;
+            }
+
+            if ( this.curLine < this.firstLine ) {
+                this.firstLine = this.curLine;
+            }
+        } else { // inputed data (delete)
+            let delSize = doData.delSize;
+            let str;
+
+            if ( doData.texts.length === 1 ) {
+                str = doData.texts[0];
+            }
+
+            for ( let y = line; y <= line+delSize; ++y ) {
+                if ( line === y || line+delSize === y ) {
+                    this.buffers[line] = str;
+                } else {
+                    this.buffers.splice( line + 1, 1 );
+                }
+            }
+            this.curLine = doData.line;
+            this.postUpdateLines( line );
+
+            if ( this.curLine < this.firstLine ) {
+                this.firstLine = this.curLine;
+            }
+        }
+
+        this.curColumn = doData.column;
+        this.doInfo.pop();
+
+        this.curColumnMax = this.curColumn;
     }
 
     keyEscape() {
