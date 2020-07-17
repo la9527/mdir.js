@@ -87,11 +87,86 @@ export abstract class Editor {
     abstract messageBox(title, text, buttons ?: [ string ]): Promise<string>;
 
     public selectSort(editSelect: IEditSelect) {
+        if ( !editSelect ) return;
 
+        if ( editSelect.y1 > editSelect.y2 ) {
+            let tmp = editSelect.y1;
+            editSelect.y1 = editSelect.y2;
+            editSelect.y2 = tmp;
+
+            tmp = editSelect.x1;
+            editSelect.x1 = editSelect.x2;
+            editSelect.x2 = tmp;
+        } else if ( editSelect.y1 === editSelect.y2 ) {
+            if ( editSelect.x1 > editSelect.x2 ) {
+                let tmp = editSelect.y1;
+                editSelect.y1 = editSelect.y2;
+                editSelect.y2 = tmp;
+
+                tmp = editSelect.x1;
+                editSelect.x1 = editSelect.x2;
+                editSelect.x2 = tmp;
+            }
+        }
     }
 
     public selectDel() {
+        if ( this.isReadOnly ) return;
+        
+        this.selectSort(this.editSelect);
 
+        if ( this.editSelect.y2 >= this.buffers.length ) {
+            this.editMode = EDIT_MODE.EDIT;
+            return;
+        }
+
+        if ( this.editSelect.y1 === this.editSelect.y2 ) {
+            let str = this.buffers[ this.editSelect.y1 ];
+
+            this.doInfo.push( new DoData(this.curLine, this.curColumn, [ str ] ));
+
+            let str1 = StringUtils.scrSubstr(str, 0, this.editSelect.x1);
+            let str2 = StringUtils.scrSubstr(str, this.editSelect.x2, strWidth(str) - this.editSelect.x2 );
+            this.buffers[ this.editSelect.y1 ] = str1 + str2;
+        } else {
+            let saveTexts = [];
+
+            let str1 = this.buffers[ this.editSelect.y1 ];
+            let str2 = this.buffers[ this.editSelect.y2 ];
+            let str3 = StringUtils.scrSubstr(str1, 0, this.editSelect.x1);
+            let str4 = StringUtils.scrSubstr(str2, this.editSelect.x2);
+            let str = str3 + str4;
+
+            for ( let y = this.editSelect.y1; y < this.editSelect.y2; ++y ) {
+                if ( this.editSelect.y1 === y ) {
+                    saveTexts.push( str1 );
+                    this.buffers[this.editSelect.y1] = str;
+                } else if ( this.editSelect.y2 === y ) {
+                    saveTexts.push( str2 );
+                    this.buffers[this.editSelect.y2] = str;
+                    this.buffers.splice(this.editSelect.y1 + 1, 1);
+                } else {
+                    saveTexts.push( this.buffers[ this.editSelect.y1 + 1 ] );
+                    this.buffers.splice(this.editSelect.y1 + 1, 1);
+                }
+
+            }
+
+            this.postUpdateLines( this.editSelect.y1, this.editSelect.y2 - this.editSelect.y1 + 1 );
+
+            this.doInfo.push( new DoData(this.editSelect.y1, this.editSelect.x1, saveTexts ));
+        }
+
+        this.curLine = this.editSelect.y1;
+        this.curColumn = this.editSelect.x1;
+        this.curColumnMax = this.curColumn;
+
+        if ( this.curLine < this.firstLine ) this.firstLine = this.curLine - 10;
+        this.editMode = EDIT_MODE.EDIT;
+
+        if ( this.buffers.length === 0 ) {
+            this.buffers.push( " " );
+        }
     }
 
     public screenMemSave( line: number, column: number ) {
@@ -323,13 +398,48 @@ export abstract class Editor {
     }
 
     keyDown() {
+        if ( this.curLine < this.buffers.length - 1 ) this.curLine++;
 
+        if ( this.curColumnMax < this.curColumn ) {
+            this.curColumnMax = this.curColumn;
+        } else {
+            this.curColumn = this.curColumnMax;
+        }
+
+        let strlen = strWidth(this.buffers[this.curLine]);
+        if ( strlen < this.curColumn ) {
+            this.curColumn = strlen;
+        } else {
+            this.keyRight();
+            this.keyLeft();
+        }
+
+        this.editSelect.x2 = this.curColumn;
+        this.editSelect.y2 = this.curLine;
+        if ( this.editMode === EDIT_MODE.SHIFT_SELECT ) this.editMode = EDIT_MODE.EDIT;
     }
 
-    keyShiftLeft() {}
-    keyShiftRight() {} 
-    keyShiftUp() {}
-    keyShiftDown() {}
+    shiftMode( func: () => void ) {
+        if ( this.editMode !== EDIT_MODE.SHIFT_SELECT ) {
+            this.editSelect.x1 = this.curColumn;
+            this.editSelect.y1 = this.curLine;
+        }
+        func();
+        this.editMode = EDIT_MODE.SELECT;
+    }
+
+    keyShiftLeft() {
+        this.shiftMode( () => this.keyLeft() );
+    }
+    keyShiftRight() {
+        this.shiftMode( () => this.keyRight() );
+    }
+    keyShiftUp() {
+        this.shiftMode( () => this.keyUp() );
+    }
+    keyShiftDown() {
+        this.shiftMode( () => this.keyDown() );
+    }
 
     keyInsert() {
         this.isInsert = !this.isInsert;
@@ -520,8 +630,72 @@ export abstract class Editor {
         this.keyPressCommon();
     }
 
-    keyPgUp() {}
-    keyPgDn() {}
+    keyPgUp() {
+        let size = this.lastLine - this.firstLine;
+        let cur = this.curLine - this.firstLine;
+
+        if ( this.firstLine === 0 ) {
+            this.curLine = 0;
+        } else {
+            this.firstLine = this.firstLine - size;
+            if ( this.firstLine < 0 ) this.firstLine = 0;
+            this.curLine = this.firstLine + cur;
+            if ( this.curLine <= 0 ) this.curLine = 0;
+        }
+
+        if ( this.curColumnMax < this.curColumn ) {
+            this.curColumnMax = this.curColumn;
+        } else {
+            this.curColumn = this.curColumnMax;
+        }
+
+        let strlen = strWidth(this.buffers[this.curLine]);
+        if ( strlen < this.curColumn ) {
+            this.curColumn = strlen;
+        }
+        
+        this.editSelect.x2 = this.curColumn;
+        this.editSelect.y2 = this.curLine;
+
+        if ( this.editMode === EDIT_MODE.SHIFT_SELECT ) this.editMode = EDIT_MODE.EDIT;
+    }
+
+    keyPgDn() {
+        let size = this.lastLine - this.firstLine;
+        let cur = this.curLine - this.firstLine;
+
+        if ( this.buffers.length < this.line - 1 ) {
+            this.curLine = this.buffers.length - 1;
+        } else if ( this.firstLine > this.buffers.length - this.line + 1 ) {
+            this.curLine = this.buffers.length - 1;
+        } else {
+            this.curLine = this.firstLine + size + cur;
+            this.firstLine = this.curLine - cur;
+
+            if ( this.firstLine > this.buffers.length - this.line + 1 ) {
+                this.firstLine = this.buffers.length - this.line + 1;
+            }
+            if ( this.buffers.length <= this.curLine ) {
+                this.curLine = this.buffers.length - 1;
+            }
+        }
+
+        if ( this.curColumnMax < this.curColumn ) {
+            this.curColumnMax = this.curColumn;
+        } else {
+            this.curColumn = this.curColumnMax;
+        }
+
+        let strlen = strWidth(this.buffers[this.curLine]);
+        if ( strlen < this.curColumn ) {
+            this.curColumn = strlen;
+        }
+
+        this.editSelect.x2 = this.curColumn;
+        this.editSelect.y2 = this.curLine;
+
+        if ( this.editMode === EDIT_MODE.SHIFT_SELECT ) this.editMode = EDIT_MODE.EDIT;
+    }
     
     keyEnter() {
         if ( this.isReadOnly ) return;
@@ -609,19 +783,34 @@ export abstract class Editor {
     }
 
     keyEscape() {
-
+        if ( this.editMode !== EDIT_MODE.EDIT ) this.editMode = EDIT_MODE.EDIT;
     }
 
     select() {
+        if ( this.editMode === EDIT_MODE.SELECT ) this.editMode = EDIT_MODE.EDIT;
+        else this.editMode = EDIT_MODE.SELECT;
 
+        this.editSelect.x2 = this.curColumn;
+        this.editSelect.y2 = this.curLine;
+        this.editSelect.x1 = this.curColumn;
+        this.editSelect.y1 = this.curLine;
     }
 
     selectAll() {
+        this.editMode = EDIT_MODE.SHIFT_SELECT;
 
+        this.editSelect.x1 = 0;
+        this.editSelect.y1 = 0;
+        this.editSelect.x2 = strWidth( this.buffers[this.buffers.length - 1] );
+        this.editSelect.y2 = this.buffers.length - 1;
     }
 
-    blockSelct() {
-
+    blockSelect() {
+        this.editMode = EDIT_MODE.BLOCK;
+	    this.editSelect.x2 = this.curColumn;
+        this.editSelect.y2 = this.curLine;
+        this.editSelect.x1 = this.curColumn;
+        this.editSelect.y1 = this.curLine;
     }
 
     fileNew() {
