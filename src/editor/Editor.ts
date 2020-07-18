@@ -5,6 +5,10 @@ import fs from "fs";
 import { Logger } from "../common/Logger";
 import { StringUtils } from "common/StringUtils";
 import { StringLineToken } from '../common/StringUtils';
+import { messageBox } from "panel_blassed/widget/MessageBox";
+import { message } from "../../@types/blessed";
+import { FileReader } from "panel/FileReader";
+import { pathToFileURL } from "url";
 
 const log = Logger( "editor" );
 
@@ -60,7 +64,7 @@ export abstract class Editor {
 
     title: string = "";
     encoding: string = "utf8";
-    fileName: string = null;
+    file: File = null;
 
     isBackup: boolean = false;
 
@@ -71,6 +75,7 @@ export abstract class Editor {
     viewBuffers: IEditorBuffer[];
     buffers: string[];
     doInfo: DoData[];
+    lastDoInfoLength: number = 0;
 
     constructor() {
         
@@ -83,8 +88,8 @@ export abstract class Editor {
     abstract postLoad(): void;
     abstract postUpdateLines( line?: number, height?: number ): void;
 
-    abstract inputBox(title, text): Promise<string>;
-    abstract messageBox(title, text, buttons ?: [ string ]): Promise<string>;
+    abstract inputBox(title: string, text: string, inputedText ?: string): Promise<string>;
+    abstract messageBox(title, text, buttons ?: string[]): Promise<string>;
 
     public selectSort(editSelect: IEditSelect) {
         if ( !editSelect ) return;
@@ -247,8 +252,8 @@ export abstract class Editor {
         this.isLineNumView = isLineNumView;
     }
 
-    newFile( fileName: string ) {
-        this.fileName = fileName;
+    newFile( file: File ) {
+        this.file = file;
         this.buffers = [];
         this.encoding = "utf8";
         this.firstLine = 0;
@@ -262,15 +267,10 @@ export abstract class Editor {
         this.doInfo = null;
     }
 
-    load( file: string | File, isReadonly: boolean = false ): boolean {
-        let fileName = (file instanceof File) ? file.fullname : file;
-        if ( !fileName ) {
-            return false;
-        }
+    load( file: File, isReadonly: boolean = false ): boolean {
+        this.newFile(file);
 
-        this.newFile(fileName);
-
-        let fsData = fs.readFileSync( fileName, this.encoding );
+        let fsData = fs.readFileSync( file.fullname, this.encoding );
         if ( !fsData ) {
             return false;
         }
@@ -288,8 +288,8 @@ export abstract class Editor {
         return true;
     }
 
-    save( file: string | File, encoding: string = null, isBackup: boolean = false ): boolean {
-        let fileName = (file instanceof File) ? file.fullname : file;
+    save( file: File, encoding: string = null, isBackup: boolean = false ): boolean {
+        let fileName = file.fullname;
         if ( !fileName ) {
             return false;
         }
@@ -767,7 +767,37 @@ export abstract class Editor {
     }
     
     copy() {
+        if ( this.editMode === EDIT_MODE.EDIT ) return;
 
+        this.selectSort( this.editSelect );
+
+        if ( this.editSelect.y2 >= this.buffers.length ) {
+            this.editMode = EDIT_MODE.EDIT;
+            return;
+        }
+
+        let strTexts = [];
+
+        if ( this.editSelect.y1 === this.editSelect.y2 ) {
+            let str = StringUtils.scrSubstr(this.buffers[ this.editSelect.y1 ], this.editSelect.x1, this.editSelect.x2 - this.editSelect.x1 );
+            strTexts.push( str );
+        } else {
+            for ( let y = this.editSelect.y1; y <= this.editSelect.y2; y++ ) {
+                let str = "";
+                if ( this.editSelect.y1 === y ) {
+                    str = StringUtils.scrSubstr(this.buffers[y], this.editSelect.x1 );
+                } else if ( this.editSelect.y2 === y ) {
+                    str = StringUtils.scrSubstr(this.buffers[y], 0, this.editSelect.x2 );
+                } else {
+                    str = this.buffers[y];
+                }
+                strTexts.push( str );
+            }
+        }
+        EditorClipboard.instance().set( strTexts, STATE_CLIPBOARD.Copy );
+
+        this.curColumnMax = this.curColumn;
+        this.editMode = EDIT_MODE.EDIT;
     }
 
     cut() {
@@ -944,32 +974,156 @@ export abstract class Editor {
         this.editSelect.y1 = this.curLine;
     }
 
-    fileNew() {
+    async fileNewPromise(): Promise<boolean> {
+        if ( this.isReadOnly ) {
+            await this.messageBox( "Error", "current file is read-only file." );
+            return false;
+        }
 
+        if ( this.lastDoInfoLength !== this.doInfo.length ) {
+            let result = await this.messageBox( "New file", "Do you want save this file?", [ "Yes", "No" ] );
+            if ( result === "Yes" ) {
+                await this.fileSavePromise();
+            }
+        }
+
+        let fileName = await this.inputBox( "New file", "Please enter a file name.");
+        if ( !fileName ) {
+            return false;
+        }
+
+        let file = FileReader.createFile( fileName, { virtualFile: true } );
+        this.newFile( file );
+        this.setViewTitle("["+this.file.fullname+"]");
+        return true;
     }
 
-    fileSave() {
+    async fileSavePromise(): Promise<boolean> {
+        if ( this.isReadOnly ) {
+            await this.messageBox( "Error", "Unable to file write. this file is read-only file." );
+            return false;
+        }
 
+        if ( this.save( this.file, null, this.isBackup ) ) {
+            this.lastDoInfoLength = this.doInfo.length;
+            return true;
+        }
+        return false;
     }
 
-    fileSaveAs() {
+    async fileSaveAsPromise(): Promise<boolean> {
+        let fileName = await this.inputBox( "New file", "Please enter a file name.");
+        if ( !fileName ) {
+            return false;
+        }
 
+        this.file = FileReader.createFile( fileName );
+        if ( this.save( this.file, null, this.isBackup ) ) {
+            this.lastDoInfoLength = this.doInfo.length;
+        }
+        this.setViewTitle("["+this.file.fullname+"]");
+        return true;
     }
 
-    find() {
+    async findPromise() {
+        let find = this.findStr;
+        let inputText = await this.inputBox( "Find", "input search text.", find );
+        if ( !inputText ) {
+            return;
+        }
 
+        this.findStr = inputText;
+        this.indexFindPosX = 0;
+        this.indexFindPosY = 0;
     }
 
-    findNext() {
+    async findNextPromise() {
+        if ( !this.findStr ) return;
 
+        if ( this.editMode === EDIT_MODE.EDIT ) {
+            this.indexFindPosX = 0;
+            this.indexFindPosY = this.curLine;
+        }
+
+        for(;;) {
+            for( let n = this.indexFindPosY; n < this.buffers.length; n++ ) {
+                let idx = this.buffers[n].indexOf(this.findStr);
+                if ( idx > -1 ) {
+                    let textSize = strWidth(this.findStr);
+                    this.indexFindPosX = idx + textSize;
+                    this.indexFindPosY = n;
+                    this.editMode = EDIT_MODE.SHIFT_SELECT;
+                    this.editSelect.x1 = idx;
+                    this.editSelect.y1 = n;
+                    this.editSelect.x2 = idx + textSize;
+                    this.editSelect.y2 = n;
+                    this.curColumn = idx + textSize;
+                    this.curLine = n;
+                    this.curColumnMax = this.curColumn;
+                    this.firstLine = this.curLine - 10;
+                    return;
+                }
+                this.indexFindPosX = 0;
+            }
+            this.indexFindPosY = 0;
+
+            let result = await this.messageBox( "Find Next", "End of document reached. find a text from the beginning again?", [ "Yes", "No" ] );
+            if ( result === "Yes" ) {
+                break;
+            }
+        }
     }
 
-    filePrevios() {
+    async filePreviousPromise() {
+        if ( !this.findStr ) return;
 
+        if ( this.editMode === EDIT_MODE.EDIT ) {
+            this.indexFindPosX = 0;
+            this.indexFindPosY = this.curLine;
+        }
+
+        this.indexFindPosX -= strWidth(this.findStr);
+
+        for(;;) {
+            for( let n = this.indexFindPosY; n >= 0; --n ) {
+                let idx = this.buffers[n].lastIndexOf(this.findStr);
+                if ( idx > -1 ) {
+                    let textSize = strWidth(this.findStr);
+                    this.indexFindPosX = idx;
+                    this.indexFindPosY = n;
+                    this.editMode = EDIT_MODE.SHIFT_SELECT;
+                    this.editSelect.x1 = idx;
+                    this.editSelect.y1 = n;
+                    this.editSelect.x2 = idx + textSize;
+                    this.editSelect.y2 = n;
+                    this.curColumn = idx + textSize;
+                    this.curLine = n;
+                    this.curColumnMax = this.curColumn;
+                    this.firstLine = this.curLine - 10;
+                    return;
+                }
+                if ( n > 0 ) {
+                    this.indexFindPosX = strWidth(this.buffers[n-1]);
+                }
+            }
+            this.indexFindPosY = this.buffers.length - 1;
+
+            let result = await this.messageBox( "Previous Find", "First of document reached. Find a text from end of document again?", [ "Yes", "No" ] );
+            if ( result === "Yes" ) {
+                break;
+            }
+        }
     }
 
     quit() {
+        if ( this.isReadOnly ) {
+            this.destory();
+            return true;
+        }
 
+        if ( this.lastDoInfoLength !== this.doInfo.length ) {
+            let result = this.messageBox( "Select", "This file is not saved. would you like to save this file?", [ "Yes", "No", "Cancel" ]);
+        }
     }
 
     isEditMode() {

@@ -173,7 +173,12 @@ export class FileReader extends Reader {
         return mounts;
     }
 
-    convertFile( filePath: string, option ?: { fileInfo ?: any, useThrow ?: boolean, checkRealPath ?: boolean } ): File {
+    static convertFile( filePath: string, option ?: { fileInfo ?: any, useThrow ?: boolean, checkRealPath ?: boolean } ): File {
+        let fileReader = new FileReader();
+        return fileReader.convertFile( filePath, option );
+    }
+
+    convertFile( filePath: string, option ?: { fileInfo ?: any, useThrow ?: boolean, checkRealPath ?: boolean, virtualFile ?: boolean } ): File {
         const { fileInfo, useThrow, checkRealPath } = option || {};
         const file = new File();
         file.fstype = this._readerFsType;
@@ -193,6 +198,15 @@ export class FileReader extends Reader {
                 throw e;
             }
             return null;
+        }
+        
+        if ( option?.virtualFile ) {
+            file.dir = false;
+            file.uid = -1;
+            file.gid = -1;
+            file.ctime = new Date(0);
+            file.mtime = new Date(0);
+            return file;
         }
 
         try {
@@ -441,5 +455,18 @@ export class FileReader extends Reader {
                 });
             }
         });
+    }
+
+    createFile( fullname: string, option ?: { virtualFile ?: boolean } ): File {
+        if ( !(option && option.virtualFile) ) {
+            fs.writeFileSync( fullname, "", { mode: 0o644 } );
+            return this.convertFile( fullname, { checkRealPath: true } );
+        }
+        return this.convertFile( fullname, { virtualFile: true } );
+    }
+
+    static createFile( fullname: string, option ?: { virtualFile ?: boolean } ): File {
+        let fileReader = new FileReader();
+        return fileReader.createFile( fullname );
     }
 }
