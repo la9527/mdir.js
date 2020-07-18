@@ -5,10 +5,7 @@ import fs from "fs";
 import { Logger } from "../common/Logger";
 import { StringUtils } from "common/StringUtils";
 import { StringLineToken } from '../common/StringUtils';
-import { messageBox } from "panel_blassed/widget/MessageBox";
-import { message } from "../../@types/blessed";
 import { FileReader } from "panel/FileReader";
-import { pathToFileURL } from "url";
 
 const log = Logger( "editor" );
 
@@ -34,7 +31,7 @@ enum EDIT_MODE {
     SHIFT_SELECT    /// Shift Mode
 };
 
-const TABCONVCHAR = " ";
+const TABCONVCHAR = "\t";
 
 export abstract class Editor {
     line: number = 0;
@@ -88,7 +85,7 @@ export abstract class Editor {
     abstract postLoad(): void;
     abstract postUpdateLines( line?: number, height?: number ): void;
 
-    abstract inputBox(title: string, text: string, inputedText ?: string): Promise<string>;
+    abstract inputBox(title: string, text: string, inputedText ?: string): Promise<string[]>;
     abstract messageBox(title, text, buttons ?: string[]): Promise<string>;
 
     public selectSort(editSelect: IEditSelect) {
@@ -297,7 +294,7 @@ export abstract class Editor {
         let tmpFileName = fileName + ".tmp";
 
         try {
-            fs.writeFileSync( tmpFileName, this.encoding, this.buffers.join( this.isDosMode ? "\r\n" : "\n" ) );
+            fs.writeFileSync( tmpFileName, encoding, this.buffers.join( this.isDosMode ? "\r\n" : "\n" ) );
         } catch( e ) {
             log.error( e );
             return false;
@@ -735,7 +732,7 @@ export abstract class Editor {
     keyMouse() {}
     
     async gotoLinePromise() {
-        const result = await this.inputBox( "Go to Line Number", "Enter the line number to move." );
+        const [ result ] = await this.inputBox( "Go to Line Number", "Enter the line number to move." );
         let number = -1;
         try {
             number = parseInt( result );
@@ -987,7 +984,7 @@ export abstract class Editor {
             }
         }
 
-        let fileName = await this.inputBox( "New file", "Please enter a file name.");
+        let [ fileName ] = await this.inputBox( "New file", "Please enter a file name.");
         if ( !fileName ) {
             return false;
         }
@@ -1004,7 +1001,7 @@ export abstract class Editor {
             return false;
         }
 
-        if ( this.save( this.file, null, this.isBackup ) ) {
+        if ( this.save( this.file, this.encoding, this.isBackup ) ) {
             this.lastDoInfoLength = this.doInfo.length;
             return true;
         }
@@ -1012,13 +1009,13 @@ export abstract class Editor {
     }
 
     async fileSaveAsPromise(): Promise<boolean> {
-        let fileName = await this.inputBox( "New file", "Please enter a file name.");
+        let [ fileName ] = await this.inputBox( "New file", "Please enter a file name.");
         if ( !fileName ) {
             return false;
         }
 
         this.file = FileReader.createFile( fileName );
-        if ( this.save( this.file, null, this.isBackup ) ) {
+        if ( this.save( this.file, this.encoding, this.isBackup ) ) {
             this.lastDoInfoLength = this.doInfo.length;
         }
         this.setViewTitle("["+this.file.fullname+"]");
@@ -1027,7 +1024,7 @@ export abstract class Editor {
 
     async findPromise() {
         let find = this.findStr;
-        let inputText = await this.inputBox( "Find", "input search text.", find );
+        let [ inputText ] = await this.inputBox( "Find", "input search text.", find );
         if ( !inputText ) {
             return;
         }
@@ -1115,15 +1112,22 @@ export abstract class Editor {
         }
     }
 
-    quit() {
+    async quitPromise(): Promise<boolean> {
         if ( this.isReadOnly ) {
             this.destory();
             return true;
         }
 
         if ( this.lastDoInfoLength !== this.doInfo.length ) {
-            let result = this.messageBox( "Select", "This file is not saved. would you like to save this file?", [ "Yes", "No", "Cancel" ]);
+            let result = await this.messageBox( "Select", "This file is not saved. would you like to save this file?", [ "Yes", "No", "Cancel" ]);
+            if ( result === "Cancel" ) {
+                return false;
+            } else if ( result === "Ok" ) {
+                await this.fileSavePromise();
+            }
         }
+        this.destory();
+        return true;
     }
 
     isEditMode() {

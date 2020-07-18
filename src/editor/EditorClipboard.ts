@@ -25,7 +25,7 @@ export class EditorClipboard {
     }
 };
 
-/// Undo, Redo information save class
+/// Undo, Redo Implement
 export class DoData {
     line: number;
     column: number;
