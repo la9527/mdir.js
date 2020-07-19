@@ -1,15 +1,14 @@
 import { strWidth } from "neo-blessed/lib/unicode";
-import { DoData, EditorClipboard, STATE_CLIPBOARD } from './EditorClipboard';
+import { DoData, EditorClipboard, STATE_CLIPBOARD } from "./EditorClipboard";
 import { File } from "../common/File";
 import fs from "fs";
 import { Logger } from "../common/Logger";
-import { StringUtils } from "common/StringUtils";
-import { StringLineToken } from '../common/StringUtils';
-import { FileReader } from "panel/FileReader";
+import { StringUtils, StringLineToken } from "../common/StringUtils";
+import { FileReader } from "../panel/FileReader";
 
 const log = Logger( "editor" );
 
-interface IEditorBuffer {
+export interface IEditorBuffer {
     textLine ?: number;       // Text Position
     viewLine ?: number;       // screen view position
     nextLineNum ?: number;    // if over the one line, line number.
@@ -51,9 +50,8 @@ export abstract class Editor {
     isIndentMode: boolean = false;
 
     editMode: EDIT_MODE = EDIT_MODE.EDIT;
-    editSelect: IEditSelect = null;
+    editSelect: IEditSelect = { x1: 0, x2: 0, y1: 0, y2: 0 };
 
-    lineWidth: number = 0;
     tabSize: number = 8;
 
     isReadOnly: boolean = false;
@@ -226,7 +224,8 @@ export abstract class Editor {
             this.lastLine = viewLine - 1;
 
             if ( this.viewBuffers.length > line - 3 ) {
-                if ( this.lastLine === this.curLine && this.viewBuffers[this.lastLine].isNext ) {
+                if ( this.lastLine === this.curLine && 
+                    this.lastLine < this.viewBuffers.length && this.viewBuffers[this.lastLine].isNext ) {
                     this.firstLine++;
                     continue;
                 }
@@ -261,7 +260,7 @@ export abstract class Editor {
         this.findStr = "";
         this.indexFindPosX = 0;
         this.indexFindPosY = 0;
-        this.doInfo = null;
+        this.doInfo = [];
     }
 
     load( file: File, isReadonly: boolean = false ): boolean {
@@ -336,7 +335,7 @@ export abstract class Editor {
             for ( let i = 0; i < this.tabSize; i++ ) {
                 this.curColumn--;
                 cul++;
-                if ( this.curColumn <= 0 && TABCONVCHAR === StringUtils.scrSubstr(this.buffers[this.curLine], this.curColumn, 1 ) ) {
+                if ( this.curColumn <= 0 || TABCONVCHAR !== StringUtils.scrSubstr(this.buffers[this.curLine], this.curColumn, 1 ) ) {
                     break;
                 }
             }
@@ -355,8 +354,8 @@ export abstract class Editor {
         if ( strlen > this.curColumn ) {
             for ( let i = 0; i < this.tabSize; i++ ) {
                 this.curColumn++;
-                if ( this.curColumn <= strlen ||
-                    TABCONVCHAR === StringUtils.scrSubstr(str, this.curColumn, 1 ) ) {
+                if ( this.curColumn >= strlen ||
+                    TABCONVCHAR !== StringUtils.scrSubstr(str, this.curColumn, 1 ) ) {
                     break;
                 }
                 if ( i === 0 ) {
@@ -595,7 +594,7 @@ export abstract class Editor {
         }
 
         if ( this.curLine < this.buffers.length ) {
-            let line = this.buffers[this.curLine];
+            let line = this.buffers[this.curLine] || "";
             this.doInfo.push( new DoData(this.curLine, this.curColumn, [line]) );
 
             if ( this.isInsert ) {
@@ -751,13 +750,13 @@ export abstract class Editor {
         this.editMode = EDIT_MODE.EDIT;
     }
 
-    gotoFirst() {
+    gotoTop() {
         this.curLine = 0;
         this.firstLine = 0;
         this.editMode = EDIT_MODE.EDIT;
     }
 
-    gotoEnd() {
+    gotoLast() {
         this.curLine = this.buffers.length - 1;
         this.firstLine = this.curLine - 10;
         this.editMode = EDIT_MODE.EDIT;

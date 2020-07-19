@@ -1,6 +1,8 @@
 import { sprintf } from "sprintf-js";
 import { strWidth } from "neo-blessed/lib/unicode";
-import { timeStamp } from "console";
+import { Logger } from "./Logger";
+
+const log = Logger("StringUtils");
 
 export class StringUtils {
     static toregular(num: any ) {
@@ -42,15 +44,21 @@ export class StringUtils {
     }
 
     static scrSubstr( text: string, firstPos: number, len: number = -1 ) {
-        let pos = firstPos;
+        let pos = firstPos > 0 ? firstPos : 0;
         let strlen = 0;
         let resText = "";
-        do {
-            pos++;
-            resText += text[pos];
-            strlen += strWidth( text[pos] );
-            if ( len > -1 && strlen >= len ) break;
-        } while( pos < text.length );
+        if ( !text || firstPos > text.length ) {
+            return resText;
+        }
+        try {
+            do {
+                resText += text[pos];
+                strlen += strWidth( text[pos] );
+                if ( len > -1 && strlen >= len ) break;
+            } while( ++pos < text.length );
+        } catch ( e ) {
+            log.error( "text [%s] - [%d] [%d] firstPos [%d] len [%d] - ERROR [%s]", text, pos, text.length, firstPos, len, e );
+        }
         return resText;
     }
 
@@ -127,7 +135,7 @@ export class StringLineToken {
     }
 
     get() {
-        return this.tokens[this._curLine];
+        return this.tokens[this._curLine] || "";
     }
 
     size() {

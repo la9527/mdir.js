@@ -52,9 +52,10 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         removePromise: "C-d",
         consoleViewPromise: "escape",
         terminalPromise: "C-o",
-        vimPromise: { name: T("Func.VIM"), key: "f4" },
+        vimPromise: { name: T("Func.VIM"), key: "f3" },
         mountListPromise: { name: T( os.platform() === "win32" ? "Func.DriveList" : "Func.MountList"), key: "f11" },
-        helpPromise: { name: T("Func.Help"), key: "f1" }
+        helpPromise: { name: T("Func.Help"), key: "f1" },
+        editorPromise: { name: T("Func.Editor"), key: "f4" }
     },
     Menu: {
         keyUp: "up",
@@ -148,6 +149,39 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         keyScrollDown: [ "C-f", "C-down", "S-down" ],
         keyScrollPageUp: [ "M-b" ],
         keyScrollPageDown: [ "M-f" ]
+    },
+    Editor: {
+        keyUp: "up",
+        keyDown: "down",
+        keyRight: "right",
+        keyLeft: "left",
+        keyHome: "home",
+        keyEnter: [ "enter" ],
+        keyPgUp: "pageup",
+        keyPgDn: "pagedown",
+        keyInsert: "insert",
+        keyDelete: "delete",
+        keyBS: "backspace",
+        keyTab: "tab",
+        keyUntab: "S-tab",
+        indentMode: "f2",
+        gotoLinePromise: "C-g",
+        gotoFirst: "C-f",
+        gotoLast: "C-l",
+        copy: "C-c",
+        cut: "C-x",
+        paste: "C-v",
+        undo: "C-z",
+        keyEscape: "escape",
+        select: "f2",
+        selectAll: "C-a",
+        fileNewPromise: "C-n",
+        fileSavePromise: "C-s",
+        fileSaveAsPromise: "A-s",
+        findPromise: "C-f",
+        findNextPromise: "C-n",
+        filePreviousPromise: "C-b",
+        quitPromise: "C-q"
     }
 };
 

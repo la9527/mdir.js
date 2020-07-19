@@ -1,6 +1,6 @@
 import * as blessed from "neo-blessed";
 import { Widgets } from "../../@types/blessed.d";
-
+import { strWidth } from "neo-blessed/lib/unicode";
 import { Panel } from "../panel/Panel";
 import { Widget } from "./widget/Widget";
 import { Logger } from "../common/Logger";
@@ -19,12 +19,12 @@ import { inputBox } from "./widget/InputBox";
 import { T } from "../common/Translation";
 import * as FileType from "file-type";
 
-import { Editor } from "../editor/Editor";
+import { Editor, IEditorBuffer } from "../editor/Editor";
 import { Color } from "../common/Color";
 
 const log = Logger( "BlassedEditor" );
 
-@KeyMapping(KeyMappingInfo.Panel)
+@KeyMapping(KeyMappingInfo.Editor)
 export class BlessedEditor extends Editor implements IBlessedView, IHelpService {
 
     colorEdit:Color = null;
@@ -68,6 +68,35 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
                 fg: this.colorStat.font
             }
         });
+
+        this.editor.on("detach", () => {
+            this.editor.box.screen.program.hideCursor();
+        });
+        this.editor.on("render", () => {
+            if ( this.editor.screen.program.cursorHidden ) {
+                this.editor.screen.program.showCursor();
+            }
+        });
+
+        this.editor.on('resize', () => {
+            process.nextTick(() => {
+                this.column = this.editor.width as number - 2;
+                this.line = this.editor.height as number - 2;
+            });
+        });
+
+        (this.editor.box as any).render = () => {
+            this._render();
+        };
+    }
+
+    keyWrite( keyInfo ) {
+        if ( keyInfo && keyInfo.name !== "enter" && keyInfo ) {
+            log.debug( "write : [%j]", keyInfo );
+            this.inputData( keyInfo.sequence || keyInfo.ch );
+        } else {
+            log.debug( "NOT - pty write : [%j]", keyInfo );
+        }
     }
 
     postLoad(): void {
@@ -129,11 +158,32 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
     }
     
     render() {
-        throw new Error("Method not implemented.");
+        this.baseWidget.render();
     }
     
     viewName(): string {
         return "Editor";
+    }
+
+    _cursorCheck() {
+        let viewLines = this.viewBuffers.filter( item => item.textLine === this.curLine );
+        
+        let x = this.curColumn;
+        let length = 0;
+        let y = 0;
+        let n = 0;
+        for ( n = 0; n < viewLines.length; n++ ) {
+            let strLen = strWidth(viewLines[n].text);
+            length += strLen;
+            log.debug( "cursor viewLines [%d] [%d] [%d]", viewLines[n].text.length, length, x );
+            if ( length >= this.curColumn ) {
+                y = viewLines[n].viewLine;
+                break;
+            }
+            x -= strLen;
+        }
+        //x = strWidth(viewLines[n].text.substr(0, x));
+        return { y, x };
     }
 
     _render(startRow = -1, endRow = -1) {
@@ -153,33 +203,30 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
         box.dattr = box.sattr(box.style);
       
         let xi = ret.xi + box.ileft
-          , xl = ret.xl - box.iright
+          , xl = ret.xl - box.iright 
           , yi = ret.yi + box.itop
           , yl = ret.yl - box.ibottom
           , cursor;
 
         this.line = box.height - 2;
-        this.lineWidth = box.width;
+        this.column = box.width - 2;
       
         this.screenMemSave( this.line, this.column );
         
+        const { x: curX, y: curY } = this._cursorCheck();
+        
         for (let y = Math.max(yi, 0); y < yl; y++) {
             let line = screen.lines[y];
-            const bufferLine = this.viewBuffers[y - yi];
-            if ( !bufferLine ) {
-                continue;
-            }
-
             if (!line) break;
 
-            if (screen.focused === box) {
-                cursor = xi + this.curColumn;
+            if (curY === y - yi && this.hasFocus() ) {
+                cursor = xi + curX;
             } else {
                 cursor = -1;
             }
 
-            // const str = bufferLine.translateToString(true);
-            // log.debug( "line : %d, COLOR [%d/%d] [%d] [%s]", scrollback + y - yi, bufferLine.getFg(0), bufferLine.getBg(0), str.length, str );
+            // log.debug( "line : %d, [%d] [%s]", y - yi, bufferLine.viewLine, bufferLine.text );
+            log.debug( "[%d/%d] cursor : [%d] [%d] [%d] [%d]", this.line, this.column, this.curColumn, curX, curY, cursor );
 
             for (let x = Math.max(xi, 0); x < xl; x++) {
                 if (!line[x]) break;
@@ -195,24 +242,24 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
                 });
 
                 if (x === cursor) {
-                    // if (this.cursor === 'block' || !this.cursor) {
-                      line[x][0] = (box as any).sattr({
-                            bold: false,
-                            underline: false,
-                            blink: false,
-                            inverse: false,
-                            invisible: false,
-                            bg: box.style.bg,
-                            fg: box.style.fg,
-                        }) | (8 << 18);
-                    // }
+                    line[x][0] = (box as any).sattr({
+                        bold: false,
+                        underline: false,
+                        blink: false,
+                        inverse: false,
+                        invisible: false,
+                        bg: box.style.bg,
+                        fg: box.style.fg,
+                    }) | (8 << 18);
                 }
 
-                if ( x - xi > -1 && x - xi < this.viewBuffers.length ) {
-                    //let info: IEditorBuffer = this.viewBuffers[x - xi];
-                    
-
-                    line[x][1] = this.viewBuffers[x - xi] || ' ';
+                if ( x - xi > -1 ) {
+                    const bufferLine: IEditorBuffer = this.viewBuffers[y - yi];
+                    if ( bufferLine?.text && x - xi < bufferLine.text.length ) {
+                        line[x][1] = bufferLine.text[x - xi] || ' ';
+                    } else {
+                        line[x][1] = ' ';
+                    }
                 }
             }
 

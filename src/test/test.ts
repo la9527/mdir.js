@@ -21,6 +21,7 @@ import I18nextCLILanguageDetector from 'i18next-cli-language-detector';
 import en from "../translation/en.json";
 import ko from "../translation/ko.json";
 import { button } from '../../@types/blessed';
+import { BlessedEditor } from "panel_blassed/BlessedEditor";
 
 /*
 const T = ( ...a ) => {

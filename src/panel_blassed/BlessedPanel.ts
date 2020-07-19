@@ -241,9 +241,14 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
             try {
                 const item = await FileType.fromFile( currentFile.fullname );
                 log.debug( "fileType: [%j]", item );
-                if ( item && item.mime.match( /(png|jpeg|gif)/ )) {
-                    await mainFrame().imageViewPromise(currentFile);
-                    return;
+                if ( item ) {
+                    if ( item.mime.match( /(png|jpeg|gif)/ ) ) {
+                        await mainFrame().imageViewPromise(currentFile);
+                        return;
+                    } else if (item.mime.match( /(text|json)/ )) {
+                        await mainFrame().editorPromise(currentFile);
+                        return;
+                    }
                 }
             } catch( e ) {
                 log.error(e.stack);

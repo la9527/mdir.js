@@ -14,6 +14,7 @@ import { keyMappingExec, menuKeyMapping, KeyMappingInfo,
 import { menuConfig } from "../config/MenuConfig";
 import { BlessedMenu } from "./BlessedMenu";
 import { BlessedMcd } from './BlessedMcd';
+import { BlessedEditor } from "./BlessedEditor";
 import { CommandBox } from './CommandBox';
 import { exec } from "child_process";
 import colors from "colors";
@@ -37,6 +38,7 @@ import { ImageViewBox } from "./widget/ImageBox";
 import * as FileType from "file-type";
 import { File } from "../common/File";
 import { number } from "yargs";
+import { yellow } from "chalk";
 
 const log = Logger("MainFrame");
 
@@ -53,7 +55,7 @@ export class MainFrame implements IHelpService {
     private screen: Widgets.Screen = null;
     private viewType: VIEW_TYPE = VIEW_TYPE.NORMAL;
     private baseWidget = null;
-    private blessedFrames: (BlessedMcd | BlessedPanel | BlessedXterm)[] = [];
+    private blessedFrames: (BlessedMcd | BlessedPanel | BlessedXterm | BlessedEditor)[] = [];
     private blessedMenu = null;
     private funcKeyBox = null;
     private bottomFilesBox: BottomFilesBox = null;
@@ -69,6 +71,31 @@ export class MainFrame implements IHelpService {
 
     viewName() {
         return "Common";
+    }
+
+    @Help(T("Help.Editor"))
+    async editorPromise(file: File = null) {
+        let view = this.blessedFrames[this.activeFrameNum];
+        if ( view instanceof BlessedPanel ) {
+            view.destroy();
+
+            const newView = new BlessedEditor( { parent: this.baseWidget, viewCount: viewCount++ }, view.getReader() );
+            await newView.load( file || view.currentFile() );
+            newView.setFocus();
+            this.blessedFrames[this.activeFrameNum] = newView;
+        } else if ( view instanceof BlessedEditor ) {
+            view.destroy();
+
+            const newView = new BlessedPanel( { parent: this.baseWidget, viewCount: viewCount++ }, view.getReader() );
+            await newView.read( view.getReader().currentDir() || "." );
+            newView.setFocus();
+            this.blessedFrames[this.activeFrameNum] = newView;
+        } else if ( view instanceof BlessedXterm || view instanceof BlessedEditor ) {
+            return RefreshType.NONE;
+        }
+        this.viewRender();
+        this.baseWidget.render();
+        return RefreshType.ALL;
     }
 
     @Hint({ hint: T("Hint.Mcd") })
@@ -225,7 +252,7 @@ export class MainFrame implements IHelpService {
             dockBorders: false,
             useBCE: true,
             ignoreDockContrast: true,
-            debug: false,
+            debug: true,
             // dump: true,
             // log: process.env.HOME + "/.m/m2.log"
         });
@@ -268,11 +295,9 @@ export class MainFrame implements IHelpService {
         }
         this.viewRender();
 
-        /*
         this.screen.key("q", () => {
             process.exit(0);
         });
-        */
         
         this.eventStart();
         this.screen.render();
@@ -310,28 +335,37 @@ export class MainFrame implements IHelpService {
                         return;
                     }
                 }
-                
-                if ( panel instanceof BlessedXterm ) {
-                    if ( TerminalAllowKeys.indexOf( keyName ) > -1 ) {
-                        let type: RefreshType = await keyMappingExec( this.activeFocusObj(), keyInfo );
-                        if ( type === RefreshType.NONE ) {
-                            type = await keyMappingExec( this, keyInfo );
-                            if ( type !== RefreshType.NONE ) {
-                                this.execRefreshType( type );
-                                this._keyLockScreen = false;
-                                return;
-                            }
-                        }
-                    }
-                    panel.ptyKeyWrite(keyInfo);
-                } else {
-                    // log.debug( "KEYPRESS - KEY START [%s] - (%dms)", keyInfo.name, Date.now() - starTime );
+
+                const keyMappingExecute = async ( func?: () => void ) => {
+                    log.debug( "KEYPRESS - KEY START [%s] - (%dms)", keyInfo.name, Date.now() - starTime );
                     let type: RefreshType = await keyMappingExec( this.activeFocusObj(), keyInfo );
                     if ( type === RefreshType.NONE ) {
                         type = await keyMappingExec( this, keyInfo );
                     }
-                    this.execRefreshType( type );
-                    // log.info( "KEYPRESS - KEY END [%s] - (%dms)", keyInfo.name, Date.now() - starTime );
+                    if ( type !== RefreshType.NONE ) {
+                        this.execRefreshType( type );
+                    } else {
+                        func && func();
+                    }
+                    log.info( "KEYPRESS - KEY END [%s] - (%dms)", keyInfo.name, Date.now() - starTime );
+                    return type;
+                };
+                
+                if ( panel instanceof BlessedXterm ) {
+                    let keyPressFunc = () => {
+                        panel.ptyKeyWrite(keyInfo);
+                    };
+                    if ( TerminalAllowKeys.indexOf( keyName ) > -1 ) {
+                        await keyMappingExecute( keyPressFunc );
+                    } else {
+                        keyPressFunc();
+                    }
+                } else if ( panel instanceof BlessedEditor ) {
+                    keyMappingExecute( () => {
+                        panel.keyWrite( keyInfo );
+                    });
+                } else {
+                    keyMappingExecute();
                 }
             } catch ( e ) {
                 log.error( e );
@@ -434,7 +468,7 @@ export class MainFrame implements IHelpService {
         return RefreshType.ALL;
     }
 
-    setActivePanel( frame: BlessedPanel | BlessedMcd | BlessedXterm ) {
+    setActivePanel( frame: BlessedPanel | BlessedMcd | BlessedXterm | BlessedEditor ) {
         for ( let i = 0; i < this.blessedFrames.length; i++ ) {
             if ( Object.is( this.blessedFrames[i], frame ) && this.activeFrameNum !== i ) {
                 this.activeFrameNum = i;
@@ -445,7 +479,7 @@ export class MainFrame implements IHelpService {
         }
     }
 
-    activePanel(): BlessedPanel | BlessedMcd | BlessedXterm {
+    activePanel(): BlessedPanel | BlessedMcd | BlessedXterm | BlessedEditor {
         log.debug( "activePanel %d", this.activeFrameNum );
         return this.blessedFrames[ this.activeFrameNum ];
     }
