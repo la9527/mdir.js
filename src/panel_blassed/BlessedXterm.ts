@@ -9,7 +9,7 @@ import { File } from "../common/File";
 import { XTerminal } from "./xterm/XTerminal";
 import { ColorConfig } from "../config/ColorConfig";
 import which from 'which';
-import { KeyMappingInfo, KeyMapping, IHelpService, Hint, Help } from '../config/KeyMapConfig';
+import { KeyMappingInfo, KeyMapping, IHelpService, Hint, Help, RefreshType } from '../config/KeyMapConfig';
 import { T } from "../common/Translation";
 
 const log = Logger("BlassedXTerm");
@@ -259,13 +259,15 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         this.panel.setFocus();
     }
 
-    ptyKeyWrite( keyInfo ) {
+    ptyKeyWrite( keyInfo ): RefreshType {
         if ( keyInfo && keyInfo.name !== "enter" && keyInfo ) {
             log.debug( "pty write : [%j]", keyInfo );
             this.pty?.write(keyInfo.sequence || keyInfo.ch);
+            return RefreshType.OBJECT;
         } else {
             log.debug( "NOT - pty write : [%j]", keyInfo );
         }
+        return RefreshType.NONE;
     }
 
     _onData(data: string) {

@@ -7,6 +7,11 @@ import { FileReader } from "../panel/FileReader";
 import { BlessedEditor } from "../panel_blassed/BlessedEditor";
 import { StringUtils } from "../common/StringUtils";
 
+/*
+console.log( StringUtils.scrSubstr("2", 0, 0) );
+console.log( StringUtils.scrStrReplace("1", 0, 1) );
+*/
+
 (async () => {
     const screen = blessed.screen({
         smartCSR: true,
@@ -33,38 +38,3 @@ import { StringUtils } from "../common/StringUtils";
     newView.setFocus();
     screen.render();
 })();
-
-/*
-const screen = blessed.screen({
-    smartCSR: true,
-    fullUnicode: true,
-    dockBorders: true,
-    useBCE: true,
-    ignoreDockContrast: true,
-    // debug: true,
-    //dump: true,
-    //log: process.env.HOME + "/.m/m2.log"
-});
-
-screen.draw = (start, end) => {
-    draw.call(screen, start, end);
-};
-
-screen.key("q", () => {
-    process.exit(0);
-});
-    
-screen.key("t", async () => {
-    let fileReader = new FileReader();
-    let file = fileReader.convertFile( "README.md" );
-
-    const newView = new BlessedEditor( { parent: screen, top: 1, left: 0, width: "100%", height: "100%-2" }, 
-                        fileReader );
-
-    await newView.load( file );
-    newView.setFocus();
-    screen.render();
-});
-
-screen.render();
-*/

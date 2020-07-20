@@ -90,13 +90,15 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
         };
     }
 
-    keyWrite( keyInfo ) {
+    keyWrite( keyInfo ): RefreshType {
         if ( keyInfo && keyInfo.name !== "enter" && keyInfo ) {
             log.debug( "write : [%j]", keyInfo );
             this.inputData( keyInfo.sequence || keyInfo.ch );
+            return RefreshType.OBJECT;
         } else {
             log.debug( "NOT - pty write : [%j]", keyInfo );
         }
+        return RefreshType.NONE;
     }
 
     postLoad(): void {

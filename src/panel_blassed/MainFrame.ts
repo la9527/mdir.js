@@ -336,7 +336,7 @@ export class MainFrame implements IHelpService {
                     }
                 }
 
-                const keyMappingExecute = async ( func?: () => void ) => {
+                const keyMappingExecute = async ( func?: () => RefreshType ) => {
                     log.debug( "KEYPRESS - KEY START [%s] - (%dms)", keyInfo.name, Date.now() - starTime );
                     let type: RefreshType = await keyMappingExec( this.activeFocusObj(), keyInfo );
                     if ( type === RefreshType.NONE ) {
@@ -345,7 +345,10 @@ export class MainFrame implements IHelpService {
                     if ( type !== RefreshType.NONE ) {
                         this.execRefreshType( type );
                     } else {
-                        func && func();
+                        if ( func ) {
+                            type = func();
+                            this.execRefreshType( type );
+                        }
                     }
                     log.info( "KEYPRESS - KEY END [%s] - (%dms)", keyInfo.name, Date.now() - starTime );
                     return type;
@@ -353,7 +356,7 @@ export class MainFrame implements IHelpService {
                 
                 if ( panel instanceof BlessedXterm ) {
                     let keyPressFunc = () => {
-                        panel.ptyKeyWrite(keyInfo);
+                        return panel.ptyKeyWrite(keyInfo);
                     };
                     if ( TerminalAllowKeys.indexOf( keyName ) > -1 ) {
                         await keyMappingExecute( keyPressFunc );
@@ -362,7 +365,7 @@ export class MainFrame implements IHelpService {
                     }
                 } else if ( panel instanceof BlessedEditor ) {
                     keyMappingExecute( () => {
-                        panel.keyWrite( keyInfo );
+                        return panel.keyWrite( keyInfo );
                     });
                 } else {
                     keyMappingExecute();

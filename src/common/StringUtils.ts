@@ -44,10 +44,10 @@ export class StringUtils {
     }
 
     static scrSubstr( text: string, firstPos: number, len: number = -1 ) {
-        let pos = firstPos > 0 ? firstPos : 0;
+        let pos = firstPos;
         let strlen = 0;
         let resText = "";
-        if ( !text || firstPos >= text.length ) {
+        if ( !text || firstPos < 0 || firstPos >= text.length || len === 0 ) {
             return resText;
         }
         try {
@@ -65,6 +65,7 @@ export class StringUtils {
     // ("123456", 3, 1) ==> "12456"
     // ("123456", 3, "7") ==> "123756"
     // ("123456", 3, "7", true) ==> "1237456"
+    // ("1", 0, 1) ===> ""
     static scrStrReplace( text: string, firstPos: number, removeLenChStr: string | number = -1, isInsert: boolean = false ): string {
         let resultText = StringUtils.scrSubstr(text, 0, firstPos);
         if ( typeof(removeLenChStr) == "string" ) {
@@ -73,6 +74,9 @@ export class StringUtils {
             }
             return resultText + removeLenChStr + StringUtils.scrSubstr(text, firstPos + strWidth(removeLenChStr));
         }
+        if ( !resultText ) {
+            return resultText;
+        }        
         return resultText + StringUtils.scrSubstr(text, firstPos + removeLenChStr);
     }
 }
