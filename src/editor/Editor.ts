@@ -201,7 +201,7 @@ export abstract class Editor {
             for ( let t = 0; t < line; t++ ) {
                 if ( !strLineToken.next(true) ) {
                     if ( viewLine >= this.buffers.length ) break;
-                    strLineToken.setString( this.buffers[viewLine++], this.column );
+                    strLineToken.setString( this.buffers[viewLine++], column );
                 }
 
                 isNext = strLineToken.size() - 1 !== strLineToken.curLine;
@@ -622,7 +622,11 @@ export abstract class Editor {
     }
 
     keyEnd() {
-        this.curColumn = strWidth( this.buffers[this.curLine] );
+        if ( this.buffers[this.curLine] ) {
+            this.curColumn = strWidth( this.buffers[this.curLine] );
+        } else {
+            this.curColumn = 0;
+        }
         this.keyPressCommon();
     }
 

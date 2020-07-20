@@ -47,7 +47,7 @@ export class StringUtils {
         let pos = firstPos > 0 ? firstPos : 0;
         let strlen = 0;
         let resText = "";
-        if ( !text || firstPos > text.length ) {
+        if ( !text || firstPos >= text.length ) {
             return resText;
         }
         try {

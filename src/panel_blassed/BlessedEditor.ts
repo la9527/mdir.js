@@ -175,14 +175,18 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
         for ( n = 0; n < viewLines.length; n++ ) {
             let strLen = strWidth(viewLines[n].text);
             length += strLen;
-            log.debug( "cursor viewLines [%d] [%d] [%d]", viewLines[n].text.length, length, x );
             if ( length >= this.curColumn ) {
                 y = viewLines[n].viewLine;
+                if ( viewLines[n].isNext && x === this.column ) {
+                    y++;
+                    x = 0;
+                }
                 break;
             }
             x -= strLen;
         }
-        //x = strWidth(viewLines[n].text.substr(0, x));
+        log.info( "cursor textlen [%d] width [%d] curColumn [%d] x [%d] y [%d] isNext [%s]", viewLines[n]?.text?.length, this.column, this.curColumn, x, y, viewLines[n]?.isNext );
+        // x = strWidth(viewLines[n].text.substr(0, x));
         return { y, x };
     }
 
@@ -214,6 +218,8 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
         this.screenMemSave( this.line, this.column );
         
         const { x: curX, y: curY } = this._cursorCheck();
+
+        log.debug( "[%d/%d] cursor : [%d] [%d] [%d] [%d]", this.line, this.column, this.curColumn, curX, curY, cursor );
         
         for (let y = Math.max(yi, 0); y < yl; y++) {
             let line = screen.lines[y];
@@ -226,8 +232,7 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
             }
 
             // log.debug( "line : %d, [%d] [%s]", y - yi, bufferLine.viewLine, bufferLine.text );
-            log.debug( "[%d/%d] cursor : [%d] [%d] [%d] [%d]", this.line, this.column, this.curColumn, curX, curY, cursor );
-
+            
             for (let x = Math.max(xi, 0); x < xl; x++) {
                 if (!line[x]) break;
 

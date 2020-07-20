@@ -156,6 +156,7 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         keyRight: "right",
         keyLeft: "left",
         keyHome: "home",
+        keyEnd: "end",
         keyEnter: [ "enter" ],
         keyPgUp: "pageup",
         keyPgDn: "pagedown",

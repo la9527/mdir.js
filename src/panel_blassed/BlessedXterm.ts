@@ -245,7 +245,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
                     text.substring(idx1 + 7, idx2).split(";").forEach((item) => convertProps(item));
                     findOSC1337( text.substr(idx2+1) );
                 }
-            }    
+            }
         };
         findOSC1337(data);
         // log.debug( this.osc1337 );
