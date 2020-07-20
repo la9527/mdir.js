@@ -1,6 +1,7 @@
 import * as blessed from "neo-blessed";
 import { Widgets } from "../../@types/blessed.d";
 import { strWidth } from "neo-blessed/lib/unicode";
+import * as unicode from "neo-blessed/lib/unicode";
 import { Panel } from "../panel/Panel";
 import { Widget } from "./widget/Widget";
 import { Logger } from "../common/Logger";
@@ -260,12 +261,24 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
                     }) | (8 << 18);
                 }
 
+                line[x][1] = ' ';
                 if ( x - xi > -1 ) {
                     const bufferLine: IEditorBuffer = this.viewBuffers[y - yi];
                     if ( bufferLine?.text && x - xi < bufferLine.text.length ) {
                         line[x][1] = bufferLine.text[x - xi] || ' ';
-                    } else {
-                        line[x][1] = ' ';
+                        if (screen.fullUnicode) {
+                            var point = unicode.codePointAt(bufferLine.text, x - xi);
+                            // Handle combining chars:
+                            // Make sure they get in the same cell and are counted as 0.
+                            if (unicode.combining[point]) {
+                                if (point > 0x00ffff) {
+                                    x++;
+                                }
+                                continue;
+                            } else if (point > 0x00ffff) { // Make sure we put surrogate pair chars in one cell.
+                                x++;
+                            }
+                        }
                     }
                 }
             }

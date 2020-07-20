@@ -1,5 +1,5 @@
 import { sprintf } from "sprintf-js";
-import { strWidth } from "neo-blessed/lib/unicode";
+import { strWidth, isSurrogate, charWidth } from "neo-blessed/lib/unicode";
 import { Logger } from "./Logger";
 
 const log = Logger("StringUtils");
@@ -44,6 +44,28 @@ export class StringUtils {
     }
 
     static scrSubstr( text: string, firstPos: number, len: number = -1 ) {
+        let strlen = 0;
+        let resText = "";
+        if (!text || firstPos < 0 || firstPos >= strWidth(text) || len === 0) {
+            return resText;
+        }
+
+        let width = 0;
+        for (let i = 0; i < text.length; i++) {
+            width += charWidth(text, i);
+            if ( width > firstPos ) {
+                strlen = width - firstPos;
+                resText += text[i];
+            }
+            if (isSurrogate(text, i)) {
+                i++;
+            }
+            if ( len > -1 && strlen >= len ) break;
+        }
+        return resText;
+    }
+    
+    static scrSubstr2( text: string, firstPos: number, len: number = -1 ) {
         let pos = firstPos;
         let strlen = 0;
         let resText = "";

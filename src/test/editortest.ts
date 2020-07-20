@@ -10,8 +10,12 @@ import { StringUtils } from "../common/StringUtils";
 /*
 console.log( StringUtils.scrSubstr("2", 0, 0) );
 console.log( StringUtils.scrStrReplace("1", 0, 1) );
+console.log( "1234567", 1, 5, StringUtils.scrSubstr("1234567", 1, 5) );
+console.log( StringUtils.scrSubstr("1234567", 5, 3) );
+console.log( StringUtils.scrSubstr("2", 0, 0) );
+console.log( StringUtils.scrSubstr("21", 2, 0) );
+console.log( "[" + StringUtils.scrSubstr("한글을 입력합니다.", 4, 3) + "]" );
 */
-
 (async () => {
     const screen = blessed.screen({
         smartCSR: true,
