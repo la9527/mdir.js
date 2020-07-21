@@ -252,6 +252,7 @@ export class MainFrame implements IHelpService {
             dockBorders: false,
             useBCE: true,
             ignoreDockContrast: true,
+            tabSize: 4,
             debug: true,
             // dump: true,
             // log: process.env.HOME + "/.m/m2.log"

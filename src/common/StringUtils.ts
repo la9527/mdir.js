@@ -46,6 +46,7 @@ export class StringUtils {
     static scrSubstr( text: string, firstPos: number, len: number = -1 ) {
         let strlen = 0;
         let resText = "";
+
         if (!text || firstPos < 0 || firstPos >= strWidth(text) || len === 0) {
             return resText;
         }

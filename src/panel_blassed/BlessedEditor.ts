@@ -2,23 +2,17 @@ import * as blessed from "neo-blessed";
 import { Widgets } from "../../@types/blessed.d";
 import { strWidth } from "neo-blessed/lib/unicode";
 import * as unicode from "neo-blessed/lib/unicode";
-import { Panel } from "../panel/Panel";
 import { Widget } from "./widget/Widget";
 import { Logger } from "../common/Logger";
 import { StringUtils } from "../common/StringUtils";
-import { PanelFileBox } from "./PanelFileBox";
 import { ColorConfig } from "../config/ColorConfig";
 import { Reader } from "../common/Reader";
 import { KeyMapping, RefreshType, SearchDisallowKeys, Hint, Help, IHelpService } from '../config/KeyMapConfig';
 import { KeyMappingInfo } from "../config/KeyMapConfig";
 import { IBlessedView } from "./IBlessedView";
-import mainFrame from './MainFrame';
-import { SearchFileBox } from './SearchFileBox';
-import { File } from "../common/File";
 import { messageBox } from "./widget/MessageBox";
 import { inputBox } from "./widget/InputBox";
 import { T } from "../common/Translation";
-import * as FileType from "file-type";
 
 import { Editor, IEditorBuffer } from "../editor/Editor";
 import { Color } from "../common/Color";
@@ -92,7 +86,7 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
     }
 
     keyWrite( keyInfo ): RefreshType {
-        if ( keyInfo && keyInfo.name !== "enter" && keyInfo ) {
+        if ( keyInfo && keyInfo.name !== "return" && keyInfo ) {
             log.debug( "write : [%j]", keyInfo );
             this.inputData( keyInfo.sequence || keyInfo.ch );
             return RefreshType.OBJECT;
@@ -234,9 +228,8 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
                 cursor = -1;
             }
 
-            // log.debug( "line : %d, [%d] [%s]", y - yi, bufferLine.viewLine, bufferLine.text );
-            
             const bufferLine: IEditorBuffer = this.viewBuffers[y - yi];
+            //log.debug( "line : %d, [%d] [%s]", y - yi, bufferLine.viewLine, bufferLine.text );
             let tpos = 0;
             for (let x = Math.max(xi, 0); x < xl; x++) {
                 if (!line[x]) break;
@@ -269,6 +262,21 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
                     let chSize = unicode.strWidth( ch );
                     line[x][1] = ch;
                     if ( chSize > 1 ) {
+                        if ( ch === "\t" ) {
+                            line[x][1] = ' ';
+                        }
+                        for ( let i = 1; i < chSize; i++ ) {
+                            line[x+i][0] = (box as any).sattr({
+                                bold: false,
+                                underline: false,
+                                blink: false,
+                                inverse: false,
+                                invisible: false,
+                                bg: box.style.bg,
+                                fg: box.style.fg,
+                            });
+                            line[x+i][1] = ' ';
+                        }
                         x += chSize - 1;
                     }
                 }

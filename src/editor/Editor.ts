@@ -1,3 +1,4 @@
+import { screen } from "neo-blessed/lib/widgets/screen";
 import { strWidth } from "neo-blessed/lib/unicode";
 import { DoData, EditorClipboard, STATE_CLIPBOARD } from "./EditorClipboard";
 import { File } from "../common/File";
@@ -29,8 +30,6 @@ enum EDIT_MODE {
     BLOCK,            /// Block Select Mode
     SHIFT_SELECT    /// Shift Mode
 };
-
-const TABCONVCHAR = "\t";
 
 export abstract class Editor {
     line: number = 0;
@@ -272,7 +271,7 @@ export abstract class Editor {
         }
         let dosMode = false;
         fsData.split("\n").map( (item) => {
-            item = this.tabToEdit( item, "\t", this.tabSize );
+            // item = this.tabToEdit( item, "\t", this.tabSize );
             let item2 = item.replace( new RegExp("\r"), "");
             if ( item2 !== item ) {
                 dosMode = true;
@@ -317,6 +316,7 @@ export abstract class Editor {
         return true;
     }
 
+    /*
     tabToEdit( text: string, tabChar: string, tabSize: number ): string {
         return text.replace( new RegExp(tabChar, "g"), tabChar.repeat(tabSize) );
     }
@@ -324,6 +324,7 @@ export abstract class Editor {
     editToTab( text: string, tabChar: string, tabSize: number ): string {
         return text.replace( new RegExp(tabChar, "g"), tabChar.repeat(tabSize) );
     }
+    */
 
     lineNumberView() {
         this.isLineNumView = !this.isLineNumView;
@@ -331,12 +332,8 @@ export abstract class Editor {
 
     keyLeft() {
         if ( this.curColumn > 0 ) {
-            if ( TABCONVCHAR.repeat(this.tabSize) === StringUtils.scrSubstr(this.buffers[this.curLine], this.curColumn - this.tabSize, this.tabSize ) ) {
-                this.curColumn -= this.tabSize;
-            } else {
-                let text = StringUtils.scrSubstr(this.buffers[this.curLine], 0, this.curColumn);
-                this.curColumn = strWidth(text.substr(0, text.length - 1));
-            }
+            let text = StringUtils.scrSubstr(this.buffers[this.curLine], 0, this.curColumn);
+            this.curColumn = strWidth(text.substr(0, text.length - 1));
         } else if ( this.curLine > 0) {
             this.curColumn = strWidth(this.buffers[ --this.curLine ]);
         }
@@ -347,13 +344,9 @@ export abstract class Editor {
         let str = this.buffers[this.curLine];
         let strlen = strWidth(str);
         if ( strlen > this.curColumn ) {
-            if ( TABCONVCHAR.repeat(this.tabSize) === StringUtils.scrSubstr(this.buffers[this.curLine], this.curColumn - this.tabSize, this.tabSize ) ) {
-                this.curColumn -= this.tabSize;
-            } else {
-                let text = StringUtils.scrSubstr(this.buffers[this.curLine], this.curColumn, 3);
-                if ( text ) {
-                    this.curColumn += strWidth(text.substr(0, 1));
-                }
+            let text = StringUtils.scrSubstr(this.buffers[this.curLine], this.curColumn, strWidth("\t"));
+            if ( text ) {
+                this.curColumn += strWidth(text.substr(0, 1));
             }
         } else if ( strlen === this.curColumn && this.curLine !== this.buffers.length - 1 ) {
             this.curLine++;
@@ -444,10 +437,8 @@ export abstract class Editor {
         if ( this.curColumn < strWidth(line) ) {
             this.doInfo.push( new DoData(this.curLine, this.curColumn, [ line ]));
 
-            let temp = StringUtils.scrSubstr(line, this.curColumn, this.tabSize);
-
             let firstText = StringUtils.scrSubstr(line, 0, this.curColumn);
-            let lastText = line.substr(firstText.length + (temp === TABCONVCHAR.repeat(temp.length) ? temp.length : 1));
+            let lastText = line.substr(firstText.length + 1);
 
             line = firstText + lastText;
             this.buffers[this.curLine] = line;
@@ -484,7 +475,7 @@ export abstract class Editor {
         if ( this.buffers.length > this.curLine ) {
             let line = this.buffers[this.curLine];
 
-            let line2;
+            let line2 = "";
             if ( this.curColumn === 0 && this.buffers.length > 0 && this.curLine > 0 ) {
                 line2 = this.buffers[this.curLine - 1];
                 this.doInfo.push( new DoData(this.curLine - 1, this.curColumn, [ line2, line ] ));
@@ -501,29 +492,18 @@ export abstract class Editor {
                 if ( this.curColumn <= strSize ) {
                     this.doInfo.push( new DoData(this.curLine, this.curColumn, [ line ] ));
 
-                    let tabCheck = "";
-                    if ( this.curColumn - this.tabSize >= 0 ) {
-                        tabCheck = StringUtils.scrSubstr(this.buffers[this.curLine], this.curColumn - this.tabSize, this.tabSize);
-                    } else {
-                        tabCheck = StringUtils.scrSubstr(this.buffers[this.curLine], 0, this.curColumn);
-                    }
-                    if ( tabCheck === TABCONVCHAR.repeat(tabCheck.length) ) {
-                        line2 = StringUtils.scrStrReplace(this.buffers[this.curLine], this.curColumn - tabCheck.length, tabCheck.length);
-                        this.curColumn -= tabCheck.length;
-                    } else {
-                        let firstText = StringUtils.scrSubstr( this.buffers[this.curLine], 0, this.curColumn );
-                        let lastText = this.buffers[this.curLine].substr(firstText.length);
-                        firstText = firstText.substr(0, firstText.length - 1);
-                        line2 = firstText + lastText;
-                        this.curColumn = strWidth(firstText);
-                    }
+                    let firstText = StringUtils.scrSubstr( this.buffers[this.curLine], 0, this.curColumn );
+                    let lastText = this.buffers[this.curLine].substr(firstText.length);
+                    firstText = firstText.substr(0, firstText.length - 1);
+                    line2 = firstText + lastText;
+                    this.curColumn = strWidth(firstText);
                 }
-            }
-            this.buffers[ this.curLine ] = line2;
-            this.postUpdateLines( this.curLine );
+                this.buffers[ this.curLine ] = line2;
+                this.postUpdateLines( this.curLine );
 
-            this.editSelect.x2 = this.curColumn;
-            this.editSelect.y2 = this.curLine;
+                this.editSelect.x2 = this.curColumn;
+                this.editSelect.y2 = this.curLine;
+            }
         }
         this.curColumnMax = this.curColumn;
     }
@@ -532,8 +512,6 @@ export abstract class Editor {
         if ( this.isReadOnly ) return;
 
         if ( this.editMode !== EDIT_MODE.EDIT ) {
-            const tabStr = TABCONVCHAR.repeat(this.tabSize);
-
             this.selectSort( this.editSelect );
 
             let save: string[] = [];
@@ -543,24 +521,18 @@ export abstract class Editor {
             this.doInfo.push( new DoData(this.editSelect.y1, 0, save, -1 ));
             
             for ( let y = this.editSelect.y1; y <= this.editSelect.y2; y++ ) {
-                this.buffers[y] = tabStr + this.buffers[y];
+                this.buffers[y] = "\t" + this.buffers[y];
             }
-
             this.postUpdateLines( this.editSelect.y1, this.editSelect.y2 - this.editSelect.y1 + 1);
-            this.screenMemSave( this.line, this.column );
+        } else {
+            this.inputData( "\t" );
         }
-
-        let tabSize = 4 - (this.curColumn % 4);
-        this.inputData( TABCONVCHAR.repeat(tabSize) );
-        this.screenMemSave( this.line, this.column );
     }
 
     keyUntab() {
         if ( this.isReadOnly ) return;
 
         if ( this.editMode !== EDIT_MODE.EDIT ) {
-            const tabStr = TABCONVCHAR.repeat(this.tabSize);
-
             this.selectSort( this.editSelect );
 
             let save: string[] = [];
@@ -570,12 +542,15 @@ export abstract class Editor {
             this.doInfo.push( new DoData(this.editSelect.y1, 0, save, -1 ));
 
             for ( let y = this.editSelect.y1; y <= this.editSelect.y2; y++ ) {
-                if ( tabStr === this.buffers[y].substr(0, tabStr.length) ) {
-                    this.buffers[y] = this.buffers[y].substr(tabStr.length);
+                if ( this.buffers[y].substr(0, 1) === "\t" ) {
+                    this.buffers[y] = this.buffers[y].substr(1);
                 }
             }
+        } else {
+            if ( this.buffers[this.curLine].substr(0, 1) === "\t" ) {
+                this.buffers[this.curLine] = this.buffers[this.curLine].substr(1);
+            }
         }
-        this.screenMemSave( this.line, this.column );
     }
 
     indentMode() {
@@ -609,12 +584,12 @@ export abstract class Editor {
         let line = this.buffers[this.curLine];
         let ne = 0, old = this.curColumn;
         for ( let n = 0; n < line.length; n++ ) {
-            if (line[n] !== ' ' && line[n] !== TABCONVCHAR) {
+            if (line[n] !== ' ' && line[n] !== "\t") {
                 ne = n;
                 break;
             }
         }
-        this.curColumn = old === ne ? 0 : ne;
+        this.curColumn = old === ne ? 0 : strWidth(line.substr(0, ne));
         this.keyPressCommon();
     }
 
@@ -706,7 +681,7 @@ export abstract class Editor {
         let p1 = "";
         if ( this.indentMode ) {
             for ( let n = 0; n < line.length; n++ ) {
-                if (line[n] !== ' ' && line[n] !== TABCONVCHAR) {
+                if (line[n] !== ' ' && line[n] !== "\t") {
                     p1 = line.substr(0, n);
                     break;
                 }
@@ -716,16 +691,20 @@ export abstract class Editor {
         this.doInfo.push( new DoData(this.curLine, this.curColumn, [line], 2) );
 
         if ( this.buffers.length > this.curLine ) {
-            this.buffers[this.curLine] = StringUtils.scrSubstr(line, 0, this.curColumn);
-            let line3 = p1 + StringUtils.scrSubstr(line, this.curColumn);
-            this.buffers.splice( this.curLine, 0, line3 );
+            let firstLine = StringUtils.scrSubstr(line, 0, this.curColumn);
+            let lastLine = p1 + line.substr(firstLine.length);
+            this.buffers.splice( this.curLine, 0, lastLine );
+            this.buffers[ this.curLine ] = firstLine;
+            this.buffers[ this.curLine+1 ] = lastLine;
             this.postUpdateLines(this.curLine);
         } else {
             this.buffers.push(p1);
-            this.screenMemSave( this.line, this.column );
         }
+        this.screenMemSave( this.line, this.column );
         this.curColumn = p1.length;
         this.curColumnMax = this.curColumn;
+
+        log.debug( "CUR COL: [%d]", this.curColumn);
         this.keyDown();
     }
 
