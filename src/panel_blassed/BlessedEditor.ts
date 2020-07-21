@@ -236,6 +236,8 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
 
             // log.debug( "line : %d, [%d] [%s]", y - yi, bufferLine.viewLine, bufferLine.text );
             
+            const bufferLine: IEditorBuffer = this.viewBuffers[y - yi];
+            let tpos = 0;
             for (let x = Math.max(xi, 0); x < xl; x++) {
                 if (!line[x]) break;
 
@@ -262,23 +264,12 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
                 }
 
                 line[x][1] = ' ';
-                if ( x - xi > -1 ) {
-                    const bufferLine: IEditorBuffer = this.viewBuffers[y - yi];
-                    if ( bufferLine?.text && x - xi < bufferLine.text.length ) {
-                        line[x][1] = bufferLine.text[x - xi] || ' ';
-                        if (screen.fullUnicode) {
-                            var point = unicode.codePointAt(bufferLine.text, x - xi);
-                            // Handle combining chars:
-                            // Make sure they get in the same cell and are counted as 0.
-                            if (unicode.combining[point]) {
-                                if (point > 0x00ffff) {
-                                    x++;
-                                }
-                                continue;
-                            } else if (point > 0x00ffff) { // Make sure we put surrogate pair chars in one cell.
-                                x++;
-                            }
-                        }
+                if ( x - xi > -1 && bufferLine?.text && tpos < bufferLine.text.length ) {
+                    let ch = bufferLine.text[tpos++];
+                    let chSize = unicode.strWidth( ch );
+                    line[x][1] = ch;
+                    if ( chSize > 1 ) {
+                        x += chSize - 1;
                     }
                 }
             }

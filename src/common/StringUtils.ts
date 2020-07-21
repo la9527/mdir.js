@@ -98,7 +98,7 @@ export class StringUtils {
         }
         if ( !resultText ) {
             return resultText;
-        }        
+        }
         return resultText + StringUtils.scrSubstr(text, firstPos + removeLenChStr);
     }
 }

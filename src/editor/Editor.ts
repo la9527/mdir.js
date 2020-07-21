@@ -331,16 +331,11 @@ export abstract class Editor {
 
     keyLeft() {
         if ( this.curColumn > 0 ) {
-            let cul = 0;
-            for ( let i = 0; i < this.tabSize; i++ ) {
-                this.curColumn--;
-                cul++;
-                if ( this.curColumn <= 0 || TABCONVCHAR !== StringUtils.scrSubstr(this.buffers[this.curLine], this.curColumn, 1 ) ) {
-                    break;
-                }
-            }
-            if ( cul != this.tabSize && cul > 1 ) {
-                this.curColumn++;
+            if ( TABCONVCHAR.repeat(this.tabSize) === StringUtils.scrSubstr(this.buffers[this.curLine], this.curColumn - this.tabSize, this.tabSize ) ) {
+                this.curColumn -= this.tabSize;
+            } else {
+                let text = StringUtils.scrSubstr(this.buffers[this.curLine], 0, this.curColumn);
+                this.curColumn = strWidth(text.substr(0, text.length - 1));
             }
         } else if ( this.curLine > 0) {
             this.curColumn = strWidth(this.buffers[ --this.curLine ]);
@@ -352,16 +347,12 @@ export abstract class Editor {
         let str = this.buffers[this.curLine];
         let strlen = strWidth(str);
         if ( strlen > this.curColumn ) {
-            for ( let i = 0; i < this.tabSize; i++ ) {
-                this.curColumn++;
-                if ( this.curColumn >= strlen ||
-                    TABCONVCHAR !== StringUtils.scrSubstr(str, this.curColumn, 1 ) ) {
-                    break;
-                }
-                if ( i === 0 ) {
-                    if ( TABCONVCHAR !== StringUtils.scrSubstr(str, this.curColumn - 1, 1 ) ) {
-                        break;
-                    }
+            if ( TABCONVCHAR.repeat(this.tabSize) === StringUtils.scrSubstr(this.buffers[this.curLine], this.curColumn - this.tabSize, this.tabSize ) ) {
+                this.curColumn -= this.tabSize;
+            } else {
+                let text = StringUtils.scrSubstr(this.buffers[this.curLine], this.curColumn, 3);
+                if ( text ) {
+                    this.curColumn += strWidth(text.substr(0, 1));
                 }
             }
         } else if ( strlen === this.curColumn && this.curLine !== this.buffers.length - 1 ) {
@@ -454,8 +445,11 @@ export abstract class Editor {
             this.doInfo.push( new DoData(this.curLine, this.curColumn, [ line ]));
 
             let temp = StringUtils.scrSubstr(line, this.curColumn, this.tabSize);
-            line = StringUtils.scrStrReplace(this.buffers[this.curLine], this.curColumn, temp === TABCONVCHAR.repeat(temp.length) ? temp.length : 1);
-            
+
+            let firstText = StringUtils.scrSubstr(line, 0, this.curColumn);
+            let lastText = line.substr(firstText.length + (temp === TABCONVCHAR.repeat(temp.length) ? temp.length : 1));
+
+            line = firstText + lastText;
             this.buffers[this.curLine] = line;
             this.postUpdateLines(this.curLine);
         } else if ( this.curLine + 1 < this.buffers.length ) {
@@ -517,8 +511,11 @@ export abstract class Editor {
                         line2 = StringUtils.scrStrReplace(this.buffers[this.curLine], this.curColumn - tabCheck.length, tabCheck.length);
                         this.curColumn -= tabCheck.length;
                     } else {
-                        line2 = StringUtils.scrStrReplace(this.buffers[this.curLine], this.curColumn - 1, 1);
-                        this.curColumn -= 1;
+                        let firstText = StringUtils.scrSubstr( this.buffers[this.curLine], 0, this.curColumn );
+                        let lastText = this.buffers[this.curLine].substr(firstText.length);
+                        firstText = firstText.substr(0, firstText.length - 1);
+                        line2 = firstText + lastText;
+                        this.curColumn = strWidth(firstText);
                     }
                 }
             }
