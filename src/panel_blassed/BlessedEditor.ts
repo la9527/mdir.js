@@ -258,7 +258,8 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
         
         const { x: curX, y: curY } = this._cursorCheck();
 
-        log.debug( "[%d/%d] cursor : [%d] [%d] [%d] [%d]", this.line, this.column, this.curColumn, curX, curY, cursor );
+        // log.debug( "[%d/%d] cursor : [%d] [%d] [%d] [%d]", this.line, this.column, this.curColumn, curX, curY, cursor );
+        log.debug( "selected [1: %d/%d 2: %d/%d]", this.editSelect.x1, this.editSelect.y1, this.editSelect.x2, this.editSelect.y2 );
 
         for (let y = Math.max(yi, 0); y < yl; y++) {
             let line = screen.lines[y];
@@ -272,6 +273,7 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
 
             const bufferLine: IViewBuffer = this.viewBuffers[y - yi];
             //log.debug( "line : %d, [%d] [%s]", y - yi, bufferLine.viewLine, bufferLine.text );
+            
             let tpos = 0;
             for (let x = Math.max(xi, 0); x < xl; x++) {
                 if (!line[x]) break;
@@ -294,25 +296,31 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
                         inverse: false,
                         invisible: false,
                         bg: box.style.bg,
-                        // fg: box.style.fg,
-                        fg: "gray"
+                        fg: box.style.fg
                     }) | (8 << 18);
                 }
 
                 line[x][1] = ' ';
                 if ( x - xi > -1 && bufferLine?.text && tpos < bufferLine.text.length ) {
-                    if ( bufferLine.selectInfo && 
-                         tpos >= bufferLine.selectInfo.start && 
-                         tpos <= bufferLine.selectInfo.end ) {
-                        line[x][0] = (box as any).sattr({
-                            bold: false,
-                            underline: false,
-                            blink: false,
-                            inverse: true,
-                            invisible: false,
-                            bg: box.style.bg,
-                            fg: box.style.fg
-                        });
+                    if ( bufferLine.selectInfo ) {
+                        const { all, start, end } = bufferLine.selectInfo;
+                        let select = all;
+                        if ( !select && tpos >= start ) {
+                            if ( end === -1 || end >= tpos ) {
+                                select = true;
+                            }
+                        }
+                        if ( select ) {
+                            line[x][0] = (box as any).sattr({
+                                bold: false,
+                                underline: false,
+                                blink: false,
+                                inverse: false,
+                                invisible: false,
+                                bg: box.style.bg,
+                                fg: box.style.fg
+                            }) | (8 << 18);
+                        }
                     }
                     let ch = bufferLine.text[tpos++];
                     let chSize = unicode.strWidth( ch );

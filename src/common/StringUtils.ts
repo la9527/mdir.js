@@ -66,25 +66,6 @@ export class StringUtils {
         return resText;
     }
     
-    static scrSubstr2( text: string, firstPos: number, len: number = -1 ) {
-        let pos = firstPos;
-        let strlen = 0;
-        let resText = "";
-        if ( !text || firstPos < 0 || firstPos >= text.length || len === 0 ) {
-            return resText;
-        }
-        try {
-            do {
-                resText += text[pos];
-                strlen += strWidth( text[pos] );
-                if ( len > -1 && strlen >= len ) break;
-            } while( ++pos < text.length );
-        } catch ( e ) {
-            log.error( "text [%s] - [%d] [%d] firstPos [%d] len [%d] - ERROR [%s]", text, pos, text.length, firstPos, len, e );
-        }
-        return resText;
-    }
-
     // ("123456", 3, 1) ==> "12456"
     // ("123456", 3, "7") ==> "123756"
     // ("123456", 3, "7", true) ==> "1237456"
@@ -164,11 +145,17 @@ export class StringLineToken {
     }
 
     get() {
+        if ( this.tokens[this._curLine] ) {
+            return "";
+        }
         return this.tokens[this._curLine].text || "";
     }
 
     getPos() {
-        return this.tokens[this._curLine].pos || "";
+        if ( this.tokens[this._curLine] ) {
+            return 0;
+        }
+        return this.tokens[this._curLine].pos || 0;
     }
 
     size() {

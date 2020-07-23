@@ -190,22 +190,25 @@ export abstract class Editor {
             }
         }
 
-        log.debug("firstLine [%d] [%d]", this.curLine, this.firstLine);
-
         let strLineToken = new StringLineToken();
 
-        if ( this.editMode !== EDIT_MODE.SELECT ) {
-            return false;
-        }
+        let isInside = (start: number, end: number, pos: number) => {
+            return (start <= pos && end >= pos);
+        };
+
+        this.selectSort(this.editSelect);
+
+        log.debug( "firstLine [%d] [%d]", this.curLine, this.firstLine);
+        log.debug( "SELECT [%d/%d] ~ [%d/%d]", 
+                                this.editSelect.x1, this.editSelect.y1, this.editSelect.x2, this.editSelect.y2 );
         
         for(;;) {
             let viewLine = this.firstLine;
-            if (viewLine < 0) return false;
+            if (viewLine < 0) return;
     
             this.viewBuffers = [];
 
             let isNext = false;
-            
             for ( let t = 0; t < line; t++ ) {
                 if ( !strLineToken.next(true) ) {
                     if ( viewLine >= this.buffers.length ) break;
@@ -214,8 +217,8 @@ export abstract class Editor {
 
                 isNext = strLineToken.size() - 1 !== strLineToken.curLine;
 
-                let { text: viewStr, pos } = strLineToken.getToken();
-
+                let { text: viewStr, pos } = strLineToken.getToken() || { text: "", pos: 0 };
+                let endPos = pos + viewStr.length;
                 let lineInfo: IViewBuffer = {};
                 lineInfo.viewLine = t;
                 lineInfo.textLine = viewLine - 1;
@@ -223,15 +226,45 @@ export abstract class Editor {
                 lineInfo.isNext = isNext;
                 lineInfo.nextLineNum = strLineToken.curLine;
 
-                // TODO
-                if ( this.editSelect.y1 < lineInfo.textLine && this.editSelect.y2 > lineInfo.textLine ) {
-                    lineInfo.selectInfo = { all: true };
-                } else if ( this.editSelect.y1 === lineInfo.textLine && this.editSelect.y2 === lineInfo.textLine ) {
-                    if ( this.editSelect.x1 > pos && this.editSelect.x1 - pos > 0 ) {
-                        lineInfo.selectInfo = { start: this.editSelect.x1 - pos };
+                if ( this.editMode === EDIT_MODE.SELECT ) {
+                    let selectInfo: any = {};
+                    let { x1, y1, x2, y2 } = this.editSelect;
+                    if ( y1 < lineInfo.textLine && y2 > lineInfo.textLine ) {
+                        selectInfo.all = true;
+                    } else if ( y1 === lineInfo.textLine && y2 === lineInfo.textLine ) {
+                        if ( isInside(pos, endPos, x1) && isInside(pos, endPos, x2) ) {
+                            selectInfo.start = x1 - pos;
+                            selectInfo.end = x2 - pos;
+                        } else if ( isInside(pos, endPos, x1) ) {
+                            selectInfo.start = x1 - pos;
+                            selectInfo.end = -1;
+                        } else if ( isInside(pos, endPos, x2) ) {
+                            selectInfo.start = -1;
+                            selectInfo.end = x2 - pos;
+                        }
+                    } else if ( y1 === lineInfo.textLine ) {
+                        if ( isInside(pos, endPos, x1) ) {
+                            selectInfo.start = x1 - pos;
+                            selectInfo.end = -1;
+                        } else if ( x1 <= pos ) {
+                            selectInfo.all = true;
+                        }
+                    } else if ( y2 === lineInfo.textLine ) {
+                        if ( isInside(pos, endPos, x2) ) {
+                            selectInfo.start = -1;
+                            selectInfo.end = x2;
+                        } else if ( x2 >= endPos ) {
+                            selectInfo.all = true;
+                        }
                     }
-                } else if ( this.editSelect.y2 === lineInfo.textLine ) {
-                    lineInfo.selectInfo = { start: 0, end: 0 };
+                    lineInfo.selectInfo = selectInfo;
+                    if ( typeof(lineInfo.selectInfo.start) === "number" ) {
+                        log.debug( "SELECT1 [%d/%d] ~ [%d/%d] pos [%d/%d] selectInfo [%j] lineInfo [%j]", 
+                                    this.editSelect.x1, this.editSelect.y1, this.editSelect.x2, this.editSelect.y2, 
+                                    pos, endPos, 
+                                    selectInfo,
+                                    lineInfo );
+                    }
                 }
                 this.viewBuffers.push( lineInfo );
                 strLineToken.next();
@@ -252,7 +285,6 @@ export abstract class Editor {
             }
             break;
         }
-        return true;
     }
     
     setViewTitle( title = "" ) {
