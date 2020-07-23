@@ -182,7 +182,7 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         findPromise: "C-f",
         findNextPromise: "C-n",
         filePreviousPromise: "C-b",
-        quitPromise: "C-q"
+        quitEditorPromise: "C-q"
     }
 };
 

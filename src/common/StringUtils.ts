@@ -104,8 +104,13 @@ export class StringUtils {
     }
 }
 
+export interface IToken {
+    text: string;
+    pos: number;
+}
+
 export class StringLineToken {
-    private tokens: string[] = [];
+    private tokens: IToken[] = [];
     private _source: string = null;
 
     private _width: number;
@@ -138,6 +143,7 @@ export class StringLineToken {
             return;
         }
 
+        let pos = 0;
         do {
             let strlen = strWidth(lineStr);
             if ( strlen <= viewWidth ) {
@@ -148,21 +154,21 @@ export class StringLineToken {
                 lineStr = StringUtils.scrSubstr( lineStr, viewWidth, strlen - viewWidth );
                 nextLine = false;
             }
-
-            this.tokens.push( viewStr );
+            this.tokens.push( { text: viewStr, pos } );
+            pos += viewStr.length;
         } while( !nextLine );
     }
 
-    setLineData( text, line ) {
-        if ( this.tokens.length <= line ) {
-            this.tokens.push( text );
-        } else {
-            this.tokens[line] = text;
-        }
+    getToken() {
+        return this.tokens[this._curLine];
     }
 
     get() {
-        return this.tokens[this._curLine] || "";
+        return this.tokens[this._curLine].text || "";
+    }
+
+    getPos() {
+        return this.tokens[this._curLine].pos || "";
     }
 
     size() {

@@ -17,7 +17,6 @@ console.log( StringUtils.scrSubstr("21", 2, 0) );
 console.log( "[" + StringUtils.scrSubstr("한글을 입력합니다.", 4, 1) + "]" );
 */
 
-/*
 (async () => {
     const screen = blessed.screen({
         smartCSR: true,
@@ -44,4 +43,3 @@ console.log( "[" + StringUtils.scrSubstr("한글을 입력합니다.", 4, 1) + "
     newView.setFocus();
     screen.render();
 })();
-*/

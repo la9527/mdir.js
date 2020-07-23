@@ -253,7 +253,7 @@ export class MainFrame implements IHelpService {
             useBCE: true,
             ignoreDockContrast: true,
             tabSize: 4,
-            debug: true,
+            // debug: true,
             // dump: true,
             // log: process.env.HOME + "/.m/m2.log"
         });
@@ -296,9 +296,11 @@ export class MainFrame implements IHelpService {
         }
         this.viewRender();
 
-        this.screen.key("q", () => {
-            process.exit(0);
-        });
+        if ( (global as any).debug ) {
+            this.screen.key("C-p", () => {
+                process.exit(0);
+            });
+        }
         
         this.eventStart();
         this.screen.render();
@@ -502,10 +504,14 @@ export class MainFrame implements IHelpService {
         if ( (activePanel instanceof BlessedXterm) ) {
             return RefreshType.NONE;
         }
-        this.menuClose();
-
         let viewName = this.activeFocusObj().viewName() || "Common";
+        if ( !menuConfig[ viewName ] ) {
+            return RefreshType.NONE;
+        }
+        this.menuClose();
+        
         log.debug( "menuConfig[ viewName ] !!!", viewName, menuConfig[ viewName ] );
+
         this.blessedMenu.init();
         this.blessedMenu.setMainMenuConfig( menuConfig[ viewName ] );
         this.blessedMenu.setFocus();

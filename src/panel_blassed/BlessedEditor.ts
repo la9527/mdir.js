@@ -1,6 +1,6 @@
 import * as blessed from "neo-blessed";
 import { Widgets } from "../../@types/blessed.d";
-import { strWidth } from "neo-blessed/lib/unicode";
+import { strWidth, charWidth } from "neo-blessed/lib/unicode";
 import * as unicode from "neo-blessed/lib/unicode";
 import { Widget } from "./widget/Widget";
 import { Logger } from "../common/Logger";
@@ -14,8 +14,9 @@ import { messageBox } from "./widget/MessageBox";
 import { inputBox } from "./widget/InputBox";
 import { T } from "../common/Translation";
 
-import { Editor, IEditorBuffer } from "../editor/Editor";
+import { Editor, IViewBuffer, EDIT_MODE } from '../editor/Editor';
 import { Color } from "../common/Color";
+import mainFrame from "./MainFrame";
 
 const log = Logger( "BlassedEditor" );
 
@@ -30,6 +31,7 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
     baseWidget: Widget = null;
     editor: Widget = null;
     header: Widget = null;
+    tailer: Widget = null;
     reader: Reader = null;
 
     constructor(opts: Widgets.BoxOptions | any, reader: Reader = null) {
@@ -49,7 +51,7 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
             left: 0,
             top: 1,
             width: "100%",
-            height: "100%-1"
+            height: "100%-2"
         });
 
         this.header = new Widget({
@@ -62,6 +64,38 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
                 bg: this.colorStat.back,
                 fg: this.colorStat.font
             }
+        });
+
+        this.tailer = new Widget({
+            parent: this.baseWidget,
+            left: 0,
+            top: "100%-1",
+            width: "100%",
+            height: 1,
+            style: {
+                bg: this.colorStat.back,
+                fg: this.colorStat.font
+            }
+        });
+
+        this.header.on("prerender", () => {
+            log.debug( "header prerender !!! - Start %d", this.baseWidget._viewCount );
+            this.header.setContent(this.title);
+        });
+        this.tailer.on("prerender", () => {
+            log.debug( "tailer prerender !!! - Start %d", this.baseWidget._viewCount );
+            let status1 = "";
+            status1 = this.lastDoInfoLength !== this.doInfo.length ? "[Change]" : status1;
+            status1 = this.isReadOnly ? "[Read Only]" : status1;
+
+            let status2 = "";
+            status2 = this.isDosMode ? "[DOS]" : status2;
+
+            let status3 = this.isInsert ? "[Ins]" : "[Ovr]";
+            status3 = this.editMode === EDIT_MODE.SELECT ? "[Select]" : status3;
+
+            this.tailer.setContentFormat("          %-10s{|}Line: {bold}%-3d{/bold} Col: {bold}%-3d{/bold} %s%s", 
+                status1, this.curLine, this.curColumn, status2, status3);
         });
 
         this.editor.on("detach", () => {
@@ -85,10 +119,18 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
         };
     }
 
+    setViewTitle( title ) {
+        this.title = StringUtils.ellipsis( title, this.editor.width);
+    }
+
     keyWrite( keyInfo ): RefreshType {
-        if ( keyInfo && keyInfo.name !== "return" && keyInfo ) {
-            log.debug( "write : [%j]", keyInfo );
-            this.inputData( keyInfo.sequence || keyInfo.ch );
+        if ( keyInfo && keyInfo.name !== "return" ) {
+            let ch = keyInfo.sequence || keyInfo.ch;
+            let chlen = charWidth( ch );
+            log.debug( "keywrite : [%j] charlen [%d]", keyInfo, chlen );
+            if ( chlen > 0 ) {
+                this.inputData( ch );
+            }
             return RefreshType.OBJECT;
         } else {
             log.debug( "NOT - pty write : [%j]", keyInfo );
@@ -97,15 +139,15 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
     }
 
     postLoad(): void {
-        //
+        // TODO: editor file highlight
     }
     postUpdateLines(line?: number, height?: number): void {
-        
+        // TODO: editor file highlight
     }
 
     inputBox(title: string, text: string, inputedText?: string): Promise<string[]> {
         return inputBox({
-            parent: this.baseWidget,
+            parent: this.baseWidget.screen,
             title: title, 
             button: [ "OK" ],
             defaultText: inputedText
@@ -114,7 +156,7 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
     
     messageBox(title: any, text: any, buttons?: string[]): Promise<string> {
         return messageBox({
-            parent: this.baseWidget,
+            parent: this.baseWidget.screen,
             title: title, 
             msg: text,
             button: buttons
@@ -217,7 +259,7 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
         const { x: curX, y: curY } = this._cursorCheck();
 
         log.debug( "[%d/%d] cursor : [%d] [%d] [%d] [%d]", this.line, this.column, this.curColumn, curX, curY, cursor );
-        
+
         for (let y = Math.max(yi, 0); y < yl; y++) {
             let line = screen.lines[y];
             if (!line) break;
@@ -228,7 +270,7 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
                 cursor = -1;
             }
 
-            const bufferLine: IEditorBuffer = this.viewBuffers[y - yi];
+            const bufferLine: IViewBuffer = this.viewBuffers[y - yi];
             //log.debug( "line : %d, [%d] [%s]", y - yi, bufferLine.viewLine, bufferLine.text );
             let tpos = 0;
             for (let x = Math.max(xi, 0); x < xl; x++) {
@@ -252,32 +294,50 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
                         inverse: false,
                         invisible: false,
                         bg: box.style.bg,
-                        fg: box.style.fg,
+                        // fg: box.style.fg,
+                        fg: "gray"
                     }) | (8 << 18);
                 }
 
                 line[x][1] = ' ';
                 if ( x - xi > -1 && bufferLine?.text && tpos < bufferLine.text.length ) {
+                    if ( bufferLine.selectInfo && 
+                         tpos >= bufferLine.selectInfo.start && 
+                         tpos <= bufferLine.selectInfo.end ) {
+                        line[x][0] = (box as any).sattr({
+                            bold: false,
+                            underline: false,
+                            blink: false,
+                            inverse: true,
+                            invisible: false,
+                            bg: box.style.bg,
+                            fg: box.style.fg
+                        });
+                    }
                     let ch = bufferLine.text[tpos++];
                     let chSize = unicode.strWidth( ch );
-                    line[x][1] = ch;
-                    if ( chSize > 1 ) {
-                        if ( ch === "\t" ) {
-                            line[x][1] = ' ';
+                    if (chSize === 0 ) {
+                        ch = '';
+                    } else {
+                        line[x][1] = ch;
+                        if ( chSize > 1 ) {
+                            if ( ch === "\t" ) {
+                                line[x][1] = ' ';
+                            }
+                            for ( let i = 1; i < chSize; i++ ) {
+                                line[x+i][0] = (box as any).sattr({
+                                    bold: false,
+                                    underline: false,
+                                    blink: false,
+                                    inverse: false,
+                                    invisible: false,
+                                    bg: box.style.bg,
+                                    fg: box.style.fg,
+                                });
+                                line[x+i][1] = ' ';
+                            }
+                            x += chSize - 1;
                         }
-                        for ( let i = 1; i < chSize; i++ ) {
-                            line[x+i][0] = (box as any).sattr({
-                                bold: false,
-                                underline: false,
-                                blink: false,
-                                inverse: false,
-                                invisible: false,
-                                bg: box.style.bg,
-                                fg: box.style.fg,
-                            });
-                            line[x+i][1] = ' ';
-                        }
-                        x += chSize - 1;
                     }
                 }
             }
@@ -290,5 +350,12 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
             screen.draw(yi + startRow, yi + endRow);
         }
         return ret;
+    }
+
+    async quitEditorPromise() {
+        const result = await super.quitPromise();
+        if ( result ) {
+            await mainFrame().editorPromise(); // quit
+        }
     }
 }

@@ -308,10 +308,12 @@ export function messageBox( msgOpt: IMessageOption, opts: Widgets.BoxOptions = {
             }, opts);
             screen.render();
         } catch( e ) {
+            log.error( e );
             try {
                 messgaeBox.destroy();
             } finally {};
             screen.render();
+            reject(e);
         }
     });
 }

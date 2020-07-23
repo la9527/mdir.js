@@ -9,22 +9,27 @@ import { FileReader } from "../panel/FileReader";
 
 const log = Logger( "editor" );
 
-export interface IEditorBuffer {
+export interface IViewBuffer {
     textLine ?: number;       // Text Position
     viewLine ?: number;       // screen view position
     nextLineNum ?: number;    // if over the one line, line number.
     isNext ?: boolean;        // Is this line over the one line?
     text ?: string;
+    selectInfo ?: {           // selected position
+        all ?: boolean;         // selected line all
+        start ?: number;        // selected start position 
+        end ?: number;          // selected end position
+    }
 };
 
-interface IEditSelect {
+export interface IEditSelect {
     x1: number;
     y1: number; // select first position(x,y)
     x2: number; 
     y2: number; // select last position (x,y)
 };
 
-enum EDIT_MODE {
+export enum EDIT_MODE {
     EDIT,            /// Edit Mode
     SELECT,            /// Select Mode
     BLOCK,            /// Block Select Mode
@@ -66,7 +71,7 @@ export abstract class Editor {
     indexFindPosX: number = 0;
     indexFindPosY: number = 0;
 
-    viewBuffers: IEditorBuffer[];
+    viewBuffers: IViewBuffer[];
     buffers: string[];
     doInfo: DoData[];
     lastDoInfoLength: number = 0;
@@ -76,7 +81,7 @@ export abstract class Editor {
     }
 
     destory() {
-        this.doInfo = null;
+        this.doInfo = [];
     }
 
     abstract postLoad(): void;
@@ -189,9 +194,13 @@ export abstract class Editor {
 
         let strLineToken = new StringLineToken();
 
+        if ( this.editMode !== EDIT_MODE.SELECT ) {
+            return false;
+        }
+        
         for(;;) {
             let viewLine = this.firstLine;
-            if (viewLine < 0) return;
+            if (viewLine < 0) return false;
     
             this.viewBuffers = [];
 
@@ -205,17 +214,25 @@ export abstract class Editor {
 
                 isNext = strLineToken.size() - 1 !== strLineToken.curLine;
 
-                let viewStr = strLineToken.get();
+                let { text: viewStr, pos } = strLineToken.getToken();
 
-                let lineInfo: IEditorBuffer = {};
+                let lineInfo: IViewBuffer = {};
                 lineInfo.viewLine = t;
                 lineInfo.textLine = viewLine - 1;
                 lineInfo.text = viewStr;
                 lineInfo.isNext = isNext;
                 lineInfo.nextLineNum = strLineToken.curLine;
 
-                // let nLineBeginPos = lineInfo.nextLineNum * column;
-                // let nLineEndPos = (lineInfo.nextLineNum * column) + column;                
+                // TODO
+                if ( this.editSelect.y1 < lineInfo.textLine && this.editSelect.y2 > lineInfo.textLine ) {
+                    lineInfo.selectInfo = { all: true };
+                } else if ( this.editSelect.y1 === lineInfo.textLine && this.editSelect.y2 === lineInfo.textLine ) {
+                    if ( this.editSelect.x1 > pos && this.editSelect.x1 - pos > 0 ) {
+                        lineInfo.selectInfo = { start: this.editSelect.x1 - pos };
+                    }
+                } else if ( this.editSelect.y2 === lineInfo.textLine ) {
+                    lineInfo.selectInfo = { start: 0, end: 0 };
+                }
                 this.viewBuffers.push( lineInfo );
                 strLineToken.next();
             }
@@ -235,6 +252,7 @@ export abstract class Editor {
             }
             break;
         }
+        return true;
     }
     
     setViewTitle( title = "" ) {
@@ -292,7 +310,10 @@ export abstract class Editor {
         let tmpFileName = fileName + ".tmp";
 
         try {
-            fs.writeFileSync( tmpFileName, encoding, this.buffers.join( this.isDosMode ? "\r\n" : "\n" ) );
+            fs.writeFileSync( tmpFileName, this.buffers.join( this.isDosMode ? "\r\n" : "\n" ), { 
+                encoding: encoding || "utf8",
+                mode: 0o644
+            });
         } catch( e ) {
             log.error( e );
             return false;
@@ -315,16 +336,6 @@ export abstract class Editor {
         }
         return true;
     }
-
-    /*
-    tabToEdit( text: string, tabChar: string, tabSize: number ): string {
-        return text.replace( new RegExp(tabChar, "g"), tabChar.repeat(tabSize) );
-    }
-
-    editToTab( text: string, tabChar: string, tabSize: number ): string {
-        return text.replace( new RegExp(tabChar, "g"), tabChar.repeat(tabSize) );
-    }
-    */
 
     lineNumberView() {
         this.isLineNumView = !this.isLineNumView;
@@ -970,7 +981,7 @@ export abstract class Editor {
 
         let file = FileReader.createFile( fileName, { virtualFile: true } );
         this.newFile( file );
-        this.setViewTitle("["+this.file.fullname+"]");
+        this.setViewTitle(this.file.fullname);
         return true;
     }
 
@@ -997,7 +1008,7 @@ export abstract class Editor {
         if ( this.save( this.file, this.encoding, this.isBackup ) ) {
             this.lastDoInfoLength = this.doInfo.length;
         }
-        this.setViewTitle("["+this.file.fullname+"]");
+        this.setViewTitle(this.file.fullname);
         return true;
     }
 
@@ -1097,8 +1108,9 @@ export abstract class Editor {
             return true;
         }
 
+        log.debug( "DO INFO [%j]", this.doInfo );
         if ( this.lastDoInfoLength !== this.doInfo.length ) {
-            let result = await this.messageBox( "Select", "This file is not saved. would you like to save this file?", [ "Yes", "No", "Cancel" ]);
+            let result = await this.messageBox( "Save", "The file has not been saved. would you like to save this file?", [ "Yes", "No", "Cancel" ]);
             if ( result === "Cancel" ) {
                 return false;
             } else if ( result === "Ok" ) {

@@ -28,6 +28,7 @@ import yargs from "yargs";
         .argv;
 
     if ( typeof(argv.logfile) !== "undefined" ) {
+        (global as any).debug = true;
         updateDebugFile( argv.logfile );
     }
 
