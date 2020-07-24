@@ -194,9 +194,7 @@ export abstract class Editor {
         let editSelect = { ...this.editSelect };
         this.selectSort(editSelect);
 
-        log.debug( "firstLine [%d] [%d]", this.curLine, this.firstLine);
-        log.debug( "SELECT [%d/%d] ~ [%d/%d]", 
-                                editSelect.x1, editSelect.y1, editSelect.x2, editSelect.y2 );
+        log.debug( "screenMemSave: line [%d] column [%d]", line, column);
         
         for(;;) {
             let viewLine = this.firstLine;
@@ -210,16 +208,13 @@ export abstract class Editor {
                     if ( viewLine >= this.buffers.length ) break;
                     strLineToken.setString( this.buffers[viewLine++], column );
                 }
-
-                isNext = strLineToken.size() - 1 !== strLineToken.curLine;
-
                 let { text: viewStr, pos } = strLineToken.getToken() || { text: "", pos: 0 };
                 let endPos = pos + viewStr.length;
                 let lineInfo: IViewBuffer = {};
                 lineInfo.viewLine = t;
                 lineInfo.textLine = viewLine - 1;
                 lineInfo.text = viewStr;
-                lineInfo.isNext = isNext;
+                lineInfo.isNext = strLineToken.next(true);
                 lineInfo.nextLineNum = strLineToken.curLine;
 
                 if ( this.editMode === EDIT_MODE.SELECT ) {
@@ -265,6 +260,7 @@ export abstract class Editor {
                     }
                 }
                 this.viewBuffers.push( lineInfo );
+                if ( line <= this.viewBuffers.length + 2 ) break;
                 strLineToken.next();
             }
 

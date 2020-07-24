@@ -93,6 +93,78 @@ export interface IToken {
 export class StringLineToken {
     private tokens: IToken[] = [];
     private _source: string = null;
+    private _sourceLen: number = -1;
+
+    private _width: number;
+    private _curLine: number;
+
+    private _curStr: string = null;
+    private _lastStr: string = null;
+    private _pos: number = -1;
+    private _nextLine: boolean = false;
+
+    get curLine() {
+        return this._curLine;
+    }
+
+    get width() {
+        return this._width;
+    }
+
+    get source() {
+        return this._source;
+    }
+
+    private update() {
+        this._sourceLen = strWidth(this._lastStr);
+        if ( this._sourceLen <= this._width ) {
+            this._curStr = this._lastStr;
+            this._nextLine = false;
+        } else {
+            this._curStr = StringUtils.scrSubstr( this._source, 0, this._width );
+            this._lastStr = this._source.substr(this._curStr.length);
+            this._nextLine = true;
+        }
+        this._pos += this._curStr.length;
+    }
+
+    setString( source: string, viewWidth = 80 ) {
+        this._source = source;
+        this._lastStr = source;
+        this._width = viewWidth;
+        this._pos = 0;
+        this._curLine = 0;
+        if ( !source ) {
+            return;
+        }
+        this.update();
+    }
+
+    getToken() {
+        return { text: this._curStr, pos: this._pos };
+    }
+
+    get() {
+        return this._curStr;
+    }
+
+    getPos() {
+        return this._pos;
+    }
+
+    next(isCheckOnly: boolean = false): boolean {
+        if ( !isCheckOnly ) {
+            this.update();
+            this._curLine++;
+        }
+        return this._nextLine;
+    }
+}
+
+/*
+export class StringLineToken {
+    private tokens: IToken[] = [];
+    private _source: string = null;
 
     private _width: number;
     private _curLine: number;
@@ -172,3 +244,4 @@ export class StringLineToken {
         return false;
     }
 }
+*/

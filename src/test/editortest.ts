@@ -5,7 +5,13 @@ import { ImageWidget } from '../panel_blassed/widget/ImageBox';
 import { draw } from "../panel_blassed/widget/BlessedDraw";
 import { FileReader } from "../panel/FileReader";
 import { BlessedEditor } from "../panel_blassed/BlessedEditor";
-import { StringUtils } from "../common/StringUtils";
+import { StringUtils, StringLineToken } from "../common/StringUtils";
+
+let token = new StringLineToken();
+token.setString( "ABCDEFHIJKLMNOPQRSTUVWXYZ", 3 );
+do {
+    console.log( token.get() );
+} while( token.next() );
 
 /*
 console.log( StringUtils.scrSubstr("2", 0, 0) );
@@ -17,6 +23,7 @@ console.log( StringUtils.scrSubstr("21", 2, 0) );
 console.log( "[" + StringUtils.scrSubstr("한글을 입력합니다.", 4, 1) + "]" );
 */
 
+/*
 (async () => {
     const screen = blessed.screen({
         smartCSR: true,
@@ -43,3 +50,4 @@ console.log( "[" + StringUtils.scrSubstr("한글을 입력합니다.", 4, 1) + "
     newView.setFocus();
     screen.render();
 })();
+*/
