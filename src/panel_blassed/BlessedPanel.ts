@@ -30,7 +30,6 @@ class SearchFileInfo {
 
     next() {
         this.index = this.index + 1;
-        log.debug("NEXT: %d/%d", this.index, this.files.length);
         return this.get();
     }
 

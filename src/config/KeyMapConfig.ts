@@ -52,10 +52,10 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         removePromise: "C-d",
         consoleViewPromise: "escape",
         terminalPromise: "C-o",
-        vimPromise: { name: T("Func.VIM"), key: "f3" },
+        vimPromise: { name: T("Func.VIM"), key: "f4" },
         mountListPromise: { name: T( os.platform() === "win32" ? "Func.DriveList" : "Func.MountList"), key: "f11" },
         helpPromise: { name: T("Func.Help"), key: "f1" },
-        editorPromise: { name: T("Func.Editor"), key: "f4" }
+        editorPromise: { name: T("Func.Editor"), key: "f3" }
     },
     Menu: {
         keyUp: "up",

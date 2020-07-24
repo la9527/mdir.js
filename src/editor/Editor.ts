@@ -49,7 +49,6 @@ export abstract class Editor {
     curLine: number = 0;
     curColumn: number = 0;
 
-    isLineNumView: boolean = false;
     isInsert: boolean = false;
     isIndentMode: boolean = false;
 
@@ -93,23 +92,19 @@ export abstract class Editor {
     public selectSort(editSelect: IEditSelect) {
         if ( !editSelect ) return;
 
-        if ( editSelect.y1 > editSelect.y2 ) {
-            let tmp = editSelect.y1;
-            editSelect.y1 = editSelect.y2;
-            editSelect.y2 = tmp;
+        let swap = ( obj: any, keyA: string, keyB: string ) => {
+            let tmp = obj[keyA];
+            obj[keyA] = obj[keyB];
+            obj[keyB] = tmp;
+        };
 
-            tmp = editSelect.x1;
-            editSelect.x1 = editSelect.x2;
-            editSelect.x2 = tmp;
+        if ( editSelect.y1 > editSelect.y2 ) {
+            swap( editSelect, "y1", "y2" );
+            swap( editSelect, "x1", "x2" );
         } else if ( editSelect.y1 === editSelect.y2 ) {
             if ( editSelect.x1 > editSelect.x2 ) {
-                let tmp = editSelect.y1;
-                editSelect.y1 = editSelect.y2;
-                editSelect.y2 = tmp;
-
-                tmp = editSelect.x1;
-                editSelect.x1 = editSelect.x2;
-                editSelect.x2 = tmp;
+                swap( editSelect, "y1", "y2" );
+                swap( editSelect, "x1", "x2" );
             }
         }
     }
@@ -196,11 +191,12 @@ export abstract class Editor {
             return (start <= pos && end >= pos);
         };
 
-        this.selectSort(this.editSelect);
+        let editSelect = { ...this.editSelect };
+        this.selectSort(editSelect);
 
         log.debug( "firstLine [%d] [%d]", this.curLine, this.firstLine);
         log.debug( "SELECT [%d/%d] ~ [%d/%d]", 
-                                this.editSelect.x1, this.editSelect.y1, this.editSelect.x2, this.editSelect.y2 );
+                                editSelect.x1, editSelect.y1, editSelect.x2, editSelect.y2 );
         
         for(;;) {
             let viewLine = this.firstLine;
@@ -228,7 +224,7 @@ export abstract class Editor {
 
                 if ( this.editMode === EDIT_MODE.SELECT ) {
                     let selectInfo: any = {};
-                    let { x1, y1, x2, y2 } = this.editSelect;
+                    let { x1, y1, x2, y2 } = editSelect;
                     if ( y1 < lineInfo.textLine && y2 > lineInfo.textLine ) {
                         selectInfo.all = true;
                     } else if ( y1 === lineInfo.textLine && y2 === lineInfo.textLine ) {
@@ -241,6 +237,8 @@ export abstract class Editor {
                         } else if ( isInside(pos, endPos, x2) ) {
                             selectInfo.start = -1;
                             selectInfo.end = x2 - pos;
+                        } else if ( isInside(x1, x2, pos) && isInside(x1, x2, endPos) ) {
+                            selectInfo.all = true;
                         }
                     } else if ( y1 === lineInfo.textLine ) {
                         if ( isInside(pos, endPos, x1) ) {
@@ -260,7 +258,7 @@ export abstract class Editor {
                     lineInfo.selectInfo = selectInfo;
                     if ( typeof(lineInfo.selectInfo.start) === "number" ) {
                         log.debug( "SELECT1 [%d/%d] ~ [%d/%d] pos [%d/%d] selectInfo [%j] lineInfo [%j]", 
-                                    this.editSelect.x1, this.editSelect.y1, this.editSelect.x2, this.editSelect.y2, 
+                                    editSelect.x1, editSelect.y1, editSelect.x2, editSelect.y2, 
                                     pos, endPos, 
                                     selectInfo,
                                     lineInfo );
@@ -291,10 +289,8 @@ export abstract class Editor {
         this.title = title;
     }
 
-    setEditor( tabSize: 8, backup: false, isLineNumView: boolean ) {
-        this.tabSize = tabSize;
+    setEditor( backup: false ) {
         this.isBackup = backup;
-        this.isLineNumView = isLineNumView;
     }
 
     newFile( file: File ) {
@@ -321,7 +317,6 @@ export abstract class Editor {
         }
         let dosMode = false;
         fsData.split("\n").map( (item) => {
-            // item = this.tabToEdit( item, "\t", this.tabSize );
             let item2 = item.replace( new RegExp("\r"), "");
             if ( item2 !== item ) {
                 dosMode = true;
@@ -369,10 +364,6 @@ export abstract class Editor {
         return true;
     }
 
-    lineNumberView() {
-        this.isLineNumView = !this.isLineNumView;
-    }
-
     keyLeft() {
         if ( this.curColumn > 0 ) {
             let text = StringUtils.scrSubstr(this.buffers[this.curLine], 0, this.curColumn);
@@ -381,6 +372,8 @@ export abstract class Editor {
             this.curColumn = strWidth(this.buffers[ --this.curLine ]);
         }
         this.keyPressCommon();
+
+        log.debug( "keyLeft - [%d] - selected [1: %d/%d 2: %d/%d]", this.curColumn, this.editSelect.x1, this.editSelect.y1, this.editSelect.x2, this.editSelect.y2 );
     }
 
     keyRight() {
@@ -444,8 +437,8 @@ export abstract class Editor {
 
     shiftMode( func: () => void ) {
         if ( this.editMode !== EDIT_MODE.SHIFT_SELECT ) {
-            this.editSelect.x1 = this.curColumn;
-            this.editSelect.y1 = this.curLine;
+            this.editSelect.x2 = this.curColumn;
+            this.editSelect.y2 = this.curLine;
         }
         func();
         this.editMode = EDIT_MODE.SELECT;

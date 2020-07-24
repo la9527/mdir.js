@@ -259,8 +259,6 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
         const { x: curX, y: curY } = this._cursorCheck();
 
         // log.debug( "[%d/%d] cursor : [%d] [%d] [%d] [%d]", this.line, this.column, this.curColumn, curX, curY, cursor );
-        log.debug( "selected [1: %d/%d 2: %d/%d]", this.editSelect.x1, this.editSelect.y1, this.editSelect.x2, this.editSelect.y2 );
-
         for (let y = Math.max(yi, 0); y < yl; y++) {
             let line = screen.lines[y];
             if (!line) break;

@@ -1,7 +1,5 @@
-// import { createLogger, format, transports, Logger } from "winston";
 import path from "path";
 import os from "os";
-import moment from "moment";
 import winston from "winston";
 import * as fs from 'fs';
 
@@ -14,7 +12,7 @@ if ( process.env.NODE_ENV === "test" ) {
 
 export function updateDebugFile( filePath: string = "" ) {
     DEBUG_FILE = filePath || os.homedir() + path.sep + ".m" + path.sep + "m.log";
-    console.log( DEBUG_FILE );
+    console.log( "DEBUG OUT >" + DEBUG_FILE );
 }
 
 export function Logger( labelName: string ): winston.Logger {
