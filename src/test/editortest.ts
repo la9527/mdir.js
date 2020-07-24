@@ -5,13 +5,23 @@ import { ImageWidget } from '../panel_blassed/widget/ImageBox';
 import { draw } from "../panel_blassed/widget/BlessedDraw";
 import { FileReader } from "../panel/FileReader";
 import { BlessedEditor } from "../panel_blassed/BlessedEditor";
+//import { StringUtils, StringLineToken, StringLineToken2 } from "../common/StringUtils";
 import { StringUtils, StringLineToken } from "../common/StringUtils";
 
-let token = new StringLineToken();
-token.setString( "ABCDEFHIJKLMNOPQRSTUVWXYZ", 3 );
-do {
-    console.log( token.get() );
-} while( token.next() );
+let tokenCheck = (token: StringLineToken) => {
+    token.setString( "한글을 입력합니다.", 4 );
+    // token.setString( "ABCDEFGHIJKLMNOPQRSTUVWXYZ", 10 );
+    //token.setString( "", 10 );
+    do {
+        if ( !token.next(true) ) break;
+        console.log( token.next(true), token.getToken(), token.curLine );
+    } while( token.next() );
+};
+
+console.log( "StringLineToken1");
+tokenCheck( new StringLineToken() );
+console.log( "StringLineToken2");
+//tokenCheck( new StringLineToken2() );
 
 /*
 console.log( StringUtils.scrSubstr("2", 0, 0) );
