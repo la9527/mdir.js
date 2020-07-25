@@ -52,6 +52,7 @@
     "i18next-cli-language-detector": "^1.0.0",
     "i18next-fs-backend": "^1.0.6",
     "jimp": "^0.14.0",
+    "mime-types": "^2.1.27",
     "moment": "^2.26.0",
     "neo-blessed": "^0.2.0",
     "node-pty": "^0.9.0",

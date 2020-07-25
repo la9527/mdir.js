@@ -17,6 +17,7 @@ import { File } from "../common/File";
 import { messageBox } from "./widget/MessageBox";
 import { T } from "../common/Translation";
 import * as FileType from "file-type";
+import * as mime from "mime-types";
 
 const log = Logger("blessedpanel");
 
@@ -238,22 +239,27 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
             const currentFile: File = this.dirFiles[this.currentPos];
 
             try {
-                const item = await FileType.fromFile( currentFile.fullname );
-                log.debug( "fileType: [%j]", item );
-                if ( item ) {
-                    if ( item.mime.match( /(png|jpeg|gif)/ ) ) {
+                let mimeLookup = mime.lookup(currentFile.fullname);
+                log.debug( "mimeLookup %s", mimeLookup );
+                if ( !mimeLookup ) {
+                    const item = await FileType.fromFile( currentFile.fullname );
+                    log.debug( "fileType: [%j]", item );
+                    mimeLookup = item.mime;
+                }
+                if ( mimeLookup ) {
+                    if ( mimeLookup.match( /(png|jpeg|gif)/ ) ) {
                         await mainFrame().imageViewPromise(currentFile);
                         return;
-                    } else if (item.mime.match( /(text|json)/ )) {
+                    } else if (mimeLookup.match( /(text|json|xml|javascript|css|html)/ )) {
                         await mainFrame().editorPromise(currentFile);
                         return;
                     }
+                    await mainFrame().commandRun(currentFile.fullname, true);
                 }
             } catch( e ) {
                 log.error(e.stack);
                 return;
             }
-            await mainFrame().commandRun(currentFile.fullname, true);
         }
         return RefreshType.ALL;
     }
