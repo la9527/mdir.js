@@ -77,6 +77,41 @@ export const menuConfig: IFrameMenuConfig = {
             "-",
             { name: T("Menu.Vim"), method: "Common.vimPromise" }
         ]
+    },
+    Editor: {
+        File: [
+            { name: T("Menu.New"), method: "Editor.fileNewPromise" },
+            "-",
+            { name: T("Menu.Save"), method: "Editor.fileSavePromise" },
+            { name: T("Menu.SaveAs"), method: "Editor.fileSaveAsPromise" },
+            "-",
+            { name: T("Menu.Quit"), method: "Editor.quitEditorPromise" }
+        ],
+        Edit: [
+            { name: T("Menu.Undo"), method: "Editor.undo" },
+            "-",
+            { name: T("Menu.Cut"), method: "Editor.cut" },
+            { name: T("Menu.Copy"), method: "Editor.copy" },
+            { name: T("Menu.Paste"), method: "Editor.paste" },
+            "-",
+            { name: T("Menu.Indent"), method: "Editor.tab" },
+            { name: T("Menu.Unindent"), method: "Editor.untab" },
+            "-",
+            { name: T("Menu.SelectAll"), method: "Editor.selectAll" },
+            "-",
+            { name: T("Menu.SelectMode"), method: "Editor.select" }
+        ],
+        View: [
+            { name: T("Menu.Refresh"), method: "Common.refreshPromise" },
+            "-",
+            { name: T("Menu.Split"), method: "Common.split" },
+            { name: T("Menu.Next Window"), method: "Common.nextWindow" },
+            "-",
+            { name: T("Menu.GotoLine"), method: "Common.gotoLinePromise" },
+            "-",
+            { name: T("Menu.GotoTop"), method: "Common.gotoTop" },
+            { name: T("Menu.GotoLast"), method: "Common.gotoLast" }
+        ]
     }
 };
 

@@ -71,7 +71,16 @@
         "Split": "창분할",
         "Next Window": "다음 화면",
         "Shell": "쉘",
-        "Vim": "Vim"
+        "Vim": "Vim",
+        "Save": "저장",
+        "SaveAs": "다른이름으로 저장",
+        "Indent": "들여쓰기",
+        "Unindent": "내여쓰기",
+        "SelectAll": "전체 선택",
+        "SelectMode": "선택 모드",
+        "GotoLine": "라인 이동",
+        "GotoTop": "맨위로",
+        "GotoLast": "마지막으로"
     },
     "Hint": {
         "Help": "도움말",

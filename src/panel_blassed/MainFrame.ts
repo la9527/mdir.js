@@ -645,12 +645,12 @@ export class MainFrame implements IHelpService {
     async methodRun( methodString, param ): Promise<RefreshType> {
         let item = methodString.split(".");
         
-        let className = item[0] || "";
+        let viewName: string = item[0] || "";
         let methodName = item[1] || "";
         let object = null;
-        if ( /panel/i.exec(className) ) {
+        if ( viewName.toLowerCase() === this.activePanel().viewName().toLowerCase() ) {
             object = this.activePanel();
-        } else if ( /common/i.exec(className) ) {
+        } else if ( /common/i.exec(viewName) ) {
             object = this;
         }
 

@@ -71,7 +71,16 @@
         "Split": "Split",
         "Next Window": "Next Window",
         "Shell": "Shell",
-        "Vim": "Vim"
+        "Vim": "Vim",
+        "Save": "Save",
+        "SaveAs": "Save As",
+        "Indent": "Indent",
+        "Unindent": "Unindent",
+        "SelectAll": "Select All",
+        "SelectMode": "Select Mode",
+        "GotoLine": "Go to line",
+        "GotoTop": "Go to top line",
+        "GotoLast": "Go to last line"
     },
     "Hint": {
         "Help": "Help",
