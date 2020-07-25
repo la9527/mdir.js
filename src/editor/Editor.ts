@@ -289,6 +289,10 @@ export abstract class Editor {
         this.isBackup = backup;
     }
 
+    getFile() {
+        return this.file;
+    }
+
     newFile( file: File ) {
         this.file = file;
         this.buffers = [];
@@ -302,6 +306,9 @@ export abstract class Editor {
         this.indexFindPosX = 0;
         this.indexFindPosY = 0;
         this.doInfo = [];
+        if ( this.file ) {
+            this.setViewTitle(this.file.fullname);
+        }
     }
 
     load( file: File, isReadonly: boolean = false ): boolean {
@@ -1002,7 +1009,6 @@ export abstract class Editor {
 
         let file = FileReader.createFile( fileName, { virtualFile: true } );
         this.newFile( file );
-        this.setViewTitle(this.file.fullname);
         return true;
     }
 

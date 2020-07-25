@@ -89,6 +89,7 @@ export class MainFrame implements IHelpService {
             const newView = new BlessedPanel( { parent: this.baseWidget, viewCount: viewCount++ }, view.getReader() );
             await newView.read( view.getReader().currentDir() || "." );
             newView.setFocus();
+            newView.focusFile( view.getFile() );
             this.blessedFrames[this.activeFrameNum] = newView;
         } else if ( view instanceof BlessedXterm || view instanceof BlessedEditor ) {
             return RefreshType.NONE;
@@ -602,6 +603,7 @@ export class MainFrame implements IHelpService {
                 return;
             }
 
+            this._keyLockScreen = true;
             this.screen.leave();
             
             if ( fileRunMode ) {
@@ -631,6 +633,7 @@ export class MainFrame implements IHelpService {
                 program.once( 'keypress', async () => {
                     this.screen.enter();
                     await this.refreshPromise();
+                    this._keyLockScreen = false;
                     resolve();
                 });
             });
