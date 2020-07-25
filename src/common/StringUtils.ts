@@ -47,7 +47,7 @@ export class StringUtils {
         let strlen = 0;
         let resText = "";
 
-        if (!text || firstPos < 0 || firstPos >= strWidth(text) || len === 0) {
+        if (!text || firstPos < 0 || firstPos >= text.length || len === 0) {
             return resText;
         }
 
@@ -88,19 +88,18 @@ export class StringUtils {
 export interface IToken {
     text: string;
     pos: number;
+    endPos: number;
     nextLine: boolean;
 }
 
 export class StringLineToken {
     private _source: string = "";
-    private _sourceLen: number = 0;
-
     private _width: number;
     private _curLine: number;
-
     private _curStr: string = "";
-    private _lastStr: string = "";
+    private _otherStr: string = "";
     private _pos: number = 0;
+    private _endPos: number = 0;
     private _nextLine: boolean = false;
 
     get curLine() {
@@ -116,25 +115,30 @@ export class StringLineToken {
     }
 
     private update() {
-        this._sourceLen = strWidth(this._lastStr);
-        if ( this._sourceLen <= this._width ) {
-            this._curStr = this._lastStr;
-            this._lastStr = "";
-            this._nextLine = false;
-        } else {
-            this._curStr = StringUtils.scrSubstr( this._lastStr, 0, this._width );
-            this._lastStr = this._lastStr.substr(this._curStr.length);
-            this._nextLine = true;
+        let txtWidth = 0;
+        let resText = "";
+        this._pos = this._endPos;
+        for (let i = 0; i < this._otherStr.length; i++) {
+            txtWidth += charWidth(this._otherStr, i);
+            resText += this._otherStr[i];
+            if (isSurrogate(this._otherStr, i)) {
+                i++;
+            }
+            if ( this._width <= txtWidth ) break;
         }
-        
-        //console.log( `pos:${this._pos};len:${this._sourceLen};str[${this._curStr}];last[${this._lastStr}];` );
+        this._curStr = resText;
+        this._otherStr = this._otherStr.substr(resText.length);
+        this._endPos = this._pos + txtWidth;
+        this._nextLine = this._otherStr.length > 0;
+        //console.log( `pos [${this._pos}-${this._endPos}] str[${this._curStr}] last[${this._otherStr.length}];` );
     }
 
     setString( source: string, viewWidth = 80 ) {
         this._source = source;
-        this._lastStr = source;
+        this._otherStr = source;
         this._width = viewWidth;
         this._pos = 0;
+        this._endPos = 0;
         this._curLine = 0;
         if ( !source ) {
             return;
@@ -143,7 +147,7 @@ export class StringLineToken {
     }
 
     getToken() {
-        return { text: this._curStr || "", pos: this._pos || 0, nextLine: this._nextLine };
+        return { text: this._curStr || "", pos: this._pos || 0, endPos: this._endPos || 0, nextLine: this._nextLine };
     }
 
     get() {
@@ -156,7 +160,6 @@ export class StringLineToken {
 
     next(isCheckOnly: boolean = false): boolean {
         if ( !isCheckOnly ) {
-            this._pos += this._curStr.length;
             this._curLine++;
             this.update();
         }

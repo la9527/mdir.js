@@ -564,10 +564,12 @@ export class MainFrame implements IHelpService {
     consoleViewPromise(): Promise<RefreshType> {
         return new Promise( (resolve, reject) => {
             let program = this.screen.program;
+            this._keyLockScreen = true;
             this.screen.leave();
             program.once( 'keypress', async () => {
                 this.screen.enter();
                 await this.refreshPromise();
+                this._keyLockScreen = false;
                 resolve(RefreshType.ALL);
             });
         });

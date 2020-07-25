@@ -94,7 +94,7 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
             let status3 = this.isInsert ? "[Ins]" : "[Ovr]";
             status3 = this.editMode === EDIT_MODE.SELECT ? "[Select]" : status3;
 
-            this.tailer.setContentFormat("          %-10s{|}Line: {bold}%-3d{/bold} Col: {bold}%-3d{/bold} %s%s", 
+            this.tailer.setContentFormat("          %-10s{|}Line {bold}%-3d{/bold} Col {bold}%-3d{/bold} %s%s", 
                 status1, this.curLine, this.curColumn, status2, status3);
         });
 
@@ -321,7 +321,7 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
                         }
                     }
                     let ch = bufferLine.text[tpos++];
-                    let chSize = unicode.strWidth( ch );
+                    let chSize = unicode.charWidth( ch );
                     if (chSize === 0 ) {
                         ch = '';
                     } else {

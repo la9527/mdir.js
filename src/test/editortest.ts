@@ -8,9 +8,15 @@ import { BlessedEditor } from "../panel_blassed/BlessedEditor";
 //import { StringUtils, StringLineToken, StringLineToken2 } from "../common/StringUtils";
 import { StringUtils, StringLineToken } from "../common/StringUtils";
 
+let text = "";
+for ( let i = 0; i < 50000; i++ ) {
+    text += String.fromCharCode(65 + Math.floor(Math.random() * 1020));
+}
+
 let tokenCheck = (token: StringLineToken) => {
-    token.setString( "한글을 입력합니다.", 4 );
-    // token.setString( "ABCDEFGHIJKLMNOPQRSTUVWXYZ", 10 );
+    // token.setString( "한글을 입력합니다.", 4 );
+    //token.setString( "ABCDEFGHIJKLMNOPQRSTUVWXYZ", 10 );
+    token.setString( text, 10 );
     //token.setString( "", 10 );
     do {
         if ( !token.next(true) ) break;

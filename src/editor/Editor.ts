@@ -185,8 +185,6 @@ export abstract class Editor {
             }
         }
 
-        let strLineToken = new StringLineToken();
-
         let isInside = (start: number, end: number, pos: number) => {
             return (start <= pos && end >= pos);
         };
@@ -201,15 +199,20 @@ export abstract class Editor {
             if (viewLine < 0) return;
     
             this.viewBuffers = [];
+            let strLineToken = new StringLineToken();
 
             let isNext = false;
             for ( let t = 0; t < line; t++ ) {
+                if ( line <= this.viewBuffers.length ) {
+                    log.debug( "this.viewBuffers.length [%d] line [%d]", this.viewBuffers.length, line );
+                    break;
+                }
+
                 if ( !strLineToken.next(true) ) {
                     if ( viewLine >= this.buffers.length ) break;
                     strLineToken.setString( this.buffers[viewLine++], column );
                 }
-                let { text: viewStr, pos } = strLineToken.getToken() || { text: "", pos: 0 };
-                let endPos = pos + viewStr.length;
+                let { text: viewStr, pos, endPos } = strLineToken.getToken() || { text: "", pos: 0 };
                 let lineInfo: IViewBuffer = {};
                 lineInfo.viewLine = t;
                 lineInfo.textLine = viewLine - 1;
@@ -251,6 +254,7 @@ export abstract class Editor {
                         }
                     }
                     lineInfo.selectInfo = selectInfo;
+                    /*
                     if ( typeof(lineInfo.selectInfo.start) === "number" ) {
                         log.debug( "SELECT1 [%d/%d] ~ [%d/%d] pos [%d/%d] selectInfo [%j] lineInfo [%j]", 
                                     editSelect.x1, editSelect.y1, editSelect.x2, editSelect.y2, 
@@ -258,13 +262,14 @@ export abstract class Editor {
                                     selectInfo,
                                     lineInfo );
                     }
+                    */
                 }
                 this.viewBuffers.push( lineInfo );
-                if ( line <= this.viewBuffers.length + 2 ) break;
                 strLineToken.next();
             }
 
             this.lastLine = viewLine - 1;
+            //log.debug( "this.viewBuffers.length [%d] this.lastLine [%d]", this.viewBuffers.length, this.lastLine );
 
             if ( this.viewBuffers.length > line - 3 ) {
                 if ( this.lastLine === this.curLine && 
@@ -375,8 +380,6 @@ export abstract class Editor {
             this.curColumn = strWidth(this.buffers[ --this.curLine ]);
         }
         this.keyPressCommon();
-
-        log.debug( "keyLeft - [%d] - selected [1: %d/%d 2: %d/%d]", this.curColumn, this.editSelect.x1, this.editSelect.y1, this.editSelect.x2, this.editSelect.y2 );
     }
 
     keyRight() {
