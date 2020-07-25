@@ -342,7 +342,7 @@ export class MainFrame implements IHelpService {
 
                 const keyMappingExecute = async ( func?: () => RefreshType ) => {
                     log.debug( "KEYPRESS - KEY START [%s] - (%dms)", keyInfo.name, Date.now() - starTime );
-                    let type: RefreshType = await keyMappingExec( this.activeFocusObj(), keyInfo );
+                    let type: RefreshType = await keyMappingExec( panel, keyInfo );
                     if ( type === RefreshType.NONE ) {
                         type = await keyMappingExec( this, keyInfo );
                     }
@@ -355,6 +355,9 @@ export class MainFrame implements IHelpService {
                         }
                     }
                     log.info( "KEYPRESS - KEY END [%s] - (%dms)", keyInfo.name, Date.now() - starTime );
+                    if ( panel.updateCursor ) {
+                        panel.updateCursor();
+                    }
                     return type;
                 };
                 
@@ -366,6 +369,9 @@ export class MainFrame implements IHelpService {
                         await keyMappingExecute( keyPressFunc );
                     } else {
                         keyPressFunc();
+                        if ( panel.updateCursor ) {
+                            panel.updateCursor();
+                        }
                     }
                 } else if ( panel instanceof BlessedEditor ) {
                     keyMappingExecute( () => {

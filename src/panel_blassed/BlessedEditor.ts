@@ -1,5 +1,5 @@
 import * as blessed from "neo-blessed";
-import { Widgets } from "../../@types/blessed.d";
+import { Widgets, program } from "../../@types/blessed.d";
 import { strWidth, charWidth } from "neo-blessed/lib/unicode";
 import * as unicode from "neo-blessed/lib/unicode";
 import { Widget } from "./widget/Widget";
@@ -33,6 +33,9 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
     header: Widget = null;
     tailer: Widget = null;
     reader: Reader = null;
+
+    isCursorDraw: boolean = false;
+    cursor = { x: -1, y: -1 };
 
     constructor(opts: Widgets.BoxOptions | any, reader: Reader = null) {
         super();
@@ -99,11 +102,15 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
         });
 
         this.editor.on("detach", () => {
-            this.editor.box.screen.program.hideCursor();
+            if ( !this.isCursorDraw ) {
+                this.editor.box.screen.program.hideCursor();
+            }
         });
         this.editor.on("render", () => {
-            if ( this.editor.screen.program.cursorHidden ) {
-                this.editor.screen.program.showCursor();
+            if ( !this.isCursorDraw ) {
+                if ( this.editor.screen.program.cursorHidden ) {
+                    this.editor.screen.program.showCursor();
+                }
             }
         });
 
@@ -238,10 +245,14 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
             ret = (box as any)._render();
         } catch( e ) {
             log.error( e );
+            this.cursor = { x: -1, y: -1 };
             return;
         }
 
-        if (!ret) return;
+        if (!ret) {
+            this.cursor = { x: -1, y: -1 };
+            return;
+        }
 
         box.dattr = box.sattr(box.style);
       
@@ -257,6 +268,7 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
         this.screenMemSave( this.line, this.column );
         
         const { x: curX, y: curY } = this._cursorCheck();
+        this.cursor = { x: xi + curX, y: yi + curY };
 
         // log.debug( "[%d/%d] cursor : [%d] [%d] [%d] [%d]", this.line, this.column, this.curColumn, curX, curY, cursor );
         for (let y = Math.max(yi, 0); y < yl; y++) {
@@ -286,7 +298,7 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
                     fg: box.style.fg,
                 });
 
-                if (x === cursor) {
+                if ( this.isCursorDraw && x === cursor) {
                     line[x][0] = (box as any).sattr({
                         bold: false,
                         underline: false,
@@ -356,6 +368,16 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
             screen.draw(yi + startRow, yi + endRow);
         }
         return ret;
+    }
+
+    updateCursor() {
+        if ( !this.isCursorDraw ) {
+            const { x, y } = this.cursor;
+            if ( x > -1 && y > -1 ) {
+                log.debug( "updateCursor: Row %d/ Col %d", y, x);
+                this.editor.screen.program.cursorPos( y, x );
+            }
+        }
     }
 
     async quitEditorPromise() {

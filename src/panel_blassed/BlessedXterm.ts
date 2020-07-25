@@ -40,6 +40,9 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
 
     osc1337: IOSC1337 = {};
 
+    isCursorDraw: boolean = true;
+    cursorPos = { y: -1, x: -1 };
+
     constructor( options: any, reader: Reader, firstPath: File ) {
         super( { ...options, scrollable: false } );
 
@@ -96,10 +99,12 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
                 || 'xterm';
 
         this.panel.on("detach", () => {
+            log.debug( "HIDE CURSOR !!!");
             this.box.screen.program.hideCursor();
         });
         this.panel.on("render", () => {
             if ( this.box.screen.program.cursorHidden ) {
+                log.debug( "SHOW CURSOR !!!");
                 this.box.screen.program.showCursor();
             }
         });
@@ -299,13 +304,18 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             ret = box._render();
         } catch( e ) {
             log.error( e );
+            this.cursorPos = { y: -1, x: -1 };
             return;
         }
 
-        if (!ret) return;
+        if (!ret) {
+            this.cursorPos = { y: -1, x: -1 };
+            return;
+        }
 
         if ( !this.term ) {
             log.debug( "term is null !!!" );
+            this.cursorPos = { y: -1, x: -1 };
             return;
         }
 
@@ -321,6 +331,8 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         // let scrollback = this.term.buffer.ydisp - (yl - yi);
         let scrollback = this.term.buffer.ydisp;
 
+        this.cursorPos = { y: yi + this.term.buffer.y, x: xi + this.term.buffer.x };
+
         for (let y = Math.max(yi, 0); y < yl; y++) {
             let line = screen.lines[y];
             const bufferLine = this.term.buffer.lines.get(scrollback + y - yi);
@@ -330,12 +342,14 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
 
             if (!line) break;
 
-            if (y === yi + this.term.buffer.y
-                && this.screen.focused === box
-                && (this.term.buffer.ydisp === this.term.buffer.ybase)) {
-                cursor = xi + this.term.buffer.x;
-            } else {
-                cursor = -1;
+            if ( this.isCursorDraw ) {
+                if (y === yi + this.term.buffer.y
+                    && this.screen.focused === box
+                    && (this.term.buffer.ydisp === this.term.buffer.ybase)) {
+                    cursor = xi + this.term.buffer.x;
+                } else {
+                    cursor = -1;
+                }
             }
 
             // const str = bufferLine.translateToString(true);
@@ -354,20 +368,17 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
                     fg: bufferLine.getFg(x - xi) || box.style.fg,
                 });
 
-                if (x === cursor) {
-                    // if (this.cursor === 'block' || !this.cursor) {
-                      line[x][0] = (box as any).sattr({
-                            bold: false,
-                            underline: false,
-                            blink: false,
-                            inverse: false,
-                            invisible: false,
-                            bg: box.style.bg,
-                            fg: box.style.fg,
-                        }) | (8 << 18);
-                    // }
+                if ( this.isCursorDraw && x === cursor) {
+                    line[x][0] = (box as any).sattr({
+                        bold: false,
+                        underline: false,
+                        blink: false,
+                        inverse: false,
+                        invisible: false,
+                        bg: box.style.bg,
+                        fg: box.style.fg,
+                    }) | (8 << 18);
                 }
-
                 line[x][1] = bufferLine.getString(x - xi) || ' ';
             }
 
@@ -379,6 +390,16 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             screen.draw(yi + startRow, yi + endRow);
         }
         return ret;
+    }
+
+    updateCursor() {
+        if ( !this.isCursorDraw ) {
+            const { x, y } = this.cursorPos;
+            log.debug( "updateCursor: Row %d/ Col %d", y, x);
+            if ( this.panel.box && x > -1 && y > -1 ) {
+                this.panel.box.screen.program.cursorPos( y, x );
+            }
+        }
     }
 
     _isMouse(buf) {
