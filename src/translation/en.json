@@ -27,7 +27,8 @@
         "DriveList": "Drive",
         "Help": "Help",
         "Mkdir": "Mkdir",
-        "Rename": "Rename"
+        "Rename": "Rename",
+        "Select": "Select"
     },
     "Menu": {
         "Mdir": "Mdir.js",
@@ -111,6 +112,22 @@
         "Rename": "Rename",
         "MountList": "Mount List",
         "QuitProgram": "Do you want to quit the program?"
+    },
+    "EditorMsg": {
+        "TITLE_GOTO_NUMBER": "Go to Line Number",
+        "GOTO_NUMBER": "Enter the line number to move.",
+        "GOTO_NUMBER_INVALID": "Invalid input number",
+        "READ_ONLY_CURRENT_FILE": "current file is read-only file.",
+        "NEW_FILE": "New file",
+        "QUESTION_SAVE_FILE": "Do you want save this file?",
+        "INPUT_FILENAME": "Please input a file name",
+        "UNABLE_FILE_WRITE": "Unable to file write. this file is read-only file.",
+        "INPUT_SEARCH_TEXT": "Please input a search text",
+        "FIND_NEXT": "Find Next",
+        "FIND_END_DOCUMENT": "End of document reached. find a text from the beginning again?",
+        "FIND_PREVIOUS": "Find Previous",
+        "FIND_FIRST_DOCUMENT": "First of document reached. Find a text from end of document again?",
+        "QUIT_QUESTION_UNSAVED": "The file has not been saved. would you like to save this file?"
     },
     "Help": {
         "Help": "help",

@@ -6,6 +6,7 @@ import fs from "fs";
 import { Logger } from "../common/Logger";
 import { StringUtils, StringLineToken } from "../common/StringUtils";
 import { FileReader } from "../panel/FileReader";
+import { T } from "../common/Translation";
 
 const log = Logger( "editor" );
 
@@ -753,12 +754,12 @@ export abstract class Editor {
     keyMouse() {}
     
     async gotoLinePromise() {
-        const [ result ] = await this.inputBox( "Go to Line Number", "Enter the line number to move." );
+        const [ result ] = await this.inputBox( T("EditorMsg.TITLE_GOTO_NUMBER"), T("EditorMsg.GOTO_NUMBER") );
         let number = -1;
         try {
             number = parseInt( result );
         } catch ( e ) {
-            await this.messageBox( "ERROR", "Invalid input number" );
+            await this.messageBox( T("ERROR"), T("EditorMsg.GOTO_NUMBER_INVALID") );
         }
         if ( number > -1 && number < this.buffers.length ) {
             this.curLine = number - 1;
@@ -994,18 +995,18 @@ export abstract class Editor {
 
     async fileNewPromise(): Promise<boolean> {
         if ( this.isReadOnly ) {
-            await this.messageBox( "Error", "current file is read-only file." );
+            await this.messageBox( T("Error"), T("EditorMsg.READ_ONLY_CURRENT_FILE") );
             return false;
         }
 
         if ( this.lastDoInfoLength !== this.doInfo.length ) {
-            let result = await this.messageBox( "New file", "Do you want save this file?", [ "Yes", "No" ] );
-            if ( result === "Yes" ) {
+            let result = await this.messageBox( T("EditorMsg.NewFile"), T("EditorMsg.QUESTION_SAVE_FILE"), [ T("Yes"), T("No") ] );
+            if ( result === T("Yes") ) {
                 await this.fileSavePromise();
             }
         }
 
-        let [ fileName ] = await this.inputBox( "New file", "Please enter a file name.");
+        let [ fileName ] = await this.inputBox( T("EditorMsg.NewFile"), T("EditorMsg.INPUT_FILENAME"));
         if ( !fileName ) {
             return false;
         }
@@ -1017,7 +1018,7 @@ export abstract class Editor {
 
     async fileSavePromise(): Promise<boolean> {
         if ( this.isReadOnly ) {
-            await this.messageBox( "Error", "Unable to file write. this file is read-only file." );
+            await this.messageBox( T("Error"), T("EditorMsg.UNABLE_FILE_WRITE") );
             return false;
         }
 
@@ -1029,7 +1030,7 @@ export abstract class Editor {
     }
 
     async fileSaveAsPromise(): Promise<boolean> {
-        let [ fileName ] = await this.inputBox( "New file", "Please enter a file name.");
+        let [ fileName ] = await this.inputBox( T("EditorMsg.NewFile"), T("EditorMsg.INPUT_FILENAME"));
         if ( !fileName ) {
             return false;
         }
@@ -1044,7 +1045,7 @@ export abstract class Editor {
 
     async findPromise() {
         let find = this.findStr;
-        let [ inputText ] = await this.inputBox( "Find", "input search text.", find );
+        let [ inputText ] = await this.inputBox( T("Find"), T("EditorMsg.INPUT_SEARCH_TEXT"), find );
         if ( !inputText ) {
             return;
         }
@@ -1084,8 +1085,8 @@ export abstract class Editor {
             }
             this.indexFindPosY = 0;
 
-            let result = await this.messageBox( "Find Next", "End of document reached. find a text from the beginning again?", [ "Yes", "No" ] );
-            if ( result === "Yes" ) {
+            let result = await this.messageBox( T("EditorMsg.FIND_NEXT"), T("EditorMsg.FIND_END_DOCUMENT"), [ T("Yes"), T("No") ] );
+            if ( result === T("Yes") ) {
                 break;
             }
         }
@@ -1125,8 +1126,8 @@ export abstract class Editor {
             }
             this.indexFindPosY = this.buffers.length - 1;
 
-            let result = await this.messageBox( "Previous Find", "First of document reached. Find a text from end of document again?", [ "Yes", "No" ] );
-            if ( result === "Yes" ) {
+            let result = await this.messageBox( T("FIND_PREVIOUS"), T("EditorMsg.FIND_FIRST_DOCUMENT"), [ T("Yes"), T("No") ] );
+            if ( result === T("Yes") ) {
                 break;
             }
         }
@@ -1140,10 +1141,10 @@ export abstract class Editor {
 
         log.debug( "DO INFO [%j]", this.doInfo );
         if ( this.lastDoInfoLength !== this.doInfo.length ) {
-            let result = await this.messageBox( "Save", "The file has not been saved. would you like to save this file?", [ "Yes", "No", "Cancel" ]);
-            if ( result === "Cancel" ) {
+            let result = await this.messageBox( T("Save"), T("EditorMsg.QUIT_QUESTION_UNSAVED"), [ T("Yes"), T("No"), T("Cancel") ]);
+            if ( result === T("Cancel") ) {
                 return false;
-            } else if ( result === "Ok" ) {
+            } else if ( result === T("Ok") ) {
                 await this.fileSavePromise();
             }
         }

@@ -27,7 +27,8 @@
         "DriveList": "드라이브",
         "Help": "도움말",
         "Mkdir": "디레토리생성",
-        "Rename": "이름변경"
+        "Rename": "이름변경",
+        "Select": "선택"
     },
     "Menu": {
         "Mdir": "Mdir.js",
@@ -110,6 +111,22 @@
         "Make Directory": "디렉토리 생성",
         "Rename": "이름변경",
         "QuitProgram": "이 프로그램을 종료할까요?"
+    },
+    "EditorMsg": {
+        "TITLE_GOTO_NUMBER": "라인 이동",
+        "GOTO_NUMBER": "이동할 라인 번호를 입력하세요.",
+        "GOTO_NUMBER_INVALID": "입력한 숫자가 잘못되었습니다.",
+        "READ_ONLY_CURRENT_FILE": "이 파일은 읽기전용 파일입니다.",
+        "NEW_FILE": "새로운 파일",
+        "QUESTION_SAVE_FILE": "이 파일을 저장하시겠습니까?",
+        "INPUT_FILENAME": "파일명을 입력하세요.",
+        "UNABLE_FILE_WRITE": "파일을 저장할 수 없습니다. 이 파일은 읽기 전용파일입니다.",
+        "INPUT_SEARCH_TEXT": "검색할 텍스트를 입력하세요.",
+        "FIND_NEXT": "다음 찾기",
+        "FIND_END_DOCUMENT": "문서의 끝에 왔습니다. 처음부터 다시 찾을까요?",
+        "FIND_PREVIOUS": "이전 찾기",
+        "FIND_FIRST_DOCUMENT": "문서의 처음까지 검색했습니다. 마지막부터 다시 찾을까요?",
+        "QUIT_QUESTION_UNSAVED": "파일이 저장되지 않았습니다. 파일을 저장할까요?"
     },
     "Help": {
         "Help": "도움말",

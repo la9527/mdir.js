@@ -174,7 +174,7 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         paste: "C-v",
         undo: "C-z",
         keyEscape: "escape",
-        select: "f2",
+        select: { name: T("Func.Select"), key: "f2" },
         selectAll: "C-a",
         fileNewPromise: "C-n",
         fileSavePromise: "C-s",
