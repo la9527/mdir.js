@@ -3,6 +3,7 @@ import { Widgets, text, input, button, form } from "neo-blessed";
 import { strWidth } from "neo-blessed/lib/unicode";
 import { ColorConfig } from "../../config/ColorConfig";
 import { Logger } from '../../common/Logger';
+import mainFrame from "../MainFrame";
 
 const log = Logger("InputBox");
 
@@ -101,7 +102,7 @@ export class InputBox extends Widget {
         let len = this.inputBoxOption.button.length;
         this.buttonWidgets.map( (item, i) => {
             let left = (Math.floor((this.box.width as number) / (len+1)) * (i+1)) - Math.floor(this.buttonWidth / 2);
-            item.bottom = 1;
+            item.bottom = 0;
             item.left = left;
             item.width = this.buttonWidth;
         });
@@ -145,7 +146,7 @@ export class InputBox extends Widget {
                     left, 
                     align: "center",
                     clickable: true,
-                    bottom: 1, 
+                    bottom: 0, 
                     height: 1, 
                     width: this.buttonWidth,
                     style: i === 0 ? this.btnColor.blessedReverse : this.btnColor.blessed
@@ -155,6 +156,7 @@ export class InputBox extends Widget {
 
         this.resize();
         this.setFocus();
+        mainFrame().keyLock = true;
     }
 
     draw() {
@@ -302,6 +304,11 @@ export class InputBox extends Widget {
             this.cursorPos += strWidth(ch);
         }
         keyRelease(true);
+    }
+
+    destroy() {
+        super.destroy();
+        mainFrame().keyLock = false;
     }
 }
 

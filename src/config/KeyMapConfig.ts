@@ -179,8 +179,8 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         fileNewPromise: "C-n",
         fileSavePromise: "C-s",
         fileSaveAsPromise: "A-s",
-        findPromise: "C-f",
-        findNextPromise: "C-n",
+        findPromise: { name: T("Func.Find"), key: [ "C-f", "f4" ] },
+        findNextPromise: { name: T("Func.NextFind"), key: "f3" },
         filePreviousPromise: "C-b",
         quitEditorPromise: "C-q"
     }

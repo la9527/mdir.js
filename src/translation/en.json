@@ -28,7 +28,9 @@
         "Help": "Help",
         "Mkdir": "Mkdir",
         "Rename": "Rename",
-        "Select": "Select"
+        "Select": "Select",
+        "Find": "Find",
+        "NextFind": "Next Find"
     },
     "Menu": {
         "Mdir": "Mdir.js",

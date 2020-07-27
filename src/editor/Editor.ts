@@ -87,7 +87,7 @@ export abstract class Editor {
     abstract postLoad(): void;
     abstract postUpdateLines( line?: number, height?: number ): void;
 
-    abstract inputBox(title: string, text: string, inputedText ?: string): Promise<string[]>;
+    abstract inputBox(title: string, text: string, inputedText ?: string, buttons ?: string[]): Promise<string[]>;
     abstract messageBox(title, text, buttons ?: string[]): Promise<string>;
 
     public selectSort(editSelect: IEditSelect) {
@@ -221,7 +221,7 @@ export abstract class Editor {
                 lineInfo.isNext = strLineToken.next(true);
                 lineInfo.nextLineNum = strLineToken.curLine;
 
-                if ( this.editMode === EDIT_MODE.SELECT ) {
+                if ( this.editMode === EDIT_MODE.SELECT || this.editMode === EDIT_MODE.SHIFT_SELECT ) {
                     let selectInfo: any = {};
                     let { x1, y1, x2, y2 } = editSelect;
                     if ( y1 < lineInfo.textLine && y2 > lineInfo.textLine ) {
@@ -754,10 +754,13 @@ export abstract class Editor {
     keyMouse() {}
     
     async gotoLinePromise() {
-        const [ result ] = await this.inputBox( T("EditorMsg.TITLE_GOTO_NUMBER"), T("EditorMsg.GOTO_NUMBER") );
+        const [ text, button ] = await this.inputBox( T("EditorMsg.TITLE_GOTO_NUMBER"), T("EditorMsg.GOTO_NUMBER"), "", [ T("OK"), T("Cancel") ] );
+        if ( button === T("Cancel") ) {
+            return;
+        }
         let number = -1;
         try {
-            number = parseInt( result );
+            number = parseInt( text );
         } catch ( e ) {
             await this.messageBox( T("ERROR"), T("EditorMsg.GOTO_NUMBER_INVALID") );
         }
@@ -1006,7 +1009,10 @@ export abstract class Editor {
             }
         }
 
-        let [ fileName ] = await this.inputBox( T("EditorMsg.NewFile"), T("EditorMsg.INPUT_FILENAME"));
+        let [ fileName, button ] = await this.inputBox( T("EditorMsg.NewFile"), T("EditorMsg.INPUT_FILENAME"), "", [ T("OK"), T("Cancel")] );
+        if ( button === T("Cancel") ) {
+            return false;
+        }
         if ( !fileName ) {
             return false;
         }
@@ -1030,7 +1036,10 @@ export abstract class Editor {
     }
 
     async fileSaveAsPromise(): Promise<boolean> {
-        let [ fileName ] = await this.inputBox( T("EditorMsg.NewFile"), T("EditorMsg.INPUT_FILENAME"));
+        let [ fileName, button ] = await this.inputBox( T("EditorMsg.NewFile"), T("EditorMsg.INPUT_FILENAME"), "", [ T("OK"), T("Cancel")]);
+        if ( button === T("Cancel")) {
+            return false;
+        }
         if ( !fileName ) {
             return false;
         }
@@ -1045,7 +1054,10 @@ export abstract class Editor {
 
     async findPromise() {
         let find = this.findStr;
-        let [ inputText ] = await this.inputBox( T("Find"), T("EditorMsg.INPUT_SEARCH_TEXT"), find );
+        let [ inputText, button ] = await this.inputBox( T("Find"), T("EditorMsg.INPUT_SEARCH_TEXT"), find, [ T("OK"), T("Cancel")] );
+        if ( button === T("Cancel")) {
+            return;
+        }
         if ( !inputText ) {
             return;
         }
@@ -1053,6 +1065,7 @@ export abstract class Editor {
         this.findStr = inputText;
         this.indexFindPosX = 0;
         this.indexFindPosY = 0;
+        await this.findNextPromise();
     }
 
     async findNextPromise() {
@@ -1065,7 +1078,7 @@ export abstract class Editor {
 
         for(;;) {
             for( let n = this.indexFindPosY; n < this.buffers.length; n++ ) {
-                let idx = this.buffers[n].indexOf(this.findStr);
+                let idx = this.buffers[n].indexOf(this.findStr, this.indexFindPosX);
                 if ( idx > -1 ) {
                     let textSize = strWidth(this.findStr);
                     this.indexFindPosX = idx + textSize;

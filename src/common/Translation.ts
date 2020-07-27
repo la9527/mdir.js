@@ -18,7 +18,7 @@ export async function changeLanguage( lang: string ) {
     await i18n.changeLanguage( lang );
 }
 
-export function T( ...a ) {
+export function T( ...a ): string {
     return i18n.t.apply( i18n, a );
 };
 

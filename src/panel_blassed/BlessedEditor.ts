@@ -152,11 +152,11 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
         // TODO: editor file highlight
     }
 
-    inputBox(title: string, text: string, inputedText?: string): Promise<string[]> {
+    inputBox(title: string, text: string, inputedText?: string, buttons ?: string[]): Promise<string[]> {
         return inputBox({
             parent: this.baseWidget.screen,
             title: title, 
-            button: [ "OK" ],
+            button: buttons,
             defaultText: inputedText
         });
     }

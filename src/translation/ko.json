@@ -28,7 +28,9 @@
         "Help": "도움말",
         "Mkdir": "디레토리생성",
         "Rename": "이름변경",
-        "Select": "선택"
+        "Select": "선택",
+        "Find": "찾기",
+        "NextFind": "다음 찾기"
     },
     "Menu": {
         "Mdir": "Mdir.js",
