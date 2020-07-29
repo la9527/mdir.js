@@ -7,6 +7,8 @@ import { Logger } from "../common/Logger";
 import { StringUtils, StringLineToken } from "../common/StringUtils";
 import { FileReader } from "../panel/FileReader";
 import { T } from "../common/Translation";
+import * as jschardet from "jschardet";
+import * as iconv from "iconv-lite";
 
 const log = Logger( "editor" );
 
@@ -320,12 +322,29 @@ export abstract class Editor {
     load( file: File, isReadonly: boolean = false ): boolean {
         this.newFile(file);
 
-        let fsData = fs.readFileSync( file.fullname, this.encoding );
+        let fsData: Buffer = fs.readFileSync( file.fullname, "binary" ) as any;
         if ( !fsData ) {
             return false;
         }
+
+        const result = jschardet.detect( fsData );
+        let data = null;
+        if ( result.encoding ) {
+            log.info( "jschardet: %j", result );
+            this.encoding = result.encoding;
+            if ( this.encoding === "utf8" ) {
+                data = fsData.toString("utf8");
+            } else {
+                data = iconv.decode(fsData, this.encoding);
+            }
+        } else {
+            data = fsData.toString("utf8");
+            this.encoding = "utf8";
+            this.isReadOnly = true;
+        }
+
         let dosMode = false;
-        fsData.split("\n").map( (item) => {
+        data.split("\n").map( (item) => {
             let item2 = item.replace( new RegExp("\r"), "");
             if ( item2 !== item ) {
                 dosMode = true;
@@ -344,12 +363,17 @@ export abstract class Editor {
         }
 
         let tmpFileName = fileName + ".tmp";
-
         try {
-            fs.writeFileSync( tmpFileName, this.buffers.join( this.isDosMode ? "\r\n" : "\n" ), { 
-                encoding: encoding || "utf8",
-                mode: 0o644
-            });
+            let saveData = this.buffers.join( this.isDosMode ? "\r\n" : "\n" );
+            if ( this.encoding !== "utf8" ) {
+                let bufSaveData: Buffer = iconv.encode(saveData, this.encoding);
+                fs.writeFileSync( tmpFileName, bufSaveData, { mode: 0o644 });
+            } else {
+                fs.writeFileSync( tmpFileName, saveData, { 
+                    encoding: encoding || "utf8",
+                    mode: 0o644
+                });
+            }
         } catch( e ) {
             log.error( e );
             return false;
