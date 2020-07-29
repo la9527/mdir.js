@@ -303,7 +303,7 @@ export abstract class Editor {
 
     newFile( file: File ) {
         this.file = file;
-        this.buffers = [];
+        this.buffers = [ "" ];
         this.encoding = "utf8";
         this.firstLine = 0;
         this.curLine = 0;
@@ -322,36 +322,58 @@ export abstract class Editor {
     load( file: File, isReadonly: boolean = false ): boolean {
         this.newFile(file);
 
-        let fsData: Buffer = fs.readFileSync( file.fullname, "binary" ) as any;
+        if ( file && file.size > 3000000 ) {
+            throw new Error("file size is too large. " + file.size);
+        }
+
+        let fsData: Buffer = fs.readFileSync( file.fullname ) as any;
         if ( !fsData ) {
             return false;
         }
 
-        const result = jschardet.detect( fsData );
-        let data = null;
-        if ( result.encoding ) {
-            log.info( "jschardet: %j", result );
-            this.encoding = result.encoding;
-            if ( this.encoding === "utf8" ) {
-                data = fsData.toString("utf8");
-            } else {
-                data = iconv.decode(fsData, this.encoding);
+        const binaryRead = () => {
+            this.buffers = [];
+            for ( let i = 0; i < fsData.byteLength; i += 20 ) {
+                this.buffers.push( fsData.slice(i, i+20).toString("hex") + "\t[" + fsData.slice(i, i+20).toString("ascii") + "]" );
             }
-        } else {
-            data = fsData.toString("utf8");
-            this.encoding = "utf8";
+            this.encoding = "binary";
             this.isReadOnly = true;
+        };
+
+        let result = null;
+        try {
+            result = jschardet.detect( fsData );
+        } catch ( e ) {
+            log.error( e );
+        }
+        log.info( "jschardet: %j", result );
+        try {
+            let data = null;
+            if ( result && result.encoding ) {
+                this.encoding = result.encoding;
+                if ( [ "utf8", "ascii" ].indexOf(this.encoding) > -1 ) {
+                    data = fsData.toString("utf8");
+                } else {
+                    data = iconv.decode(fsData, this.encoding);
+                }
+                this.buffers = [];
+                let dosMode = false;
+                data.split("\n").map( (item) => {
+                    let item2 = item.replace( new RegExp("\r"), "");
+                    if ( item2 !== item ) {
+                        dosMode = true;
+                    }
+                    this.buffers.push( item2 );
+                });
+                this.isDosMode = dosMode;
+            } else {
+                binaryRead();
+            }
+        } catch ( e ) {
+            log.error( e );
+            binaryRead();
         }
 
-        let dosMode = false;
-        data.split("\n").map( (item) => {
-            let item2 = item.replace( new RegExp("\r"), "");
-            if ( item2 !== item ) {
-                dosMode = true;
-            }
-            this.buffers.push( item2 );
-        });
-        this.isDosMode = dosMode;
         this.postLoad();
         return true;
     }

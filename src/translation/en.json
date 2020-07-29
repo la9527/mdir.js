@@ -38,6 +38,7 @@
         "Directory": "Directory",
         "Run": "Run",
         "View": "View",
+        "Edit": "Edit",
         "Terminal": "Terminal",
         "About": "About",
         "Help": "Help",
@@ -75,6 +76,7 @@
         "Next Window": "Next Window",
         "Shell": "Shell",
         "Vim": "Vim",
+        "Undo": "Undo",
         "Save": "Save",
         "SaveAs": "Save As",
         "Indent": "Indent",
@@ -113,7 +115,8 @@
         "MakeDirectory": "Make Directory",
         "Rename": "Rename",
         "MountList": "Mount List",
-        "QuitProgram": "Do you want to quit the program?"
+        "QuitProgram": "Do you want to quit the program?",
+        "FILE_OPEN_FAILURE": "file open failure !!!"
     },
     "EditorMsg": {
         "TITLE_GOTO_NUMBER": "Go to Line Number",

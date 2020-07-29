@@ -39,6 +39,7 @@ import * as FileType from "file-type";
 import { File } from "../common/File";
 import { number } from "yargs";
 import { yellow } from "chalk";
+import { EEXIST } from "constants";
 
 const log = Logger("MainFrame");
 
@@ -80,9 +81,20 @@ export class MainFrame implements IHelpService {
             view.destroy();
 
             const newView = new BlessedEditor( { parent: this.baseWidget, viewCount: viewCount++ }, view.getReader() );
-            await newView.load( file || view.currentFile() );
             newView.setFocus();
             this.blessedFrames[this.activeFrameNum] = newView;
+
+            try {
+                await newView.load( file || view.currentFile() );
+            } catch ( e ) {
+                await messageBox({
+                    parent: this.baseWidget,
+                    title: T("Error"),
+                    msg: T("Message.FILE_OPEN_FAILURE") + "\n" + e.message,
+                    button: [ T("OK") ]
+                });
+                return await this.editorPromise(file);
+            }
         } else if ( view instanceof BlessedEditor ) {
             view.destroy();
 

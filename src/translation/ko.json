@@ -38,6 +38,7 @@
         "Directory": "디렉토리",
         "Run": "실행",
         "View": "보기",
+        "Edit": "편집",
         "Terminal": "터미널",
         "About": "Mdir.js 정보",
         "Help": "도움말",
@@ -75,6 +76,7 @@
         "Next Window": "다음 화면",
         "Shell": "쉘",
         "Vim": "Vim",
+        "Undo": "실행취소",
         "Save": "저장",
         "SaveAs": "다른이름으로 저장",
         "Indent": "들여쓰기",
@@ -112,7 +114,8 @@
         "{{filename}}_FILE_NOT_EXISTS": "'{{filename}}' 파일이 존재합니다.",
         "Make Directory": "디렉토리 생성",
         "Rename": "이름변경",
-        "QuitProgram": "이 프로그램을 종료할까요?"
+        "QuitProgram": "이 프로그램을 종료할까요?",
+        "FILE_OPEN_FAILURE": "파일을 여는데 실패하였습니다."
     },
     "EditorMsg": {
         "TITLE_GOTO_NUMBER": "라인 이동",
