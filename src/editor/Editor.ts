@@ -5,10 +5,11 @@ import { File } from "../common/File";
 import fs from "fs";
 import { Logger } from "../common/Logger";
 import { StringUtils, StringLineToken } from "../common/StringUtils";
-import { FileReader } from "../panel/FileReader";
+import { FileReader, convertAttrToStatMode } from "../panel/FileReader";
 import { T } from "../common/Translation";
 import * as jschardet from "jschardet";
 import * as iconv from "iconv-lite";
+import { message } from '../../@types/blessed';
 
 const log = Logger( "editor" );
 
@@ -384,16 +385,17 @@ export abstract class Editor {
             return false;
         }
 
+        let mode = convertAttrToStatMode(file) || 0o644;
         let tmpFileName = fileName + ".tmp";
         try {
             let saveData = this.buffers.join( this.isDosMode ? "\r\n" : "\n" );
             if ( this.encoding !== "utf8" ) {
                 let bufSaveData: Buffer = iconv.encode(saveData, this.encoding);
-                fs.writeFileSync( tmpFileName, bufSaveData, { mode: 0o644 });
+                fs.writeFileSync( tmpFileName, bufSaveData, { mode });
             } else {
                 fs.writeFileSync( tmpFileName, saveData, { 
                     encoding: encoding || "utf8",
-                    mode: 0o644
+                    mode
                 });
             }
         } catch( e ) {
@@ -411,7 +413,8 @@ export abstract class Editor {
 
         try {
             fs.renameSync( tmpFileName, fileName );
-            fs.chmodSync( fileName, 0o644 );
+            fs.chmodSync( fileName, mode );
+            log.debug( "SAVE - CHMOD [%s] [%d]", fileName, mode );
         } catch( e ) {
             log.error( e );
             return false;
@@ -1074,9 +1077,14 @@ export abstract class Editor {
             return false;
         }
 
-        if ( this.save( this.file, this.encoding, this.isBackup ) ) {
-            this.lastDoInfoLength = this.doInfo.length;
-            return true;
+        try {
+            if ( this.save( this.file, this.encoding, this.isBackup ) ) {
+                this.lastDoInfoLength = this.doInfo.length;
+                return true;
+            }
+        } catch( e ) {
+            log.error( e );
+            await this.messageBox( T("Error"), T("EditorMsg.UNABLE_FILE_WRITE") + " " + e.message );
         }
         return false;
     }
@@ -1090,11 +1098,16 @@ export abstract class Editor {
             return false;
         }
 
-        this.file = FileReader.createFile( fileName );
-        if ( this.save( this.file, this.encoding, this.isBackup ) ) {
-            this.lastDoInfoLength = this.doInfo.length;
+        try {
+            this.file = FileReader.createFile( fileName );
+            if ( this.save( this.file, this.encoding, this.isBackup ) ) {
+                this.lastDoInfoLength = this.doInfo.length;
+            }
+            this.setViewTitle(this.file.fullname);
+        } catch( e ) {
+            log.error( e );
+            await this.messageBox( T("Error"), T("EditorMsg.UNABLE_FILE_WRITE") + " " + e.message );
         }
-        this.setViewTitle(this.file.fullname);
         return true;
     }
 

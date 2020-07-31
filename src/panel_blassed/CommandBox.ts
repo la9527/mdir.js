@@ -10,6 +10,7 @@ import { IBlessedView } from './IBlessedView';
 import mainFrame from './MainFrame';
 import { ColorConfig } from '../config/ColorConfig';
 import { BlessedPanel } from './BlessedPanel';
+import { RefreshType } from '../config/KeyMapConfig';
 
 const log = Logger("CommandBox");
 
@@ -212,6 +213,7 @@ export class CommandBox extends Widget {
         this.cursorPos = 0;
         this.commandValue = "";
         this.box.screen.program.showCursor();
+        mainFrame().execRefreshType(RefreshType.ALL);
     }
 
     keyEscape() {

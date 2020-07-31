@@ -654,7 +654,7 @@ export class MainFrame implements IHelpService {
                     this.screen.enter();
                     await this.refreshPromise();
                     this._keyLockScreen = false;
-                    resolve();
+                    resolve(RefreshType.ALL);
                 });
             });
         });

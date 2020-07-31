@@ -58,6 +58,23 @@ const convertAttr = ( stats: fs.Stats ): string => {
     return fileMode.join("");
 };
 
+export function convertAttrToStatMode( file: File ): number {
+    if ( file instanceof File && file.attr && file.attr.length === 10 ) {
+        let mode = 0;
+        mode = mode | (file.attr[1] === 'r' ? fs.constants.S_IRUSR : 0);
+        mode = mode | (file.attr[2] === 'w' ? fs.constants.S_IWUSR : 0);
+        mode = mode | (file.attr[3] === 'x' ? fs.constants.S_IXUSR : 0);
+        mode = mode | (file.attr[4] === 'r' ? fs.constants.S_IRGRP : 0);
+        mode = mode | (file.attr[5] === 'w' ? fs.constants.S_IWGRP : 0);
+        mode = mode | (file.attr[6] === 'x' ? fs.constants.S_IXGRP : 0);
+        mode = mode | (file.attr[7] === 'r' ? fs.constants.S_IROTH : 0);
+        mode = mode | (file.attr[8] === 'w' ? fs.constants.S_IWOTH : 0);
+        mode = mode | (file.attr[9] === 'x' ? fs.constants.S_IXOTH : 0);
+        return mode;
+    }
+    return 0;
+}
+
 const convertAttrFsDirect = ( dirent: fs.Dirent ): string => {
     const fileMode: string[] = os.platform() === "win32" ? "------".split("") : "----------".split("");
     fileMode[0] = dirent.isSymbolicLink() ? "l" : (dirent.isDirectory() ? "d" : "-");
@@ -352,17 +369,7 @@ export class FileReader extends Reader {
             if ( !path.dir ) {
                 return;
             }
-            let mode = 0;
-            mode = mode | (path.attr[1] === 'r' ? fs.constants.S_IRUSR : 0);
-            mode = mode | (path.attr[2] === 'w' ? fs.constants.S_IWUSR : 0);
-            mode = mode | (path.attr[3] === 'x' ? fs.constants.S_IXUSR : 0);
-            mode = mode | (path.attr[4] === 'r' ? fs.constants.S_IRGRP : 0);
-            mode = mode | (path.attr[5] === 'w' ? fs.constants.S_IWGRP : 0);
-            mode = mode | (path.attr[6] === 'x' ? fs.constants.S_IWGRP : 0);
-            mode = mode | (path.attr[7] === 'r' ? fs.constants.S_IROTH : 0);
-            mode = mode | (path.attr[8] === 'w' ? fs.constants.S_IWOTH : 0);
-            mode = mode | (path.attr[9] === 'x' ? fs.constants.S_IXOTH : 0);
-            fs.mkdirSync( path.fullname, { mode } );
+            fs.mkdirSync( path.fullname, { mode: convertAttrToStatMode(path) } );
         } else {
             fs.mkdirSync( path );
         }
