@@ -33,7 +33,7 @@ export default class BottomFilesBox extends Widget {
         } else if ( repeatSize < 0 ) {
             textFileName = scrstrncpy( fileName, 0, filenameMaxSize - 1) + "~";
         }
-        return textFileName;
+        return textFileName.normalize();
     }
 
     draw() {
