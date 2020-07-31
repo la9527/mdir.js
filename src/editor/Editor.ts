@@ -1214,10 +1214,12 @@ export abstract class Editor {
         log.debug( "DO INFO [%j]", this.doInfo );
         if ( this.lastDoInfoLength !== this.doInfo.length ) {
             let result = await this.messageBox( T("Save"), T("EditorMsg.QUIT_QUESTION_UNSAVED"), [ T("Yes"), T("No"), T("Cancel") ]);
-            if ( result === T("Cancel") ) {
-                return false;
-            } else if ( result === T("Ok") ) {
+            if ( result === T("Yes") ) {
                 await this.fileSavePromise();
+            } if ( result === T("No") ) {
+                log.debug( T("No") );
+            } else {
+                return false;
             }
         }
         this.destory();
