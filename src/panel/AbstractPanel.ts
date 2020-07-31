@@ -2,7 +2,7 @@ import { Logger } from "../common/Logger";
 import { File } from "../common/File";
 import { SortType } from "../common/Sort";
 
-const log = Logger("main");
+const log = Logger("AbstractPanel");
 
 export abstract class AbstractPanel {
     protected column: number = 0;
