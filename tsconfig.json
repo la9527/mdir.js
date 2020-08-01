@@ -19,7 +19,7 @@
         "resolveJsonModule": true,
         "esModuleInterop": true,
         "outDir": "./build",
-        "baseUrl": "./src",
+        "baseUrl": ".",
         "paths": {
             "neo-blessed": [ "./@types/blessed.d.ts" ],
         },

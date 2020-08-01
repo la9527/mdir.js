@@ -72,4 +72,8 @@ export class File {
         renew.mimetype = this.mimetype;
         return renew;
     }
+
+    toString() {
+        return `${this.fstype} ${this.attr} ${this.owner} ${this.group} ${this.fullname} ${this.size}`;
+    }
 }

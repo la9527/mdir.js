@@ -27,6 +27,16 @@ export function Logger( labelName: string ): winston.Logger {
         } catch ( e ) {
             isColor = false;
         }
+        let transports: any[] = [];
+        if ( process.env.DEBUG_STDOUT === "TRUE" ) {
+            transports.push( new winston.transports.Console({level: "debug"}) );
+        } else {
+            transports.push( new winston.transports.File({
+                level: "debug",
+                filename: DEBUG_FILE
+            }));
+        }
+
         logger = winston.createLogger({
             format: combine(
                 label({ label: labelName }),
@@ -43,9 +53,13 @@ export function Logger( labelName: string ): winston.Logger {
                         silly: "S"
                     };
                     if ( typeof(info.message) === "object" ) {
-                        try {
-                            info.message = JSON.stringify( info.message );
-                        } catch ( e ) {}
+                        if ( info.message && typeof((info.message as any).toString) === "function" ) {
+                            info.message = (info.message as any).toString();
+                        } else {
+                            try {
+                                info.message = JSON.stringify( info.message );
+                            } catch ( e ) {}
+                        }
                     }
                     let item = `${info.timestamp} - [${info.label.padEnd(10)}] ${level[info.level] || ""}: ${info.message}`;
                     if ( isColor ) {
@@ -54,12 +68,7 @@ export function Logger( labelName: string ): winston.Logger {
                     return item;
                 })
             ),
-            transports: [
-                new winston.transports.File({
-                    level: "debug",
-                    filename: DEBUG_FILE
-                })
-            ]
+            transports
         });
     } else {
         logger = winston.createLogger( { silent: true } );

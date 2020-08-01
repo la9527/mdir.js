@@ -17,7 +17,7 @@ import { T } from "../common/Translation";
 import { Editor, IViewBuffer, EDIT_MODE } from '../editor/Editor';
 import { Color } from "../common/Color";
 import mainFrame from "./MainFrame";
-import { File } from "common/File";
+import { File } from "../common/File";
 
 const log = Logger( "BlassedEditor" );
 
@@ -128,7 +128,7 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
     }
 
     setViewTitle( title ) {
-        this.title = StringUtils.ellipsis( title, this.editor.width);
+        this.title = StringUtils.ellipsis( title, this.editor.width as number);
     }
 
     keyWrite( keyInfo ): RefreshType {

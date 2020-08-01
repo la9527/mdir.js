@@ -1,4 +1,4 @@
-import { Widgets, text, button, BoxElement } from "neo-blessed";
+import { Widgets, text, button } from "neo-blessed";
 import { strWidth } from "neo-blessed/lib/unicode";
 
 import { Widget } from "./Widget";
@@ -51,7 +51,7 @@ export class MessageBox extends Widget {
         const MAX_WIDTH = this.box.screen.width as number;
 
         const MIN_BUTTON_WIDTH = 12;
-        this.buttonWidth = this.msgOption.button.reduce( (pre, item) => {
+        this.buttonWidth = this.msgOption.button.reduce( (pre: number, item) => {
             let strWidth = this.box.strWidth(item);
             return pre < strWidth ? strWidth : pre;
         }, MIN_BUTTON_WIDTH);
@@ -75,7 +75,7 @@ export class MessageBox extends Widget {
 
         if ( this.buttonType === MSG_BUTTON_TYPE.HORIZONTAL ) {
             this.box.width = Math.max( buttonAllWidth, Math.max(widthTitle, widthMsg) );
-            this.box.height = Math.min((this.msgOption.msg ? (msgLines.length + 7) : 4), this.screen.height - 6);
+            this.box.height = Math.min((this.msgOption.msg ? (msgLines.length + 7) : 4), this.screen.height as number - 6);
 
             if ( this.textWidget ) {
                 this.textWidget.width = this.box.width - 4;
@@ -86,7 +86,7 @@ export class MessageBox extends Widget {
         } else {
             this.buttonWidth = Math.max(this.buttonWidth, 20);
             this.box.width = Math.max( Math.max(widthTitle, widthMsg), this.buttonWidth + 4 );
-            this.box.height = Math.min( (this.msgOption.msg ? (msgLines.length + 5) : 4) + this.msgOption.button.length, this.screen.height - 6);
+            this.box.height = Math.min( (this.msgOption.msg ? (msgLines.length + 5) : 4) + this.msgOption.button.length, this.screen.height as number - 6);
             log.debug( "RESIZE - VERTICAL %d (%d, %d)", msgLines.length, this.box.width, this.box.height );
 
             if ( this.textWidget ) {
@@ -243,9 +243,9 @@ export class MessageBox extends Widget {
             } if ( [ "down" ].indexOf(keyInfo.name) > -1 ) {
                 this.textWidget.box.scroll(1);
             } else if ( this.msgOption.scroll && [ "pageup" ].indexOf(keyInfo.name) > -1 ) {
-                this.textWidget.box.scroll(-(this.textWidget.height - 1));
+                this.textWidget.box.scroll(-(this.textWidget.height as number - 1));
             } else if ( this.msgOption.scroll && [ "pagedown" ].indexOf(keyInfo.name) > -1 ) {
-                this.textWidget.box.scroll(this.textWidget.height - 1);
+                this.textWidget.box.scroll(this.textWidget.height as number - 1);
             } else if ( [ "return", "space", "escape" ].indexOf(keyInfo.name) > -1 ) {
                 this.destroy();
                 if ( keyInfo.name === "escape" ) {
@@ -291,7 +291,7 @@ export class MessageBox extends Widget {
 
 export function messageBox( msgOpt: IMessageOption, opts: Widgets.BoxOptions = {}): Promise<string> {
     return new Promise(( resolve, reject ) => {
-        const screen = msgOpt.parent.screen || opts.parent.screen || opts.parent;
+        const screen: any = msgOpt.parent.screen || opts.parent.screen || opts.parent;
         let messgaeBox = null;
         try {
             messgaeBox = new MessageBox({

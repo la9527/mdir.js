@@ -16,7 +16,7 @@ For bug reports, comments and questions, please email to la9527@daum.net
 
  - Windows 10
  - MAC OSX Catalina (10.15.x)
- - Ubuntu 
+ - Ubuntu Linux
 
 # License
 

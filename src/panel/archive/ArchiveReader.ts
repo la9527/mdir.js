@@ -1,11 +1,15 @@
 import { Reader, ProgressFunc, IMountList } from "../../common/Reader";
 import { File, FileLink } from "../../common/File";
 import { Logger } from "../../common/Logger";
-import { Writable } from "stream";
+import { Writable, Transform } from "stream";
 import * as tar from "tar-stream";
 import * as path from "path";
 import * as fs from "fs";
 import * as zlib from "zlib";
+import * as unzip from "unzip-stream";
+import { transports } from "winston";
+import * as jschardet from "jschardet";
+import * as iconv from "iconv-lite";
 
 const log = Logger("Archive");
 
@@ -16,7 +20,7 @@ interface Archive {
     uncompress( extractDir: File );
 }
 
-class ArchiveTarZip implements Archive {
+export class ArchiveTarZip implements Archive {
     private originalFile: File = null;
     private supportType: string = null;
 
@@ -27,15 +31,17 @@ class ArchiveTarZip implements Archive {
         this.originalFile = file;
 
         let name = this.originalFile.name;
-        if ( name.match( /(\.tar\.gz^|.tgz^)/ ) ) {
+        log.debug( this.originalFile );
+        if ( name.match( /(\.tar\.gz$|\.tgz$)/ ) ) {
             this.supportType = "tgz";
-        } else if ( name.match( /(\.tar^)/ ) ) {
+        } else if ( name.match( /(\.tar$)/ ) ) {
             this.supportType = "tar";
-        }else if ( name.match( /zip^)/ ) ) {
+        }else if ( name.match( /\.zip$/ ) ) {
             this.supportType = "zip";
-        } else if ( name.match( /.gz^/ ) ) {
+        } else if ( name.match( /\.gz$/ ) ) {
             this.supportType = "tgz";
         }
+        log.debug( this.supportType );
         return !!this.supportType;
     }
 
@@ -59,7 +65,7 @@ class ArchiveTarZip implements Archive {
         return fileMode.join("");
     };
 
-    convertTarFile(header: tar.Headers): File {
+    convertTarToFile(header: tar.Headers): File {
         let file = new File();
         file.fstype = "archive";
         file.fullname = header.name;
@@ -67,12 +73,30 @@ class ArchiveTarZip implements Archive {
         file.owner = header.uname;
         if ( header.linkname ) {
             file.link = new FileLink( header.linkname, null );
-        }        
+        }
+        file.uid = header.uid;
         file.gid = header.gid;
         file.group = header.gname;
         file.mtime = header.mtime;
         file.root = this.originalFile.fullname;
         file.attr = this.convertAttr(header);
+        file.size = header.size;
+        return file;
+    };
+
+    convertZipToFile(zipHeader): File {
+        let file = new File();
+        file.fstype = "archive";
+        file.fullname = zipHeader.path;
+        file.name = path.basename(file.fullname);
+        file.owner = "";
+        file.group = "";
+        file.uid = 0;
+        file.gid = 0;
+        file.mtime = new Date();
+        file.root = this.originalFile.fullname;
+        file.attr = zipHeader.isDirectory ? "d---------" : "----------";
+        file.size = zipHeader.size;
         return file;
     };
 
@@ -87,18 +111,11 @@ class ArchiveTarZip implements Archive {
                 return;
             }
     
-            let emptyWrite = new Writable({
-                write(chunk, encodeing, callback) {
-                    callback();
-                }
-            });
-
-            let archive = null;
             let resultFiles = [];
             if ( this.supportType === "tgz" || this.supportType === "tar" ) {
                 let extract = tar.extract();
                 extract.on("entry", (header, stream, next) => {
-                    resultFiles.push(this.convertTarFile(header));
+                    resultFiles.push(this.convertTarToFile(header));
                     stream.resume();
                     next();
                 });
@@ -115,6 +132,45 @@ class ArchiveTarZip implements Archive {
                         reject(error);
                     })
                     .on("finish", () => {
+                        log.debug( resultFiles );
+                        log.info( "finish : [%d]", resultFiles.length );
+                        resolve( resultFiles );
+                    });
+            } else if ( this.supportType === "zip" ) {
+                let stream = fs.createReadStream(this.originalFile.fullname);
+                let zipParse = unzip.Parse({
+                    decodeString: (buffer) => {
+                        let result = null;
+                        try {
+                            result = jschardet.detect( buffer );
+                        } catch ( e ) {
+                            log.error( e );
+                        }
+                        let data = null;
+                        if ( result && result.encoding && [ "utf8", "ascii" ].indexOf(result.encoding) === -1 ) {
+                            data = iconv.decode(buffer, result.encoding);
+                        } else {
+                            data = buffer.toString("utf8");
+                        }
+                        // log.info( "decode file: %s %s", result, data );
+                        return data;
+                    }
+                });
+
+                let transform = new Transform({
+                    objectMode: true,
+                    transform: (entry,e,cb) => {
+                        // log.debug( entry );
+                        resultFiles.push(this.convertZipToFile(entry));
+                        entry.autodrain();
+                        cb();
+                    }
+                });
+
+                stream.pipe(zipParse)
+                    .pipe(transform)
+                    .on("finish", () => {
+                        log.debug( resultFiles );
                         log.info( "finish : [%d]", resultFiles.length );
                         resolve( resultFiles );
                     });
@@ -130,9 +186,13 @@ class ArchiveTarZip implements Archive {
 }
 
 
-
-
 export class ArchiveReader extends Reader {
+    private baseArchiveFile: File;
+
+    setArchiveFile( file: File ) {
+
+    }
+
     convertFile(path: string, option?: { fileInfo?: any; useThrow?: boolean; checkRealPath?: boolean; }): File {
         throw new Error("Method not implemented.");
     }

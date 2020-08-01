@@ -81,7 +81,7 @@ export class ImageWidget extends Widget {
     draw() {
         // const { width, height } = this.scale(this.width, this.height, this.originalSize.width, this.originalSize.height);
         // log.debug( "image size [%s, %s]", width, height)
-        this.imageBuffer.resize( this.width, supportColorLevel.level > 2 ? this.height * 2 : this.height );
+        this.imageBuffer.resize( this.width as number, supportColorLevel.level > 2 ? (this.height as number) * 2 : (this.height as number) );
     }
 
     _render(startRow = -1, endRow = -1) {

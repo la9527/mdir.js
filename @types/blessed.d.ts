@@ -459,7 +459,7 @@ export namespace Widgets {
     namespace Types {
         type TTopLeft = string | number | "center";
 
-        type TPosition = string | number;
+        type TPosition = number | string;
 
         type TMouseAction = "mousedown" | "mouseup" | "mousemove";
 
@@ -689,7 +689,7 @@ export namespace Widgets {
     interface INodeOptions extends IOptions {
         name?: string;
         screen?: Screen;
-        parent?: Node;
+        parent?: Node | Screen;
         children?: Node[];
         focusable?: boolean;
     }
@@ -2065,7 +2065,7 @@ export namespace Widgets {
          * Get a string's displayed width, taking into account double-width, surrogate pairs,
          * combining characters, tags, and SGR escape codes.
          */
-        strWidth(text: string): string;
+        strWidth(text: string): number;
     }
 
     interface ScrollableBoxOptions extends ElementOptions {

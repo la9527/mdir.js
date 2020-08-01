@@ -1,5 +1,5 @@
 import * as blessed from "neo-blessed";
-import { BlessedProgram, Widgets, box, text, colors, ANSIImage } from "neo-blessed";
+import { BlessedProgram, Widgets, box, colors } from "neo-blessed";
 import { Logger, updateDebugFile } from "../common/Logger";
 import { ImageWidget } from '../panel_blassed/widget/ImageBox';
 import { draw } from "../panel_blassed/widget/BlessedDraw";
