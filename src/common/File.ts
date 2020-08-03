@@ -1,5 +1,6 @@
 import { Color } from "./Color";
 import * as path from "path";
+import { CLIENT_RENEG_WINDOW } from "tls";
 
 export class FileLink {
     name: string;
@@ -34,6 +35,8 @@ export class File {
     ctime:      Date;       // create time
     mtime:      Date;       // modify time
 
+    orgname:    string;
+
     select:     boolean;
 
     color:      Color = new Color();
@@ -62,6 +65,7 @@ export class File {
         renew.dir = this.dir;
         renew.name = this.name;
         renew.fullname = this.fullname;
+        renew.orgname = this.orgname;
         renew.owner = this.owner;
         renew.group = this.group;
         renew.gid = this.gid;

@@ -7,6 +7,7 @@ import * as path from "path";
 import * as fs from "fs";
 import * as zlib from "zlib";
 import * as unzip from "unzip-stream";
+import * as bunzip2 from "unbzip2-stream";
 import { transports } from "winston";
 import * as jschardet from "jschardet";
 import * as iconv from "iconv-lite";
@@ -34,12 +35,16 @@ export class ArchiveTarZip implements Archive {
         log.debug( this.originalFile );
         if ( name.match( /(\.tar\.gz$|\.tgz$)/ ) ) {
             this.supportType = "tgz";
+        } else if ( name.match( /(\.tar\.bz2$|\.tar\.bz$|\.tbz2$|\.tbz$)/ ) ) {
+            this.supportType = "tbz2";
         } else if ( name.match( /(\.tar$)/ ) ) {
             this.supportType = "tar";
         }else if ( name.match( /\.zip$/ ) ) {
             this.supportType = "zip";
         } else if ( name.match( /\.gz$/ ) ) {
-            this.supportType = "tgz";
+            this.supportType = "gz";
+        } else if ( name.match( /.bz$/ )) {
+            this.supportType = "bz2";
         }
         log.debug( this.supportType );
         return !!this.supportType;
@@ -68,7 +73,8 @@ export class ArchiveTarZip implements Archive {
     convertTarToFile(header: tar.Headers): File {
         let file = new File();
         file.fstype = "archive";
-        file.fullname = header.name;
+        file.fullname = header.name[0] !== "/" ? "/" + header.name : header.name;
+        file.orgname = header.name;
         file.name = path.basename(file.fullname);
         file.owner = header.uname;
         if ( header.linkname ) {
@@ -87,7 +93,8 @@ export class ArchiveTarZip implements Archive {
     convertZipToFile(zipHeader): File {
         let file = new File();
         file.fstype = "archive";
-        file.fullname = zipHeader.path;
+        file.fullname = zipHeader.path[0] !== "/" ? "/" + zipHeader.path : zipHeader.path;
+        file.orgname = zipHeader.path;
         file.name = path.basename(file.fullname);
         file.owner = "";
         file.group = "";
@@ -110,34 +117,39 @@ export class ArchiveTarZip implements Archive {
                 resolve( [file] );
                 return;
             }
-    
+
+            let file = this.originalFile;
+            let stream: any = fs.createReadStream(file.fullname);
+            let chunkSum = 0;
+
+            const reportProgress = new Transform({
+                transform(chunk: Buffer, encoding, callback) {
+                    chunkSum += chunk.length;
+                    progress && progress( file, chunkSum, file.size, chunk.length );
+                    // log.debug( "Transform: %s => %d / %d", file.fullname, chunkSum, file.size );
+                    callback( null, chunk );
+                }
+            });
+
+            stream = stream.pipe( reportProgress );
+
+            let outstream: any = null;    
             let resultFiles = [];
-            if ( this.supportType === "tgz" || this.supportType === "tar" ) {
+            if ( [ "tbz2", "tgz", "tar" ].indexOf( this.supportType ) > -1 ) {
                 let extract = tar.extract();
                 extract.on("entry", (header, stream, next) => {
                     resultFiles.push(this.convertTarToFile(header));
                     stream.resume();
                     next();
                 });
-
-                let stream = fs.createReadStream(this.originalFile.fullname);
-                let outstream = null;
+                
                 if ( this.supportType === "tgz" ) {
-                    outstream = stream.pipe(zlib.createGunzip()).pipe( extract );
-                } else {
-                    outstream = stream.pipe( extract );
+                    outstream = stream.pipe(zlib.createGunzip());
+                } else if ( this.supportType === "tbz2" ) {
+                    outstream = stream.pipe(bunzip2());
                 }
-                outstream.on("error", (error) => {
-                        log.error( "ERROR", error );
-                        reject(error);
-                    })
-                    .on("finish", () => {
-                        log.debug( resultFiles );
-                        log.info( "finish : [%d]", resultFiles.length );
-                        resolve( resultFiles );
-                    });
+                outstream = outstream.pipe( extract );
             } else if ( this.supportType === "zip" ) {
-                let stream = fs.createReadStream(this.originalFile.fullname);
                 let zipParse = unzip.Parse({
                     decodeString: (buffer) => {
                         let result = null;
@@ -160,75 +172,132 @@ export class ArchiveTarZip implements Archive {
                 let transform = new Transform({
                     objectMode: true,
                     transform: (entry,e,cb) => {
-                        // log.debug( entry );
+                        // log.debug( "TRANSFORM: %s", e );
+                        //log.debug( JSON.stringify(entry, null, 2) );
                         resultFiles.push(this.convertZipToFile(entry));
                         entry.autodrain();
                         cb();
                     }
                 });
-
-                stream.pipe(zipParse)
-                    .pipe(transform)
-                    .on("finish", () => {
-                        log.debug( resultFiles );
-                        log.info( "finish : [%d]", resultFiles.length );
-                        resolve( resultFiles );
-                    });
+                outstream = stream.pipe(zipParse).pipe(transform);
             }
+            outstream.on("error", (error) => {
+                    log.error( "ERROR", error );
+                    reject(error);
+                })
+                .on("finish", () => {
+                    log.info( "finish : [%d]", resultFiles.length );
+                    resolve( resultFiles );
+                });
         });
     }
+
     compress(files: File[], progress?: ProgressFunc) {
         throw new Error("Method not implemented.");
     }
+
     uncompress(extractDir: File, progress?: ProgressFunc) {
         throw new Error("Method not implemented.");
     }
 }
 
-
 export class ArchiveReader extends Reader {
     private baseArchiveFile: File;
+    private archiveObj: ArchiveTarZip = new ArchiveTarZip();
+    private archiveFiles: File[] = [];
+    private baseDir: File;
 
-    setArchiveFile( file: File ) {
-
+    async setArchiveFile( file: File, progressFunc: ProgressFunc ): Promise<boolean> {
+        if ( !this.archiveObj.setFile( file ) ) {
+            return false;
+        }
+        this.baseArchiveFile = file;
+        this.archiveFiles = await this.archiveObj.archivedFiles(progressFunc);
+        return true;
     }
 
     convertFile(path: string, option?: { fileInfo?: any; useThrow?: boolean; checkRealPath?: boolean; }): File {
-        throw new Error("Method not implemented.");
+        if ( !path ) {
+            return null;
+        }
+        return this.archiveFiles.find( (item) => {
+            return item.orgname === path;
+        });
     }
     readdir(dir: File, option?: { isExcludeHiddenFile?: boolean; noChangeDir?: boolean; }): Promise<File[]> {
-        throw new Error("Method not implemented.");
+        let resultFile = this.archiveFiles.filter( (item) => {
+            if ( item.orgname.indexOf( dir.orgname ) === 0 && 
+                 item.orgname.split("/").length === dir.orgname.split("/").length ) {
+                return true;
+            }
+            return false;
+        });
+        return new Promise((resolve) => {
+            resolve( resultFile );
+        });
     }
+ 
     homeDir(): File {
-        throw new Error("Method not implemented.");
+        return this.rootDir(); 
     }
+
     rootDir(): File {
-        throw new Error("Method not implemented.");
+        let file = new File();
+        file.fstype = "archive";
+        file.fullname = "/";
+        file.orgname = "";
+        file.name = "/";
+        file.owner = "";
+        file.group = "";
+        file.uid = 0;
+        file.gid = 0;
+        file.mtime = new Date();
+        file.root = this.baseArchiveFile.fullname;
+        file.attr = "d---------";
+        file.size = 0;
+        return file;
     }
+
     mountList(): Promise<IMountList[]> {
         throw new Error("Method not implemented.");
     }
+
     changeDir(dirFile: File) {
         throw new Error("Method not implemented.");
     }
+
     currentDir(): File {
-        throw new Error("Method not implemented.");
+        return this.baseDir;
     }
+
     sep(): string {
-        throw new Error("Method not implemented.");
+        return "/";
     }
+
     exist(source: string | File): boolean {
-        throw new Error("Method not implemented.");
+        if ( !source ) {
+            return false;
+        }
+        return !!this.archiveFiles.find( (item) => {
+            if ( source instanceof File ) {
+                return item.orgname === source.orgname;
+            }
+            return item.orgname === source;
+        });
     }
+
     mkdir(path: string | File) {
         throw new Error("Method not implemented.");
     }
+
     rename(source: File, rename: string): Promise<void> {
         throw new Error("Method not implemented.");
     }
+
     copy(source: File, target: File, progress?: ProgressFunc): Promise<void> {
         throw new Error("Method not implemented.");
     }
+    
     remove(source: File): Promise<void> {
         throw new Error("Method not implemented.");
     }    

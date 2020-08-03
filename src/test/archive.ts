@@ -4,8 +4,8 @@ import { log } from "winston";
 
 // let archiveReader = new ArchiveReader();
 
-//let file = FileReader.convertFile("./impay.tar.gz");
-let file = FileReader.convertFile("./src.zip");
+let file = FileReader.convertFile("./impay.tar.gz");
+//let file = FileReader.convertFile("./src.zip");
 
 (async () => {
     let archiveTarZip = new ArchiveTarZip();
