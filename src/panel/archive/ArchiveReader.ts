@@ -1,14 +1,13 @@
 import { Reader, ProgressFunc, IMountList } from "../../common/Reader";
 import { File, FileLink } from "../../common/File";
 import { Logger } from "../../common/Logger";
-import { Writable, Transform } from "stream";
+import { Transform } from "stream";
 import * as tar from "tar-stream";
 import * as path from "path";
 import * as fs from "fs";
 import * as zlib from "zlib";
-import * as unzip from "unzip-stream";
+import * as yauzl from "yauzl";
 import * as bunzip2 from "unbzip2-stream";
-import { transports } from "winston";
 import * as jschardet from "jschardet";
 import * as iconv from "iconv-lite";
 
@@ -90,20 +89,82 @@ export class ArchiveTarZip implements Archive {
         return file;
     };
 
-    convertZipToFile(zipHeader): File {
+    decodeString(buffer) {
+        let result = null;
+        try {
+            result = jschardet.detect( buffer );
+        } catch ( e ) {
+            log.error( e );
+        }
+        let data = null;
+        if ( result && result.encoding && [ "utf8", "ascii" ].indexOf(result.encoding) === -1 ) {
+            data = iconv.decode(buffer, result.encoding);
+        } else {
+            data = buffer.toString("utf8");
+        }
+        // log.info( "decode file: %s %s", result, data );
+        return data;
+    }
+
+    convertZipToFile(zipHeader: yauzl.Entry): File {
         let file = new File();
         file.fstype = "archive";
-        file.fullname = zipHeader.path[0] !== "/" ? "/" + zipHeader.path : zipHeader.path;
-        file.orgname = zipHeader.path;
+
+        // console.log( zipHeader );
+
+        const filename = this.decodeString(zipHeader.fileName);
+        file.fullname = filename[0] !== "/" ? "/" + filename : filename;
+        file.orgname = filename;
         file.name = path.basename(file.fullname);
         file.owner = "";
         file.group = "";
         file.uid = 0;
         file.gid = 0;
-        file.mtime = new Date();
+        if ( zipHeader.extraFields ) { // https://github.com/mhr3/unzip-stream/blob/master/lib/unzip-stream.js
+            /**
+             *          -Info-ZIP New Unix Extra Field:
+                ====================================
+
+                Currently stores Unix UIDs/GIDs up to 32 bits.
+                (Last Revision 20080509)
+
+                Value         Size        Description
+                -----         ----        -----------
+        (UnixN) 0x7875        Short       tag for this extra block type ("ux")
+                TSize         Short       total data size for this block
+                Version       1 byte      version of this extra field, currently 1
+                UIDSize       1 byte      Size of UID field
+                UID           Variable    UID for this entry
+                GIDSize       1 byte      Size of GID field
+                GID           Variable    GID for this entry
+             */
+            zipHeader.extraFields.map( item => {
+                if ( item.id === 0x7875 ) { // Info-ZIP New Unix Extra Field
+                    let offset = 0;
+                    let extraVer = item.data.readInt8(0);
+                    offset += 1;
+                    if (extraVer === 1) {
+                        let uidSize = item.data.readUInt8(offset);
+                        offset += 1;
+                        if (uidSize <= 6) {
+                            file.uid = item.data.readUIntLE(offset, uidSize);
+                        }
+                        offset += uidSize;
+    
+                        let gidSize = item.data.readUInt8(offset);
+                        offset += 1;
+                        if (gidSize <= 6) {
+                            file.gid = item.data.readUIntLE(offset, gidSize);
+                        }
+                    }
+                }
+            });
+        }
+        file.mtime = zipHeader.getLastModDate();
+        file.ctime = zipHeader.getLastModDate();
         file.root = this.originalFile.fullname;
-        file.attr = zipHeader.isDirectory ? "d---------" : "----------";
-        file.size = zipHeader.size;
+        file.attr = filename[filename.length - 1] === "/" ? "drwxr-xr-x" : "-rw-r--r--";
+        file.size = zipHeader.uncompressedSize;
         return file;
     };
 
@@ -118,24 +179,24 @@ export class ArchiveTarZip implements Archive {
                 return;
             }
 
-            let file = this.originalFile;
-            let stream: any = fs.createReadStream(file.fullname);
-            let chunkSum = 0;
-
-            const reportProgress = new Transform({
-                transform(chunk: Buffer, encoding, callback) {
-                    chunkSum += chunk.length;
-                    progress && progress( file, chunkSum, file.size, chunk.length );
-                    // log.debug( "Transform: %s => %d / %d", file.fullname, chunkSum, file.size );
-                    callback( null, chunk );
-                }
-            });
-
-            stream = stream.pipe( reportProgress );
-
-            let outstream: any = null;    
             let resultFiles = [];
             if ( [ "tbz2", "tgz", "tar" ].indexOf( this.supportType ) > -1 ) {
+                let file = this.originalFile;
+                let stream: any = fs.createReadStream(file.fullname);
+                let chunkSum = 0;
+
+                const reportProgress = new Transform({
+                    transform(chunk: Buffer, encoding, callback) {
+                        chunkSum += chunk.length;
+                        progress && progress( file, chunkSum, file.size, chunk.length );
+                        log.debug( "Transform: %s => %d / %d", file.fullname, chunkSum, file.size );
+                        callback( null, chunk );
+                    }
+                });
+
+                stream = stream.pipe( reportProgress );
+
+                let outstream: any = null;
                 let extract = tar.extract();
                 extract.on("entry", (header, stream, next) => {
                     resultFiles.push(this.convertTarToFile(header));
@@ -149,39 +210,7 @@ export class ArchiveTarZip implements Archive {
                     outstream = stream.pipe(bunzip2());
                 }
                 outstream = outstream.pipe( extract );
-            } else if ( this.supportType === "zip" ) {
-                let zipParse = unzip.Parse({
-                    decodeString: (buffer) => {
-                        let result = null;
-                        try {
-                            result = jschardet.detect( buffer );
-                        } catch ( e ) {
-                            log.error( e );
-                        }
-                        let data = null;
-                        if ( result && result.encoding && [ "utf8", "ascii" ].indexOf(result.encoding) === -1 ) {
-                            data = iconv.decode(buffer, result.encoding);
-                        } else {
-                            data = buffer.toString("utf8");
-                        }
-                        // log.info( "decode file: %s %s", result, data );
-                        return data;
-                    }
-                });
-
-                let transform = new Transform({
-                    objectMode: true,
-                    transform: (entry,e,cb) => {
-                        // log.debug( "TRANSFORM: %s", e );
-                        //log.debug( JSON.stringify(entry, null, 2) );
-                        resultFiles.push(this.convertZipToFile(entry));
-                        entry.autodrain();
-                        cb();
-                    }
-                });
-                outstream = stream.pipe(zipParse).pipe(transform);
-            }
-            outstream.on("error", (error) => {
+                outstream.on("error", (error) => {
                     log.error( "ERROR", error );
                     reject(error);
                 })
@@ -189,6 +218,25 @@ export class ArchiveTarZip implements Archive {
                     log.info( "finish : [%d]", resultFiles.length );
                     resolve( resultFiles );
                 });
+            } else if ( this.supportType === "zip" ) {
+                yauzl.open( this.originalFile.fullname, { lazyEntries: true, autoClose: false, decodeStrings: false }, (err, zipfile: yauzl.ZipFile) =>{
+                    if ( err ) {
+                        reject( err );
+                        return;
+                    }
+                    zipfile.readEntry();
+                    zipfile.on("entry", (entry: yauzl.Entry) => {
+                        progress && progress( this.originalFile, entry.relativeOffsetOfLocalHeader, this.originalFile.size, this.originalFile.size - entry.relativeOffsetOfLocalHeader );
+                        resultFiles.push( this.convertZipToFile(entry) );
+                        zipfile.readEntry();
+                    });
+                    zipfile.once("end", () => {
+                        progress && progress( this.originalFile, this.originalFile.size, this.originalFile.size, 0 );
+                        zipfile.close();
+                        resolve( resultFiles );
+                    });
+                });
+            }
         });
     }
 

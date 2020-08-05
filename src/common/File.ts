@@ -1,6 +1,6 @@
 import { Color } from "./Color";
 import * as path from "path";
-import { CLIENT_RENEG_WINDOW } from "tls";
+import { sprintf } from "sprintf-js";
 
 export class FileLink {
     name: string;
@@ -73,11 +73,17 @@ export class File {
         renew.fstype = this.fstype;
         renew.link = this.link && this.link.clone();
         renew.error = this.error;
+        renew.ctime = this.ctime;
+        renew.mtime = this.mtime;
         renew.mimetype = this.mimetype;
         return renew;
     }
 
     toString() {
-        return `${this.fstype} ${this.attr} ${this.owner} ${this.group} ${this.fullname} ${this.size}`;
+        if ( this.owner && this.group ) {
+            return sprintf("%s %s %s %s %-10d %s", this.fstype, this.attr, this.owner, this.group, this.size, this.fullname);
+        } else {
+            return sprintf("%s %s %10d %s", this.fstype, this.attr, this.size, this.fullname);
+        }
     }
 }
