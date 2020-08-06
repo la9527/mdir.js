@@ -336,7 +336,7 @@ export function functionKeyInfo( baseObject ) {
         if ( keyFrame['f' + i] ) {
             if ( typeof(keyFrame['f' + i]) === "string" ) {
                 functionKeyInfo['F' + i] = keyFrame['f' + i];
-            } else if ( (keyFrame['f' + i] as IMethodParam)?.name ) {
+            } else if ( (keyFrame['f' + i] as IMethodParam) && (keyFrame['f' + i] as IMethodParam).name ) {
                 functionKeyInfo['F' + i] = (keyFrame['f' + i] as IMethodParam).name;
             }
         }
@@ -450,7 +450,7 @@ export function menuKeyMapping( allkeyMappingInfo: IAllKeyMappingInfo, menuObjec
     Object.keys(menuObject).forEach( i => {
         Object.keys(menuObject[i]).forEach( j => {            
             menuObject[i][j].map( (item: ISubMenuConfig | string ) => {
-                if ( typeof(item) === "object" && item?.method ) {
+                if ( typeof(item) === "object" && item && item.method ) {
                     let key = getKeyName(item.method, item.funcParam);
                     if ( key ) {
                         item.key = key;

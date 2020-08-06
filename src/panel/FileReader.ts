@@ -217,12 +217,13 @@ export class FileReader extends Reader {
             return null;
         }
         
-        if ( option?.virtualFile ) {
+        if ( option && option.virtualFile ) {
             file.dir = false;
             file.uid = -1;
             file.gid = -1;
             file.ctime = new Date(0);
             file.mtime = new Date(0);
+            file.atime = new Date(0);
             return file;
         }
 
@@ -235,6 +236,7 @@ export class FileReader extends Reader {
                 file.size = item.SIZE;
                 file.ctime = item.CREATION_TIME;
                 file.mtime = item.LAST_WRITE_TIME;
+                file.atime = item.LAST_ACCESS_TIME;
             } else {
                 const stat = fs.lstatSync( file.fullname );
                 file.dir = stat.isDirectory();
@@ -246,6 +248,7 @@ export class FileReader extends Reader {
                 file.group = this.systemUserInfo.findGid(stat.gid, "name");
                 file.ctime = stat.ctime;
                 file.mtime = stat.mtime;
+                file.atime = stat.atime;
             }
         } catch ( e ) {
             log.error( "convertfile - FAIL 2 : [%s] %j", filePath, e);
@@ -256,6 +259,7 @@ export class FileReader extends Reader {
                 file.gid = -1;
                 file.ctime = new Date(0);
                 file.mtime = new Date(0);
+                file.atime = new Date(0);
             } else {
                 if ( useThrow ) {
                     throw e;
@@ -277,12 +281,11 @@ export class FileReader extends Reader {
                 log.error( "convertfile - FAIL 3 : [%s] %j", filePath, e);
             }
         }
-        file.color = ColorConfig.instance().getFileColor( file );
         return file;
     }
 
     changeDir( dirFile: File ) {
-        if ( dirFile?.fullname ) {
+        if ( dirFile && dirFile.fullname ) {
             process.chdir( dirFile.fullname );
         }
     }
@@ -314,7 +317,7 @@ export class FileReader extends Reader {
 
                     const item = this.convertFile(dirPath + file.name, { fileInfo: file } );
                     //log.info( "dirInfo [%s][%s][%s]", dirPath, file.name, item.fullname );
-                    if ( option?.isExcludeHiddenFile ) {
+                    if ( option && option.isExcludeHiddenFile ) {
                         if ( process.platform !== "win32" && item.name !== ".." && item.name[0] === "." ) {
                             continue;
                         }

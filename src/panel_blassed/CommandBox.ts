@@ -140,10 +140,13 @@ export class CommandBox extends Widget {
 
     async pathComplatePromise( pathStr ): Promise<{ path: File, files: File[] }> {
         try {
-            let reader = this.panelView?.getReader();
+            let reader = this.panelView && this.panelView.getReader();
+            if ( !reader ) {
+                return null;
+            }
 
             let pathInfo = path.parse(pathStr);
-            let pathFile = reader?.convertFile( pathInfo.dir, { checkRealPath: true } );
+            let pathFile = reader.convertFile( pathInfo.dir, { checkRealPath: true } );
             if ( !pathFile ) {
                 return null;
             }
@@ -164,11 +167,14 @@ export class CommandBox extends Widget {
     }
 
     draw() {
-        let dir: File = (mainFrame().activePanel() as BlessedPanel)?.currentPath();
-        if ( dir ) {
-            //log.debug( "CommandBox - PATH: [%s]", dir.fullname );
-            this.promptText = this.prompt( dir?.fullname );
-            this.setContent( this.promptText + this.commandValue );
+        let panel = (mainFrame().activePanel() as BlessedPanel);
+        if ( panel ) {
+            let dir: File = panel.currentPath();
+            if ( dir ) {
+                //log.debug( "CommandBox - PATH: [%s]", dir.fullname );
+                this.promptText = this.prompt( dir.fullname );
+                this.setContent( this.promptText + this.commandValue );
+            }
         }
     }
 
@@ -245,7 +251,7 @@ export class CommandBox extends Widget {
             let lastIndex = cmd.lastIndexOf(" ");
             let firstText = cmd.substr(0, lastIndex > -1 ? (lastIndex + 1) : cmd.length );
             let lastPath = cmd.substr(lastIndex+1);
-            let currentPath: File = (mainFrame().activePanel() as BlessedPanel)?.currentPath();
+            let currentPath: File = (mainFrame().activePanel() as BlessedPanel).currentPath();
 
             if ( this.tabFileInfo ) {
                 this.tabFileInfo.index++;
@@ -283,7 +289,7 @@ export class CommandBox extends Widget {
             }).replace(/\s+/g, "");
         };
 
-        if ( key?.name ) {
+        if ( key && key.name ) {
             if ( key.name !== "tab" ) {
                 this.tabFileInfo = null;
             }

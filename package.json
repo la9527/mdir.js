@@ -41,7 +41,7 @@
     "Xterm"
   ],
   "engines": {
-    "node": ">= 10.0.0"
+    "node": ">= 10.20.0"
   },
   "dependencies": {
     "chalk": "^4.1.0",
@@ -75,7 +75,7 @@
   },
   "devDependencies": {
     "@types/drivelist": "^6.4.1",
-    "@types/node": "^11.10.4",
+    "@types/node": "^12.12.54",
     "@types/sprintf-js": "^1.1.2",
     "@types/tar-stream": "^2.1.0",
     "@types/yargs": "^15.0.5",

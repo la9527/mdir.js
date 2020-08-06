@@ -165,7 +165,7 @@ export class ImageViewBox extends Widget {
 
     async setImageOption( option: IImageBoxOptions ) {
         this.option = option;
-        await this.imageWidget?.setImage( option.file );
+        await this.imageWidget.setImage( option.file );
     }
 
     resize() {
@@ -204,7 +204,7 @@ export class ImageViewBox extends Widget {
         this.box.off("keypress");
         this.box.on("element click", (el, name) => {
             this.destroy();
-            this.option?.closeFunc();
+            this.option && this.option.closeFunc();
         });
         this.box.on("keypress", async (ch, keyInfo) => {
             log.info( "KEYPRESS [%s]", keyInfo.name );
@@ -214,7 +214,7 @@ export class ImageViewBox extends Widget {
 
             if ( [ "return", "space", "escape" ].indexOf(keyInfo.name) > -1 ) {
                 this.destroy();
-                this.option?.closeFunc();
+                this.option && this.option.closeFunc();
                 return;
             }
             this.render();
@@ -229,7 +229,9 @@ export class ImageViewBox extends Widget {
     draw() {
         this.resize();
 
-        this.option?.file?.name && this.titleWidget.setContent( this.option.file.name );
+        if ( this.option && this.option.file ) {
+            this.option.file.name && this.titleWidget.setContent( this.option.file.name );
+        }
     }
 
     destroy() {

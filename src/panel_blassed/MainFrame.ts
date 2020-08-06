@@ -30,16 +30,13 @@ import { BlessedXterm } from "./BlessedXterm";
 import { sprintf } from "sprintf-js";
 import { T } from "../common/Translation";
 import * as os from 'os';
-import { chdir } from "process";
 import * as fs from 'fs';
 import * as path from 'path';
 import { draw } from "./widget/BlessedDraw";
 import { ImageViewBox } from "./widget/ImageBox";
-import * as FileType from "file-type";
 import { File } from "../common/File";
-import { number } from "yargs";
-import { yellow } from "chalk";
-import { EEXIST } from "constants";
+import { ArchiveReader } from "../panel/archive/ArchiveReader";
+import { FileReader } from "../panel/FileReader";
 
 const log = Logger("MainFrame");
 
@@ -135,6 +132,52 @@ export class MainFrame implements IHelpService {
         this.viewRender();
         this.baseWidget.render();
         return RefreshType.ALL;
+    }
+
+    async archivePromise(file: File = null) {
+        let view = this.blessedFrames[this.activeFrameNum];
+        if ( view instanceof BlessedPanel && file.fstype === "file" ) {
+            const progressBox = new ProgressBox( { title: T("Message.Archive"), msg: T("Message.Calculating"), cancel: () => {
+                reader.isUserCanceled = true;
+            }}, { parent: this.baseWidget } );
+            this.screen.render();
+            await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
+            
+            let copyBytes = 0;
+            let befCopyInfo = { beforeTime: Date.now(), copyBytes };
+        
+            let refreshTimeMs = 300;
+            let fullFileSize = file.size;
+            const progressStatus: ProgressFunc = ( source, copySize, size, chunkLength ) => {
+                copyBytes += chunkLength;
+                let repeatTime = Date.now() - befCopyInfo.beforeTime;
+                if ( repeatTime > refreshTimeMs ) {
+                    let bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
+                    let lastText = (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
+                                    (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(fullFileSize, false, 1).trim());
+                    progressBox.updateProgress( source.fullname, lastText, copyBytes, fullFileSize );
+                    befCopyInfo.beforeTime = Date.now();
+                    befCopyInfo.copyBytes = copyBytes;
+                }
+            };
+
+            let reader = new ArchiveReader();
+            if ( await reader.setArchiveFile( file, progressStatus ) ) {
+                view.setReader( reader );
+                await view.read( reader.rootDir() );
+                view.setFocus();
+            }
+            progressBox.destroy();
+        } else if ( view instanceof BlessedPanel && 
+            file.fstype === "archive" && 
+            view.getReader().currentDir().fullname === "/" &&
+            file.fullname === "/" && file.name === ".." ) {
+            let fileReader = new FileReader();
+            view.setReader( fileReader );
+            let archiveFile = fileReader.convertFile( file.root, { checkRealPath: true } );
+            await view.read( fileReader.convertFile( archiveFile.dirname ) );
+            view.focusFile( archiveFile );
+        }
     }
 
     async vimPromise() {
@@ -462,7 +505,7 @@ export class MainFrame implements IHelpService {
             return RefreshType.NONE;
         }
 
-        if ( this.activePanel()?.getReader()?.currentDir()?.fullname ) {
+        if ( this.activePanel() && this.activePanel().getReader() && this.activePanel().getReader().currentDir() ) {
             let lastPath = this.activePanel().getReader().currentDir().fullname;
             log.debug( "CHDIR : %s", lastPath );
             process.chdir( lastPath );

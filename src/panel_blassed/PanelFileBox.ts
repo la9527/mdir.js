@@ -31,8 +31,10 @@ export class PanelFileBox extends Widget {
         this._viewOwner = viewOwner;
 
         this.on( "click", async (e) => {
-            log.debug( e );            
-            await this.parentPanel?.onFileBoxClick( this, e );
+            log.debug( e );
+            if ( this.parentPanel ) {
+                await this.parentPanel.onFileBoxClick( this, e );
+            }
         });
     }
 

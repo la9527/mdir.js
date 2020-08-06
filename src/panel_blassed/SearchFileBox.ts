@@ -71,7 +71,7 @@ export class SearchFileBox extends Widget {
         };
 
         let result = false;
-        if ( keyInfo?.name ) {
+        if ( keyInfo && keyInfo.name ) {
             const methodName = camelize("key " + keyInfo.name);
             log.debug( "SearchFileBox.%s()", methodName );
             if ( this[methodName] ) {

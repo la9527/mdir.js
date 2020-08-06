@@ -117,7 +117,7 @@ export abstract class CoreTerminal extends Disposable implements ICoreTerminal {
       return;
     }
     super.dispose();
-    this._windowsMode?.dispose();
+    this._windowsMode && this._windowsMode.dispose();
     this._windowsMode = undefined;
   }
 
@@ -311,7 +311,7 @@ export abstract class CoreTerminal extends Disposable implements ICoreTerminal {
         if (this.optionsService.options.windowsMode) {
           this._enableWindowsMode();
         } else {
-          this._windowsMode?.dispose();
+          this._windowsMode && this._windowsMode.dispose();
           this._windowsMode = undefined;
         }
         break;

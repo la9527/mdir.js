@@ -18,6 +18,7 @@ import { messageBox } from "./widget/MessageBox";
 import { T } from "../common/Translation";
 import * as FileType from "file-type";
 import * as mime from "mime-types";
+import { FileReader } from "../panel/FileReader";
 
 const log = Logger("blessedpanel");
 
@@ -186,7 +187,12 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
         this.header.on("prerender", () => {
             // log.debug( "header prerender !!! - Start %d", this.baseWidget._viewCount );
             if (this._currentDir) {
-                this.header.setContent(this._currentDir.fullname);
+                if ( this._currentDir.fstype === "archive" ) {
+                    let file = FileReader.convertFile(this._currentDir.root);
+                    this.header.setContent( file?.name + ":" + this._currentDir.fullname);
+                } else {
+                    this.header.setContent(this._currentDir.fullname);
+                }
             }
         });
         this.tailer.on("prerender", () => {
@@ -223,7 +229,7 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
             });
         }
         const result = await this.searchFileBox.executePromise(ch, keyInfo);
-        if (result && keyInfo?.name !== "tab") {
+        if (result && keyInfo && keyInfo.name !== "tab") {
             this.searchFile();
         }
         if (result) {
@@ -233,10 +239,20 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
     }
 
     async keyEnterPromise(): Promise<any> {
-        this.searchFileBox?.clear();
+        this.searchFileBox && this.searchFileBox.clear();
+        const currentFile: File = this.dirFiles[this.currentPos];
+        if ( currentFile.fstype === "archive" && this.reader.currentDir().fullname === "/" &&
+            currentFile.fullname === "/" && currentFile.name === ".." ) {
+            await mainFrame().archivePromise(currentFile);
+            return RefreshType.ALL;
+        }
+
         const result = await super.keyEnterPromise();
         if (!result) {
-            const currentFile: File = this.dirFiles[this.currentPos];
+            if ( currentFile.fstype === "archive" ) {
+                log.debug( currentFile );
+                return RefreshType.NONE;
+            }
 
             try {
                 let mimeLookup = mime.lookup(currentFile.fullname);
@@ -253,6 +269,9 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
                     } else if (mimeLookup.match( /(text|json|xml|javascript|css|html)/ )) {
                         await mainFrame().editorPromise(currentFile);
                         return;
+                    } else if (mimeLookup.match( /(zip|gz|tar)/ )) {
+                        await mainFrame().archivePromise(currentFile);
+                        return RefreshType.ALL;
                     }
                     await mainFrame().commandRun(currentFile.fullname, true);
                 }
@@ -274,10 +293,10 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
     }
 
     searchFile() {
-        if (!this.searchFileBox?.value) {
+        if ( !this.searchFileBox || !this.searchFileBox.value) {
             return;
         }
-        const searchExp = new RegExp(this.searchFileBox?.value, "i");
+        const searchExp = new RegExp(this.searchFileBox.value, "i");
         this._searchFiles = new SearchFileInfo(this.dirFiles.filter(item => searchExp.test(item.name)));
         log.debug("SEARCH FILES : [%j]", this._searchFiles.files.map(item => item.name));
         if (!this._searchFiles.get()) {
@@ -461,7 +480,7 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
         }
     }
 
-    @Hint({ hint: T("Hint.Shell"),  order: 4 })
+    @Hint({ hint: T("Hint.Shell"), order: 4 })
     @Help( T("Help.CommandBox") )
     commandBoxShow() {
         mainFrame().commandBoxShow();

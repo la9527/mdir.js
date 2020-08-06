@@ -140,7 +140,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
 
         this.panel.on('resize', () => {
             process.nextTick(() => {
-                this.term?.resize((box.width as number) - (box.iwidth as number), (box.height as number) - (box.iheight as number));
+                this.term && this.term.resize((box.width as number) - (box.iwidth as number), (box.height as number) - (box.iheight as number));
             });
         });
 
@@ -157,7 +157,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         });
 
         this.panel.on('blur', () => {
-            this.term?.blur();
+            this.term && this.term.blur();
         });
 
         this.on('focus', () => {
@@ -165,7 +165,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         });
         
         this.on('blur', () => {
-            this.term?.blur();
+            this.term && this.term.blur();
         });
         
         this.term.onTitleChange((title) => {
@@ -181,7 +181,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         });
         
         this.panel.box.once('render', () => {
-            this.term?.resize((box.width as number) - (box.iwidth as number), (box.height as number) - (box.iheight as number));
+            this.term && this.term.resize((box.width as number) - (box.iwidth as number), (box.height as number) - (box.iheight as number));
         });
         
         this.panel.on('destroy', () => {
@@ -203,7 +203,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             process.nextTick(() => {
                 log.debug( "BLESSED RESIZE !!! - TERMINAL");
                 try {
-                    this.pty?.resize((box.width as number) - (box.iwidth as number), (box.height as number) - (box.iheight as number));
+                    this.pty.resize((box.width as number) - (box.iwidth as number), (box.height as number) - (box.iheight as number));
                 } catch (e) {
                     log.debug( e );
                 }
@@ -213,7 +213,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         this.pty.on('data', (data) => {
             // log.debug( "screen write : [%s] [%d]", data.trim(), data.length );
             this.parseOSC1337(data); 
-            this?.write(data);
+            this.write(data);
         });
 
         this.pty.on('exit', (code) => {
@@ -267,7 +267,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
     ptyKeyWrite( keyInfo ): RefreshType {
         if ( keyInfo && keyInfo.name !== "enter" && keyInfo ) {
             log.debug( "pty write : [%j]", keyInfo );
-            this.pty?.write(keyInfo.sequence || keyInfo.ch);
+            this.pty && this.pty.write(keyInfo.sequence || keyInfo.ch);
             return RefreshType.OBJECT;
         } else {
             log.debug( "NOT - pty write : [%j]", keyInfo );
@@ -277,13 +277,13 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
 
     _onData(data: string) {
         if (this.screen.focused === this.panel.box && !this._isMouse(data) ) {
-            this.pty?.write(data);
+            this.pty && this.pty.write(data);
         }
     }
 
     write(data) {
         // log.debug( "term write [%d]", data.length );
-        return this.term?.write(data);
+        return this.term.write(data);
     }
 
     public clear(): void {
@@ -483,7 +483,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         }
         if (this.pty) {
             try {
-                (this.pty as any)?.emit('exit', 0);
+                (this.pty as any).emit('exit', 0);
                 log.debug( "PROCESS KILL - %d", this.pty.pid );
                 process.kill( this.pty.pid );
                 /* BUG - process stop
@@ -517,7 +517,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
     }
 
     getCurrentPath() {
-        return this.osc1337?.CurrentDir;
+        return this.osc1337 && this.osc1337.CurrentDir;
     }
 
     @Help( T("Help.TermScrollUp") )

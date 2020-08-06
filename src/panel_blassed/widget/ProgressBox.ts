@@ -153,7 +153,7 @@ export class ProgressBox extends Widget {
 
         this.on("cancel", () => {
             this.canceled = true;
-            this.progressOpt?.cancel && this.progressOpt?.cancel();
+            this.progressOpt && this.progressOpt.cancel && this.progressOpt.cancel();
         });
 
         mainFrame().keyLock = true;

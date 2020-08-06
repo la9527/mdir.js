@@ -249,7 +249,7 @@ export class Mcd implements IHelpService {
     }
 
     currentPathFile() {
-        return this.currentDir()?.file;
+        return this.currentDir() && this.currentDir().file;
     }
 
     keyUp() {

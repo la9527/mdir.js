@@ -232,7 +232,10 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
             }
             x -= strLen;
         }
-        log.info( "cursor textlen [%d] width [%d] curColumn [%d] x [%d] y [%d] isNext [%s]", viewLines[n]?.text?.length, this.column, this.curColumn, x, y, viewLines[n]?.isNext );
+
+        if ( viewLines[n] && viewLines[n].text && viewLines[n].text.length > 0 ) {
+            log.info( "cursor textlen [%d] width [%d] curColumn [%d] x [%d] y [%d] isNext [%s]", viewLines[n].text.length, this.column, this.curColumn, x, y, viewLines[n].isNext );
+        }
         // x = strWidth(viewLines[n].text.substr(0, x));
         return { y, x };
     }
@@ -312,7 +315,7 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
                 }
 
                 line[x][1] = ' ';
-                if ( x - xi > -1 && bufferLine?.text && tpos < bufferLine.text.length ) {
+                if ( x - xi > -1 && bufferLine && bufferLine.text && tpos < bufferLine.text.length ) {
                     if ( bufferLine.selectInfo ) {
                         const { all, start, end } = bufferLine.selectInfo;
                         let select = all;

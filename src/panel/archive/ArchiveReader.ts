@@ -69,6 +69,20 @@ export class ArchiveTarZip implements Archive {
         return fileMode.join("");
     };
 
+    convertUnixPermission( file: File, mode: number ) {
+        let fileMode: string[] = file.attr ? file.attr.split("") : "----------".split("");
+        fileMode[1] = mode & fs.constants.S_IRUSR ? "r" : "-";
+        fileMode[2] = mode & fs.constants.S_IWUSR ? "w" : "-";
+        fileMode[3] = mode & fs.constants.S_IXUSR ? "x" : "-";
+        fileMode[4] = mode & fs.constants.S_IRGRP ? "r" : "-";
+        fileMode[5] = mode & fs.constants.S_IWGRP ? "w" : "-";
+        fileMode[6] = mode & fs.constants.S_IXGRP ? "x" : "-";
+        fileMode[7] = mode & fs.constants.S_IROTH ? "r" : "-";
+        fileMode[8] = mode & fs.constants.S_IWOTH ? "w" : "-";
+        fileMode[9] = mode & fs.constants.S_IXOTH ? "x" : "-";
+        file.attr = fileMode.join("");
+    }
+
     convertTarToFile(header: tar.Headers): File {
         let file = new File();
         file.fstype = "archive";
@@ -86,6 +100,7 @@ export class ArchiveTarZip implements Archive {
         file.root = this.originalFile.fullname;
         file.attr = this.convertAttr(header);
         file.size = header.size;
+        file.dir = file.attr[0] === 'd';
         return file;
     };
 
@@ -102,7 +117,7 @@ export class ArchiveTarZip implements Archive {
         } else {
             data = buffer.toString("utf8");
         }
-        // log.info( "decode file: %s %s", result, data );
+        log.info( "decode file: %s %s", result, data );
         return data;
     }
 
@@ -111,7 +126,6 @@ export class ArchiveTarZip implements Archive {
         file.fstype = "archive";
 
         // console.log( zipHeader );
-
         const filename = this.decodeString(zipHeader.fileName);
         file.fullname = filename[0] !== "/" ? "/" + filename : filename;
         file.orgname = filename;
@@ -120,24 +134,17 @@ export class ArchiveTarZip implements Archive {
         file.group = "";
         file.uid = 0;
         file.gid = 0;
-        if ( zipHeader.extraFields ) { // https://github.com/mhr3/unzip-stream/blob/master/lib/unzip-stream.js
-            /**
-             *          -Info-ZIP New Unix Extra Field:
-                ====================================
+        file.mtime = zipHeader.getLastModDate();
+        file.ctime = zipHeader.getLastModDate();
+        file.root = this.originalFile.fullname;
+        file.attr = filename[filename.length - 1] === "/" ? "drwxr-xr-x" : "-rw-r--r--";
+        file.dir = file.attr[0] === 'd';
+        file.size = zipHeader.uncompressedSize;
 
-                Currently stores Unix UIDs/GIDs up to 32 bits.
-                (Last Revision 20080509)
-
-                Value         Size        Description
-                -----         ----        -----------
-        (UnixN) 0x7875        Short       tag for this extra block type ("ux")
-                TSize         Short       total data size for this block
-                Version       1 byte      version of this extra field, currently 1
-                UIDSize       1 byte      Size of UID field
-                UID           Variable    UID for this entry
-                GIDSize       1 byte      Size of GID field
-                GID           Variable    GID for this entry
-             */
+        if ( zipHeader.extraFields ) {
+            // .ZIP File Format Specification)
+            //   - https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT
+            //   - https://opensource.apple.com/source/zip/zip-6/unzip/unzip/proginfo/extra.fld
             zipHeader.extraFields.map( item => {
                 if ( item.id === 0x7875 ) { // Info-ZIP New Unix Extra Field
                     let offset = 0;
@@ -157,14 +164,97 @@ export class ArchiveTarZip implements Archive {
                             file.gid = item.data.readUIntLE(offset, gidSize);
                         }
                     }
+                } else if ( item.id === 0x5455 ) { // extended timestamp
+                    let offset = 0;
+                    let timestampFields = item.data.readInt8(0);
+                    offset += 1;
+                    if (timestampFields & 1) {
+                        file.mtime = new Date(item.data.readUInt32LE(offset) * 1000);
+                        offset += 4;
+                    }
+                    if (timestampFields & 2) {
+                        file.atime = new Date(item.data.readUInt32LE(offset) * 1000);
+                        offset += 4;
+                    }
+                    if (timestampFields & 4) {
+                        file.ctime = new Date(item.data.readUInt32LE(offset) * 1000);
+                    }
+                } else if ( item.id === 0x5855 || item.id === 0x000d ) { // "Info-ZIP UNIX (type 1)", "PKWARE Unix"
+                    let offset = 0;
+                    if (item.data.byteLength >= 8) {
+                        let atime = new Date(item.data.readUInt32LE(offset) * 1000);
+                        offset += 4;
+                        let mtime = new Date(item.data.readUInt32LE(offset) * 1000);
+                        offset += 4;
+                        file.atime = atime;
+                        file.mtime = mtime;
+
+                        if (item.data.byteLength >= 12) {
+                            file.uid = item.data.readUInt16LE(offset);
+                            offset += 2;
+                            file.gid = item.data.readUInt16LE(offset);
+                            offset += 2;
+                        }
+                    }
+                } else if ( item.id === 0x7855 ) { // Info-ZIP Unix Extra Field (type 2)
+                    let offset = 0;
+                    if (item.data.byteLength >= 4) {
+                        file.uid = item.data.readUInt16LE(offset);
+                        offset += 2;
+                        file.gid = item.data.readUInt16LE(offset);
+                    }
+                } else if ( item.id === 0x756e ) { // ASi Unix Extra Field
+                    let offset = 0;
+                    if (item.data.byteLength >= 14) {
+                        let crc = item.data.readUInt32LE(offset);
+                        offset += 4;
+                        let mode = item.data.readUInt16LE(offset);
+                        offset += 2;
+                        let sizdev = item.data.readUInt32LE(offset);
+                        offset += 4;
+                        file.uid = item.data.readUInt16LE(offset);
+                        offset += 2;
+                        file.gid = item.data.readUInt16LE(offset);
+                        offset += 2;
+                        this.convertUnixPermission(file, mode);
+                        if (item.data.byteLength > 14) {
+                            let start = offset;
+                            let end = item.data.byteLength - 14;
+                            let symlinkName = this.decodeString(item.data.slice(start, end));
+                            if ( symlinkName ) {
+                                file.link = new FileLink( symlinkName, null );
+                            }
+                        }
+                    }
+                } else if ( item.id === 0x000a ) { // NTFS (Win9x/WinNT FileTimes)
+                    let offset = 4;
+                    if ( item.data.byteLength >= 24 + 4 + 4 ) {
+                        let tag1 = item.data.readUInt16LE(offset);
+                        offset += 2;
+                        let size1 = item.data.readUInt16LE(offset);
+                        offset += 2;
+                        let mtime = item.data.readBigInt64LE(offset);
+                        offset += 8;
+                        let atime = item.data.readBigInt64LE(offset);
+                        offset += 8;
+                        let ctime = item.data.readBigInt64LE(offset);
+
+                        try {
+                            // @ts-ignore
+                            let EPOCH_OFFSET = -116444736000000000n;
+                            const convertWin32Time = (time) => {
+                                // @ts-ignore
+                                return new Date(Number((time + EPOCH_OFFSET) / 10000n))
+                            };
+                            file.mtime = convertWin32Time(mtime);
+                            file.atime = convertWin32Time(atime);
+                            file.ctime = convertWin32Time(ctime);
+                        } catch( e ) {}
+                    }
                 }
             });
         }
-        file.mtime = zipHeader.getLastModDate();
-        file.ctime = zipHeader.getLastModDate();
-        file.root = this.originalFile.fullname;
-        file.attr = filename[filename.length - 1] === "/" ? "drwxr-xr-x" : "-rw-r--r--";
-        file.size = zipHeader.uncompressedSize;
+        //console.log( file );
         return file;
     };
 
@@ -264,22 +354,45 @@ export class ArchiveReader extends Reader {
         return true;
     }
 
-    convertFile(path: string, option?: { fileInfo?: any; useThrow?: boolean; checkRealPath?: boolean; }): File {
+    convertFile(path: string, option?: any): File {
         if ( !path ) {
             return null;
+        } else if ( path === "." ) {
+            return this.baseDir;
+        } else if ( path === ".." ) {
+            let file = this.rootDir();
+            if ( this.baseDir.fullname !== "/" && this.baseDir.dirname !== "/" ) {
+                file = this.convertFile(this.baseDir.dirname + "/");
+            } else {
+                file = this.rootDir();
+            }
+            file.name = "..";
+            return file;
+        } else if ( path === "/" ) {
+            return this.rootDir();
         }
         return this.archiveFiles.find( (item) => {
-            return item.orgname === path;
-        });
+            return item.fullname === path;
+        }).clone();
     }
-    readdir(dir: File, option?: { isExcludeHiddenFile?: boolean; noChangeDir?: boolean; }): Promise<File[]> {
-        let resultFile = this.archiveFiles.filter( (item) => {
-            if ( item.orgname.indexOf( dir.orgname ) === 0 && 
-                 item.orgname.split("/").length === dir.orgname.split("/").length ) {
-                return true;
-            }
-            return false;
-        });
+
+    readdir(dir: File, option ?: { isExcludeHiddenFile ?: boolean, noChangeDir ?: boolean }): Promise<File[]> {
+        let resultFile = [];
+        if ( dir.fstype === "archive" ) {
+            resultFile = this.archiveFiles.filter( (item) => {
+                if ( dir.fullname === item.fullname ) {
+                    return false;
+                }
+                if ( item.fullname.startsWith(dir.fullname) ) {
+                    let idx = item.fullname.indexOf("/", dir.fullname.length);
+                    if ( idx === -1 || idx === item.fullname.length - 1) {
+                        return true;
+                    }
+                }
+                return false;
+            }).map( item => item.clone() );
+            this.baseDir = dir.clone();
+        }
         return new Promise((resolve) => {
             resolve( resultFile );
         });
@@ -300,14 +413,17 @@ export class ArchiveReader extends Reader {
         file.uid = 0;
         file.gid = 0;
         file.mtime = new Date();
+        file.atime = new Date();
+        file.ctime = new Date();
         file.root = this.baseArchiveFile.fullname;
-        file.attr = "d---------";
+        file.attr = "drwxr-xr-x";
         file.size = 0;
+        file.dir = true;
         return file;
     }
 
     mountList(): Promise<IMountList[]> {
-        throw new Error("Method not implemented.");
+        return null;
     }
 
     changeDir(dirFile: File) {
@@ -328,9 +444,9 @@ export class ArchiveReader extends Reader {
         }
         return !!this.archiveFiles.find( (item) => {
             if ( source instanceof File ) {
-                return item.orgname === source.orgname;
+                return item.fullname === source.fullname;
             }
-            return item.orgname === source;
+            return item.fullname === source;
         });
     }
 

@@ -1,6 +1,7 @@
 import { Color } from "./Color";
 import * as path from "path";
 import { sprintf } from "sprintf-js";
+import { ColorConfig } from "../config/ColorConfig";
 
 export class FileLink {
     name: string;
@@ -34,6 +35,7 @@ export class File {
     gid:        number;
     ctime:      Date;       // create time
     mtime:      Date;       // modify time
+    atime:      Date;       // access time
 
     orgname:    string;
 
@@ -58,24 +60,34 @@ export class File {
         return file.fullname === this.fullname;
     }
 
+    convertColor() {
+        this.color = ColorConfig.instance().getFileColor( this );
+    }
+
     clone(): File {
         let renew = new File();
-        renew.attr = this.attr;
-        renew.color = this.color;
-        renew.dir = this.dir;
-        renew.name = this.name;
+        renew.fstype = this.fstype;
+        renew.root = this.root;
         renew.fullname = this.fullname;
-        renew.orgname = this.orgname;
+        renew.name = this.name;
+        renew.size = this.size;
+        renew.dir = this.dir;
+        renew.attr = this.attr;
+
         renew.owner = this.owner;
         renew.group = this.group;
         renew.gid = this.gid;
         renew.uid = this.uid;
-        renew.fstype = this.fstype;
-        renew.link = this.link && this.link.clone();
-        renew.error = this.error;
         renew.ctime = this.ctime;
         renew.mtime = this.mtime;
-        renew.mimetype = this.mimetype;
+        renew.atime = this.atime;
+        
+        renew.orgname = this.orgname;
+
+        renew.color = this.color;
+        renew.link = this.link && this.link.clone();
+        renew.error = this.error;
+        renew.mimetype = this.mimetype;        
         return renew;
     }
 

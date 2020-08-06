@@ -203,11 +203,11 @@ export class InputBox extends Widget {
             this.keyTab();
             return;
         }
-        this.inputBoxOption?.result(this.value, this.inputBoxOption.button[this.focusBtnNum] );
+        this.inputBoxOption.result(this.value, this.inputBoxOption.button[this.focusBtnNum] );
     }
 
     keyEscape() {
-        this.inputBoxOption?.result(null, "cancel");
+        this.inputBoxOption.result(null, "cancel");
     }
 
     keyBackspace() {
@@ -261,8 +261,8 @@ export class InputBox extends Widget {
         }
         this.keylock = true;
         const keyRelease = (render = false) => {
-            if ( render ) {
-                this.box?.screen.render();
+            if ( render && this.box ) {
+                this.box.screen.render();
             }
             this.keylock = false;
         };
@@ -273,7 +273,7 @@ export class InputBox extends Widget {
             }).replace(/\s+/g, "");
         };
 
-        if ( key?.name ) {
+        if ( key && key.name ) {
             let methodName = camelize("key " + key.name);
             log.debug( "InputBox.%s()", methodName );
             if ( this[methodName] ) {

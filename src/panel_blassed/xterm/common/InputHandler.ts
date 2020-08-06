@@ -768,7 +768,8 @@ export class InputHandler extends Disposable implements IInputHandler {
       if (buffer.x === 0
           && buffer.y > buffer.scrollTop
           && buffer.y <= buffer.scrollBottom
-          && buffer.lines.get(buffer.ybase + buffer.y)?.isWrapped)
+          && buffer.lines.get(buffer.ybase + buffer.y)
+          && buffer.lines.get(buffer.ybase + buffer.y).isWrapped)
       {
         buffer.lines.get(buffer.ybase + buffer.y)!.isWrapped = false;
         buffer.y--;

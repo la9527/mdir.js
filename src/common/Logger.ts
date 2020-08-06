@@ -5,22 +5,21 @@ import * as fs from 'fs';
 
 const { combine, timestamp, label, printf, prettyPrint } = winston.format;
 
-let DEBUG_FILE = null;
-if ( process.env.NODE_ENV === "test" ) {
-    DEBUG_FILE = os.homedir() + path.sep + ".m" + path.sep + "m.log";
+if ( process.env.NODE_ENV === "test" && !(global as any).DEBUG_FILE ) {
+    (global as any).DEBUG_FILE = os.homedir() + path.sep + ".m" + path.sep + "m.log";
 }
 
 export function updateDebugFile( filePath: string = "" ) {
-    DEBUG_FILE = filePath || os.homedir() + path.sep + ".m" + path.sep + "m.log";
-    console.log( "DEBUG OUT >" + DEBUG_FILE );
+    (global as any).DEBUG_FILE = filePath || os.homedir() + path.sep + ".m" + path.sep + "m.log";
+    console.log( "DEBUG OUT >" + (global as any).DEBUG_FILE );
 }
 
 export function Logger( labelName: string ): winston.Logger {
     let logger = null;
-    if ( DEBUG_FILE ) {
+    if ( (global as any).DEBUG_FILE ) {
         let isColor = false;
         try {
-            let stats = fs.lstatSync(DEBUG_FILE);
+            let stats = fs.lstatSync((global as any).DEBUG_FILE);
             if ( !stats.isFile() && stats.isCharacterDevice() ) {
                 isColor = true;
             }
@@ -33,7 +32,7 @@ export function Logger( labelName: string ): winston.Logger {
         } else {
             transports.push( new winston.transports.File({
                 level: "debug",
-                filename: DEBUG_FILE
+                filename: (global as any).DEBUG_FILE
             }));
         }
 

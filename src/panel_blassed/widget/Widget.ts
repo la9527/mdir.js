@@ -16,14 +16,14 @@ export class Widget {
         } else {
             this._box = box( { ...opts, tags: true } );
         }
-        this._viewCount = opts?.viewCount;
+        this._viewCount = opts && opts.viewCount;
         this.on( "prerender", () => {
             this.draw();
         });
     }
 
     get screen() {
-        return this.box?.screen;
+        return this.box && this.box.screen;
     }
 
     setFront() {

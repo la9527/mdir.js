@@ -41,14 +41,20 @@ export abstract class Panel extends AbstractPanel implements IHelpService {
 
         try {
             const parentFile = this.reader.convertFile("..");
-            if ( parentFile.fullname !== file.fullname ) {
+            if ( parentFile ) {
+                log.debug( "read() - parentFile [%s] [%s] [%s]", parentFile.fstype, parentFile.fullname, parentFile.name);
+            }
+            if ( parentFile && parentFile.fstype === "archive" ) {
+                this.dirFiles.unshift( parentFile );
+            } else if ( parentFile && parentFile.fullname !== file.fullname ) {
                 parentFile.name = "..";
                 this.dirFiles.unshift( parentFile );
             }
         } catch ( e ) {
-            log.error( "PARENT DIR READ FAILED %j", e );
+            log.error( "PARENT DIR READ FAILED %s", e.stack );
         }
-        //log.info( "FIND LIST: %s", JSON.stringify(this.dirFiles.map((item) => `${item.fullname} - ${item.name}`), null, 4) );
+        log.info( "FIND LIST: %s", JSON.stringify(this.dirFiles.map((item) => `${item.attr} [${item.fullname}] [${item.name}]`), null, 2) );
+        this.colorUpdate();
         this.sort();
         
         if ( previousDir ) {
@@ -63,6 +69,10 @@ export abstract class Panel extends AbstractPanel implements IHelpService {
             }
             this._previousDir = previousDir;
         }
+    }
+
+    colorUpdate() {
+        this.dirFiles.forEach( item => item.convertColor() );
     }
 
     async refreshPromise(): Promise<void> {
@@ -127,7 +137,6 @@ export abstract class Panel extends AbstractPanel implements IHelpService {
         log.debug( "focusFile [%s] FIND - [%d]", file.name, findIndex );
         if ( findIndex > -1 ) {
             this.currentPos = findIndex;
-            log.debug( "focusFile : [%d], [%s]", this.currentPos, this.currentFile()?.name);
             return true;
         }
         return false;
@@ -153,7 +162,7 @@ export abstract class Panel extends AbstractPanel implements IHelpService {
         if ( selectItems.length > 0 ) {
             return selectItems;
         }
-        if ( this.currentFile()?.name !== ".." ) {
+        if ( this.currentFile() && this.currentFile().name !== ".." ) {
             return [ this.currentFile() ];
         }
         return null;

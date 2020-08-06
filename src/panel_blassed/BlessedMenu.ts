@@ -49,7 +49,7 @@ class BlassedMenuBox extends Widget {
             let lineBox = null;
             if ( item === "-" ) {
                 lineBox = line( { ...opt, type: "line", top: top++, orientation: "horizontal", style: this.lineColor.blessed } );
-            } else if ( (item as ISubMenuConfig)?.name ) {
+            } else if ( (item as ISubMenuConfig) && (item as ISubMenuConfig).name ) {
                 log.debug( "SUBMENU: %s", item );
 
                 let keyName = i !== this.selectPos ? 
@@ -144,11 +144,11 @@ export class BlessedMenu implements IHelpService {
     }
 
     setFocus() {
-        this.topMenu?.setFocus();
+        this.topMenu && this.topMenu.setFocus();
     }
 
     hasFocus(): boolean {
-        return this.topMenu?.hasFocus();
+        return this.topMenu && this.topMenu.hasFocus();
     }
 
     draw() {

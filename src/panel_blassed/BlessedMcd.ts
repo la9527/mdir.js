@@ -41,7 +41,7 @@ class McdDirButton extends Widget {
         this.parentMcd = parent;
 
         this.on("click", () => {
-            this.parentMcd?.onDirButtonClick(this);
+            this.parentMcd && this.parentMcd.onDirButtonClick(this);
         });
     }
 
@@ -331,7 +331,7 @@ export class BlessedMcd extends Mcd implements IBlessedView, IHelpService {
     }
 
     onDirButtonClick( button: McdDirButton ) {
-        if ( button?.node?.index ) {
+        if ( button && button.node && button.node.index ) {
             this.curDirInx = button.node.index;
             mainFrame().execRefreshType( RefreshType.OBJECT );
         }
