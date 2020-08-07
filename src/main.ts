@@ -1,5 +1,6 @@
 import { Logger, updateDebugFile } from "./common/Logger";
 import { i18nInit, T, changeLanguage } from "./common/Translation";
+import osLocale from "os-locale";
 import yargs from "yargs";
 
 (async () => {
@@ -36,6 +37,7 @@ import yargs from "yargs";
         await changeLanguage(argv.lang);
     }
 
+    (global as any).LOCALE = await osLocale();
     /*
     const log = Logger("main");
     log.debug( argv );

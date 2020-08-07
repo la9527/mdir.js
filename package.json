@@ -59,6 +59,7 @@
     "moment": "^2.26.0",
     "neo-blessed": "^0.2.0",
     "node-pty": "^0.9.0",
+    "os-locale": "^5.0.0",
     "sprintf-js": "^1.1.2",
     "supports-color": "^7.1.0",
     "tar-fs": "^2.1.0",

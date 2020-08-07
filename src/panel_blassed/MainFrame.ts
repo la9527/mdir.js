@@ -137,6 +137,7 @@ export class MainFrame implements IHelpService {
     async archivePromise(file: File = null) {
         let view = this.blessedFrames[this.activeFrameNum];
         if ( view instanceof BlessedPanel && file.fstype === "file" ) {
+            let reader = new ArchiveReader();
             const progressBox = new ProgressBox( { title: T("Message.Archive"), msg: T("Message.Calculating"), cancel: () => {
                 reader.isUserCanceled = true;
             }}, { parent: this.baseWidget } );
@@ -161,13 +162,15 @@ export class MainFrame implements IHelpService {
                 }
             };
 
-            let reader = new ArchiveReader();
-            if ( await reader.setArchiveFile( file, progressStatus ) ) {
-                view.setReader( reader );
-                await view.read( reader.rootDir() );
-                view.setFocus();
+            try {
+                if ( await reader.setArchiveFile( file, progressStatus ) ) {
+                    view.setReader( reader );
+                    await view.read( reader.rootDir() );
+                    view.setFocus();
+                }
+            } finally {
+                progressBox.destroy();
             }
-            progressBox.destroy();
         } else if ( view instanceof BlessedPanel && 
             file.fstype === "archive" && 
             view.getReader().currentDir().fullname === "/" &&

@@ -113,6 +113,11 @@ export class ArchiveTarZip implements Archive {
         }
         let data = null;
         if ( result && result.encoding && [ "utf8", "ascii" ].indexOf(result.encoding) === -1 ) {
+            if ( (global as any)?.LOCALE?.indexOf("ko") > -1 ) {
+                if ( result.confidence < 0.7 || result.encoding === "windows-1252") {
+                    result.encoding = "EUC-KR";
+                }
+            }
             data = iconv.decode(buffer, result.encoding);
         } else {
             data = buffer.toString("utf8");
@@ -349,8 +354,13 @@ export class ArchiveReader extends Reader {
         if ( !this.archiveObj.setFile( file ) ) {
             return false;
         }
-        this.baseArchiveFile = file;
-        this.archiveFiles = await this.archiveObj.archivedFiles(progressFunc);
+        try {
+            this.baseArchiveFile = file;
+            this.archiveFiles = await this.archiveObj.archivedFiles(progressFunc);
+        } catch( e ) {
+            log.error( "ArchiveReader.archivedFiles ERROR - [%s]", e.stack );
+            return false;
+        }
         return true;
     }
 
