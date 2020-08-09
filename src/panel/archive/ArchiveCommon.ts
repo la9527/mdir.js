@@ -1,16 +1,9 @@
-import * as tar from "tar-stream";
-import * as path from "path";
-import * as fs from "fs";
-import * as zlib from "zlib";
-import * as yauzl from "yauzl";
-import * as bunzip2 from "unbzip2-stream";
 import * as jschardet from "jschardet";
 import * as iconv from "iconv-lite";
 
 import { Reader, ProgressFunc, IMountList } from "../../common/Reader";
-import { File, FileLink } from "../../common/File";
+import { File } from "../../common/File";
 import { Logger } from "../../common/Logger";
-import { Transform } from "stream";
 
 const log = Logger("Archive");
 
@@ -34,13 +27,8 @@ export abstract class ArchiveCommon {
     protected abstract isSupportType( file: File ): string;
     public abstract getArchivedFiles(progress?: ProgressFunc): Promise<File[]>;
 
-    compress( files: File[] ) {
-
-    }
-
-    uncompress( extractDir: File ) {
-
-    }
+    abstract compress( files: File[], progress?: ProgressFunc ): Promise<boolean>;
+    abstract uncompress( extractDir: File, files ?: File[], progress?: ProgressFunc ): Promise<boolean>;
 
     protected decodeString(buffer) {
         let result = null;
@@ -51,7 +39,7 @@ export abstract class ArchiveCommon {
         }
         let data = null;
         if ( result && result.encoding && [ "utf8", "ascii" ].indexOf(result.encoding) === -1 ) {
-            if ( (global as any)?.LOCALE?.indexOf("ko") > -1 ) {
+            if ( (global as any)?.LOCALE?.indexOf("ko_KR") > -1 ) {
                 if ( result.confidence < 0.7 || result.encoding === "windows-1252") {
                     result.encoding = "EUC-KR";
                 }

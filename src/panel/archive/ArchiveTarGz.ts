@@ -2,7 +2,6 @@ import * as tar from "tar-stream";
 import * as path from "path";
 import * as fs from "fs";
 import * as zlib from "zlib";
-import * as yauzl from "yauzl";
 import * as bunzip2 from "unbzip2-stream";
 
 import { ArchiveCommon } from "./ArchiveCommon";
@@ -80,6 +79,18 @@ export class ArchiveTarGz extends ArchiveCommon {
                 log.info( "finish : [%d]", resultFiles.length );
                 resolve( resultFiles );
             });
+        });
+    }
+
+    compress( files: File[], progress?: ProgressFunc ): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            resolve( false );
+        });
+    }
+
+    uncompress( extractDir: File, files ?: File[], progress?: ProgressFunc ): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            resolve( false );
         });
     }
 

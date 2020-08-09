@@ -6,7 +6,8 @@ import { ArchiveCommon } from "./ArchiveCommon";
 import { File, FileLink } from "../../common/File";
 import { Reader, ProgressFunc, IMountList } from "../../common/Reader";
 import { Logger } from "../../common/Logger";
-import { Transform } from "stream";
+import { Transform, TransformCallback } from "stream";
+import { convertAttrToStatMode } from "../FileReader";
 
 const log = Logger("archivetar");
 
@@ -32,6 +33,109 @@ export class ArchiveZip extends ArchiveCommon {
                     progress && progress( this.originalFile, this.originalFile.size, this.originalFile.size, 0 );
                     zipfile.close();
                     resolve( this.subDirectoryCheck(resultFiles) );
+                });
+                zipfile.readEntry();
+            });
+        });
+    }
+
+    compress( files: File[], progress?: ProgressFunc ): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            resolve( false );
+        });
+    }
+
+    uncompress( extractDir: File, uncompressFiles ?: File[], progress?: ProgressFunc ): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            if ( !extractDir || (uncompressFiles && uncompressFiles.length === 0) ) {
+                reject( "Uncompress files empty !!!" );
+                return;
+            }
+
+            yauzl.open( this.originalFile.fullname, { lazyEntries: true, autoClose: false, decodeStrings: false }, (err, zipfile: yauzl.ZipFile) =>{
+                if ( err ) {
+                    reject( err );
+                    return;
+                }
+                zipfile.on("entry", (entry: yauzl.Entry) => {
+                    progress && progress( this.originalFile, (zipfile as any).readEntryCursor, this.originalFile.size, 0 );
+                    let file = this.convertZipToFile(entry);
+
+                    zipfile.openReadStream( entry, (err, readStream) => {
+                        if ( err ) {
+                            reject( err );
+                            return;
+                        }
+
+                        let targetBaseDir = extractDir.fullname + file.dirname;
+                        targetBaseDir = path.normalize(targetBaseDir);
+
+                        try {
+                            if ( !fs.existsSync(targetBaseDir) ) {
+                                fs.mkdirSync( targetBaseDir, { recursive: true, mode: file.dir ? convertAttrToStatMode(file) : 0o755 } );
+                            }
+                        } catch ( err ) {
+                            reject( err );
+                            return;
+                        }
+
+                        if ( file.dir ) {
+                            zipfile.readEntry();
+                            return;
+                        }
+
+                        let targetFullname = extractDir.fullname + file.fullname;
+                        targetFullname = path.normalize(targetBaseDir);
+                        let chunkCopyLength = 0;
+
+                        let writeStream = fs.createWriteStream(targetFullname, { mode: convertAttrToStatMode(file) });
+                        let rejectFunc = (err) => {
+                            readStream.destroy();
+                            writeStream.end(() => {
+                                fs.unlinkSync( targetFullname );
+                            });
+                            log.debug( "COPY ERROR - " + err );
+                            zipfile.close();
+                            reject(err);
+                        };
+
+                        readStream.on('error', rejectFunc);
+                        writeStream.on('error', rejectFunc);
+                        writeStream.on('finish', () => {
+                            log.debug( "Uncompress OK - %s", targetFullname );
+                        });
+
+                        const reportProgress = new Transform({
+                            transform(chunk: Buffer, encoding, callback) {
+                                chunkCopyLength += chunk.length;
+                                progress && progress( file, chunkCopyLength, file.size, chunk.length );
+                                log.debug( "Uncompress: %s => %s (%d / %d)", file.fullname, targetFullname, chunkCopyLength, file.size );
+                                /*
+                                if ( reader.isUserCanceled ) {
+                                    readStream.destroy();
+                                    writeStream.end(() => {
+                                        fs.unlinkSync( targetFullname );
+                                    });
+                                    log.debug( "COPY - CANCEL" );
+                                    reject( "USER_CANCEL" );
+                                    return;
+                                }
+                                */
+                                callback( null, chunk );
+                            }
+                        });
+                        reportProgress._flush = (cb) => {
+                            cb();
+                            zipfile.readEntry();
+                        };
+                        readStream.pipe( reportProgress ).pipe(writeStream);
+                    });                    
+                    zipfile.readEntry();
+                });
+                zipfile.once("end", () => {
+                    progress && progress( this.originalFile, this.originalFile.size, this.originalFile.size, 0 );
+                    zipfile.close();
+                    resolve( true );
                 });
                 zipfile.readEntry();
             });
