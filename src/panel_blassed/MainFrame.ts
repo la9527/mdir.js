@@ -147,10 +147,10 @@ export class MainFrame implements IHelpService {
             let copyBytes = 0;
             let befCopyInfo = { beforeTime: Date.now(), copyBytes };
         
-            let refreshTimeMs = 300;
+            let refreshTimeMs = 100;
             let fullFileSize = file.size;
-            const progressStatus: ProgressFunc = ( source, copySize, size, chunkLength ) => {
-                copyBytes += chunkLength;
+            const progressStatus: ProgressFunc = ( source, processSize, size, chunkLength ) => {
+                copyBytes = processSize;
                 let repeatTime = Date.now() - befCopyInfo.beforeTime;
                 if ( repeatTime > refreshTimeMs ) {
                     let bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
@@ -167,6 +167,7 @@ export class MainFrame implements IHelpService {
                     view.setReader( reader );
                     await view.read( reader.rootDir() );
                     view.setFocus();
+                    view.resetPosition();
                 }
             } finally {
                 progressBox.destroy();

@@ -22,6 +22,10 @@ export abstract class AbstractPanel {
         return this._previousDir;
     }
 
+    resetPosition() {
+        this.currentPos = 0;
+    }
+
     keyLeft() {
         this.currentPos = this.currentPos < this.row ? 0 : this.currentPos - this.row;
     }
