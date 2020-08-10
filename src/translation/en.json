@@ -87,7 +87,8 @@
         "SelectMode": "Select Mode",
         "GotoLine": "Go to line",
         "GotoTop": "Go to top line",
-        "GotoLast": "Go to last line"
+        "GotoLast": "Go to last line",
+        "PanelSync": "Panels to same directory"
     },
     "Hint": {
         "Help": "Help",
@@ -169,7 +170,8 @@
         "TermScrollUp": "terminal scroll up",
         "TermScrollDown": "terminal scroll down",
         "TermScrollPageUp": "terminal scroll page up",
-        "TermScrollPageDown": "terminal scroll page down"
+        "TermScrollPageDown": "terminal scroll page down",
+        "PanelSync": "set panels to same directory."
     },
     "About": [
         "{center}{bold}Mdir.js{/bold} is a visual file manager.{/center}\n",

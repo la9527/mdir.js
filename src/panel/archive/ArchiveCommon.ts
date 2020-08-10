@@ -3,13 +3,11 @@ import * as iconv from "iconv-lite";
 import * as path from "path";
 import * as fs from "fs";
 
-import { Reader, ProgressFunc, IMountList } from "../../common/Reader";
+import { ProgressFunc } from "../../common/Reader";
 import { File } from "../../common/File";
 import { Logger } from "../../common/Logger";
 import { Readable, Transform } from "stream";
 import { convertAttrToStatMode } from "../FileReader";
-import { rejects } from "assert";
-import { stream } from "winston";
 
 const log = Logger("Archive");
 
@@ -39,6 +37,7 @@ export abstract class ArchiveCommon {
     protected fileStreamWrite(extractDir: File, filesBaseDir: string, file: File, readStream: Readable, reportProgress: Transform, next: (status: string, err?:any) => void) {
         try {
             let filename = extractDir.fullname + ((filesBaseDir && filesBaseDir !== "/") ? file.fullname.substr(filesBaseDir.length) : file.fullname);
+            filename = path.normalize( filename );
             let dirname = path.dirname(filename);
             let mode = convertAttrToStatMode(file);
 

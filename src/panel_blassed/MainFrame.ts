@@ -595,6 +595,17 @@ export class MainFrame implements IHelpService {
         return RefreshType.ALL;
     }
 
+    @Help(T("Help.PanelSync"))
+    async panelSyncPromise() {
+        const activePanel = this.activePanel();
+        let anotherPanel = this.blessedFrames.find( (item, i) => this.activeFrameNum !== i );
+        if ( anotherPanel && activePanel instanceof BlessedPanel && anotherPanel instanceof BlessedPanel ) {
+            await activePanel.read(anotherPanel.currentPath());
+            return RefreshType.ALL;
+        }
+        return RefreshType.NONE;
+    }
+
     commandBoxShow() {
         const activePanel = this.activePanel();
         if ( !(activePanel instanceof BlessedPanel) ) {

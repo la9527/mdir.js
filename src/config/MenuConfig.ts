@@ -44,6 +44,7 @@ export const menuConfig: IFrameMenuConfig = {
         Directory: [
             { name: T("Menu.Mcd"), method: "Common.mcdPromise" },
             { name: T("Menu.MountList"), method: "Common.mountListPromise" },
+            { name: T("Menu.PanelSync"), method: "Common.panelSyncPromise" },
             "-",
             { name: T("Menu.Mkdir"), method: "Panel.mkdirPromise" },
             { name: T("Menu.To parent"), method: "Panel.gotoParentPromise" },
