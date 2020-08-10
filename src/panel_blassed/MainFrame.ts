@@ -658,11 +658,15 @@ export class MainFrame implements IHelpService {
             }
         }
 
-        process.chdir( activePanel.currentPath().fullname );
-
         if ( cmd === "quit" || cmd === "exit" ) {
             return this.quitPromise();
         }
+
+        if ( activePanel.getReader().readerName !== "file" ) {
+            return new Promise( resolve => resolve() );
+        }
+
+        process.chdir( activePanel.currentPath().fullname );
 
         return new Promise( (resolve, reject) => {
             let program = this.screen.program;

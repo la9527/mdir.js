@@ -37,6 +37,10 @@ $ npm install mdir.js -g
 $ mdir
 ```
 
+### Version
+
+v0.8.0 - Support the compress files (zip, tar.gz, tar, gz, bz2) - viewer, uncompress
+
 # Gallery
 
 ![MDir MAIN](https://github.com/la9527/mdir.js/blob/master/images/mdir_v0.1_windows10_cmd.png?raw=true)

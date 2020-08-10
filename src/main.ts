@@ -4,6 +4,9 @@ import osLocale from "os-locale";
 import yargs from "yargs";
 
 (async () => {
+    (global as any).LOCALE = await osLocale();
+    console.log( "Detected locale: " + (global as any).LOCALE );
+
     await i18nInit();
 
     let reargv = process.argv;
@@ -37,7 +40,7 @@ import yargs from "yargs";
         await changeLanguage(argv.lang);
     }
 
-    (global as any).LOCALE = await osLocale();
+    
     /*
     const log = Logger("main");
     log.debug( argv );

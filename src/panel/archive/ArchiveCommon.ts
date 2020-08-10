@@ -83,7 +83,6 @@ export abstract class ArchiveCommon {
                     fs.utimesSync(filename, file.atime || new Date(), file.mtime || new Date());
                     next("finish");
                 });
-
                 if ( reportProgress ) {
                     readStream.pipe(reportProgress).pipe(writeStream);
                 } else {
@@ -105,7 +104,7 @@ export abstract class ArchiveCommon {
         }
         let data = null;
         if ( result && result.encoding && [ "utf8", "ascii" ].indexOf(result.encoding) === -1 ) {
-            if ( (global as any)?.LOCALE?.indexOf("ko_KR") > -1 ) {
+            if ( (global as any)?.LOCALE?.indexOf("ko-KR") > -1 ) {
                 if ( result.confidence < 0.7 || result.encoding === "windows-1252") {
                     result.encoding = "EUC-KR";
                 }

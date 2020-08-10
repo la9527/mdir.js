@@ -4,13 +4,10 @@ import { File } from "../common/File";
 import { ProgressResult } from "../common/Reader";
 import selection, { ClipBoard } from "../panel/Selection";
 
-// let archiveReader = new ArchiveReader();
-
-let file = FileReader.convertFile("C:\\Users\\la952\\Documents\\D2Coding-Ver1.3.2-20180524.zip");
-//let file = FileReader.convertFile("./hoppinmoweb.zip");
-console.log( file );
-
 (async () => {
+    let file = FileReader.convertFile("test.zip");
+    //let file = FileReader.convertFile("./test.tar.gz");
+
     let reader = new ArchiveReader();
     if ( await reader.setArchiveFile( file, null ) ) {
         const files = await reader.readdir( reader.rootDir() );
