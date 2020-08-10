@@ -5,7 +5,7 @@ import * as drivelist from "drivelist";
 
 import { File, FileLink } from "../common/File";
 import { Logger } from "../common/Logger";
-import { Reader, IMountList, ProgressFunc } from "../common/Reader";
+import { Reader, IMountList, ProgressFunc, ProgressResult } from "../common/Reader";
 
 import { ColorConfig } from "../config/ColorConfig";
 import { Transform } from "stream";
@@ -427,9 +427,9 @@ export class FileReader extends Reader {
             const reportProgress = new Transform({
                 transform(chunk: Buffer, encoding, callback) {
                     chunkCopyLength += chunk.length;
-                    progress && progress( srcFile, chunkCopyLength, srcFile.size, chunk.length );
+                    const result = progress && progress( srcFile, chunkCopyLength, srcFile.size, chunk.length );
                     log.debug( "Copy to: %s => %s (%d / %d)", srcFile.fullname, target.fullname, chunkCopyLength, srcFile.size );
-                    if ( reader.isUserCanceled ) {
+                    if ( result === ProgressResult.USER_CANCELED ) {
                         rd.destroy();
                         wr.end(() => {
                             fs.unlinkSync( target.fullname );

@@ -12,7 +12,15 @@ export interface IMountList {
     isSystem: boolean;
 }
 
-export type ProgressFunc = ( source: File, copySize: number, size: number, chunkLength: number) => void;
+export enum ProgressResult {
+    USER_CANCELED = -1,
+    SUCCESS = 0
+}
+
+/**
+ * @return -1: user cancel, 0 or undefined : continue
+ */
+export type ProgressFunc = (source: File, copySize: number, size: number, chunkLength: number) => ProgressResult;
 
 export abstract class Reader {
     protected _readerFsType: string = null;

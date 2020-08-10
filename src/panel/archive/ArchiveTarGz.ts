@@ -6,9 +6,10 @@ import * as bunzip2 from "unbzip2-stream";
 
 import { ArchiveCommon } from "./ArchiveCommon";
 import { File, FileLink } from "../../common/File";
-import { Reader, ProgressFunc, IMountList } from "../../common/Reader";
+import { Reader, ProgressFunc, IMountList, ProgressResult } from "../../common/Reader";
 import { Logger } from "../../common/Logger";
-import { Transform } from "stream";
+import { Transform, Readable } from "stream";
+import { convertAttrToStatMode } from "../FileReader";
 
 const log = Logger("archivetar");
 
@@ -82,15 +83,69 @@ export class ArchiveTarGz extends ArchiveCommon {
         });
     }
 
-    compress( files: File[], progress?: ProgressFunc ): Promise<boolean> {
+    compress( files: File[], progress?: ProgressFunc ): Promise<void> {
         return new Promise((resolve, reject) => {
-            resolve( false );
+            resolve();
         });
     }
 
-    uncompress( extractDir: File, files ?: File[], progress?: ProgressFunc ): Promise<boolean> {
-        return new Promise((resolve, reject) => {
-            resolve( false );
+    uncompress( extractDir: File, files ?: File[], progress?: ProgressFunc ): Promise<void> {
+        return new Promise((resolve, reject) => {            
+            let extractFiles = [];
+            let file = this.originalFile;
+            let tarStream: any = fs.createReadStream(file.fullname);
+            let filesBaseDir = files && files.length > 0 ? files[0].dirname : "";
+
+            let outstream: any = null;
+            let extract = tar.extract();
+            extract.on("entry", (header, stream, next: any) => {
+                const tarFileInfo = this.convertTarToFile(header);
+                if ( files ) {
+                    if ( !files.find( item => tarFileInfo.fullname === item.fullname ) ) {
+                        stream.resume();
+                        next();
+                        return;
+                    }
+                }
+
+                let chunkSum = 0;
+                const reportProgress = new Transform({
+                    transform(chunk: Buffer, encoding, callback) {
+                        chunkSum += chunk.length;
+                        if ( progress ) {
+                            const result = progress( tarFileInfo, chunkSum, tarFileInfo.size, chunk.length );
+                            if ( result === ProgressResult.USER_CANCELED ) {
+                                extract.destroy();
+                                reject("USER_CANCEL");
+                                return;
+                            }
+                        }
+                        // log.debug( "Transform: %s => %d / %d", tarFileInfo.fullname, chunkSum, file.size );
+                        callback( null, chunk );
+                    }
+                });
+    
+                this.fileStreamWrite( extractDir, filesBaseDir, tarFileInfo, stream, reportProgress, (status: string, err) => {
+                    next(err);
+                });
+                extractFiles.push( tarFileInfo );
+            });
+            
+            if ( this.supportType === "tgz" ) {
+                outstream = tarStream.pipe(zlib.createGunzip());
+            } else if ( this.supportType === "tbz2" ) {
+                outstream = tarStream.pipe(bunzip2());
+            }
+            outstream = outstream.pipe( extract );
+            outstream.on("error", (error) => {
+                log.error( "ERROR", error );
+                extract.destroy();
+                reject(error);
+            })
+            .on("finish", () => {
+                log.info( "finish : [%d]", extractFiles.length );
+                resolve();
+            });
         });
     }
 

@@ -19,7 +19,7 @@ import { CommandBox } from './CommandBox';
 import { exec } from "child_process";
 import colors from "colors";
 import selection, { Selection, ClipBoard } from "../panel/Selection";
-import { ProgressFunc, IMountList } from "../common/Reader";
+import { ProgressFunc, IMountList, ProgressResult } from "../common/Reader";
 import { messageBox, MSG_BUTTON_TYPE } from "./widget/MessageBox";
 import { ProgressBox } from "./widget/ProgressBox";
 import { StringUtils } from "../common/StringUtils";
@@ -160,6 +160,7 @@ export class MainFrame implements IHelpService {
                     befCopyInfo.beforeTime = Date.now();
                     befCopyInfo.copyBytes = copyBytes;
                 }
+                return reader.isUserCanceled ? ProgressResult.USER_CANCELED : ProgressResult.SUCCESS;
             };
 
             try {
@@ -768,7 +769,7 @@ export class MainFrame implements IHelpService {
         }
 
         let select = new Selection();
-        select.set( activePanel.getSelectFiles(), activePanel.currentPath(), ClipBoard.CLIP_NONE );
+        select.set( activePanel.getSelectFiles(), activePanel.currentPath(), ClipBoard.CLIP_NONE, activePanel.getReader() );
 
         const reader = activePanel.getReader();
         reader.isUserCanceled = false;
@@ -779,7 +780,7 @@ export class MainFrame implements IHelpService {
         this.screen.render();
         await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
         
-        if ( await select.expandDir( reader ) === false ) {
+        if ( await select.expandDir() === false ) {
             progressBox.destroy();
             return RefreshType.NONE;
         }
@@ -834,7 +835,7 @@ export class MainFrame implements IHelpService {
         if ( !(activePanel instanceof BlessedPanel) ) {
             return ;
         }
-        selection().set( activePanel.getSelectFiles(), activePanel.currentPath(), ClipBoard.CLIP_CUT );
+        selection().set( activePanel.getSelectFiles(), activePanel.currentPath(), ClipBoard.CLIP_CUT, activePanel.getReader() );
     }
 
     @Hint({ hint: T("Hint.Copy"), order: 5 })
@@ -844,7 +845,7 @@ export class MainFrame implements IHelpService {
         if ( !(activePanel instanceof BlessedPanel) ) {
             return ;
         }
-        selection().set( activePanel.getSelectFiles(), activePanel.currentPath(), ClipBoard.CLIP_COPY );
+        selection().set( activePanel.getSelectFiles(), activePanel.currentPath(), ClipBoard.CLIP_COPY, activePanel.getReader() );
     }
 
     @Hint({ hint: T("Hint.Paste"), order: 7 })
@@ -872,7 +873,7 @@ export class MainFrame implements IHelpService {
         this.screen.render();
         await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
         
-        if ( await clipSelected.expandDir( reader ) === false ) {
+        if ( await clipSelected.expandDir() === false ) {
             progressBox.destroy();
             return RefreshType.NONE;
         }
@@ -901,6 +902,7 @@ export class MainFrame implements IHelpService {
                 befCopyInfo.beforeTime = Date.now();
                 befCopyInfo.copyBytes = copyBytes;
             }
+            return reader.isUserCanceled ? ProgressResult.USER_CANCELED : ProgressResult.SUCCESS;
         };
 
         if ( activePanel instanceof BlessedPanel ) {
@@ -918,7 +920,7 @@ export class MainFrame implements IHelpService {
             
             const reader = activePanel.getReader();
             log.debug( "READER : [%s] => [%s]", reader.readerName, files[0].fstype );
-            if ( reader.readerName === files[0].fstype ) {
+            if ( files[0].fstype === "file" && reader.readerName === files[0].fstype ) {
                 let targetPath = activePanel.currentPath();
                 let i = 0, skipAll = false, overwriteAll = false;
                 for ( let src of files ) {
@@ -998,6 +1000,18 @@ export class MainFrame implements IHelpService {
                             }
                         }
                     }
+                }
+            } else if ( files[0].fstype === clipSelected.getReader().readerName && reader.readerName === "file" ) {
+                try {
+                    await clipSelected.getReader().copy( files, activePanel.currentPath(), progressStatus );
+                } catch( err ) {
+                    log.error( err );
+                    await messageBox( {
+                        parent: this.baseWidget,
+                        title: T("Error"),
+                        msg: err,
+                        button: [ T("OK") ]
+                    });
                 }
             }
         }

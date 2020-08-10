@@ -7,35 +7,20 @@ import { ArchiveZip } from "./ArchiveZip";
 
 const log = Logger("Archive");
 
-export class Archive {
-    private archiveCommon: ArchiveCommon = null;
-
-    setFile( file: File ): boolean {
-        let archiveObjs = [ new ArchiveTarGz(), new ArchiveZip() ];
-        this.archiveCommon = archiveObjs.find( item => item.setFile( file ) );
-        return !!this.archiveCommon;
-    }
-
-    getArchivedFiles(progress?: ProgressFunc): Promise<File[]> {
-        if ( this.archiveCommon ) {
-            new Error("Unsupported file");
-        }
-        return this.archiveCommon.getArchivedFiles(progress);
-    }
-
-    
-}
-
 export class ArchiveReader extends Reader {
     private baseArchiveFile: File;
-    private archiveObj: Archive = new Archive();
+    private archiveObj: ArchiveCommon = null;
     private archiveFiles: File[] = [];
     private baseDir: File;
+    protected _readerFsType = "archive";
 
     async setArchiveFile( file: File, progressFunc: ProgressFunc ): Promise<boolean> {
-        if ( !this.archiveObj.setFile( file ) ) {
+        let archiveObjs = [ new ArchiveTarGz(), new ArchiveZip() ];
+        this.archiveObj = archiveObjs.find( item => item.setFile( file ) );
+        if ( !this.archiveObj ) {
             return false;
         }
+
         try {
             this.baseArchiveFile = file;
             this.archiveFiles = await this.archiveObj.getArchivedFiles(progressFunc);
@@ -151,8 +136,11 @@ export class ArchiveReader extends Reader {
     }
 
     copy(source: File | File[], target: File, progress?: ProgressFunc): Promise<void> {
+        if ( Array.isArray( source ) && source.length > 0 && source[0].fstype === "archive" && target.fstype === "file") {
+            return this.archiveObj.uncompress(target, source, progress);
+        }
         return new Promise((resolve, reject) => {
-
+            reject( "Unsupport copy !!!" );
         });
     }
 

@@ -16,6 +16,7 @@ export class Selection {
     private selectedBaseDir: File = null;
     private isExpandDir = false;
     private stateClipboard: ClipBoard = ClipBoard.CLIP_NONE;
+    private reader: Reader = null;
 
     getClipboard() {
         return this.stateClipboard;
@@ -25,11 +26,16 @@ export class Selection {
         return this.selectedBaseDir;
     }
 
-    set( files: File[], selectedBaseDir: File, stateClipboard: ClipBoard ) {
+    set( files: File[], selectedBaseDir: File, stateClipboard: ClipBoard, reader: Reader ) {
         this.arrFiles = files;
         this.stateClipboard = stateClipboard;
         this.selectedBaseDir = selectedBaseDir;
         this.isExpandDir = false;
+        this.reader = reader;
+    }
+
+    getReader() {
+        return this.reader;
     }
 
     clear() {
@@ -61,8 +67,8 @@ export class Selection {
         return this.size;
     }
 
-    async expandDir(reader: Reader): Promise<boolean> {
-        if ( this.isExpandDir || !reader ) {
+    async expandDir(): Promise<boolean> {
+        if ( this.isExpandDir || !this.reader ) {
             return false;
         }
 
@@ -76,7 +82,7 @@ export class Selection {
 
         let result = false;
 
-        const beforeDir = reader.currentDir();
+        const beforeDir = this.reader.currentDir();
         for ( ;; ) {
             let dir = arrDirs.find( (item) => !item.checked );
             if ( !dir ) {
@@ -86,13 +92,13 @@ export class Selection {
 
             dir.checked = true;
 
-            if ( reader.isUserCanceled ) {
-                reader.isUserCanceled = false;
+            if ( this.reader.isUserCanceled ) {
+                this.reader.isUserCanceled = false;
                 result = false;
                 break;
             }
 
-            const files = await reader.readdir( dir.dirFile );
+            const files = await this.reader.readdir( dir.dirFile );
             files && files.forEach( (item) => {
                 if ( item.fullname !== dir.dirFile.fullname && item.dir && !item.link ) {
                     arrDirs.push( { dirFile: item, checked: false } );
@@ -102,7 +108,7 @@ export class Selection {
             this.arrFiles = this.arrFiles.concat( files );
         }
 
-        reader.readdir(beforeDir);
+        this.reader.readdir(beforeDir);
         this.isExpandDir = true;
         return true;
     }
