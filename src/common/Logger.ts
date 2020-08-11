@@ -16,20 +16,21 @@ export function updateDebugFile( filePath: string = "" ) {
 
 export function Logger( labelName: string ): winston.Logger {
     let logger = null;
-    if ( (global as any).DEBUG_FILE ) {
-        let isColor = false;
-        try {
-            let stats = fs.lstatSync((global as any).DEBUG_FILE);
-            if ( !stats.isFile() && stats.isCharacterDevice() ) {
-                isColor = true;
-            }
-        } catch ( e ) {
-            isColor = false;
-        }
+    if ( (global as any).DEBUG_FILE || (global as any).DEBUG_STDOUT ) {
         let transports: any[] = [];
-        if ( process.env.DEBUG_STDOUT === "TRUE" ) {
+        let isColor = false;
+        if ( (global as any).DEBUG_STDOUT ) {
+            isColor = true;
             transports.push( new winston.transports.Console({level: "debug"}) );
         } else {
+            try {
+                let stats = fs.lstatSync((global as any).DEBUG_FILE);
+                if ( !stats.isFile() && stats.isCharacterDevice() ) {
+                    isColor = true;
+                }
+            } catch ( e ) {
+                isColor = false;
+            }
             transports.push( new winston.transports.File({
                 level: "debug",
                 filename: (global as any).DEBUG_FILE
@@ -60,11 +61,10 @@ export function Logger( labelName: string ): winston.Logger {
                             } catch ( e ) {}
                         }
                     }
-                    let item = `${info.timestamp} - [${info.label.padEnd(10)}] ${level[info.level] || ""}: ${info.message}`;
                     if ( isColor ) {
-                        return winston.format.colorize().colorize(info.level, item);
+                        return `${info.timestamp} - [${info.label.padEnd(10)}] ${level[info.level] || ""}: ` + winston.format.colorize().colorize(info.level, info.message);
                     }
-                    return item;
+                    return `${info.timestamp} - [${info.label.padEnd(10)}] ${level[info.level] || ""}: ${info.message}`;
                 })
             ),
             transports

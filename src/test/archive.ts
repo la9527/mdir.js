@@ -1,3 +1,5 @@
+(global as any).DEBUG_STDOUT = true;
+
 import { ArchiveReader } from "../panel/archive/ArchiveReader";
 import { FileReader } from "../panel/FileReader";
 import { File } from "../common/File";
@@ -5,7 +7,7 @@ import { ProgressResult } from "../common/Reader";
 import selection, { ClipBoard } from "../panel/Selection";
 
 (async () => {
-    let file = FileReader.convertFile("test.zip");
+    let file = FileReader.convertFile("mdir.js-0.8.0-alpha.tgz");
     //let file = FileReader.convertFile("./test.tar.gz");
 
     let reader = new ArchiveReader();

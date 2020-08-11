@@ -14,5 +14,9 @@ binary
 .vscode
 images
 *.tgz
+*.zip
+*.tar.gz
 *.jpg
+@types
 build/**/*.map
+build/test
