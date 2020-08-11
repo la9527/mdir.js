@@ -5,8 +5,6 @@ import yargs from "yargs";
 
 (async () => {
     (global as any).LOCALE = await osLocale();
-    console.log( "Detected locale: " + (global as any).LOCALE );
-
     await i18nInit();
 
     let reargv = process.argv;
@@ -33,19 +31,14 @@ import yargs from "yargs";
 
     if ( typeof(argv.logfile) !== "undefined" ) {
         (global as any).debug = true;
+        console.log( "detect locale: " + (global as any).LOCALE );
         updateDebugFile( argv.logfile );
     }
 
     if ( argv.lang ) {
         await changeLanguage(argv.lang);
     }
-
     
-    /*
-    const log = Logger("main");
-    log.debug( argv );
-    */
-
     let mainFrame = (await import("./panel_blassed/MainFrame")).default();
     await mainFrame.start();
 })();

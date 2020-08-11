@@ -20,14 +20,9 @@ export class ArchiveReader extends Reader {
         if ( !this.archiveObj ) {
             return false;
         }
-
-        try {
-            this.baseArchiveFile = file;
-            this.archiveFiles = await this.archiveObj.getArchivedFiles(progressFunc);
-        } catch( e ) {
-            log.error( "ArchiveReader.archivedFiles ERROR - [%s]", e.stack );
-            return false;
-        }
+        this.baseArchiveFile = file;
+        log.info( "Archive Type: [%s] [%s]", file.name, this.archiveObj.getSupportType());
+        this.archiveFiles = await this.archiveObj.getArchivedFiles(progressFunc);
         return true;
     }
 

@@ -9,7 +9,7 @@
     "start": "tsc -p tsconfig.json && node ./build/main.js",
     "debug": "tsc -p tsconfig.json && node --inspect-brk ./build/main.js",
     "test": "tsc -p tsconfig.json && node ./build/test/test.js",
-    "test2": "tsc -p tsconfig.json && node ./build/test/imagetest.js",
+    "testimage": "tsc -p tsconfig.json && node ./build/test/imagetest.js",
     "testeditor": "tsc -p tsconfig.json && node ./build/test/editortest.js",
     "archivetest": "tsc -p tsconfig.json && node ./build/test/archive.js",
     "prepare": "tsc -p tsconfig.json",

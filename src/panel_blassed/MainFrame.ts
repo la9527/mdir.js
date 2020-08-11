@@ -170,6 +170,13 @@ export class MainFrame implements IHelpService {
                     view.setFocus();
                     view.resetPosition();
                 }
+            } catch( err ) {
+                await messageBox({
+                    parent: this.baseWidget,
+                    title: T("Error"),
+                    msg: err.message,
+                    button: [ T("OK") ]
+                });
             } finally {
                 progressBox.destroy();
             }
@@ -1077,6 +1084,7 @@ export class MainFrame implements IHelpService {
             if ( result && result[1] === T("OK") && result[0] ) {
                 try {
                     reader.rename( file, panel.currentPath().fullname + reader.sep() + result[0] );
+                    panel.resetViewCache();
                 } catch( e ) {
                     await messageBox( { parent: this.baseWidget, title: T("Error"), msg: e, button: [ T("OK") ] } );
                 }

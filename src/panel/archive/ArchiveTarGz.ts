@@ -73,7 +73,7 @@ export class ArchiveTarGz extends ArchiveCommon {
             }
             outstream = outstream.pipe( extract );
             outstream.on("error", (error) => {
-                log.error( "ERROR", error );
+                log.error( error );
                 reject(error);
             })
             .on("finish", () => {
@@ -138,7 +138,7 @@ export class ArchiveTarGz extends ArchiveCommon {
             }
             outstream = outstream.pipe( extract );
             outstream.on("error", (error) => {
-                log.error( "ERROR", error );
+                log.error( "ERROR [%s]", error );
                 extract.destroy();
                 reject(error);
             })

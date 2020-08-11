@@ -77,7 +77,13 @@ export class Mcd implements IHelpService {
         while( arrDir.length !== 0 ) {
             pTree = arrDir.pop();
             
-            let dirInfo: File[] = await this.reader.readdir( pTree.file );
+            let dirInfo: File[] = null;
+            try {
+                dirInfo = await this.reader.readdir( pTree.file );
+            } catch ( e ) {
+                log.error( e );
+                dirInfo = [];
+            }
             pTree.subDir = [];
             dirInfo.map( item => {
                 if ( item.dir && !item.link ) {

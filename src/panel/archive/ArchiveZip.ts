@@ -212,15 +212,15 @@ export class ArchiveZip extends ArchiveCommon {
                     let offset = 0;
                     let timestampFields = item.data.readInt8(0);
                     offset += 1;
-                    if (timestampFields & 1) {
+                    if (item.data.byteLength >= 5 && timestampFields & 1) {
                         file.mtime = new Date(item.data.readUInt32LE(offset) * 1000);
                         offset += 4;
                     }
-                    if (timestampFields & 2) {
+                    if (item.data.byteLength >= 9 && timestampFields & 2) {
                         file.atime = new Date(item.data.readUInt32LE(offset) * 1000);
                         offset += 4;
                     }
-                    if (timestampFields & 4) {
+                    if (item.data.byteLength >= 13 && timestampFields & 4) {
                         file.ctime = new Date(item.data.readUInt32LE(offset) * 1000);
                     }
                 } else if ( item.id === 0x5855 || item.id === 0x000d ) { // "Info-ZIP UNIX (type 1)", "PKWARE Unix"
