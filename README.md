@@ -39,22 +39,23 @@ $ mdir
 
 ### Version History
 
-v0.8.0
+
+- v0.8.0
     - Support the compress files (zip, tar.gz, gz, bz2)
       (archive file viewer, uncompress)
-v0.7.x
+- v0.7.x
     - Support the simple editor in the window box. (auto detect text file encoding)
-v0.6.x 
+- v0.6.x 
     - Support korean text translation.
-v0.5.x 
+- v0.5.x 
     - Support the image text viewer. (png, jpeg, gif)
     - Support the true color image in the iTerm for MacOS only.
-v0.4.x 
+- v0.4.x 
     - Support the terminal(sub shell) in the window box.
-v0.2.x
+- v0.2.x
     - Add the hint at the bottom side.
     - Add the command line at the bottom side (press slash('/') key)
-v0.1.x
+- v0.1.x
     - Support the mcd(directory changer of tree design) in the window box.
 
 # Gallery
