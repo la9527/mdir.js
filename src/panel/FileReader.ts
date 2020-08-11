@@ -201,7 +201,9 @@ export class FileReader extends Reader {
         file.fstype = this._readerFsType;
 
         try {
-            if ( filePath === ".." || filePath === "." ) {
+            if ( filePath === "~" || filePath[0] === "~" ) {
+                file.fullname = os.homedir() + filePath.substr(1);
+            } else if ( filePath === ".." || filePath === "." ) {
                 file.fullname = fs.realpathSync( filePath );
             } else {
                 file.fullname = checkRealPath ? fs.realpathSync(filePath) : filePath;

@@ -350,11 +350,12 @@ export class MainFrame implements IHelpService {
         for ( var i = 0; i < this.blessedFrames.length; i++ ) {
             const panel = this.blessedFrames[i];
             if ( panel instanceof BlessedPanel ) {
+                panel.setReader(readerControl("file"));
                 try {
-                    panel.setReader(readerControl("file"));
-                    await panel.read( i !== 0 ? (lastPath || ".") : "." );
+                    await panel.read( i !== 0 ? (lastPath || ".") : ".", false );
                 } catch ( e ) {
                     log.error( e );
+                    await panel.read( "~" );
                 }
             }
         }

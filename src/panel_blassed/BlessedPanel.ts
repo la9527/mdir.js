@@ -283,12 +283,16 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
         return RefreshType.ALL;
     }
 
-    async read(path: string | File): Promise<void> {
+    async read(path: string | File, throwMsgBoxShow: boolean = true): Promise<void> {
         try {
             await super.read(path);
         } catch (e) {
-            log.error(e.stack);
-            await messageBox({ parent: this.baseWidget, title: T("Error"), msg: e.toString(), button: [ T("OK") ] });
+            log.error("READ FAIL - [%s] [%s]", path, e.stack);
+            if ( throwMsgBoxShow ) {
+                await messageBox({ parent: this.baseWidget, title: T("Error"), msg: e.toString(), button: [ T("OK") ] });
+            } else {
+                throw e;
+            }
         }
     }
 
