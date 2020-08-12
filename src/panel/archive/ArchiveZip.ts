@@ -39,7 +39,7 @@ export class ArchiveZip extends ArchiveCommon {
         });
     }
 
-    compress( files: File[], progress?: ProgressFunc ): Promise<void> {
+    compress( files: File[], baseDir: File, progress?: ProgressFunc, newFile ?: File ): Promise<void> {
         return new Promise((resolve, reject) => {
             resolve();
         });

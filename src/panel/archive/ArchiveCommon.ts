@@ -31,7 +31,7 @@ export abstract class ArchiveCommon {
     protected abstract isSupportType( file: File ): string;
     public abstract getArchivedFiles(progress?: ProgressFunc): Promise<File[]>;
 
-    public abstract compress( files: File[], progress?: ProgressFunc ): Promise<void>;
+    public abstract compress( files: File[], baseDir: File, progress?: ProgressFunc, newFile ?: File ): Promise<void>;
     public abstract uncompress( extractDir: File, files ?: File[], progress?: ProgressFunc ): Promise<void>;
 
     protected fileStreamWrite(extractDir: File, filesBaseDir: string, file: File, readStream: Readable, reportProgress: Transform, next: (status: string, err?:any) => void) {
