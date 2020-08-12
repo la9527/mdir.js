@@ -53,15 +53,18 @@ $ mdir
 - v0.4.x 
     - Support the terminal(sub shell) in the window box.
 - v0.2.x
-    - Add the hint at the bottom side.
+    - Add the hint on the bottom side.
     - Add the command line at the bottom side (press slash('/') key)
 - v0.1.x
     - Support the mcd(directory changer of tree design) in the window box.
 
 # Gallery
 
-![MDir MAIN](https://github.com/la9527/mdir.js/blob/master/images/mdir_v0.1_windows10_cmd.png?raw=true)
+### 1. Main Screen (Split Window)
+![Mdir.js MAIN](https://github.com/la9527/mdir.js/blob/master/images/mdir_v0.1_windows10_cmd.png?raw=true)
 
+### 2. Mcd Screen (Tree viewer)
 ![Mdir.js MCD](https://github.com/la9527/mdir.js/blob/master/images/mdir_v0.1_windows10_cmd_mcd.png?raw=true)
 
+### 3. Terminal(Sub-shell) in the inside window
 ![Mdir.js XTerm](https://github.com/la9527/mdir.js/blob/master/images/mdir_v3.0_macos_terminal.png?raw=true)

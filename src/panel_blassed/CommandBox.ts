@@ -138,7 +138,7 @@ export class CommandBox extends Widget {
         }
     }
 
-    async pathComplatePromise( pathStr ): Promise<{ path: File, files: File[] }> {
+    async pathComplatePromise( pathStr: string ): Promise<{ path: File, files: File[] }> {
         try {
             let reader = this.panelView && this.panelView.getReader();
             if ( !reader ) {
@@ -146,7 +146,8 @@ export class CommandBox extends Widget {
             }
 
             let pathInfo = path.parse(pathStr);
-            let pathFile = reader.convertFile( pathInfo.dir, { checkRealPath: true } );
+            let isDirCheck = pathStr[ pathStr.length - 1 ] === path.sep;
+            let pathFile = reader.convertFile( isDirCheck ? pathStr : pathInfo.dir, { checkRealPath: true } );
             if ( !pathFile ) {
                 return null;
             }
@@ -154,7 +155,7 @@ export class CommandBox extends Widget {
             return {
                 path: pathFile,
                 files: pathFiles.filter( (item) => {
-                    if ( item.name.match(new RegExp("^" + pathInfo.name, "i") ) ) {
+                    if ( !isDirCheck && item.name.match(new RegExp("^" + pathInfo.name, "i") ) ) {
                         return true;
                     }
                     return false;
@@ -269,7 +270,8 @@ export class CommandBox extends Widget {
 
             if ( this.tabFileInfo ) {
                 let pathInfo = path.parse(lastPath);
-                this.commandValue = firstText + (pathInfo.dir ? (pathInfo.dir + path.sep) : "") + this.tabFileInfo.files[this.tabFileInfo.index].name;
+                let tabFile = this.tabFileInfo.files[this.tabFileInfo.index];
+                this.commandValue = firstText + (pathInfo.dir ? (pathInfo.dir + path.sep) : "") + tabFile.name + (tabFile.dir ? path.sep : "");
                 this.cursorPos = unicode.strWidth(this.commandValue);
             }
         } catch( e ) {

@@ -340,9 +340,18 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
             } else {
                 this.column = 6;
             }
-            const columnSize = Math.round(this.baseWidget.width as number / MAX_COLUMN);
-            if (this.column > columnSize) {
-                this.column = columnSize;
+            
+            let MIN_COLUMN_SIZE = 20;
+            let checkColumnSize = Array(this.column).fill(0).reduce( (pre, n, i) => {
+                let checkNum = this.column - i;
+                let columnSize = Math.round(this.baseWidget.width as number / checkNum);
+                if ( columnSize <= MIN_COLUMN_SIZE ) {
+                    return checkNum;
+                }
+                return pre;
+            }, -1);
+            if ( checkColumnSize > -1 ) {
+                this.column = checkColumnSize;
             }
         } else {
             this.column = this.viewColumn;
