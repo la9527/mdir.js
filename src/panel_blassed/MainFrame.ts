@@ -606,8 +606,10 @@ export class MainFrame implements IHelpService {
     @Help(T("Help.PanelSync"))
     async panelSyncPromise() {
         const activePanel = this.activePanel();
-        let anotherPanel = this.blessedFrames.find( (item, i) => this.activeFrameNum !== i );
-        if ( anotherPanel && activePanel instanceof BlessedPanel && anotherPanel instanceof BlessedPanel ) {
+        let anotherPanel = this.blessedFrames.find( (item, i) => {
+                return item instanceof BlessedPanel && item.getReader().readerName === "file" && this.activeFrameNum !== i;
+            });
+        if ( activePanel instanceof BlessedPanel && anotherPanel instanceof BlessedPanel ) {
             await activePanel.read(anotherPanel.currentPath());
             return RefreshType.ALL;
         }
@@ -943,7 +945,7 @@ export class MainFrame implements IHelpService {
             
             const reader = activePanel.getReader();
             log.debug( "READER : [%s] => [%s]", reader.readerName, files[0].fstype );
-            if ( files[0].fstype === "file" && reader.readerName === files[0].fstype ) {
+            if ( files[0].fstype === "file" && reader.readerName === "file" && files[0].fstype === clipSelected.getReader().readerName ) {
                 let targetPath = activePanel.currentPath();
                 let i = 0, skipAll = false, overwriteAll = false;
                 for ( let src of files ) {
@@ -1006,7 +1008,7 @@ export class MainFrame implements IHelpService {
                             reader.mkdir( target );
                         } else {
                             log.debug( "COPY - [%s] => [%s]", src.fullname, target.fullname );
-                            await reader.copy( src, target, progressStatus );
+                            await reader.copy( src, null, target, progressStatus );
                         }
                     } catch( err ) {
                         if ( err === "USER_CANCEL" ) {
@@ -1024,9 +1026,12 @@ export class MainFrame implements IHelpService {
                         }
                     }
                 }
-            } else if ( files[0].fstype === clipSelected.getReader().readerName && reader.readerName === "file" ) {
+            } else if ( files[0].fstype === clipSelected.getReader().readerName ) {
                 try {
-                    await clipSelected.getReader().copy( files, activePanel.currentPath(), progressStatus );
+                    let reader = clipSelected.getReader().readerName !== "file" ? 
+                        clipSelected.getReader() : activePanel.getReader();
+
+                    await reader.copy( files, clipSelected.getSelecteBaseDir(), activePanel.currentPath(), progressStatus );
                 } catch( err ) {
                     log.error( err );
                     await messageBox( {

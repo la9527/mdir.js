@@ -392,16 +392,21 @@ export class FileReader extends Reader {
         });
     }
 
-    copy( source: File, target: File, progress: ProgressFunc = null ): Promise<void> {
+    copy(source: File | File[], sourceBaseDir: File, targetDir: File, progress?: ProgressFunc): Promise<void> {
         let reader = this;
         return new Promise( ( resolve, reject ) => {
-            let srcFile = source.link ? source.link.file : source;
-            if ( srcFile.dir || target.dir ) {
+            if ( Array.isArray(source) ) {
+                reject( "Unsupport file array type !!!" );
+                return;
+            }
+
+            let srcFile =  source.link ? source.link.file : source;
+            if ( srcFile.dir || targetDir.dir ) {
                 reject("Unable to copy from a source directory.");
                 return;
             }
 
-            if ( srcFile.dirname === target.fullname ) {
+            if ( srcFile.dirname === targetDir.fullname ) {
                 log.debug( "source file and target file are the same." );
                 resolve();
                 return;
@@ -409,12 +414,12 @@ export class FileReader extends Reader {
 
             let chunkCopyLength = 0;
             let rd = fs.createReadStream(srcFile.fullname);
-            let wr = fs.createWriteStream(target.fullname);
+            let wr = fs.createWriteStream(targetDir.fullname);
 
             let rejectFunc = (err) => {
                 rd.destroy();
                 wr.end(() => {
-                    fs.unlinkSync( target.fullname );
+                    fs.unlinkSync( targetDir.fullname );
                 });
                 log.debug( "COPY ERROR - " + err );
                 reject(err);
@@ -430,11 +435,11 @@ export class FileReader extends Reader {
                 transform(chunk: Buffer, encoding, callback) {
                     chunkCopyLength += chunk.length;
                     const result = progress && progress( srcFile, chunkCopyLength, srcFile.size, chunk.length );
-                    log.debug( "Copy to: %s => %s (%d / %d)", srcFile.fullname, target.fullname, chunkCopyLength, srcFile.size );
+                    log.debug( "Copy to: %s => %s (%d / %d)", srcFile.fullname, targetDir.fullname, chunkCopyLength, srcFile.size );
                     if ( result === ProgressResult.USER_CANCELED ) {
                         rd.destroy();
                         wr.end(() => {
-                            fs.unlinkSync( target.fullname );
+                            fs.unlinkSync( targetDir.fullname );
                         });
                         log.debug( "COPY - CANCEL" );
                         reject( "USER_CANCEL" );

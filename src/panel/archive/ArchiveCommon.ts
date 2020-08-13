@@ -8,6 +8,7 @@ import { File } from "../../common/File";
 import { Logger } from "../../common/Logger";
 import { Readable, Transform } from "stream";
 import { convertAttrToStatMode } from "../FileReader";
+import { message } from '../../../@types/blessed';
 
 const log = Logger("Archive");
 
@@ -31,7 +32,7 @@ export abstract class ArchiveCommon {
     protected abstract isSupportType( file: File ): string;
     public abstract getArchivedFiles(progress?: ProgressFunc): Promise<File[]>;
 
-    public abstract compress( files: File[], baseDir: File, progress?: ProgressFunc, newFile ?: File ): Promise<void>;
+    public abstract compress( sourceFile: File[], baseDir: File, targetDirOrNewFile ?: File, progress?: ProgressFunc ): Promise<void>;
     public abstract uncompress( extractDir: File, files ?: File[], progress?: ProgressFunc ): Promise<void>;
 
     protected fileStreamWrite(extractDir: File, filesBaseDir: string, file: File, readStream: Readable, reportProgress: Transform, next: (status: string, err?:any) => void) {
@@ -41,7 +42,7 @@ export abstract class ArchiveCommon {
             let dirname = path.dirname(filename);
             let mode = convertAttrToStatMode(file);
 
-            // console.log( filename, dirname );            
+            // console.log( filename, dirname );
             if ( !fs.existsSync( dirname ) ) {
                 fs.mkdirSync( dirname, { recursive: true });
             }
@@ -59,7 +60,11 @@ export abstract class ArchiveCommon {
                 next("link");
             } else if ( file.dir && !file.link ) {
                 fs.mkdirSync( filename, { recursive: true, mode });
-                fs.chownSync( filename, file.uid, file.gid );
+                try {
+                    fs.chownSync( filename, file.uid, file.gid );
+                } catch( e ) {
+                    console.error( e.message );
+                }
                 fs.utimesSync(filename, file.atime || new Date(), file.mtime || new Date());
                 readStream && readStream.resume();
                 next("directory");
@@ -78,7 +83,11 @@ export abstract class ArchiveCommon {
                 readStream.on('error', rejectFunc);
                 writeStream.on('error', rejectFunc);
                 writeStream.on('finish', () => {
-                    fs.chownSync( filename, file.uid, file.gid );
+                    try {
+                        fs.chownSync( filename, file.uid, file.gid );
+                    } catch( e ) {
+                        log.error( e.message );
+                    }
                     fs.utimesSync(filename, file.atime || new Date(), file.mtime || new Date());
                     next("finish");
                 });

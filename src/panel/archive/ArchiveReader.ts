@@ -23,6 +23,7 @@ export class ArchiveReader extends Reader {
         this.baseArchiveFile = file;
         log.info( "Archive Type: [%s] [%s]", file.name, this.archiveObj.getSupportType());
         this.archiveFiles = await this.archiveObj.getArchivedFiles(progressFunc);
+        this.baseDir = this.rootDir();
         return true;
     }
 
@@ -130,9 +131,19 @@ export class ArchiveReader extends Reader {
         throw new Error("Unsupport rename.");
     }
 
-    copy(source: File | File[], target: File, progress?: ProgressFunc): Promise<void> {
-        if ( Array.isArray( source ) && source.length > 0 && source[0].fstype === "archive" && target.fstype === "file") {
-            return this.archiveObj.uncompress(target, source, progress);
+    copy(source: File | File[], sourceBaseDir: File, targetDir: File, progress?: ProgressFunc): Promise<void> {
+        if ( Array.isArray( source ) && source.length > 0 && source[0].fstype === "archive" && targetDir.fstype === "file") {
+            return this.archiveObj.uncompress(targetDir, source, progress);
+        } else if ( Array.isArray( source ) && source.length > 0 && source[0].fstype === "file" && targetDir.fstype === "archive" ) {
+            return new Promise( async (resolve, reject) => {
+                try {
+                    await this.archiveObj.compress(source, sourceBaseDir, targetDir, progress);
+                    await this.setArchiveFile( this.baseArchiveFile, progress );
+                    resolve();
+                } catch( e ) {
+                    reject( e );
+                }
+            });
         }
         return new Promise((resolve, reject) => {
             reject( "Unsupport copy !!!" );
