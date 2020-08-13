@@ -1,13 +1,15 @@
 import * as path from "path";
 import * as fs from "fs";
+import * as yazl from "yazl";
 import * as yauzl from "yauzl";
 
 import { ArchiveCommon } from "./ArchiveCommon";
 import { File, FileLink } from "../../common/File";
 import { Reader, ProgressFunc, IMountList, ProgressResult } from "../../common/Reader";
 import { Logger } from "../../common/Logger";
-import { Transform, TransformCallback } from "stream";
+import { Transform, TransformCallback, Readable } from "stream";
 import { convertAttrToStatMode } from "../FileReader";
+import { pack } from "tar-stream";
 
 const log = Logger("archivetar");
 
@@ -39,8 +41,43 @@ export class ArchiveZip extends ArchiveCommon {
         });
     }
 
+    convertFileToZipHeader( file: File, srcBaseDir: File, targetDir: string ) {
+        let header: any = {
+            name: file.orgname,
+            option: {
+                mtime: file.mtime,
+                mode: 0o100000 | convertAttrToStatMode(file)
+            }
+        };
+        if ( file.fstype === "file" ) {
+            header.name = path.normalize(targetDir + file.fullname.substr(srcBaseDir.fullname.length));
+            header.name = header.name.replace( /^\//i, "");
+        }
+        return header;
+    }
+
     compress( sourceFile: File[], baseDir: File, targetDirOrNewFile ?: File, progress?: ProgressFunc ): Promise<void> {
         return new Promise((resolve, reject) => {
+            let zip = new yazl.ZipFile();
+
+            const packEntryPromise = (file: File, stream: Readable, reportProgress?: Transform) => {
+                return new Promise( (resolve, reject) => {
+                    let targetDir = targetDirOrNewFile.fstype === "archive" ? targetDirOrNewFile.fullname : "";
+                    let header = this.convertFileToZipHeader(file, baseDir, targetDir);
+
+                    if ( file.link ) {
+                        reject( `Unsupport link file - ${file.fullname}` );
+                        return;
+                    }
+                    if ( file.dir || file.link ) {
+                        zip.addEmptyDirectory( header.path, header.option );
+                    } else {
+                        zip.addReadStream( stream, header.path, header.option );
+                    }
+                });
+            };
+            
+
             resolve();
         });
     }
@@ -136,7 +173,7 @@ export class ArchiveZip extends ArchiveCommon {
     private subDirectoryCheck(files: File[]): File[] {
         let dirFilter = files.filter( item => item.dir );
         let addFiles: File[] = [];
-        
+
         files.forEach( item => {
             if ( item.fullname !== "/" && item.dirname !== "/" && addFiles.findIndex( (addItem) => addItem.fullname === item.dirname + "/" ) === -1 ) {
                 if ( dirFilter.findIndex( (dirItem) => dirItem.fullname === item.dirname + "/" ) === -1 ) {                

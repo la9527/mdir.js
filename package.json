@@ -59,6 +59,7 @@
     "moment": "^2.26.0",
     "neo-blessed": "^0.2.0",
     "node-pty": "^0.9.0",
+    "node-stream-zip": "^1.11.2",
     "os-locale": "^5.0.0",
     "sprintf-js": "^1.1.2",
     "supports-color": "^7.1.0",
@@ -72,7 +73,9 @@
     "winston-daily-rotate-file": "^3.8.0",
     "xterm": "^4.7.0",
     "yargs": "^15.3.1",
-    "yauzl": "^2.10.0"
+    "yauzl": "^2.10.0",
+    "yazl": "^2.5.1",
+    "zip-stream": "^4.0.2"
   },
   "devDependencies": {
     "@types/drivelist": "^6.4.1",
@@ -81,6 +84,7 @@
     "@types/tar-stream": "^2.1.0",
     "@types/yargs": "^15.0.5",
     "@types/yauzl": "^2.9.1",
+    "@types/yazl": "^2.4.2",
     "@typescript-eslint/parser": "^3.0.0",
     "pkg": "^4.4.8",
     "typescript": "^3.9.3"
