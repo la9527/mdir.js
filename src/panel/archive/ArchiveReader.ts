@@ -100,7 +100,7 @@ export class ArchiveReader extends Reader {
     }
 
     changeDir(dirFile: File) {
-        throw new Error("Method not implemented.");
+        throw new Error("Unsupport changedir");
     }
 
     currentDir(): File {
@@ -123,12 +123,37 @@ export class ArchiveReader extends Reader {
         });
     }
 
-    mkdir(path: string | File) {
-        throw new Error("Method not implemented.");
+    mkdir(path: string | File, progress?: ProgressFunc) {
+        let file: File = null;
+        if ( typeof(path) === "string" ) {
+            file = this.baseDir.clone();
+            file.fullname = file.fullname + path + "/";
+            file.name = path;
+            file.orgname = file.orgname + path + "/";
+        } else {
+            file = path;
+        }
+        return new Promise( async (resolve, reject) => {
+            try {
+                await this.archiveObj.compress( [ file ], null, this.baseDir, progress);
+                await this.setArchiveFile( this.baseArchiveFile, progress );
+                resolve();
+            } catch( e ) {
+                reject( e );
+            }
+        });
     }
 
-    rename(source: File, rename: string): Promise<void> {
-        throw new Error("Unsupport rename.");
+    rename(source: File, rename: string, progress?: ProgressFunc): Promise<void> {
+        return new Promise( async (resolve, reject) => {
+            try {
+                await this.archiveObj.rename(source, rename, progress);
+                await this.setArchiveFile( this.baseArchiveFile, progress );
+                resolve();
+            } catch( e ) {
+                reject( e );
+            }
+        });
     }
 
     copy(source: File | File[], sourceBaseDir: File, targetDir: File, progress?: ProgressFunc): Promise<void> {
@@ -150,7 +175,19 @@ export class ArchiveReader extends Reader {
         });
     }
 
-    remove(source: File): Promise<void> {
-        throw new Error("Method not implemented.");
+    remove(source: File | File[], progress?: ProgressFunc): Promise<void> {
+        return new Promise( async (resolve, reject) => {
+            if ( Array.isArray( source ) ) {
+                try {
+                    await this.archiveObj.remove(source, progress);
+                    await this.setArchiveFile( this.baseArchiveFile, progress );
+                    resolve();
+                } catch( e ) {
+                    reject( e );
+                }
+            } else {
+                reject( "only support array source files !!!" );
+            }
+        });
     }
 }

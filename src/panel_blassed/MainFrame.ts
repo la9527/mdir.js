@@ -823,30 +823,53 @@ export class MainFrame implements IHelpService {
         let beforeTime = Date.now();
         let refreshTimeMs = 300;
 
-        for ( let i = 0; i < files.length; i++ ) {
-            let src = files[i];
-            try {
-                log.debug( "REMOVE : [%s]", src.fullname);
-                if ( Date.now() - beforeTime > refreshTimeMs ) {
-                    progressBox.updateProgress( src.fullname, `${i+1} / ${files.length}`, i+1, files.length );
-                    await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
-                    beforeTime = Date.now();
-                }
-                if ( progressBox.getCanceled() ) {
-                    break;
-                }
-                await reader.remove( src );
-            } catch ( err ) {
-                let result = await messageBox( {
-                    parent: this.baseWidget,
-                    title: T("Error"),
-                    msg: err,
-                    button: [ T("Continue"), T("Cancel") ]
-                });
-                if ( result === T("Cancel") ) {
-                    break;
+        if ( activePanel.getReader().readerName === "file" ) {
+            for ( let i = 0; i < files.length; i++ ) {
+                let src = files[i];
+                try {
+                    log.debug( "REMOVE : [%s]", src.fullname);
+                    if ( Date.now() - beforeTime > refreshTimeMs ) {
+                        progressBox.updateProgress( src.fullname, `${i+1} / ${files.length}`, i+1, files.length );
+                        await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
+                        beforeTime = Date.now();
+                    }
+                    if ( progressBox.getCanceled() ) {
+                        break;
+                    }
+                    await reader.remove( src );
+                } catch ( err ) {
+                    let result = await messageBox( {
+                        parent: this.baseWidget,
+                        title: T("Error"),
+                        msg: err,
+                        button: [ T("Continue"), T("Cancel") ]
+                    });
+                    if ( result === T("Cancel") ) {
+                        break;
+                    }
                 }
             }
+        } else {
+            let copyBytes = 0;
+            let befCopyInfo = { beforeTime: Date.now(), copyBytes };
+            let fullFileSize = 0;
+
+            const progressStatus: ProgressFunc = ( source, copySize, size, chunkLength ) => {
+                copyBytes += chunkLength;
+                let repeatTime = Date.now() - befCopyInfo.beforeTime;
+                if ( repeatTime > refreshTimeMs ) {
+                    let bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
+                    let lastText = (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
+                                    (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(fullFileSize, false, 1).trim());
+                                    // + `(${StringUtils.sizeConvert(bytePerSec, false, 1).trim()}s)`;
+                    progressBox.updateProgress( source.fullname, lastText, copyBytes, fullFileSize );
+                    befCopyInfo.beforeTime = Date.now();
+                    befCopyInfo.copyBytes = copyBytes;
+                }
+                return reader.isUserCanceled ? ProgressResult.USER_CANCELED : ProgressResult.SUCCESS;
+            };
+            
+            await reader.remove( files, progressStatus );
         }
         progressBox.destroy();
         await this.refreshPromise();
@@ -1061,7 +1084,40 @@ export class MainFrame implements IHelpService {
             }, {  });
             if ( result && result[1] === T("OK") && result[0] ) {
                 try {
-                    reader.mkdir( panel.currentPath().fullname + reader.sep() + result[0] );
+                    if ( panel.getReader().readerName !== "file" ) {
+                        const reader = panel.getReader();
+                        reader.isUserCanceled = false;
+
+                        const progressBox = new ProgressBox( { title: T("Message.Copy"), msg: T("Message.Calculating"), cancel: () => {
+                            reader.isUserCanceled = true;
+                        }}, { parent: this.baseWidget } );
+                        this.screen.render();
+                        await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
+
+                        let copyBytes = 0;
+                        let befCopyInfo = { beforeTime: Date.now(), copyBytes };
+                        let fullFileSize = 0;
+                        let refreshTimeMs = 100;
+
+                        const progressStatus: ProgressFunc = ( source, copySize, size, chunkLength ) => {
+                            copyBytes += chunkLength;
+                            let repeatTime = Date.now() - befCopyInfo.beforeTime;
+                            if ( repeatTime > refreshTimeMs ) {
+                                let bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
+                                let lastText = (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
+                                                (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(fullFileSize, false, 1).trim());
+                                                // + `(${StringUtils.sizeConvert(bytePerSec, false, 1).trim()}s)`;
+                                progressBox.updateProgress( source.fullname, lastText, copyBytes, fullFileSize );
+                                befCopyInfo.beforeTime = Date.now();
+                                befCopyInfo.copyBytes = copyBytes;
+                            }
+                            return reader.isUserCanceled ? ProgressResult.USER_CANCELED : ProgressResult.SUCCESS;
+                        };
+
+                        await reader.mkdir( panel.currentPath().fullname + reader.sep() + result[0], progressStatus );
+                    } else {
+                        reader.mkdir( panel.currentPath().fullname + reader.sep() + result[0], null);
+                    }
                 } catch( e ) {
                     await messageBox( { parent: this.baseWidget, title: T("Error"), msg: e, button: [ T("OK") ] } );
                 }
@@ -1088,11 +1144,43 @@ export class MainFrame implements IHelpService {
                 button: [ T("OK"), T("Cancel") ]
             }, {  });
             if ( result && result[1] === T("OK") && result[0] ) {
+                const progressBox = new ProgressBox( { title: T("Message.Rename"), msg: T("Message.Calculating"), cancel: () => {
+                    reader.isUserCanceled = true;
+                }}, { parent: this.baseWidget } );
+
                 try {
-                    reader.rename( file, panel.currentPath().fullname + reader.sep() + result[0] );
+                    if ( reader.readerName !== "file ") {
+                        let copyBytes = 0;
+                        let befCopyInfo = { beforeTime: Date.now(), copyBytes };
+                        let fullFileSize = 0;
+                        let refreshTimeMs = 300;
+
+                        this.screen.render();
+                        await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
+
+                        const progressStatus: ProgressFunc = ( source, copySize, size, chunkLength ) => {
+                            copyBytes += chunkLength;
+                            let repeatTime = Date.now() - befCopyInfo.beforeTime;
+                            if ( repeatTime > refreshTimeMs ) {
+                                let bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
+                                let lastText = (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
+                                                (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(fullFileSize, false, 1).trim());
+                                                // + `(${StringUtils.sizeConvert(bytePerSec, false, 1).trim()}s)`;
+                                progressBox.updateProgress( source.fullname, lastText, copyBytes, fullFileSize );
+                                befCopyInfo.beforeTime = Date.now();
+                                befCopyInfo.copyBytes = copyBytes;
+                            }
+                            return reader.isUserCanceled ? ProgressResult.USER_CANCELED : ProgressResult.SUCCESS;
+                        };
+                        await reader.rename( file, panel.currentPath().fullname + reader.sep() + result[0], progressStatus );
+                    } else {
+                        reader.rename( file, panel.currentPath().fullname + reader.sep() + result[0] );
+                    }
                     panel.resetViewCache();
                 } catch( e ) {
                     await messageBox( { parent: this.baseWidget, title: T("Error"), msg: e, button: [ T("OK") ] } );
+                } finally {
+                    progressBox.destroy();
                 }
             }
         }

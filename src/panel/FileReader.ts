@@ -369,7 +369,7 @@ export class FileReader extends Reader {
         return fs.existsSync( source );
     }
 
-    mkdir( path: string | File ) {
+    mkdir( path: string | File, progress?: ProgressFunc ) {
         if ( path instanceof File ) {
             if ( !path.dir ) {
                 return;
@@ -380,7 +380,7 @@ export class FileReader extends Reader {
         }
     }
     
-    rename( source: File, rename: string ): Promise<void> {
+    rename( source: File, rename: string, progress?: ProgressFunc ): Promise<void> {
         return new Promise( (resolve, reject) => {
             fs.rename( source.fullname, rename, (err) => {
                 if ( err ) {

@@ -7,8 +7,9 @@ import { ProgressResult } from "../common/Reader";
 import selection, { ClipBoard } from "../panel/Selection";
 
 (async () => {
-    let file = FileReader.convertFile("mdir.js-0.8.1-alpha.tgz");
+    //let file = FileReader.convertFile("mdir.js-0.8.1-alpha.tgz");
     //let file = FileReader.convertFile("./test.tar.gz");
+    let file = FileReader.convertFile("./src.zip");
 
     let reader = new ArchiveReader();
     if ( await reader.setArchiveFile( file, null ) ) {
@@ -22,8 +23,6 @@ import selection, { ClipBoard } from "../panel/Selection";
 
         let selectFiles = select.getFiles();
 
-        console.log( select.getSelecteBaseDir() );
-
         let progressFunc = (source: File, copySize: number, size: number, chunkLength: number): ProgressResult => {
             console.log( source.name, copySize, size, chunkLength );
             return ProgressResult.SUCCESS;
@@ -31,6 +30,8 @@ import selection, { ClipBoard } from "../panel/Selection";
         
         try {
             await reader.copy( selectFiles, select.getSelecteBaseDir(), reader.currentDir(), progressFunc);
+
+            console.log( "FINISH !!!" );
         } catch( e ) {
             console.error( "Exception:", e );
         }

@@ -115,149 +115,80 @@ export class ArchiveTarGz extends ArchiveCommon {
         });
     }
 
-    compress( sourceFile: File[], baseDir: File, targetDirOrNewFile ?: File, progress?: ProgressFunc ): Promise<void> {
+    private commonCompress( writeTarStream: fs.WriteStream, packFunc: (pack: tar.Pack) => Promise<void>, progress?: ProgressFunc ): Promise<void> {
         const pack = tar.pack();
-        const packEntryPromise = (file: File, stream: Readable, reportProgress?: Transform) => {
-            return new Promise( (resolve, reject) => {
-                let targetDir = targetDirOrNewFile.fstype === "archive" ? targetDirOrNewFile.fullname : "";
-                let header = this.convertFileToTarHeader(file, baseDir, targetDir);
-                if ( file.dir || file.link ) {
-                    pack.entry( header, (err) => {
-                        if ( err ) {
-                            reject(err);
-                        } else {
-                            resolve();
-                        }
-                    });
-                } else {
-                    let entry = pack.entry( header, (err) => {
-                        log.debug( "Insert File : [%s] [%s]", file.fullname, header.name );
-                        if ( err ) {
-                            reject(err);
-                        } else {
-                            resolve();
-                        }
-                    });
-                    stream.on( "error", (err) => {
-                        entry.destroy(err);
-                    });
-                    if ( reportProgress ) {
-                        stream.pipe(reportProgress).pipe( entry );
-                    } else {
-                        stream.pipe( entry );
-                    }
-                }
-            });
-        };
-
-        const originFilePacking = () => {
-            return new Promise( (resolve, reject) => {
-                let tarStream: any = fs.createReadStream(this.originalFile.fullname);
-                let extract = tar.extract();
-                extract.on("entry", (header, stream, next: any) => {
-                    const tarFileInfo = this.convertTarToFile(header);
-                    
-                    let chunkSum = 0;
-                    const reportProgress = new Transform({
-                        transform(chunk: Buffer, encoding, callback) {
-                            chunkSum += chunk.length;
-                            if ( progress ) {
-                                const result = progress( tarFileInfo, chunkSum, tarFileInfo.size, chunk.length );
-                                if ( result === ProgressResult.USER_CANCELED ) {
-                                    extract.destroy();
-                                    reject("USER_CANCEL");
-                                    return;
-                                }
-                            }
-                            // log.debug( "Transform: %s => %d / %d", tarFileInfo.fullname, chunkSum, file.size );
-                            callback( null, chunk );
-                        }
-                    });
-
-                    packEntryPromise(tarFileInfo, stream, reportProgress).then( () => {
-                        next();
-                    }).catch( (error) => {
-                        reject(error);
-                    });
-                });
-
-                let outstream = null;
-                if ( this.supportType === "tgz" ) {
-                    outstream = tarStream.pipe(zlib.createGunzip());
-                } else if ( this.supportType === "tbz2" ) {
-                    outstream = tarStream.pipe(bunzip2());
-                }
-                outstream = outstream.pipe( extract );
-                outstream.on("error", (error) => {
-                    log.error( "ERROR [%s]", error );
-                    extract.destroy();
-                    reject(error);
-                })
-                .on("finish", () => {
-                    log.info( "originalFileLoader finish !!" );
-                    resolve();
-                });
-            });
-        };
-
         return new Promise( async (resolve, reject) => {
             if ( this.supportType === "tbz2" ) {
                 reject("Unsupport bzip2 compress !!!");
                 return;
             }
 
-            let tmpWriteFileName = this.originalFile.fullname + ".bak";
-            if ( targetDirOrNewFile.fstype === "file" ) {
-                tmpWriteFileName = targetDirOrNewFile.fullname;
-            }
-
-            let writeNewTarStream = fs.createWriteStream( tmpWriteFileName );
-            let outstream = null;
-
             try {
-                writeNewTarStream.on("error", (error) => {
+                let outstream = null;
+                writeTarStream.on("error", (error) => {
                     log.error( "ERROR [%s]", error );
                     pack.destroy();
                     reject(error);
                 });
                 if ( this.supportType === "tgz" ) {
-                    outstream = pack.pipe(zlib.createGzip()).pipe(writeNewTarStream);
+                    outstream = pack.pipe(zlib.createGzip()).pipe(writeTarStream);
                 } else {
-                    outstream = pack.pipe(writeNewTarStream);
+                    outstream = pack.pipe(writeTarStream);
                 }
                 outstream.on("error", (error) => {
                     log.error( "ERROR [%s]", error );
-                    fs.unlinkSync( tmpWriteFileName );
                     reject(error);
                 }).on("finish", () => {
                     log.info( "Compress Finish !!!" );
-                    writeNewTarStream.close();
-                    fs.unlinkSync( this.originalFile.fullname );
-                    fs.renameSync( tmpWriteFileName, this.originalFile.fullname );
-                    log.info( "Compress Finish !!!" );
+                    writeTarStream.close();
                     resolve();
                 });
-                
-                if ( targetDirOrNewFile.fstype === "archive" ) {
-                    await originFilePacking();
-                }
-                
-                for ( let item of sourceFile ) {
-                    let stream = null;
-                    if ( !item.dir && !item.link ) {
-                        stream = fs.createReadStream(item.fullname);
-                    }
-                    await packEntryPromise(item, stream);
-                }
+
+                await packFunc( pack );
                 pack.finalize();
             } catch ( err ) {
                 pack.destroy( err );
+                reject( err );
+            }
+        });
+    }
+    
+    public compress( sourceFile: File[], baseDir: File, targetDirOrNewFile: File, progress?: ProgressFunc ): Promise<void> {
+        return new Promise( async (resolve, reject) => {
+            let tmpWriteFileName = this.originalFile.fullname + ".bak";
+            if ( targetDirOrNewFile.fstype === "file" ) {
+                tmpWriteFileName = targetDirOrNewFile.fullname;
+            }
+            let writeNewTarStream = fs.createWriteStream( tmpWriteFileName );
+            try {
+                await this.commonCompress( writeNewTarStream, async (pack) => {
+                    if ( targetDirOrNewFile.fstype === "archive" ) {
+                        await this.originalPacking(pack, null, progress);
+                    }            
+                    for ( let item of sourceFile ) {
+                        let stream = null;
+                        if ( !item.dir && !item.link ) {
+                            stream = fs.createReadStream(item.fullname);
+                        }
+                        let targetDir = targetDirOrNewFile.fstype === "archive" ? targetDirOrNewFile.fullname : "";
+                        let fileHeader = this.convertFileToTarHeader(item, baseDir, targetDir);
+                        await this.packEntry(item, fileHeader, stream, pack);
+                    }
+                });
+                fs.unlinkSync( this.originalFile.fullname );
+                fs.renameSync( tmpWriteFileName, this.originalFile.fullname );
+                resolve();
+            } catch( err ) {
+                if ( fs.existsSync(tmpWriteFileName) ) {
+                    fs.unlinkSync( tmpWriteFileName );
+                }
+                reject( err );
             }
         });
     }
 
     uncompress( extractDir: File, files ?: File[], progress?: ProgressFunc ): Promise<void> {
-        return new Promise((resolve, reject) => {            
+        return new Promise((resolve, reject) => {
             let extractFiles = [];
             let file = this.originalFile;
             let tarStream: any = fs.createReadStream(file.fullname);
@@ -315,6 +246,150 @@ export class ArchiveTarGz extends ArchiveCommon {
             });
         });
     }
+
+    public rename( source: File, rename: string, progress?: ProgressFunc ): Promise<void> {
+        const indexOrgName = source.orgname ? source.orgname.split("/").lastIndexOf(source.name) : -1;
+        const filterEntryFunc = (tarFileInfo: File, header): boolean => {
+            if ( !source.dir && source.fullname === tarFileInfo.fullname ) {
+                let nameArr = header.name.split("/");
+                nameArr.pop();
+                header.name = nameArr.join("/") + rename;
+            } else if ( source.dir && tarFileInfo.fullname.indexOf(source.fullname) > -1 ) {
+                let nameArr: string[] = header.name.split("/");
+                let index = nameArr.indexOf(source.name, indexOrgName);
+                if ( index > -1 ) {
+                    nameArr[index] = rename;
+                    header.name = nameArr.join("/");
+                }
+            }
+            return true;
+        };
+        return new Promise( async (resolve, reject) => {
+            let tmpWriteFileName = this.originalFile.fullname + ".bak";
+            let writeNewTarStream = fs.createWriteStream( tmpWriteFileName );
+            try {
+                await this.commonCompress( writeNewTarStream, async (pack) => {
+                    await this.originalPacking( pack, filterEntryFunc, progress );
+                });
+                fs.unlinkSync( this.originalFile.fullname );
+                fs.renameSync( tmpWriteFileName, this.originalFile.fullname );
+                resolve();
+            } catch( err ) {
+                if ( fs.existsSync(tmpWriteFileName) ) {
+                    fs.unlinkSync( tmpWriteFileName );
+                }
+                reject( err );
+            }
+        });
+    }
+
+    public remove( sourceFile: File[], progress?: ProgressFunc ): Promise<void> {
+        const filterEntryFunc = (tarFileInfo: File, header): boolean => {
+            if ( sourceFile.find( item => item.fullname == tarFileInfo.fullname ) ) {
+                return false;
+            }
+            return true;
+        };
+
+        return new Promise( async (resolve, reject) => {
+            let tmpWriteFileName = this.originalFile.fullname + ".bak";
+            let writeNewTarStream = fs.createWriteStream( tmpWriteFileName );
+            try {
+                await this.commonCompress( writeNewTarStream, async (pack) => {
+                    await this.originalPacking( pack, filterEntryFunc, progress );
+                });
+                fs.unlinkSync( this.originalFile.fullname );
+                fs.renameSync( tmpWriteFileName, this.originalFile.fullname );
+                resolve();
+            } catch( err ) {
+                if ( fs.existsSync(tmpWriteFileName) ) {
+                    fs.unlinkSync( tmpWriteFileName );
+                }
+                reject( err );
+            }
+        });
+    }
+
+    private originalPacking( pack: tar.Pack, filterEntryFunc: (tarFileInfo: File, header) => boolean, progress?: ProgressFunc ): Promise<void> {
+        return new Promise( (resolve, reject) => {
+            let tarStream: any = fs.createReadStream(this.originalFile.fullname);
+            let extract = tar.extract();
+            extract.on("entry", (header, stream, next: any) => {
+                const tarFileInfo = this.convertTarToFile(header);
+
+                if ( filterEntryFunc && !filterEntryFunc( tarFileInfo, header ) ) {
+                    next();
+                    return;
+                }
+                
+                let chunkSum = 0;
+                const reportProgress = new Transform({
+                    transform(chunk: Buffer, encoding, callback) {
+                        chunkSum += chunk.length;
+                        if ( progress ) {
+                            const result = progress( tarFileInfo, chunkSum, tarFileInfo.size, chunk.length );
+                            if ( result === ProgressResult.USER_CANCELED ) {
+                                extract.destroy();
+                                reject("USER_CANCEL");
+                                return;
+                            }
+                        }
+                        // log.debug( "Transform: %s => %d / %d", tarFileInfo.fullname, chunkSum, file.size );
+                        callback( null, chunk );
+                    }
+                });
+
+                this.packEntry(tarFileInfo, header, stream, pack, reportProgress).then( () => {
+                    next();
+                }).catch( (error) => {
+                    reject(error);
+                });
+            });
+
+            let outstream = null;
+            if ( this.supportType === "tgz" ) {
+                outstream = tarStream.pipe(zlib.createGunzip());
+            } else if ( this.supportType === "tbz2" ) {
+                outstream = tarStream.pipe(bunzip2());
+            }
+            outstream = outstream.pipe( extract );
+            outstream.on("error", (error) => {
+                log.error( "ERROR [%s]", error );
+                extract.destroy();
+                reject(error);
+            })
+            .on("finish", () => {
+                log.info( "originalFileLoader finish !!" );
+                resolve();
+            });
+        });
+    }
+
+    private packEntry(file: File, header, stream: Readable, pack, reportProgress?: Transform): Promise<void>  {
+        return new Promise( (resolve, reject) => {
+            if ( file.dir || file.link ) {
+                log.debug( "Insert Directory : [%s] [%s]", file.fullname, header.name );
+                pack.entry( header, (err) => err ? reject(err) : resolve());
+            } else {
+                let entry = pack.entry( header, (err) => {
+                    log.debug( "Insert File : [%s] [%s]", file.fullname, header.name );
+                    if ( err ) {
+                        reject(err);
+                    } else {
+                        resolve();
+                    }
+                });
+                stream.on( "error", (err) => {
+                    entry.destroy(err);
+                });
+                if ( reportProgress ) {
+                    stream.pipe(reportProgress).pipe( entry );
+                } else {
+                    stream.pipe( entry );
+                }
+            }
+        });
+    };
 
     private convertAttr( stats: tar.Headers ): string {
         const fileMode: string[] = "----------".split("");    
