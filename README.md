@@ -60,6 +60,9 @@ $ mdir
 
 # Gallery
 
+### 1. Running Capture Image
+![Mdir.js](https://github.com/la9527/mdir.js/blob/master/images/mdir_v0.8.1.gif?raw=true)
+
 ### 1. Main Screen (Split Window)
 ![Mdir.js MAIN](https://github.com/la9527/mdir.js/blob/master/images/mdir_v0.1_windows10_cmd.png?raw=true)
 
@@ -67,4 +70,10 @@ $ mdir
 ![Mdir.js MCD](https://github.com/la9527/mdir.js/blob/master/images/mdir_v0.1_windows10_cmd_mcd.png?raw=true)
 
 ### 3. Terminal(Sub-shell) in the inside window
-![Mdir.js XTerm](https://github.com/la9527/mdir.js/blob/master/images/mdir_v3.0_macos_terminal.png?raw=true)
+![Mdir.js XTerm](https://github.com/la9527/mdir.js/blob/master/images/mdir_v0.8.1_zsh_terminal.png?raw=true)
+
+### 4. Internal Editor
+![Mdir.js XTerm](https://github.com/la9527/mdir.js/blob/master/images/mdir_v0.8.1_inside_editor.png?raw=true)
+
+### 5. Simple Terminal Image Viewer
+![Mdir.js XTerm](https://github.com/la9527/mdir.js/blob/master/images/mdir_v0.8.1_picture_viewer.png?raw=true)
