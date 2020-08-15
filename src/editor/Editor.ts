@@ -1,5 +1,3 @@
-import { screen } from "neo-blessed/lib/widgets/screen";
-import { strWidth } from "neo-blessed/lib/unicode";
 import { DoData, EditorClipboard, STATE_CLIPBOARD } from "./EditorClipboard";
 import { File } from "../common/File";
 import fs from "fs";
@@ -9,7 +7,6 @@ import { FileReader, convertAttrToStatMode } from "../panel/FileReader";
 import { T } from "../common/Translation";
 import * as jschardet from "jschardet";
 import * as iconv from "iconv-lite";
-import { message } from '../../@types/blessed';
 
 const log = Logger( "editor" );
 
@@ -129,7 +126,7 @@ export abstract class Editor {
             this.doInfo.push( new DoData(this.curLine, this.curColumn, [ str ] ));
 
             let str1 = StringUtils.scrSubstr(str, 0, this.editSelect.x1);
-            let str2 = StringUtils.scrSubstr(str, this.editSelect.x2, strWidth(str) - this.editSelect.x2 );
+            let str2 = StringUtils.scrSubstr(str, this.editSelect.x2, StringUtils.strWidth(str) - this.editSelect.x2 );
             this.buffers[ this.editSelect.y1 ] = str1 + str2;
         } else {
             let saveTexts = [];
@@ -425,20 +422,20 @@ export abstract class Editor {
     keyLeft() {
         if ( this.curColumn > 0 ) {
             let text = StringUtils.scrSubstr(this.buffers[this.curLine], 0, this.curColumn);
-            this.curColumn = strWidth(text.substr(0, text.length - 1));
+            this.curColumn = StringUtils.strWidth(text.substr(0, text.length - 1));
         } else if ( this.curLine > 0) {
-            this.curColumn = strWidth(this.buffers[ --this.curLine ]);
+            this.curColumn = StringUtils.strWidth(this.buffers[ --this.curLine ]);
         }
         this.keyPressCommon();
     }
 
     keyRight() {
         let str = this.buffers[this.curLine];
-        let strlen = strWidth(str);
+        let strlen = StringUtils.strWidth(str);
         if ( strlen > this.curColumn ) {
-            let text = StringUtils.scrSubstr(this.buffers[this.curLine], this.curColumn, strWidth("\t"));
+            let text = StringUtils.scrSubstr(this.buffers[this.curLine], this.curColumn, StringUtils.strWidth("\t"));
             if ( text ) {
-                this.curColumn += strWidth(text.substr(0, 1));
+                this.curColumn += StringUtils.strWidth(text.substr(0, 1));
             }
         } else if ( strlen === this.curColumn && this.curLine !== this.buffers.length - 1 ) {
             this.curLine++;
@@ -456,7 +453,7 @@ export abstract class Editor {
             this.curColumn = this.curColumnMax;
         }
 
-        let strlen = strWidth(this.buffers[this.curLine]);
+        let strlen = StringUtils.strWidth(this.buffers[this.curLine]);
         if ( strlen < this.curColumn ) {
             this.curColumn = strlen;
         } else {
@@ -478,7 +475,7 @@ export abstract class Editor {
             this.curColumn = this.curColumnMax;
         }
 
-        let strlen = strWidth(this.buffers[this.curLine]);
+        let strlen = StringUtils.strWidth(this.buffers[this.curLine]);
         if ( strlen < this.curColumn ) {
             this.curColumn = strlen;
         } else {
@@ -526,7 +523,7 @@ export abstract class Editor {
         }
 
         let line = this.buffers[this.curLine];
-        if ( this.curColumn < strWidth(line) ) {
+        if ( this.curColumn < StringUtils.strWidth(line) ) {
             this.doInfo.push( new DoData(this.curLine, this.curColumn, [ line ]));
 
             let firstText = StringUtils.scrSubstr(line, 0, this.curColumn);
@@ -572,7 +569,7 @@ export abstract class Editor {
                 line2 = this.buffers[this.curLine - 1];
                 this.doInfo.push( new DoData(this.curLine - 1, this.curColumn, [ line2, line ] ));
 
-                let tmpLine2Width = strWidth( line2 );
+                let tmpLine2Width = StringUtils.strWidth( line2 );
                 this.buffers[ this.curLine - 1 ] = line2 + line;
                 this.buffers.splice( this.curLine, 1 );
 
@@ -580,7 +577,7 @@ export abstract class Editor {
                 this.keyUp();
                 this.curColumn = tmpLine2Width;
             } else {
-                let strSize = strWidth( this.buffers[ this.curLine ] );
+                let strSize = StringUtils.strWidth( this.buffers[ this.curLine ] );
                 if ( this.curColumn <= strSize ) {
                     this.doInfo.push( new DoData(this.curLine, this.curColumn, [ line ] ));
 
@@ -588,7 +585,7 @@ export abstract class Editor {
                     let lastText = this.buffers[this.curLine].substr(firstText.length);
                     firstText = firstText.substr(0, firstText.length - 1);
                     line2 = firstText + lastText;
-                    this.curColumn = strWidth(firstText);
+                    this.curColumn = StringUtils.strWidth(firstText);
                 }
                 this.buffers[ this.curLine ] = line2;
                 this.postUpdateLines( this.curLine );
@@ -664,10 +661,10 @@ export abstract class Editor {
             if ( this.isInsert ) {
                 line = StringUtils.scrSubstr( line, 0, this.curColumn) + textStr + StringUtils.scrSubstr( line, this.curColumn );
             } else {
-                line = StringUtils.scrSubstr( line, 0, this.curColumn) + textStr + StringUtils.scrSubstr( line, this.curColumn + strWidth(textStr) );
+                line = StringUtils.scrSubstr( line, 0, this.curColumn) + textStr + StringUtils.scrSubstr( line, this.curColumn + StringUtils.strWidth(textStr) );
             }
             this.buffers[this.curLine] = line;
-            this.curColumn += strWidth(textStr);
+            this.curColumn += StringUtils.strWidth(textStr);
         }
         this.curColumnMax = this.curColumn;
     }
@@ -681,13 +678,13 @@ export abstract class Editor {
                 break;
             }
         }
-        this.curColumn = old === ne ? 0 : strWidth(line.substr(0, ne));
+        this.curColumn = old === ne ? 0 : StringUtils.strWidth(line.substr(0, ne));
         this.keyPressCommon();
     }
 
     keyEnd() {
         if ( this.buffers[this.curLine] ) {
-            this.curColumn = strWidth( this.buffers[this.curLine] );
+            this.curColumn = StringUtils.strWidth( this.buffers[this.curLine] );
         } else {
             this.curColumn = 0;
         }
@@ -713,7 +710,7 @@ export abstract class Editor {
             this.curColumn = this.curColumnMax;
         }
 
-        let strlen = strWidth(this.buffers[this.curLine]);
+        let strlen = StringUtils.strWidth(this.buffers[this.curLine]);
         if ( strlen < this.curColumn ) {
             this.curColumn = strlen;
         }
@@ -750,7 +747,7 @@ export abstract class Editor {
             this.curColumn = this.curColumnMax;
         }
 
-        let strlen = strWidth(this.buffers[this.curLine]);
+        let strlen = StringUtils.strWidth(this.buffers[this.curLine]);
         if ( strlen < this.curColumn ) {
             this.curColumn = strlen;
         }
@@ -924,7 +921,7 @@ export abstract class Editor {
             this.doInfo.push( new DoData(this.curLine, this.curColumn, [this.buffers[this.curLine]]) );
             
             this.buffers[ this.curLine] = str1 + clips[0] + str2;
-            this.curColumn += strWidth(clipStr);
+            this.curColumn += StringUtils.strWidth(clipStr);
             this.postUpdateLines( this.curLine );
         } else {
             this.doInfo.push( new DoData(this.curLine, this.curColumn, [ this.buffers[this.curLine] ], clips.length ) );
@@ -936,7 +933,7 @@ export abstract class Editor {
                     let clip = clips[y];
                     let clip2 = clip + str2;
                     this.buffers.splice( this.curLine + y, 0, clip2 );
-                    this.curColumn = strWidth(clip2);
+                    this.curColumn = StringUtils.strWidth(clip2);
                     this.curLine += clips.length - 1;
                 } else {
                     this.buffers.splice( this.curLine + y, 0, clips[y] );
@@ -1033,7 +1030,7 @@ export abstract class Editor {
 
         this.editSelect.x1 = 0;
         this.editSelect.y1 = 0;
-        this.editSelect.x2 = strWidth( this.buffers[this.buffers.length - 1] );
+        this.editSelect.x2 = StringUtils.strWidth( this.buffers[this.buffers.length - 1] );
         this.editSelect.y2 = this.buffers.length - 1;
     }
 
@@ -1139,7 +1136,7 @@ export abstract class Editor {
             for( let n = this.indexFindPosY; n < this.buffers.length; n++ ) {
                 let idx = this.buffers[n].indexOf(this.findStr, this.indexFindPosX);
                 if ( idx > -1 ) {
-                    let textSize = strWidth(this.findStr);
+                    let textSize = StringUtils.strWidth(this.findStr);
                     this.indexFindPosX = idx + textSize;
                     this.indexFindPosY = n;
                     this.editMode = EDIT_MODE.SHIFT_SELECT;
@@ -1172,13 +1169,13 @@ export abstract class Editor {
             this.indexFindPosY = this.curLine;
         }
 
-        this.indexFindPosX -= strWidth(this.findStr);
+        this.indexFindPosX -= StringUtils.strWidth(this.findStr);
 
         for(;;) {
             for( let n = this.indexFindPosY; n >= 0; --n ) {
                 let idx = this.buffers[n].lastIndexOf(this.findStr);
                 if ( idx > -1 ) {
-                    let textSize = strWidth(this.findStr);
+                    let textSize = StringUtils.strWidth(this.findStr);
                     this.indexFindPosX = idx;
                     this.indexFindPosY = n;
                     this.editMode = EDIT_MODE.SHIFT_SELECT;
@@ -1193,7 +1190,7 @@ export abstract class Editor {
                     return;
                 }
                 if ( n > 0 ) {
-                    this.indexFindPosX = strWidth(this.buffers[n-1]);
+                    this.indexFindPosX = StringUtils.strWidth(this.buffers[n-1]);
                 }
             }
             this.indexFindPosY = this.buffers.length - 1;

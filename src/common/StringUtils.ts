@@ -32,6 +32,13 @@ export class StringUtils {
         return textSize;
     }
 
+    static strWidth( str: string ): number {
+        if ( str && typeof(str) === "string" ) {
+            return strWidth( str );
+        }
+        return 0;
+    }
+
     static ellipsis( text: string, maxWidth: number ) {
         if ( !text ) {
             return null;

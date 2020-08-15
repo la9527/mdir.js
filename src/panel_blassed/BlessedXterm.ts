@@ -395,9 +395,11 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
                 }
                 line[x][1] = bufferLine.getString(x - xi) || ' ';
 
+                /*
                 if ( line[x][1] === "." ) {
                     log.debug( "[%s] %j", line[x][1], sattr );
                 }
+                */
             }
 
             line.dirty = true;

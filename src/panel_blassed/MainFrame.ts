@@ -614,10 +614,10 @@ export class MainFrame implements IHelpService {
     @Help(T("Help.PanelSync"))
     async panelSyncPromise() {
         const activePanel = this.activePanel();
-        let anotherPanel = this.blessedFrames.find( (item, i) => {
+        const anotherPanel = this.blessedFrames.find( (item, i) => {
                 return item instanceof BlessedPanel && item.getReader().readerName === "file" && this.activeFrameNum !== i;
             });
-        if ( activePanel instanceof BlessedPanel && anotherPanel instanceof BlessedPanel ) {
+        if ( activePanel.getReader().readerName === "file" && activePanel instanceof BlessedPanel && anotherPanel instanceof BlessedPanel ) {
             await activePanel.read(anotherPanel.currentPath());
             return RefreshType.ALL;
         }
