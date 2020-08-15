@@ -23,13 +23,17 @@ export function Logger( labelName: string ): winston.Logger {
             isColor = true;
             transports.push( new winston.transports.Console({level: "debug"}) );
         } else {
-            try {
-                let stats = fs.lstatSync((global as any).DEBUG_FILE);
-                if ( !stats.isFile() && stats.isCharacterDevice() ) {
-                    isColor = true;
+            if ( os.platform() === "win32" ) {
+                isColor = true;
+            } else {
+                try {
+                    let stats = fs.lstatSync((global as any).DEBUG_FILE);
+                    if ( !stats.isFile() && stats.isCharacterDevice() ) {
+                        isColor = true;
+                    }
+                } catch ( e ) {
+                    isColor = false;
                 }
-            } catch ( e ) {
-                isColor = false;
             }
             transports.push( new winston.transports.File({
                 level: "debug",

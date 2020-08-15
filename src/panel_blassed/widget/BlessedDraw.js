@@ -17,6 +17,8 @@ var angles = {
 
 const supportColorLevel = supportsColor(process.stdout);
 
+console.log( "SUPPORT COLOR LEVEL : ", supportColorLevel );
+
 // blessed screen.draw() redesign - true(rgb) color support
 exports.draw = function(start, end) {
     let item = this;

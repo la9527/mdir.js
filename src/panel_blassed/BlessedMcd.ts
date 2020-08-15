@@ -127,6 +127,14 @@ export class BlessedMcd extends Mcd implements IBlessedView, IHelpService {
         return "Mcd";
     }
 
+    setBoxDraw( boxDraw: boolean ) {
+        return true;
+    }
+
+    hasBoxDraw(): boolean {
+        return true;
+    }
+
     hide() {
         this.baseWidget.hide();
     }

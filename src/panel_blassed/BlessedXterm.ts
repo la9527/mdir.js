@@ -7,6 +7,7 @@ import { IBlessedView } from "./IBlessedView";
 import { Reader } from "../common/Reader";
 import { File } from "../common/File";
 import { XTerminal } from "./xterm/XTerminal";
+import { AttributeData } from "./xterm/common/buffer/AttributeData";
 import { ColorConfig } from "../config/ColorConfig";
 import which from 'which';
 import { KeyMappingInfo, KeyMapping, IHelpService, Hint, Help, RefreshType } from '../config/KeyMapConfig';
@@ -119,6 +120,14 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         return "XTerm";
     }
 
+    setBoxDraw( boxDraw: boolean ) {
+        this.panel.setBorderLine( boxDraw );
+    }
+
+    hasBoxDraw(): boolean {
+        return this.panel.hasBorderLine();
+    }
+
     shellCheck( cmd: string[] ) {
         for ( let item of cmd ) {
             try {
@@ -136,12 +145,6 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             cols: (box.width as number) - (box.iwidth as number),
             rows: (box.height as number) - (box.iheight as number),
             cursorBlink: this.cursorBlink
-        });
-
-        this.panel.on('resize', () => {
-            process.nextTick(() => {
-                this.term && this.term.resize((box.width as number) - (box.iwidth as number), (box.height as number) - (box.iheight as number));
-            });
         });
 
         // Incoming keys and mouse inputs.
@@ -195,13 +198,18 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             cols: (box.width as number) - (box.iwidth as number),
             rows: (box.height as number) - (box.iheight as number),
             cwd: firstPath ? firstPath.fullname : process.env.HOME,
-            encoding: "utf-8",
+            encoding: os.platform() !== "win32" ? "utf-8" : null,
             env: this.options.env || process.env
         });
 
         this.on('resize', () => {
+            log.debug( "PANEL - resize !!!" );
             process.nextTick(() => {
-                log.debug( "BLESSED RESIZE !!! - TERMINAL");
+                log.debug( "BLESSED TERM RESIZE !!! - TERMINAL");
+                this.term && this.term.resize((box.width as number) - (box.iwidth as number), (box.height as number) - (box.iheight as number));
+            });
+            process.nextTick(() => {
+                log.debug( "BLESSED PTY RESIZE !!! - TERMINAL");
                 try {
                     this.pty.resize((box.width as number) - (box.iwidth as number), (box.height as number) - (box.iheight as number));
                 } catch (e) {
@@ -355,18 +363,24 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             // const str = bufferLine.translateToString(true);
             // log.debug( "line : %d, COLOR [%d/%d] [%d] [%s]", scrollback + y - yi, bufferLine.getFg(0), bufferLine.getBg(0), str.length, str );
 
+            let attr = new AttributeData();
+
             for (let x = Math.max(xi, 0); x < xl; x++) {
                 if (!line[x]) break;
 
-                line[x][0] = (box as any).sattr({
-                    bold: false,
-                    underline: false,
-                    blink: false,
-                    inverse: false,
-                    invisible: false,
-                    bg: bufferLine.getBg(x - xi) || box.style.bg,
-                    fg: bufferLine.getFg(x - xi) || box.style.fg,
-                });
+                attr.bg = bufferLine.getBg(x - xi);
+                attr.fg = bufferLine.getFg(x - xi);
+
+                const sattr = {
+                    bold: !!attr.isBold(),
+                    underline: !!attr.isUnderline(),
+                    blink: !!attr.isBlink(),
+                    inverse: !!attr.isInverse(),
+                    invisible: !!attr.isInvisible(),
+                    bg: attr.getBgColor(),
+                    fg: attr.getFgColor()
+                };
+                line[x][0] = (box as any).sattr(sattr);
 
                 if ( this.isCursorDraw && x === cursor) {
                     line[x][0] = (box as any).sattr({
@@ -380,6 +394,10 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
                     }) | (8 << 18);
                 }
                 line[x][1] = bufferLine.getString(x - xi) || ' ';
+
+                if ( line[x][1] === "." ) {
+                    log.debug( "[%s] %j", line[x][1], sattr );
+                }
             }
 
             line.dirty = true;

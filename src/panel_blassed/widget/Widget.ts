@@ -26,6 +26,21 @@ export class Widget {
         return this.box && this.box.screen;
     }
 
+    setBorderLine( isBorder: boolean ) {
+        (this._box.border as any) = isBorder ? {
+            type: "line",
+            ch: ' ',
+            left: true,
+            top: true,
+            right: true,
+            bottom: true
+        } : null;
+    }
+
+    hasBorderLine(): boolean {
+        return !!this._box.border;
+    }
+
     setFront() {
         this._box.setFront();
     }

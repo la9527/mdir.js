@@ -292,12 +292,17 @@ export class MainFrame implements IHelpService {
 
         if ( this.viewType === VIEW_TYPE.NORMAL ) {
             const deActiveNum = (this.activeFrameNum + 1) % 2;
+            this.blessedFrames[this.activeFrameNum].setBoxDraw(false);
             updateWidget( this.blessedFrames[this.activeFrameNum].getWidget(), { top: 1, left: 0, width: "100%", height: "100%-3" } );
             this.blessedFrames[deActiveNum].hide();
         } else if ( this.viewType === VIEW_TYPE.VERTICAL_SPLIT ) {
+            this.blessedFrames[0].setBoxDraw(true);
+            this.blessedFrames[1].setBoxDraw(true);
             updateWidget( this.blessedFrames[0].getWidget(), { top: 1, left: 0, width: "50%", height: "100%-3" } );
             updateWidget( this.blessedFrames[1].getWidget(), { top: 1, left: "50%", width: "50%", height: "100%-3" } );
         } else if ( this.viewType === VIEW_TYPE.HORIZONTAL_SPLIT ) {
+            this.blessedFrames[0].setBoxDraw(false);
+            this.blessedFrames[1].setBoxDraw(false);
             updateWidget( this.blessedFrames[0].getWidget(), { top: 1, left: 0, width: "100%", height: "50%-1" } );
             updateWidget( this.blessedFrames[1].getWidget(), { top: "50%", left: 0, width: "100%", height: "50%-1" } );
         }

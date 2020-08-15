@@ -134,6 +134,14 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
         this.initRender();
     }
 
+    setBoxDraw( boxDraw: boolean ) {
+        return true;
+    }
+
+    hasBoxDraw(): boolean {
+        return true;
+    }
+
     viewName() {
         return "Panel";
     }

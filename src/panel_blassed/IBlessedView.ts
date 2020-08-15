@@ -8,6 +8,9 @@ export interface IBlessedView {
 
     getWidget(): Widget;
 
+    setBoxDraw( hasBoxDraw: boolean );
+    hasBoxDraw(): boolean;
+
     setFocus();
     hasFocus(): boolean;
     

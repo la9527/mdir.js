@@ -36,6 +36,7 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
     reader: Reader = null;
 
     isCursorDraw: boolean = false;
+    isBoxDraw: boolean = false;
     cursor = { x: -1, y: -1 };
 
     constructor(opts: Widgets.BoxOptions | any, reader: Reader = null) {
@@ -117,14 +118,22 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
 
         this.editor.on('resize', () => {
             process.nextTick(() => {
-                this.column = this.editor.width as number - 2;
-                this.line = this.editor.height as number - 2;
+                this.column = this.editor.width as number - (this.hasBoxDraw() ? 2 : 0);
+                this.line = this.editor.height as number - (this.hasBoxDraw() ? 2 : 0);
             });
         });
 
         (this.editor.box as any).render = () => {
             this._render();
         };
+    }
+
+    setBoxDraw( boxDraw: boolean ) {
+        this.editor.setBorderLine( boxDraw );
+    }
+
+    hasBoxDraw(): boolean {
+        return this.editor.hasBorderLine();
     }
 
     setViewTitle( title ) {
