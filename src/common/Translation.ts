@@ -21,4 +21,3 @@ export async function changeLanguage( lang: string ) {
 export function T( ...a ): string {
     return i18n.t.apply( i18n, a );
 };
-
