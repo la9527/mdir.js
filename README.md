@@ -1,3 +1,5 @@
+![Mdir.js](https://github.com/la9527/mdir.js/blob/master/images/mdir_v0.8.1.gif?raw=true)
+
 # Instruction
 
 Mdir.js is a visual file manager.
@@ -59,9 +61,6 @@ $ mdir
     - Support the mcd(directory changer of tree design) in the window box.
 
 # Gallery
-
-### 1. Running Capture Image
-![Mdir.js](https://github.com/la9527/mdir.js/blob/master/images/mdir_v0.8.1.gif?raw=true)
 
 ### 1. Main Screen (Split Window)
 ![Mdir.js MAIN](https://github.com/la9527/mdir.js/blob/master/images/mdir_v0.1_windows10_cmd.png?raw=true)
