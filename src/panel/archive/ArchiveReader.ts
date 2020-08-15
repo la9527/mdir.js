@@ -4,6 +4,7 @@ import { Logger } from "../../common/Logger";
 import { ArchiveCommon } from "./ArchiveCommon";
 import { ArchiveTarGz } from "./ArchiveTarGz";
 import { ArchiveZip } from "./ArchiveZip";
+import * as path from "path";
 
 const log = Logger("Archive");
 
@@ -34,14 +35,14 @@ export class ArchiveReader extends Reader {
             return this.baseDir;
         } else if ( path === ".." ) {
             let file = this.rootDir();
-            if ( this.baseDir.fullname !== "/" && this.baseDir.dirname !== "/" ) {
-                file = this.convertFile(this.baseDir.dirname + "/");
+            if ( this.baseDir.fullname !== this.sep() && this.baseDir.dirname !== this.sep() ) {
+                file = this.convertFile(this.baseDir.dirname + this.sep());
             } else {
                 file = this.rootDir();
             }
             file.name = "..";
             return file;
-        } else if ( path === "/" ) {
+        } else if ( path === this.sep() ) {
             return this.rootDir();
         }
         return this.archiveFiles.find( (item) => {
@@ -123,15 +124,15 @@ export class ArchiveReader extends Reader {
         });
     }
 
-    mkdir(path: string | File, progress?: ProgressFunc) {
+    mkdir(pathStr: string | File, progress?: ProgressFunc) {
         let file: File = null;
-        if ( typeof(path) === "string" ) {
+        if ( typeof(pathStr) === "string" ) {
             file = this.baseDir.clone();
-            file.fullname = file.fullname + path + "/";
-            file.name = path;
-            file.orgname = file.orgname + path + "/";
+            file.fullname = path.posix.normalize(pathStr) + path.posix.sep;
+            file.name = path.posix.basename(file.fullname);
+            file.orgname = file.fullname.replace(/^\//, "");
         } else {
-            file = path;
+            file = pathStr;
         }
         return new Promise( async (resolve, reject) => {
             try {

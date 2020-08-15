@@ -5,10 +5,9 @@ import * as yauzl from "yauzl";
 
 import { ArchiveCommon } from "./ArchiveCommon";
 import { File, FileLink } from "../../common/File";
-import { Reader, ProgressFunc, IMountList, ProgressResult } from "../../common/Reader";
+import { ProgressFunc, ProgressResult } from "../../common/Reader";
 import { Logger } from "../../common/Logger";
-import { Transform, TransformCallback, Readable } from "stream";
-import { convertAttrToStatMode } from "../FileReader";
+import { Transform, Readable } from "stream";
 
 const log = Logger("archivetar");
 
@@ -37,156 +36,6 @@ export class ArchiveZip extends ArchiveCommon {
                 });
                 zipfile.readEntry();
             });
-        });
-    }
-
-    compress( sourceFile: File[], baseDir: File, targetDirOrNewFile ?: File, progress?: ProgressFunc ): Promise<void> {
-        const zip = new yazl.ZipFile();
-        const zipEntryPromise = (file: File, stream: Readable, reportProgress?: Transform) => {
-            return new Promise( (resolve, reject) => {
-                let targetDir = targetDirOrNewFile.fstype === "archive" ? targetDirOrNewFile.fullname : "";
-                let header = this.convertFileToZipHeader(file, baseDir, targetDir);
-
-                if ( file.link ) {
-                    reject( `Unsupport link file - ${file.fullname}` );
-                    return;
-                }
-                if ( file.dir ) {
-                    zip.addEmptyDirectory( header.name, header.option );
-                    resolve();
-                } else {
-                    stream.on( "error", (err) => {
-                        log.error( err );
-                        reject( err );
-                    });
-                    stream.on( "end", () => {
-                        resolve();
-                    });
-                    if ( reportProgress ) {
-                        stream = stream.pipe(reportProgress);
-                    }
-                    zip.addReadStream( stream, header.name, header.option );
-                }
-            });
-        };
-        
-        const originFileZipping = () => {
-            return new Promise( (resolve, reject) => {
-                yauzl.open( this.originalFile.fullname, { lazyEntries: true, autoClose: false, decodeStrings: false }, (err, zipfile: yauzl.ZipFile) =>{
-                    if ( err ) {
-                        reject( err );
-                        return;
-                    }
-                    zipfile.on("entry", (entry: yauzl.Entry) => {
-                        try {
-                            let zipFileInfo = this.convertZipToFile(entry);
-                            let header = this.convertFileToZipHeader(zipFileInfo, null, null);
-
-                            if ( zipFileInfo.link ) {
-                                reject( `Unsupport link file ${zipFileInfo.name}` );
-                                return;
-                            }
-                            if ( zipFileInfo.dir ) {
-                                zip.addEmptyDirectory( header.name, header.option );
-                                zipfile.readEntry();
-                                return;
-                            }
-                            zipfile.openReadStream( entry, (err, readStream) => {
-                                if ( err ) {
-                                    log.error( "zipfile.openReadStream: [%s]", err.message );
-                                    reject( err );
-                                    return;
-                                }
-                                
-                                let chunkCopyLength = 0;
-                                const reportProgress = new Transform({
-                                    transform(chunk: Buffer, encoding, callback) {
-                                        chunkCopyLength += chunk.length;
-                                        if ( progress ) {
-                                            let result = progress( zipFileInfo, chunkCopyLength, zipFileInfo.size, chunk.length );
-                                            log.debug( "Uncompress: %s => %d (%d / %d)", zipFileInfo.fullname, chunk.length, chunkCopyLength, zipFileInfo.size );
-                                            if ( result === ProgressResult.USER_CANCELED ) {
-                                                zipfile.close();
-                                                log.debug( "ZIP Uncompress - CANCEL" );
-                                                reject( "USER_CANCEL" );
-                                                return;
-                                            }
-                                        }
-                                        callback( null, chunk );
-                                    }
-                                });
-                                reportProgress._flush = (cb) => {
-                                    cb();
-                                    zipfile.readEntry();
-                                };
-                                readStream.on( "error", (err) => {
-                                    log.error( err );
-                                    reject( err );
-                                });
-                                zip.addReadStream( readStream.pipe(reportProgress), header.name, header.option );
-                            });
-                        } catch ( e ) {
-                            log.error( e );
-                            reject( e );
-                        }
-                    });
-                    zipfile.on("error", (err) => {
-                        log.error( err );
-                        zipfile.close();
-                        reject( err );
-                    });
-                    zipfile.once("end", () => {
-                        zipfile.close();
-                        resolve();
-                    });
-                    zipfile.readEntry();
-                });
-            });
-        };
-
-        return new Promise( async (resolve, reject) => {
-            let unSupportFile = sourceFile.find( item => item.link || !item.attr.match(/^(d|-)/) );
-            if ( unSupportFile ) {
-                reject(`Unsupport file - ${unSupportFile.fullname}`);
-                return;
-            }
-
-            let tmpWriteFileName = this.originalFile.fullname + ".bak";
-            if ( targetDirOrNewFile.fstype === "file" ) {
-                tmpWriteFileName = targetDirOrNewFile.fullname;
-            }
-
-            try {
-                let writeNewTarStream = fs.createWriteStream( tmpWriteFileName );
-                let outstream = zip.outputStream.pipe(writeNewTarStream);
-                outstream.on("error", (error) => {
-                    log.error( "ERROR [%s]", error );
-                    fs.unlinkSync( tmpWriteFileName );
-                    reject(error);
-                }).on("finish", () => {
-                    writeNewTarStream.close();
-                    fs.unlinkSync( this.originalFile.fullname );
-                    fs.renameSync( tmpWriteFileName, this.originalFile.fullname );
-                    log.info( "Compress Finish !!!" );
-                    resolve();
-                });
-                
-                if ( targetDirOrNewFile.fstype === "archive" ) {
-                    await originFileZipping();
-                }
-                
-                for ( let item of sourceFile ) {
-                    let stream = null;
-                    if ( !item.dir && !item.link ) {
-                        stream = fs.createReadStream(item.fullname);
-                    }
-                    await zipEntryPromise(item, stream);
-                }
-                (zip as any).end();
-            } catch ( err ) {
-                log.error( err );
-                reject( err );
-            }
         });
     }
 
@@ -278,26 +127,34 @@ export class ArchiveZip extends ArchiveCommon {
         });
     }
 
-    public rename( source: File, rename: string, progress?: ProgressFunc ): Promise<void> {
+    protected commonCompress( writeTarStream: fs.WriteStream, packFunc: (zip: yazl.ZipFile) => Promise<void>, progress?: ProgressFunc ): Promise<void> {
         const zip = new yazl.ZipFile();
-        const indexOrgName = source.orgname ? source.orgname.split("/").lastIndexOf(source.name) : -1;
+        return new Promise( async (resolve, reject) => {
+            try {
+                writeTarStream.on("error", (error) => {
+                    log.error( "ERROR [%s]", error );
+                    reject(error);
+                });                
+                let outstream = zip.outputStream.pipe(writeTarStream);
+                outstream.on("error", (error) => {
+                    log.error( "ERROR [%s]", error );
+                    reject(error);
+                }).on("finish", () => {
+                    writeTarStream.close();
+                    log.info( "Compress Finish !!!" );
+                    resolve();
+                });                
+                await packFunc( zip );
+                (zip as any).end();
+            } catch ( err ) {
+                log.error( err );
+                reject( err );
+            }
+        });
+    }
 
-        return new Promise((resolve, reject) => {
-            let tmpWriteFileName = this.originalFile.fullname + ".bak";
-            let writeNewTarStream = fs.createWriteStream( tmpWriteFileName );
-            let outstream = zip.outputStream.pipe(writeNewTarStream);
-            outstream.on("error", (error) => {
-                log.error( "ERROR [%s]", error );
-                fs.unlinkSync( tmpWriteFileName );
-                reject(error);
-            }).on("finish", () => {
-                writeNewTarStream.close();
-                fs.unlinkSync( this.originalFile.fullname );
-                fs.renameSync( tmpWriteFileName, this.originalFile.fullname );
-                log.info( "Compress Finish !!!" );
-                resolve();
-            });
-            
+    protected originalPacking( pack: yazl.ZipFile, filterEntryFunc: (packFileInfo: File, header) => boolean, progress?: ProgressFunc ): Promise<void> {
+        return new Promise( (resolve, reject) => {
             yauzl.open( this.originalFile.fullname, { lazyEntries: true, autoClose: false, decodeStrings: false }, (err, zipfile: yauzl.ZipFile) =>{
                 if ( err ) {
                     reject( err );
@@ -306,28 +163,19 @@ export class ArchiveZip extends ArchiveCommon {
                 zipfile.on("entry", (entry: yauzl.Entry) => {
                     try {
                         let zipFileInfo = this.convertZipToFile(entry);
-                        let header = this.convertFileToZipHeader(zipFileInfo, null, null);
+                        let header = this.convertFileToHeader(zipFileInfo, null, null);
+
+                        if ( filterEntryFunc && !filterEntryFunc( zipFileInfo, header ) ) {
+                            zipfile.readEntry();
+                            return;
+                        }
 
                         if ( zipFileInfo.link ) {
                             reject( `Unsupport link file ${zipFileInfo.name}` );
                             return;
                         }
-
-                        if ( !source.dir && source.fullname === zipFileInfo.fullname ) {
-                            let nameArr = header.name.split("/");
-                            nameArr.pop();
-                            header.name = nameArr.join("/") + rename;
-                        } else if ( source.dir && zipFileInfo.fullname.indexOf(source.fullname) > -1 ) {
-                            let nameArr: string[] = header.name.split("/");
-                            let index = nameArr.indexOf(source.name, indexOrgName);
-                            if ( index > -1 ) {
-                                nameArr[index] = rename;
-                                header.name = nameArr.join("/");
-                            }
-                        }
-
                         if ( zipFileInfo.dir ) {
-                            zip.addEmptyDirectory( header.name, header.option );
+                            pack.addEmptyDirectory( header.name, header.option );
                             zipfile.readEntry();
                             return;
                         }
@@ -344,7 +192,7 @@ export class ArchiveZip extends ArchiveCommon {
                                     chunkCopyLength += chunk.length;
                                     if ( progress ) {
                                         let result = progress( zipFileInfo, chunkCopyLength, zipFileInfo.size, chunk.length );
-                                        log.debug( "Uncompress: %s => %d (%d / %d)", zipFileInfo.fullname, chunk.length, chunkCopyLength, zipFileInfo.size );
+                                        // log.debug( "Uncompress: %s => %d (%d / %d)", zipFileInfo.fullname, chunk.length, chunkCopyLength, zipFileInfo.size );
                                         if ( result === ProgressResult.USER_CANCELED ) {
                                             zipfile.close();
                                             log.debug( "ZIP Uncompress - CANCEL" );
@@ -363,7 +211,7 @@ export class ArchiveZip extends ArchiveCommon {
                                 log.error( err );
                                 reject( err );
                             });
-                            zip.addReadStream( readStream.pipe(reportProgress), header.name, header.option );
+                            pack.addReadStream( readStream.pipe(reportProgress), header.name, header.option );
                         });
                     } catch ( e ) {
                         log.error( e );
@@ -377,110 +225,39 @@ export class ArchiveZip extends ArchiveCommon {
                 });
                 zipfile.once("end", () => {
                     zipfile.close();
-                    (zip as any).end();
+                    resolve();
                 });
                 zipfile.readEntry();
             });
         });
     }
 
-    public remove( sourceFile: File[], progress?: ProgressFunc ): Promise<void> {
-        const zip = new yazl.ZipFile();
-        return new Promise((resolve, reject) => {
-            let tmpWriteFileName = this.originalFile.fullname + ".bak";
-            let writeNewTarStream = fs.createWriteStream( tmpWriteFileName );
-            let outstream = zip.outputStream.pipe(writeNewTarStream);
-            outstream.on("error", (error) => {
-                log.error( "ERROR [%s]", error );
-                fs.unlinkSync( tmpWriteFileName );
-                reject(error);
-            }).on("finish", () => {
-                writeNewTarStream.close();
-                fs.unlinkSync( this.originalFile.fullname );
-                fs.renameSync( tmpWriteFileName, this.originalFile.fullname );
-                log.info( "Compress Finish !!!" );
+    protected packEntry(file: File, header, stream: Readable, pack: yazl.ZipFile, reportProgress?: Transform): Promise<void>  {
+        return new Promise( (resolve, reject) => {
+            if ( file.link ) {
+                reject( `Unsupport link file - ${file.fullname}` );
+                return;
+            }
+            if ( file.dir ) {
+                pack.addEmptyDirectory( header.name, header.option );
                 resolve();
-            });
-            
-            yauzl.open( this.originalFile.fullname, { lazyEntries: true, autoClose: false, decodeStrings: false }, (err, zipfile: yauzl.ZipFile) =>{
-                if ( err ) {
-                    reject( err );
-                    return;
-                }
-                zipfile.on("entry", (entry: yauzl.Entry) => {
-                    try {
-                        let zipFileInfo = this.convertZipToFile(entry);
-                        let header = this.convertFileToZipHeader(zipFileInfo, null, null);
-
-                        if ( zipFileInfo.link ) {
-                            reject( `Unsupport link file ${zipFileInfo.name}` );
-                            return;
-                        }
-
-                        if ( sourceFile.find( item => item.fullname == zipFileInfo.fullname ) ) {
-                            zipfile.readEntry();
-                            return;
-                        }
-
-                        if ( zipFileInfo.dir ) {
-                            zip.addEmptyDirectory( header.name, header.option );
-                            zipfile.readEntry();
-                            return;
-                        }
-                        zipfile.openReadStream( entry, (err, readStream) => {
-                            if ( err ) {
-                                log.error( "zipfile.openReadStream: [%s]", err.message );
-                                reject( err );
-                                return;
-                            }
-                            
-                            let chunkCopyLength = 0;
-                            const reportProgress = new Transform({
-                                transform(chunk: Buffer, encoding, callback) {
-                                    chunkCopyLength += chunk.length;
-                                    if ( progress ) {
-                                        let result = progress( zipFileInfo, chunkCopyLength, zipFileInfo.size, chunk.length );
-                                        log.debug( "Uncompress: %s => %d (%d / %d)", zipFileInfo.fullname, chunk.length, chunkCopyLength, zipFileInfo.size );
-                                        if ( result === ProgressResult.USER_CANCELED ) {
-                                            zipfile.close();
-                                            log.debug( "ZIP Uncompress - CANCEL" );
-                                            reject( "USER_CANCEL" );
-                                            return;
-                                        }
-                                    }
-                                    callback( null, chunk );
-                                }
-                            });
-                            reportProgress._flush = (cb) => {
-                                cb();
-                                zipfile.readEntry();
-                            };
-                            readStream.on( "error", (err) => {
-                                log.error( err );
-                                reject( err );
-                            });
-                            zip.addReadStream( readStream.pipe(reportProgress), header.name, header.option );
-                        });
-                    } catch ( e ) {
-                        log.error( e );
-                        reject( e );
-                    }
-                });
-                zipfile.on("error", (err) => {
+            } else {
+                stream.on( "error", (err) => {
                     log.error( err );
-                    zipfile.close();
                     reject( err );
                 });
-                zipfile.once("end", () => {
-                    zipfile.close();
-                    (zip as any).end();
+                stream.on( "end", () => {
+                    resolve();
                 });
-                zipfile.readEntry();
-            });
+                if ( reportProgress ) {
+                    stream = stream.pipe(reportProgress);
+                }
+                pack.addReadStream( stream, header.name, header.option );
+            }
         });
-    }
+    };
 
-    private convertFileToZipHeader( file: File, srcBaseDir: File, targetDir: string ) {
+    protected convertFileToHeader( file: File, srcBaseDir: File, targetDir: string ) {
         let header: any = {
             name: file.orgname,
             option: {
@@ -489,43 +266,11 @@ export class ArchiveZip extends ArchiveCommon {
             }
         };
         if ( file.fstype === "file" ) {
-            header.name = path.normalize(targetDir + file.fullname.substr(srcBaseDir.fullname.length));
-            header.name = header.name.replace( /^\//i, "");
+            let orgFilename = file.fullname.substr(srcBaseDir.fullname.length);
+            orgFilename = orgFilename.split(path.sep).join(path.posix.sep);
+            header.name = path.posix.normalize(targetDir + orgFilename).replace( /^\//, "");
         }
         return header;
-    }
-
-    private subDirectoryCheck(files: File[]): File[] {
-        let dirFilter = files.filter( item => item.dir );
-        let addFiles: File[] = [];
-
-        files.forEach( item => {
-            if ( item.fullname !== "/" && item.dirname !== "/" && addFiles.findIndex( (addItem) => addItem.fullname === item.dirname + "/" ) === -1 ) {
-                if ( dirFilter.findIndex( (dirItem) => dirItem.fullname === item.dirname + "/" ) === -1 ) {                
-                    addFiles.push( this.convertDirectory( item.dirname + "/" ) );
-                }
-            }
-        });
-        return files.concat( addFiles );
-    }
-
-    private convertDirectory(filename: string): File {
-        let file = new File;
-        file.fstype = "archive";
-        file.fullname = filename[0] !== "/" ? "/" + filename : filename;
-        file.orgname = filename;
-        file.name = path.basename(file.fullname);
-        file.owner = "";
-        file.group = "";
-        file.uid = 0;
-        file.gid = 0;
-        file.mtime = new Date();
-        file.ctime = new Date();
-        file.root = this.originalFile.fullname;
-        file.attr = "drwxr-xr-x";
-        file.dir = true;
-        file.size = 0;
-        return file;
     }
 
     private convertZipToFile(zipHeader: yauzl.Entry): File {
@@ -660,6 +405,7 @@ export class ArchiveZip extends ArchiveCommon {
                 }
             });
         }
+        log.debug( "File [%s] - ORG [%s]", file.fullname, filename);
         return file;
     };
 

@@ -30,42 +30,122 @@ export abstract class ArchiveCommon {
 
     protected abstract isSupportType( file: File ): string;
     public abstract getArchivedFiles(progress?: ProgressFunc): Promise<File[]>;
-
-    public abstract compress( sourceFile: File[], baseDir: File, targetDirOrNewFile ?: File, progress?: ProgressFunc ): Promise<void>;
     public abstract uncompress( extractDir: File, files ?: File[], progress?: ProgressFunc ): Promise<void>;
 
-    public abstract rename( source: File, rename: string, progress?: ProgressFunc ): Promise<void>;
-    public abstract remove( sourceFile: File[], progress?: ProgressFunc ): Promise<void>;
-
-    protected checkEmptyDirectory( orgFiles: File[] ): File[] {
-        let files = orgFiles;
-        let checkDir = (dir: string) => {
-            return files.find(item => {
-                if ( item.dir && path.format(path.parse(item.fullname)) === dir ) {
-                    return true;
+    public compress( sourceFile: File[], baseDir: File, targetDirOrNewFile: File, progress?: ProgressFunc ): Promise<void> {
+        return new Promise( async (resolve, reject) => {
+            let tmpWriteFileName = this.originalFile.fullname + ".bak";
+            if ( targetDirOrNewFile.fstype === "file" ) {
+                tmpWriteFileName = targetDirOrNewFile.fullname;
+            }
+            let writeNewTarStream = fs.createWriteStream( tmpWriteFileName );
+            try {
+                await this.commonCompress( writeNewTarStream, async (pack) => {
+                    if ( targetDirOrNewFile.fstype === "archive" ) {
+                        await this.originalPacking(pack, null, progress);
+                    }            
+                    for ( let item of sourceFile ) {
+                        let stream = null;
+                        if ( !item.dir && !item.link ) {
+                            stream = fs.createReadStream(item.fullname);
+                        }
+                        let targetDir = targetDirOrNewFile.fstype === "archive" ? targetDirOrNewFile.fullname : "";
+                        let fileHeader = this.convertFileToHeader(item, baseDir, targetDir);
+                        await this.packEntry(item, fileHeader, stream, pack);
+                    }
+                });
+                fs.unlinkSync( this.originalFile.fullname );
+                fs.renameSync( tmpWriteFileName, this.originalFile.fullname );
+                resolve();
+            } catch( err ) {
+                if ( fs.existsSync(tmpWriteFileName) ) {
+                    fs.unlinkSync( tmpWriteFileName );
                 }
+                reject( err );
+            }
+        });
+    }
+
+    public rename( source: File, rename: string, progress?: ProgressFunc ): Promise<void> {
+        rename = path.posix.normalize(rename);
+        const filterEntryFunc = (tarFileInfo: File, header): boolean => {
+            if ( !source.dir && source.fullname === tarFileInfo.fullname ) {
+                header.name = rename.replace( /^\//, "" );
+            } else if ( source.dir && tarFileInfo.fullname.indexOf(source.fullname) > -1 ) {
+                header.name = tarFileInfo.fullname.replace( source.fullname, rename + path.posix.sep).replace( /^\//, "" );
+            }
+            return true;
+        };
+        return new Promise( async (resolve, reject) => {
+            let tmpWriteFileName = this.originalFile.fullname + ".bak";
+            let writeNewTarStream = fs.createWriteStream( tmpWriteFileName );
+            try {
+                await this.commonCompress( writeNewTarStream, async (pack) => {
+                    await this.originalPacking( pack, filterEntryFunc, progress );
+                });
+                fs.unlinkSync( this.originalFile.fullname );
+                fs.renameSync( tmpWriteFileName, this.originalFile.fullname );
+                resolve();
+            } catch( err ) {
+                if ( fs.existsSync(tmpWriteFileName) ) {
+                    fs.unlinkSync( tmpWriteFileName );
+                }
+                reject( err );
+            }
+        });
+    }
+
+    public remove( sourceFile: File[], progress?: ProgressFunc ): Promise<void> {
+        const filterEntryFunc = (tarFileInfo: File, header): boolean => {
+            if ( sourceFile.find( item => item.fullname == tarFileInfo.fullname ) ) {
                 return false;
-            });
+            }
+            return true;
         };
 
-        let i = 0;
-        for( ;; ) {
-            if ( i >= files.length ) {
-                break;
+        return new Promise( async (resolve, reject) => {
+            let tmpWriteFileName = this.originalFile.fullname + ".bak";
+            let writeNewTarStream = fs.createWriteStream( tmpWriteFileName );
+            try {
+                await this.commonCompress( writeNewTarStream, async (pack) => {
+                    await this.originalPacking( pack, filterEntryFunc, progress );
+                });
+                fs.unlinkSync( this.originalFile.fullname );
+                fs.renameSync( tmpWriteFileName, this.originalFile.fullname );
+                resolve();
+            } catch( err ) {
+                if ( fs.existsSync(tmpWriteFileName) ) {
+                    fs.unlinkSync( tmpWriteFileName );
+                }
+                reject( err );
             }
-            if ( !files[i].dir && files[i].dirname !== "/" && !checkDir( files[i].dirname ) ) {
-                let file = files[i].clone();
-                file.fullname = files[i].dirname + "/";
-                file.name = path.basename(files[i].dirname);
-                file.orgname = "";
-                file.attr = "drwxr-xr-x";
-                file.size = 0;
-                file.dir = true;
-                files.splice( i, 0, file );
+        });
+    }
+
+    protected abstract commonCompress( writeTarStream: fs.WriteStream, packFunc: (pack) => Promise<void>, progress?: ProgressFunc ): Promise<void>;
+    protected abstract originalPacking( pack, filterEntryFunc: (packFileInfo: File, header) => boolean, progress?: ProgressFunc ): Promise<void>;
+    protected abstract packEntry(file: File, header, stream: Readable, pack, reportProgress?: Transform): Promise<void>;
+    protected abstract convertFileToHeader(file: File, srcBaseDir: File, targetDir: string): any;
+
+    protected subDirectoryCheck(files: File[]): File[] {
+        let dirFilter = files.filter( item => item.dir );
+        let addFiles: File[] = [];
+
+        files.forEach( item => {
+            if ( item.fullname !== path.posix.sep && item.dirname !== path.posix.sep && addFiles.findIndex( (addItem) => addItem.fullname === item.dirname + "/" ) === -1 ) {
+                if ( dirFilter.findIndex( (dirItem) => dirItem.fullname === item.dirname + path.posix.sep ) === -1 ) {
+                    let file = item.clone();
+                    file.fullname = item.dirname + path.posix.sep;
+                    file.name = path.basename(item.dirname);
+                    file.orgname = file.fullname.replace(/^\//, "");
+                    file.attr = "drwxr-xr-x";
+                    file.size = 0;
+                    file.dir = true;
+                    addFiles.push( file );
+                }
             }
-            i++;
-        }
-        return files;
+        });
+        return files.concat( addFiles );
     }
 
     protected fileStreamWrite(extractDir: File, filesBaseDir: string, file: File, readStream: Readable, reportProgress: Transform, next: (status: string, err?:any) => void) {
@@ -158,7 +238,3 @@ export abstract class ArchiveCommon {
         return data;
     }
 }
-
-
-
-

@@ -518,7 +518,10 @@ export class MainFrame implements IHelpService {
             return RefreshType.NONE;
         }
 
-        if ( this.activePanel() && this.activePanel().getReader() && this.activePanel().getReader().currentDir() ) {
+        if (this.activePanel() && 
+            this.activePanel().getReader() && 
+            this.activePanel().getReader().currentDir() && 
+            this.activePanel().getReader().readerName === "file" ) {
             let lastPath = this.activePanel().getReader().currentDir().fullname;
             log.debug( "CHDIR : %s", lastPath );
             process.chdir( lastPath );
@@ -1057,12 +1060,15 @@ export class MainFrame implements IHelpService {
                     await reader.copy( files, clipSelected.getSelecteBaseDir(), activePanel.currentPath(), progressStatus );
                 } catch( err ) {
                     log.error( err );
+                    progressBox.destroy();
                     await messageBox( {
                         parent: this.baseWidget,
                         title: T("Error"),
                         msg: err,
                         button: [ T("OK") ]
                     });
+                    await this.refreshPromise();
+                    return RefreshType.ALL;
                 }
             }
         }
@@ -1083,14 +1089,16 @@ export class MainFrame implements IHelpService {
                 button: [ T("OK"), T("Cancel") ]
             }, {  });
             if ( result && result[1] === T("OK") && result[0] ) {
-                try {
-                    if ( panel.getReader().readerName !== "file" ) {
+                
+                if ( panel.getReader().readerName !== "file" ) {
+                    const progressBox = new ProgressBox( { title: T("Message.Copy"), msg: T("Message.Calculating"), cancel: () => {
+                        reader.isUserCanceled = true;
+                    }}, { parent: this.baseWidget } );
+
+                    try {
                         const reader = panel.getReader();
                         reader.isUserCanceled = false;
 
-                        const progressBox = new ProgressBox( { title: T("Message.Copy"), msg: T("Message.Calculating"), cancel: () => {
-                            reader.isUserCanceled = true;
-                        }}, { parent: this.baseWidget } );
                         this.screen.render();
                         await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
 
@@ -1113,13 +1121,18 @@ export class MainFrame implements IHelpService {
                             }
                             return reader.isUserCanceled ? ProgressResult.USER_CANCELED : ProgressResult.SUCCESS;
                         };
-
                         await reader.mkdir( panel.currentPath().fullname + reader.sep() + result[0], progressStatus );
-                    } else {
-                        reader.mkdir( panel.currentPath().fullname + reader.sep() + result[0], null);
+                    } catch( e ) {
+                        await messageBox( { parent: this.baseWidget, title: T("Error"), msg: e, button: [ T("OK") ] } );
+                    } finally {
+                        progressBox.destroy();
                     }
-                } catch( e ) {
-                    await messageBox( { parent: this.baseWidget, title: T("Error"), msg: e, button: [ T("OK") ] } );
+                } else {
+                    try {
+                        reader.mkdir( panel.currentPath().fullname + reader.sep() + result[0], null);
+                    } catch( e ) {
+                        await messageBox( { parent: this.baseWidget, title: T("Error"), msg: e, button: [ T("OK") ] } );
+                    }
                 }
             }
         }

@@ -17,7 +17,7 @@ export enum MSG_BUTTON_TYPE {
 interface IMessageOption {
     parent: Widget | Widgets.Screen;
     title: string;
-    msg ?: string;
+    msg ?: string | any;
     button: string[];
     buttonType ?: MSG_BUTTON_TYPE;
     textAlign ?: string;
@@ -42,7 +42,11 @@ export class MessageBox extends Widget {
 
         this.box.enableMouse();
         this.msgOption = messageOption;
-
+        if ( this.msgOption.msg instanceof Error ) {
+            this.msgOption.msg = this.msgOption.msg.message;
+        } else if ( typeof(this.msgOption.msg) !== "string" ) {
+            this.msgOption.msg = JSON.stringify(this.msgOption.msg, null, 2);
+        }
         this.init();
     }
 
@@ -295,7 +299,7 @@ export function messageBox( msgOpt: IMessageOption, opts: Widgets.BoxOptions = {
         let messgaeBox = null;
         try {
             messgaeBox = new MessageBox({
-                parent: msgOpt.parent,
+                parent: screen,
                 title: msgOpt.title, 
                 msg: msgOpt.msg, button: msgOpt.button,
                 buttonType: msgOpt.buttonType,
