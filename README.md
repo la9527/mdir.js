@@ -40,9 +40,9 @@ $ mdir
 ### Version History
 
 
-- v0.8.0
-    - Support the compress files (zip, tar.gz, gz, bz2)
-      (archive file viewer, uncompress)
+- v0.8.x
+    - Support the compressed files (zip, tar.gz, gz, bz2)
+      (Supports copy, remove, rename, create directories of the selected files in the compressed file viewer.)
 - v0.7.x
     - Support the simple editor in the window box. (auto detect text file encoding)
 - v0.6.x 
