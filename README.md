@@ -41,19 +41,21 @@ $ mdir
 
 ### Version History
 
-
-- v0.8.x
-    - Support the compressed files (zip, tar.gz, gz, bz2)
+- v0.8.2
+    - [bugfix] package dependency for windows 10
+    - [add] show logo at startup
+- v0.8.1
+    - compressed files support (zip, tar.gz, gz, bz2)
       (Supports copy, remove, rename, create directories of the selected files in the compressed file viewer.)
 - v0.7.x
-    - Support the simple editor in the window box. (auto detect text file encoding)
+    - simple editor support in the window box. (auto detect text file encoding)
 - v0.6.x 
-    - Support korean text translation.
+    - korean text translation support
 - v0.5.x 
-    - Support the image text viewer. (png, jpeg, gif)
-    - Support the true color image in the iTerm for MacOS only.
+    - simple image viewer support (png, jpeg, gif)
+    - true color image support in the iTerm (MacOS only).
 - v0.4.x 
-    - Support the terminal(sub shell) in the window box.
+    - terminal support(sub-shell) in the window box.
 - v0.2.x
     - Add the hint on the bottom side.
     - Add the command line at the bottom side (press slash('/') key)
