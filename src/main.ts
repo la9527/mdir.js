@@ -2,6 +2,8 @@ import { Logger, updateDebugFile } from "./common/Logger";
 import { i18nInit, T, changeLanguage } from "./common/Translation";
 import osLocale from "os-locale";
 import yargs from "yargs";
+import { stdout } from "process";
+import { progressbar } from "neo-blessed";
 
 (async () => {
     (global as any).LOCALE = await osLocale();
@@ -28,6 +30,14 @@ import yargs from "yargs";
         })
         .help()
         .argv;
+
+        stdout.write(`
+    ███╗   ███╗██████╗ ██╗██████╗         ██╗███████╗
+    ████╗ ████║██╔══██╗██║██╔══██╗        ██║██╔════╝
+    ██╔████╔██║██║  ██║██║██████╔╝        ██║███████╗
+    ██║╚██╔╝██║██║  ██║██║██╔══██╗   ██   ██║╚════██║
+    ██║ ╚═╝ ██║██████╔╝██║██║  ██║██╗╚█████╔╝███████║
+    ╚═╝     ╚═╝╚═════╝ ╚═╝╚═╝  ╚═╝╚═╝ ╚════╝ ╚══════╝`);
 
     if ( typeof(argv.logfile) !== "undefined" ) {
         (global as any).debug = true;

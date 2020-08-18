@@ -1,6 +1,6 @@
 {
   "name": "mdir.js",
-  "version": "0.8.1-alpha+033",
+  "version": "0.8.2-alpha+034",
   "description": "Mdir.js is visual file manager. (text mode application)",
   "main": "./build/main.js",
   "scripts": {
@@ -85,7 +85,9 @@
     "@types/yargs": "^15.0.5",
     "@types/yauzl": "^2.9.1",
     "@types/yazl": "^2.4.2",
-    "@typescript-eslint/parser": "^3.0.0",
+    "@typescript-eslint/eslint-plugin": "^3.9.1",
+    "@typescript-eslint/parser": "^3.9.1",
+    "eslint": "^7.7.0",
     "pkg": "^4.4.8",
     "typescript": "^3.9.3"
   },
