@@ -119,7 +119,8 @@
         "Rename": "Rename",
         "MountList": "Mount List",
         "QuitProgram": "Do you want to quit the program?",
-        "FILE_OPEN_FAILURE": "file open failure !!!"
+        "FILE_OPEN_FAILURE": "file open failure !!!",
+        "Archive": "Compress file"
     },
     "EditorMsg": {
         "TITLE_GOTO_NUMBER": "Go to Line Number",

@@ -8,6 +8,7 @@
     "build": "tsc -p tsconfig.json",
     "start": "tsc -p tsconfig.json && node ./build/main.js",
     "debug": "tsc -p tsconfig.json && node --inspect-brk ./build/main.js",
+    "jest": "jest",
     "test": "tsc -p tsconfig.json && node ./build/test/test.js",
     "testimage": "tsc -p tsconfig.json && node ./build/test/imagetest.js",
     "testeditor": "tsc -p tsconfig.json && node ./build/test/editortest.js",
@@ -15,7 +16,7 @@
     "prepare": "tsc -p tsconfig.json",
     "postinstall": "node ./scripts/post-install.js",
     "pkg": "pkg --target=node12-macos-x64 --out-path=./binary .",
-    "pkg-win": "pkg --debug --target=node12-win-x64 --out-path=./binary ."
+    "pkg-win": "pkg --target=node12-win-x64 --out-path=./binary ."
   },
   "author": "La Byoungyoung <la9527@daum.net>",
   "contributors": [
@@ -78,7 +79,12 @@
     "zip-stream": "^4.0.2"
   },
   "devDependencies": {
+    "@babel/core": "^7.11.4",
+    "@babel/node": "^7.10.5",
+    "@babel/preset-env": "^7.11.0",
+    "@babel/preset-typescript": "^7.10.4",
     "@types/drivelist": "^6.4.1",
+    "@types/jest": "^26.0.10",
     "@types/node": "^12.12.54",
     "@types/sprintf-js": "^1.1.2",
     "@types/tar-stream": "^2.1.0",
@@ -87,12 +93,13 @@
     "@types/yazl": "^2.4.2",
     "@typescript-eslint/eslint-plugin": "^3.9.1",
     "@typescript-eslint/parser": "^3.9.1",
+    "babel-jest": "^26.3.0",
+    "eslint": "^7.7.0",
     "jest": "24.9.0",
     "jest-environment-jsdom-fourteen": "1.0.1",
     "jest-pnp-resolver": "1.0.2",
     "jest-resolve": "24.9.0",
     "jest-watch-typeahead": "0.4.2",
-    "eslint": "^7.7.0",
     "pkg": "^4.4.8",
     "typescript": "^3.9.3"
   },
@@ -103,57 +110,11 @@
     "assets": [
       "node_modules/neo-blessed/**",
       "node_modules/node-pty/**",
-      "node_modules/drivelist/**"
+      "node_modules/drivelist/**",
+      "node_modules/fswin/**"
     ],
     "tagets": [
       "node12"
-    ]
-  },
-  "jest": {
-    "roots": [
-      "<rootDir>/src"
-    ],
-    "collectCoverageFrom": [
-      "src/**/*.{js,ts}",
-      "!src/**/*.d.ts"
-    ],
-    "setupFiles": [],
-    "setupFilesAfterEnv": [
-      "<rootDir>/test/setupTests.ts"
-    ],
-    "testMatch": [
-      "<rootDir>/src/**/__tests__/**/*.{js,ts}",
-      "<rootDir>/src/**/*.{spec,test}.{js,ts}"
-    ],
-    "testEnvironment": "jest-environment-jsdom-fourteen",
-    "transform": {
-      "^.+\\.(js|jsx|ts|tsx)$": "<rootDir>/node_modules/babel-jest",
-      "^(?!.*\\.(js|jsx|ts|tsx|css|json)$)": "<rootDir>/test/jest/fileTransform.js"
-    },
-    "transformIgnorePatterns": [
-      "[/\\\\]node_modules[/\\\\].+\\.(js|jsx|ts|tsx)$",
-      "^.+\\.module\\.(css|sass|scss)$"
-    ],
-    "modulePaths": [],
-    "moduleNameMapper": {
-      "^react-native$": "react-native-web",
-      "^.+\\.module\\.(css|sass|scss)$": "identity-obj-proxy"
-    },
-    "moduleFileExtensions": [
-      "web.js",
-      "js",
-      "web.ts",
-      "ts",
-      "web.tsx",
-      "tsx",
-      "json",
-      "web.jsx",
-      "jsx",
-      "node"
-    ],
-    "watchPlugins": [
-      "jest-watch-typeahead/filename",
-      "jest-watch-typeahead/testname"
     ]
   }
 }

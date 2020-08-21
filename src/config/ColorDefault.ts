@@ -8,6 +8,7 @@
 */
 
 export const ColorDefault = {
+    version: "1.0",
     base: {
         default: "7,-1",
         mcd: "15",

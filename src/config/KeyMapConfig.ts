@@ -80,6 +80,7 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         keyHome: "home",
         keyEnd: "end",
         keyEnterPromise: [ "enter" ],
+        keyEnterSelectPromise: [ "C-r" ],
         toggleSelect: "space",
         commandBoxShow: "/",
         gotoHomePromise: "~",

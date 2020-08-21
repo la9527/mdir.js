@@ -176,7 +176,7 @@ exports.draw = function(start, end) {
               out += '8;';
             }
 
-            // rgb(true) color support
+            // rgb(true) color support ( https://en.wikipedia.org/wiki/ANSI_escape_code )
             if ( supportColorLevel.level > 2 && rgbColors ) {
               const rgbText = ( num, { r, g, b } ) => {
                 return `${num};2;${r};${g};${b}`;

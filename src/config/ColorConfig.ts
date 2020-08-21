@@ -1,3 +1,7 @@
+import * as path from "path";
+import * as os from "os";
+import * as fs from "fs";
+
 import { ColorDefault } from "./ColorDefault";
 import { Color } from "../common/Color";
 import { File } from "../common/File";
@@ -17,7 +21,32 @@ export class ColorConfig {
     private _colorConfig: any = { base: {}, file: { name: {}, ext: {} } };
 
     constructor() {
-        this.parsingColorConfig();
+        this.load();
+    }
+
+    protected getConfigPath() {
+        return os.homedir() + path.sep + ".m" + path.sep + "configure_color.json";
+    }
+
+    public load() {
+        try {
+            if ( fs.existsSync(this.getConfigPath()) ) {
+                let result = fs.readFileSync( this.getConfigPath(), { encoding: "utf8" } );
+                const colorConfigInfo = JSON.parse( result );
+                if ( colorConfigInfo.version !== ColorDefault.version ) {
+                    process.stdout.write( `Invalid version - this version [${ColorDefault.version}] - file ${this.getConfigPath()}` );
+                    this.parsingColorConfig();
+                } else {
+                    this.parsingColorConfig( colorConfigInfo );
+                }
+            } else {
+                fs.writeFileSync( this.getConfigPath(), JSON.stringify( ColorDefault, null, 2), { encoding: "utf8" } );
+                this.parsingColorConfig();
+            }
+        } catch( e ) {
+            log.error( e );
+            throw e;
+        }
     }
 
     parsingColorConfig( config: any = ColorDefault): void {

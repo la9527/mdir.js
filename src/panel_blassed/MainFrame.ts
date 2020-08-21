@@ -37,6 +37,7 @@ import { ImageViewBox } from "./widget/ImageBox";
 import { File } from "../common/File";
 import { ArchiveReader } from "../panel/archive/ArchiveReader";
 import { FileReader } from "../panel/FileReader";
+import { boolean } from "yargs";
 
 const log = Logger("MainFrame");
 
@@ -136,6 +137,13 @@ export class MainFrame implements IHelpService {
 
     async archivePromise(file: File = null) {
         let view = this.blessedFrames[this.activeFrameNum];
+        if ( !file && view instanceof BlessedPanel ) {
+            file = view.currentFile();
+        }
+        if ( !file ) {
+            return;
+        }
+
         if ( view instanceof BlessedPanel && file.fstype === "file" ) {
             let reader = new ArchiveReader();
             const progressBox = new ProgressBox( { title: T("Message.Archive"), msg: T("Message.Calculating"), cancel: () => {
@@ -211,22 +219,79 @@ export class MainFrame implements IHelpService {
     }
 
     private commandParsing( cmd: string ) {
+        const result = {
+            cmd,
+            ask: false,
+            prompt: false,
+            background: false,
+            wait: false,
+            mterm: false,
+            root: false
+        };
         if ( cmd ) {
             const panel = this.activePanel();
             if ( panel instanceof BlessedPanel && panel.currentFile() ) {
-                cmd = cmd.replace("%1", panel.currentFile().fullname );
+                /**
+                    %1,%F	filename.ext (ex. test.txt)
+                    %N 	    filename (ex. test)
+                    %E	    file extension name (ex. .ext)
+                    %S	    selected files (a.ext b.ext)
+                    %A	    current directory name(bin)
+                    %D	    execute MCD
+                    %Q	    ask before running.
+                    %P      command text string edit before a script execution.
+                    %W	    Waiting after script execution.
+                    %B	    background execution
+                    %T      execution over inside terminal
+                    %R      root execution - linux, mac osx only (su - --command= )
+                    %%	    %
+                 */
+                result.cmd = result.cmd.replace( /(%[1|F|N|E|S|A|D|Q|P|W|B|T|R])/g, (substr) => {
+                    if ( substr.match( /(%1|%F)/ ) ) {
+                        return panel.currentFile().fullname;
+                    } else if ( substr === "%N" ) {
+                        return path.parse(panel.currentFile().fullname).name;
+                    } else if ( substr === "%E" ) {
+                        return panel.currentFile().extname;
+                    } else if ( substr === "%S" ) {
+                        return panel.getSelectFiles().map(item => `"${item.fullname}"`).join(" ");
+                    } else if ( substr === "%A" ) {
+                        return panel.currentPath().fullname;
+                    } else if ( substr === "%%" ) {
+                        return "%";
+                    } else if ( substr === "%Q" ) {
+                        result.ask = true;
+                        return "";
+                    } else if ( substr === "%B" ) {
+                        result.ask = true;
+                        return "";
+                    } else if ( substr === "%P" ) {
+                        result.prompt = true;
+                        return "";
+                    } else if ( substr === "%W" ) {
+                        result.wait = true;
+                        return "";
+                    } else if ( substr === "%T" ) {
+                        result.mterm = true;
+                        return "";
+                    } else if ( substr === "%R" ) {
+                        result.root = true;
+                        return "";
+                    }
+                    return substr;
+                });
             }
         }
         log.debug( "commandParsing : %s", cmd );
-        return cmd;
+        return result;
     }
 
     @Hint({ hint: T("Hint.Terminal"), order: 4 })
     @Help(T("Help.Terminal"))
     async terminalPromise(isEscape = false, shellCmd: string = null ) {
         let view = this.blessedFrames[this.activeFrameNum];        
-        let shell: any = this.commandParsing( shellCmd );
-        shell = shell ? shell.split(" ") : null;
+        let result = this.commandParsing( shellCmd );
+        let shell = result.cmd ? result.cmd.split(" ") : null;
 
         if ( view instanceof BlessedPanel ) {
             view.destroy();
@@ -240,6 +305,12 @@ export class MainFrame implements IHelpService {
                 viewCount: viewCount++ 
             }, view.getReader(), view.currentPath() );
             newView.on("process_exit", () => {
+                process.nextTick( () => {
+                    this.terminalPromise( true );
+                });
+            });
+            newView.on("error", (err) => {
+                // TODO: error message box
                 process.nextTick( () => {
                     this.terminalPromise( true );
                 });
@@ -706,18 +777,14 @@ export class MainFrame implements IHelpService {
 
             this._keyLockScreen = true;
             this.screen.leave();
+
+            let result = this.commandParsing( cmd );
             
             if ( fileRunMode ) {
+                cmd = result.cmd;
+            } else {                
                 if ( process.platform === "win32" ) {
-                    cmd = `@chcp 65001 >nul & cmd /s/c ""${cmd}""`;
-                } else if ( process.platform === "darwin" ) {
-                    cmd = `open "${cmd}"`;
-                } else if ( process.platform === "linux" ) {
-                    cmd = `xdg-open "${cmd}"`;
-                }
-            } else {
-                if ( process.platform === "win32" ) {
-                    cmd = "@chcp 65001 >nul & cmd /d/s/c " + cmd;
+                    cmd = "@chcp 65001 >nul & cmd /d/s/c " + result.cmd;
                 }
             }
 
@@ -1280,6 +1347,13 @@ export class MainFrame implements IHelpService {
     }
 
     async imageViewPromise( file: File ) {
+        const panel = this.activePanel();
+        if ( panel instanceof BlessedPanel ) {
+            file = panel.currentFile();
+        }
+        if ( !file ) {
+            return;
+        }
         if (process.env.TERM_PROGRAM === 'iTerm.app') {
             const buffer = await fs.promises.readFile(file.fullname);
 

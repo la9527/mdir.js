@@ -4,10 +4,15 @@ import osLocale from "os-locale";
 import yargs from "yargs";
 import { stdout } from "process";
 import { progressbar } from "neo-blessed";
+import Configure from "./config/Configure";
+import { ColorConfig } from "./config/ColorConfig";
 
 (async () => {
     (global as any).LOCALE = await osLocale();
     await i18nInit();
+
+    ColorConfig.instance();
+    Configure.instance();
 
     let reargv = process.argv;
     if ( [ ".", "source" ].indexOf(reargv[0]) > -1 ) {

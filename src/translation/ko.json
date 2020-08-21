@@ -118,7 +118,8 @@
         "Make Directory": "디렉토리 생성",
         "Rename": "이름변경",
         "QuitProgram": "이 프로그램을 종료할까요?",
-        "FILE_OPEN_FAILURE": "파일을 여는데 실패하였습니다."
+        "FILE_OPEN_FAILURE": "파일을 여는데 실패하였습니다.",
+        "Archive": "압축 파일 보기"
     },
     "EditorMsg": {
         "TITLE_GOTO_NUMBER": "라인 이동",
@@ -169,9 +170,9 @@
         "TermScrollUp": "터미널 스크롤 위로",
         "TermScrollDown": "터미널 스크롤 아래로",
         "TermScrollPageUp": "터미널 스크롤 페이지 위로",
-        "TermScrollPageDown":  "터미널 스크롤 페이지 아래로"
+        "TermScrollPageDown": "터미널 스크롤 페이지 아래로"
     },
-    "About": [ 
+    "About": [
         "{center}{bold}Mdir.js{/bold}은 심플한 파일 관리자 입니다.{/center}\n",
         "",
         "쉘 환경에서 파일을 복사, 이동, 삭제를 지원하며,",

@@ -27,7 +27,7 @@ export const menuConfig: IFrameMenuConfig = {
         ],
         Run: [
             { name: T("Menu.Run"), method: "Panel.keyEnterPromise" },
-            { name: T("Menu.Run(select)") },
+            { name: T("Menu.Run(select)"), method: "Panel.keyEnterSelectPromise" },
             "-",
             { name: T("Menu.View Console"), method: "Common.consoleViewPromise" }
         ],

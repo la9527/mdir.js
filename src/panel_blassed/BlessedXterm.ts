@@ -193,14 +193,22 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
 
         log.debug( "SHELL : %s %s", this.shell, this.args );
         
-        this.pty = NodePTY.spawn(this.shell, this.args, {
-            name: this.termName,
-            cols: (box.width as number) - (box.iwidth as number),
-            rows: (box.height as number) - (box.iheight as number),
-            cwd: firstPath ? firstPath.fullname : process.env.HOME,
-            encoding: os.platform() !== "win32" ? "utf-8" : null,
-            env: this.options.env || process.env
-        });
+        try {
+            this.pty = NodePTY.spawn(this.shell, this.args, {
+                name: this.termName,
+                cols: (box.width as number) - (box.iwidth as number),
+                rows: (box.height as number) - (box.iheight as number),
+                cwd: firstPath ? firstPath.fullname : process.env.HOME,
+                encoding: os.platform() !== "win32" ? "utf-8" : null,
+                env: this.options.env || process.env
+            });
+        } catch( e ) {
+            log.error( e );
+            process.nextTick(() => {
+                this.box.emit( "error", e );
+            });
+            return;
+        }
 
         this.on('resize', () => {
             log.debug( "PANEL - resize !!!" );

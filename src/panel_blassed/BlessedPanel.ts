@@ -14,11 +14,12 @@ import { IBlessedView } from "./IBlessedView";
 import mainFrame from './MainFrame';
 import { SearchFileBox } from './SearchFileBox';
 import { File } from "../common/File";
-import { messageBox } from "./widget/MessageBox";
+import { messageBox, MSG_BUTTON_TYPE } from "./widget/MessageBox";
 import { T } from "../common/Translation";
 import * as FileType from "file-type";
 import * as mime from "mime-types";
 import { FileReader } from "../panel/FileReader";
+import Configure from "../config/Configure";
 
 const log = Logger("blessedpanel");
 
@@ -246,6 +247,43 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
         return result;
     }
 
+    async keyEnterSelectPromise(): Promise<any> {
+        const currentFile: File = this.dirFiles[this.currentPos];
+        if ( currentFile.fstype !== "file" || currentFile.dir ) {
+            log.debug( currentFile );
+            return RefreshType.NONE;
+        }
+        let programInfo = Configure.instance().getMatchProgramInfo( currentFile );
+        if ( programInfo && programInfo.length > 0 ) {
+            let buttons = programInfo.map( item => item.name );
+            
+            const result = await messageBox({
+                parent: this.getWidget(),
+                title: "Program Select",
+                button: buttons,
+                buttonType: MSG_BUTTON_TYPE.VERTICAL
+            });
+            if ( result ) {
+                const programItem = programInfo.find( item => item.name === result );
+                if ( programItem ) {
+                    if ( programItem.command ) {
+                        if ( !programItem.mterm ) {
+                            return await mainFrame().commandRun(programItem.command, true);
+                        } else {
+                            return await mainFrame().terminalPromise( false, programItem.command );
+                        }
+                    } else if ( programItem.method ) {
+                        return await mainFrame().methodRun( programItem.method, programItem.methodParam );
+                    } else {
+                        throw new Error("Invalid program configure.");
+                    }
+                }
+                return RefreshType.ALL;
+            }
+        }
+        return RefreshType.NONE;
+    }
+
     async keyEnterPromise(): Promise<any> {
         this.searchFileBox && this.searchFileBox.clear();
         const currentFile: File = this.dirFiles[this.currentPos];
@@ -261,29 +299,41 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
                 log.debug( currentFile );
                 return RefreshType.NONE;
             }
-
             try {
-                let mimeLookup = mime.lookup(currentFile.fullname);
-                log.debug( "mimeLookup %s", mimeLookup );
-                if ( !mimeLookup ) {
-                    const item = await FileType.fromFile( currentFile.fullname );
-                    log.debug( "fileType: [%j]", item );
-                    mimeLookup = item.mime;
-                }
-                if ( mimeLookup ) {
-                    if ( mimeLookup.match( /(png|jpeg|gif)/ ) ) {
-                        await mainFrame().imageViewPromise(currentFile);
-                        return;
-                    } else if (mimeLookup.match( /(text|json|xml|javascript|css|html)/ )) {
-                        await mainFrame().editorPromise(currentFile);
-                        return;
-                    } else if (mimeLookup.match( /(zip|gz|tar)/ )) {
-                        await mainFrame().archivePromise(currentFile);
-                        return RefreshType.ALL;
+                let result = Configure.instance().getMatchProgramInfo( currentFile );
+                if ( result && result.length > 0 && result[0].command ) {
+                    await mainFrame().commandRun(result[0].command, true);
+                } else if ( result && result.length > 0 && result[0].method ) {
+                    await mainFrame().methodRun( result[0].method, result[0].methodParam );
+                } else {
+                    let mimeLookup = mime.lookup(currentFile.fullname);
+                    log.debug( "mimeLookup %s", mimeLookup );
+                    if ( !mimeLookup ) {
+                        const item = await FileType.fromFile( currentFile.fullname );
+                        log.debug( "fileType: [%j]", item );
+                        mimeLookup = item.mime;
                     }
-                    await mainFrame().commandRun(currentFile.fullname, true);
+                    if ( mimeLookup ) {
+                        if ( mimeLookup.match( /(png|jpeg|gif)/ ) ) {
+                            await mainFrame().imageViewPromise(currentFile);
+                            return;
+                        } else if (mimeLookup.match( /(text|json|xml|javascript|css|html)/ )) {
+                            await mainFrame().editorPromise(currentFile);
+                            return;
+                        } else if (mimeLookup.match( /(zip|gz|tar)/ )) {
+                            await mainFrame().archivePromise(currentFile);
+                            return RefreshType.ALL;
+                        }
+                        await mainFrame().commandRun(currentFile.fullname, true);
+                    }
                 }
             } catch( e ) {
+                await messageBox({
+                    parent: this.baseWidget,
+                    title: T("Error"),
+                    msg: "Exception: " + e.message,
+                    button: [ T("OK") ]
+                });
                 log.error(e.stack);
                 return;
             }
