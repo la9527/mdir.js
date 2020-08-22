@@ -89,8 +89,8 @@ export const ConfigureDefault: IConfigure = {
         archive: "<Open> %1 %B",
         certification: "<Open> %1 %B",
         package: [ "<Open> %1 %B", "adb install %1" ],
-        editor: [ "<Editor>", "<VIM>", "<Open> %1 %B" ],
-        makefile: [ "<Editor>", "<VIM>", "make", "<Open> %1" ],
-        etc: [ "<Open> %1 %W", "<Editor>", "<VIM>" ]
+        editor: [ "<Editor>", "<VIM> %1", "<Open> %1 %B" ],
+        makefile: [ "<Editor>", "<VIM> %1", "make", "<Open> %1" ],
+        etc: [ "<Open> %1 %W", "<Editor>", "<VIM> %1" ]
     }
 };
