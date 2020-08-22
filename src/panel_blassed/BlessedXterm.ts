@@ -210,6 +210,8 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             return;
         }
 
+        this.header.setContent( [ this.shell, ...(this.args || []) ].join(" ") || "" );
+
         this.on('resize', () => {
             log.debug( "PANEL - resize !!!" );
             process.nextTick(() => {
