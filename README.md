@@ -41,6 +41,9 @@ $ mdir
 
 ### Version History
 
+- v0.8.3
+    - Add option to select a program when running the program. (Ctrl+R)
+    - Add configuration file.
 - v0.8.2
     - [bugfix] package dependency for windows 10
     - [add] show logo at startup

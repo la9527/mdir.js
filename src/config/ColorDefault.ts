@@ -8,7 +8,7 @@
 */
 
 export const ColorDefault = {
-    version: "1.0",
+    version: require("../../package.json").version,
     base: {
         default: "7,-1",
         mcd: "15",

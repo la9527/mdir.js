@@ -1,5 +1,7 @@
 import which from "which";
-import blessed from "neo-blessed";
+import * as os from 'os';
+import * as fs from 'fs';
+import * as path from 'path';
 import { BlessedProgram, Widgets, box, text, screen } from "neo-blessed";
 import { Logger } from "../common/Logger";
 import { BlessedPanel } from './BlessedPanel';
@@ -29,15 +31,11 @@ import { HintBox } from "./HintBox";
 import { BlessedXterm } from "./BlessedXterm";
 import { sprintf } from "sprintf-js";
 import { T } from "../common/Translation";
-import * as os from 'os';
-import * as fs from 'fs';
-import * as path from 'path';
 import { draw } from "./widget/BlessedDraw";
 import { ImageViewBox } from "./widget/ImageBox";
 import { File } from "../common/File";
 import { ArchiveReader } from "../panel/archive/ArchiveReader";
 import { FileReader } from "../panel/FileReader";
-import { boolean } from "yargs";
 
 const log = Logger("MainFrame");
 
@@ -310,9 +308,14 @@ export class MainFrame implements IHelpService {
                 });
             });
             newView.on("error", (err) => {
-                // TODO: error message box
-                process.nextTick( () => {
-                    this.terminalPromise( true );
+                process.nextTick( async () => {
+                    await messageBox( {
+                        parent: this.baseWidget,
+                        title: T("ERROR"),
+                        msg: err + " - " + shellCmd,
+                        button: [ T("OK") ]
+                    });
+                    await this.terminalPromise( true );
                 });
             });
             newView.setFocus();
@@ -486,21 +489,27 @@ export class MainFrame implements IHelpService {
 
                 const keyMappingExecute = async ( func?: () => RefreshType ) => {
                     log.debug( "KEYPRESS - KEY START [%s] - (%dms)", keyInfo.name, Date.now() - starTime );
-                    let type: RefreshType = await keyMappingExec( panel, keyInfo );
-                    if ( type === RefreshType.NONE ) {
-                        type = await keyMappingExec( this, keyInfo );
-                    }
-                    if ( type !== RefreshType.NONE ) {
-                        this.execRefreshType( type );
-                    } else {
-                        if ( func ) {
-                            type = func();
-                            this.execRefreshType( type );
+                    let type: RefreshType;
+                    try {
+                        let type: RefreshType = await keyMappingExec( panel, keyInfo );
+                        if ( type === RefreshType.NONE ) {
+                            type = await keyMappingExec( this, keyInfo );
                         }
-                    }
-                    log.info( "KEYPRESS - KEY END [%s] - (%dms)", keyInfo.name, Date.now() - starTime );
-                    if ( panel.updateCursor ) {
-                        panel.updateCursor();
+                        if ( type !== RefreshType.NONE ) {
+                            this.execRefreshType( type );
+                        } else {
+                            if ( func ) {
+                                type = func();
+                                this.execRefreshType( type );
+                            }
+                        }
+                        log.info( "KEYPRESS - KEY END [%s] - (%dms)", keyInfo.name, Date.now() - starTime );
+                        if ( panel.updateCursor ) {
+                            panel.updateCursor();
+                        }
+                    } catch( e ) {
+                        log.error( e );
+                        throw e;
                     }
                     return type;
                 };
@@ -518,14 +527,14 @@ export class MainFrame implements IHelpService {
                         }
                     }
                 } else if ( panel instanceof BlessedEditor ) {
-                    keyMappingExecute( () => {
+                    await keyMappingExecute( () => {
                         return panel.keyWrite( keyInfo );
                     });
                 } else {
-                    keyMappingExecute();
+                    await keyMappingExecute();
                 }
             } catch ( e ) {
-                log.error( e );
+                log.error( "Exception: - keypress ", e.message );
                 await messageBox( {
                     parent: this.baseWidget,
                     title: T("Error"), 
@@ -778,18 +787,25 @@ export class MainFrame implements IHelpService {
             this._keyLockScreen = true;
             this.screen.leave();
 
-            let result = this.commandParsing( cmd );
+            let cmdParse = this.commandParsing( cmd );
             
             if ( fileRunMode ) {
-                cmd = result.cmd;
-            } else {                
+                cmd = cmdParse.cmd;
+                if ( os.platform() !== "win32" ) {
+                    if ( cmdParse.background ) {
+                        cmd += " &";
+                    }
+                    if ( os.userInfo().username !== "root" && cmdParse.root ) {
+                        cmd = "su - " + cmd;
+                    }
+                }
+            } else {
                 if ( process.platform === "win32" ) {
-                    cmd = "@chcp 65001 >nul & cmd /d/s/c " + result.cmd;
+                    cmd = "@chcp 65001 >nul & cmd /d/s/c " + cmdParse.cmd;
                 }
             }
 
             process.stdout.write( colors.white("mdir.js $ ") + cmd + "\n");
-
             exec(cmd, { encoding: "utf-8" }, (error, stdout, stderr) => {
                 if (error) {
                     console.error(error.message);
@@ -797,13 +813,18 @@ export class MainFrame implements IHelpService {
                     stderr && process.stderr.write(stderr);
                     stdout && process.stdout.write(stdout);
                 }
-                process.stdout.write( colors.white(T("Message.ANY_KEY_RETURN_M_JS")) + "\n" );
-                program.once( 'keypress', async () => {
+                const returnFunc = async () => {
                     this.screen.enter();
                     await this.refreshPromise();
                     this._keyLockScreen = false;
                     resolve(RefreshType.ALL);
-                });
+                };
+                if ( !fileRunMode || cmdParse.wait ) {
+                    process.stdout.write( colors.yellow(T("Message.ANY_KEY_RETURN_M_JS")) + "\n" );
+                    program.once( 'keypress', returnFunc );
+                } else {
+                    returnFunc();
+                }
             });
         });
     }
@@ -1277,7 +1298,7 @@ export class MainFrame implements IHelpService {
     @Help( T(os.platform() === "win32" ? "Help.DriveList" : "Help.MountList") )
     async mountListPromise() {
         const panel = this.activePanel();
-        if ( panel instanceof BlessedPanel ) {
+        if ( panel instanceof BlessedPanel || panel instanceof BlessedMcd ) {
             const mountList: IMountList[] = await panel.getReader().mountList();
             if ( mountList ) {
                 let maxLength = [ 0, 0 ];
@@ -1299,7 +1320,12 @@ export class MainFrame implements IHelpService {
                 try {
                     const result = await messageBox( { parent: this.baseWidget, title: T("Message.MountList"), msg: "", button: viewMountInfo, buttonType: MSG_BUTTON_TYPE.VERTICAL } );
                     if ( result && viewMountInfo.indexOf(result) > -1 ) {
-                        await panel.read( mountList[ viewMountInfo.indexOf(result) ].mountPath );
+                        if ( panel instanceof BlessedPanel ) {
+                            await panel.read( mountList[ viewMountInfo.indexOf(result) ].mountPath );
+                        } else {
+                            panel.getReader().changeDir( mountList[ viewMountInfo.indexOf(result) ].mountPath );
+                            await panel.rescan(2);
+                        }
                         return RefreshType.ALL;
                     }
                 } catch ( e ) {

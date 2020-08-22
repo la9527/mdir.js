@@ -6,14 +6,14 @@ import { stdout } from "process";
 import { progressbar } from "neo-blessed";
 import Configure from "./config/Configure";
 import { ColorConfig } from "./config/ColorConfig";
+import colors from "colors";
+import { StringUtils } from "./common/StringUtils";
+import { sprintf } from "sprintf-js";
 
 (async () => {
     (global as any).LOCALE = await osLocale();
-    await i18nInit();
-
-    ColorConfig.instance();
-    Configure.instance();
-
+    await i18nInit( (global as any).LOCALE.match( /^ko/ ) ? "ko" : undefined );
+    
     let reargv = process.argv;
     if ( [ ".", "source" ].indexOf(reargv[0]) > -1 ) {
         reargv = process.argv.slice(2);
@@ -36,23 +36,36 @@ import { ColorConfig } from "./config/ColorConfig";
         .help()
         .argv;
 
-        stdout.write(`
+    if ( argv.lang ) {
+        await changeLanguage(argv.lang);
+    }
+
+    stdout.write(colors.green(`
     ███╗   ███╗██████╗ ██╗██████╗         ██╗███████╗
     ████╗ ████║██╔══██╗██║██╔══██╗        ██║██╔════╝
     ██╔████╔██║██║  ██║██║██████╔╝        ██║███████╗
     ██║╚██╔╝██║██║  ██║██║██╔══██╗   ██   ██║╚════██║
     ██║ ╚═╝ ██║██████╔╝██║██║  ██║██╗╚█████╔╝███████║
-    ╚═╝     ╚═╝╚═════╝ ╚═╝╚═╝  ╚═╝╚═╝ ╚════╝ ╚══════╝`);
+    ╚═╝     ╚═╝╚═════╝ ╚═╝╚═╝  ╚═╝╚═╝ ╚════╝ ╚══════╝\n\n`));
+
+    const colorConfig = ColorConfig.instance();
+    const configure = Configure.instance();
+
+    const consoleMessage = ( msg, highlightText ) => {
+        stdout.write( colors.gray(msg) );
+        stdout.write( Array(30 - StringUtils.strWidth( msg )).fill(" ").join("") );
+        stdout.write( colors.gray("[") + colors.yellow(highlightText) + colors.gray("]") + "\n" );
+    };
 
     if ( typeof(argv.logfile) !== "undefined" ) {
         (global as any).debug = true;
-        console.log( "detect locale: " + (global as any).LOCALE );
         updateDebugFile( argv.logfile );
+        consoleMessage( " * Debug mode", (global as any).DEBUG_FILE );
     }
-
-    if ( argv.lang ) {
-        await changeLanguage(argv.lang);
-    }
+    consoleMessage( T("Start.SystemLocale"), (global as any).LOCALE );
+    stdout.write( "\n" + T("Start.LoadConfigureFiles") + "\n" );
+    consoleMessage( T("Start.LoadConfigure"), configure.getConfigPath() );
+    consoleMessage( T("Start.LoadConfigureColor"), colorConfig.getConfigPath() );
     
     let mainFrame = (await import("./panel_blassed/MainFrame")).default();
     await mainFrame.start();

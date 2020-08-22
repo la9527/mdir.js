@@ -2,6 +2,7 @@ import path from "path";
 import os from "os";
 import winston from "winston";
 import * as fs from 'fs';
+import colors from "colors";
 
 const { combine, timestamp, label, printf, prettyPrint } = winston.format;
 
@@ -11,7 +12,6 @@ if ( process.env.NODE_ENV === "test" && !(global as any).DEBUG_FILE ) {
 
 export function updateDebugFile( filePath: string = "" ) {
     (global as any).DEBUG_FILE = filePath || os.homedir() + path.sep + ".m" + path.sep + "m.log";
-    console.log( "DEBUG OUT >" + (global as any).DEBUG_FILE );
 }
 
 export function Logger( labelName: string ): winston.Logger {

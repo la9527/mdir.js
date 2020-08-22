@@ -1,7 +1,7 @@
 import { IConfigure } from "./Configure";
 
 export const ConfigureDefault: IConfigure = {
-    Version: "1.0",
+    Version: require("../../package.json").version,
     Option: {
         
     },
@@ -36,7 +36,7 @@ export const ConfigureDefault: IConfigure = {
     },
     ProgramService: {
         Open: { // execution a program registered on system mime type.
-            name: "Open",
+            name: "Configure.Open",
             command: {
                 win32: "@chcp 65001 >nul & cmd /s/c",
                 darwin: "open",
@@ -44,19 +44,19 @@ export const ConfigureDefault: IConfigure = {
             }
         },
         TerminalImageViewer: { // internal simple terminal image viewer
-            name: "Terminal Image Viewer",
+            name: "Configure.TerminalImageViewer",
             method: "Common.imageViewPromise"
         },
         Archive: {
-            name: "Archive Util",
+            name: "Configure.Archive",
             method: "Common.archivePromise"
         },
         Editor: {
-            name: "Internal Editor",
+            name: "Configure.Editor",
             method: "Common.editorPromise"
         },
         VIM: {
-            name: "VIM Editor",
+            name: "Configure.VIM",
             command: "vim",
             mterm: true
         }
@@ -80,8 +80,11 @@ export const ConfigureDefault: IConfigure = {
          */
         office: [ "<Open> %1 %B" ],
         hwp: [ "<Open> %1 %B" ],
+        pdf: [ "<Open> %1 %B" ],
         supportImage: [ "<TerminalImageViewer>", "<Open> %1 %B" ],
         image: "<Open> %1 %B",
+        movie: "<Open> %1 %B",
+        audio: "<Open> %1 %B",
         internalArchive: [ "<Archive>", "<Open> %1 %B" ],
         archive: "<Open> %1 %B",
         certification: "<Open> %1 %B",

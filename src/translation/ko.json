@@ -119,7 +119,8 @@
         "Rename": "이름변경",
         "QuitProgram": "이 프로그램을 종료할까요?",
         "FILE_OPEN_FAILURE": "파일을 여는데 실패하였습니다.",
-        "Archive": "압축 파일 보기"
+        "Archive": "압축 파일 보기",
+        "SelectProgramToRun" : "실행할 프로그램 선택하세요."
     },
     "EditorMsg": {
         "TITLE_GOTO_NUMBER": "라인 이동",
@@ -186,5 +187,18 @@
     "Args": {
         "Lang": "언어 선택.\n(기본 : 자동 인식)",
         "LogFile": "디버그 메시지를 파일에 출력\n(빈값일 때: ~/.m/m.log)"
+    },
+    "Start": {
+        "SystemLocale": " * 시스템 언어 정보",
+        "LoadConfigureFiles": " * 설정 파일 정보",
+        "LoadConfigure": "    - 기본 설정 파일",
+        "LoadConfigureColor": "    - 색 설정 파일"
+    },
+    "Configure": {
+        "Open": "시스템 연결된 프로그램 실행",
+        "TerminalImageViewer": "내부 터미널 이미지 뷰어",
+        "Archive": "내부 압축 유틸리티",
+        "Editor": "내부 편집기",
+        "VIM": "VIM 편집기"
     }
 }

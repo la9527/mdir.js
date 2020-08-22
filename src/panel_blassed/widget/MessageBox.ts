@@ -21,6 +21,7 @@ interface IMessageOption {
     button: string[];
     buttonType ?: MSG_BUTTON_TYPE;
     textAlign ?: string;
+    buttonTextAlign ?: string;
     scroll ?: boolean;
     result?: (button: string, buttonPos ?: number ) => void;
 }
@@ -90,13 +91,12 @@ export class MessageBox extends Widget {
         } else {
             this.buttonWidth = Math.max(this.buttonWidth, 20);
             this.box.width = Math.max( Math.max(widthTitle, widthMsg), this.buttonWidth + 4 );
-            this.box.height = Math.min( (this.msgOption.msg ? (msgLines.length + 5) : 4) + this.msgOption.button.length, this.screen.height as number - 6);
+            this.box.height = Math.min( (this.msgOption.msg ? (msgLines.length + 5) : 4) + this.msgOption.button.length + 2, this.screen.height as number - 6);
             log.debug( "RESIZE - VERTICAL %d (%d, %d)", msgLines.length, this.box.width, this.box.height );
 
             if ( this.textWidget ) {
                 this.textWidget.width = this.box.width - 4;
                 this.textWidget.height = Math.min(msgLines.length, this.box.height - 6);
-                
             }
         }
 
@@ -110,7 +110,7 @@ export class MessageBox extends Widget {
             } else {
                 // VERITCAL
                 let left = Math.floor((this.box.width as number) / 2) - Math.floor(this.buttonWidth / 2);
-                let bottom = len - i - 1;
+                let bottom = len - i;
                 item.left = left - 1;
                 item.bottom = bottom;
                 item.width = this.buttonWidth;
@@ -180,7 +180,7 @@ export class MessageBox extends Widget {
                         parent: this, 
                         tags: true, 
                         content: "{center}" + item + "{/center}", 
-                        align: "center",
+                        align: this.msgOption.buttonTextAlign || "center",
                         left: left - 1,
                         clickable: true,
                         bottom: 1, 
@@ -198,7 +198,7 @@ export class MessageBox extends Widget {
                         parent: this,
                         tags: true,
                         content: item,
-                        align: "center",
+                        align: this.msgOption.buttonTextAlign || "center",
                         left: left - 1,
                         clickable: true,
                         bottom,
@@ -304,6 +304,7 @@ export function messageBox( msgOpt: IMessageOption, opts: Widgets.BoxOptions = {
                 msg: msgOpt.msg, button: msgOpt.button,
                 buttonType: msgOpt.buttonType,
                 textAlign: msgOpt.textAlign,
+                buttonTextAlign: msgOpt.buttonTextAlign,
                 scroll: msgOpt.scroll,
                 result: (button, buttonPos) => {
                     screen.render();

@@ -6,6 +6,7 @@ import { ColorDefault } from "./ColorDefault";
 import { Color } from "../common/Color";
 import { File } from "../common/File";
 import { Logger } from "../common/Logger";
+import colors from "colors";
 
 const log = Logger("ColorConfig");
 
@@ -24,7 +25,7 @@ export class ColorConfig {
         this.load();
     }
 
-    protected getConfigPath() {
+    public getConfigPath() {
         return os.homedir() + path.sep + ".m" + path.sep + "configure_color.json";
     }
 
@@ -34,7 +35,9 @@ export class ColorConfig {
                 let result = fs.readFileSync( this.getConfigPath(), { encoding: "utf8" } );
                 const colorConfigInfo = JSON.parse( result );
                 if ( colorConfigInfo.version !== ColorDefault.version ) {
-                    process.stdout.write( `Invalid version - this version [${ColorDefault.version}] - file ${this.getConfigPath()}` );
+                    process.stdout.write( colors.bold("Warning: ") + colors.red(`Invalid version - file ${this.getConfigPath()}. restore to initial file after backup.`) + "\n" );
+                    fs.renameSync( this.getConfigPath(), this.getConfigPath() + ".bak" );
+                    fs.writeFileSync( this.getConfigPath(), JSON.stringify( ColorDefault, null, 2), { encoding: "utf8" } );
                     this.parsingColorConfig();
                 } else {
                     this.parsingColorConfig( colorConfigInfo );

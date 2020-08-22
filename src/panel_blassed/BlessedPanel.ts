@@ -255,16 +255,17 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
         }
         let programInfo = Configure.instance().getMatchProgramInfo( currentFile );
         if ( programInfo && programInfo.length > 0 ) {
-            let buttons = programInfo.map( item => item.name );
-            
+            let buttons = programInfo.map( (item, i) => `${i+1}. ${T(item.name)}` );
+
             const result = await messageBox({
                 parent: this.getWidget(),
-                title: "Program Select",
+                title: T("Message.SelectProgramToRun"),
                 button: buttons,
-                buttonType: MSG_BUTTON_TYPE.VERTICAL
+                buttonType: MSG_BUTTON_TYPE.VERTICAL,
+                buttonTextAlign: "left"
             });
             if ( result ) {
-                const programItem = programInfo.find( item => item.name === result );
+                const programItem = programInfo[buttons.indexOf(result)];
                 if ( programItem ) {
                     if ( programItem.command ) {
                         if ( !programItem.mterm ) {

@@ -4,6 +4,7 @@ import * as fs from "fs";
 import { File } from "../common/File";
 import { ConfigureDefault } from "./ConfigureDefault";
 import { Logger } from "../common/Logger";
+import colors from "colors";
 
 const log = Logger("Configure");
 
@@ -68,7 +69,9 @@ export default class Configure {
                 const text = fs.readFileSync( this.getConfigPath(), { encoding: "utf8" } );
                 const configInfo = JSON.parse( text );
                 if ( configInfo.Version !== this.configInfo.Version ) {
-                    process.stdout.write( `Invalid version - file ${this.getConfigPath()}. Load initial settings.` );
+                    process.stdout.write( colors.bold("Warning: ") + colors.red(`Invalid version - file ${this.getConfigPath()}. restore to initial file after backup.`) + "\n" );
+                    fs.renameSync( this.getConfigPath(), this.getConfigPath() + ".bak" );
+                    this.save();
                 } else {
                     this.configInfo = configInfo;
                 }
@@ -91,15 +94,15 @@ export default class Configure {
 
     public getMimeTypeAlias( file: File ): string {
         let mimeTypeAlias = this.configInfo.MimeTypeAlias;
-        let filename = path.parse(file.name).name;
-        let fileext = file.extname;
+        let filename = path.parse(file.name).name.toLowerCase();
+        let fileext = file.extname.toLowerCase();
 
         let convertStrSplitArray = (item: string | string[]): string[] => {
             if ( !item ) {
                 return [];
             }
             let text = Array.isArray(item) ? item.join("") : item;
-            return text ? (text as string).split(";").filter(item => !!item) : [];
+            return text ? (text as string).toLowerCase().split(";").filter(item => !!item) : [];
         };
 
         let result = Object.keys(mimeTypeAlias.name)

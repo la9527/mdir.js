@@ -120,7 +120,8 @@
         "MountList": "Mount List",
         "QuitProgram": "Do you want to quit the program?",
         "FILE_OPEN_FAILURE": "file open failure !!!",
-        "Archive": "Compress file"
+        "Archive": "Compress file",
+        "SelectProgramToRun" : "Please select a program to run"
     },
     "EditorMsg": {
         "TITLE_GOTO_NUMBER": "Go to Line Number",
@@ -188,5 +189,18 @@
     "Args": {
         "Lang": "set a language.\n(default: auto detect locale)",
         "LogFile": "Saves debugging messages to a file.\n(default: ~/.m/m.log)"
+    },
+    "Start": {
+        "SystemLocale": " * System Locale",
+        "LoadConfigureFiles": " * Load configuration files",
+        "LoadConfigure": "    - configure file",
+        "LoadConfigureColor": "    - configure color file"
+    },
+    "Configure": {
+        "Open": "Run a Linked System Program",
+        "TerminalImageViewer": "Terminal Image Viewer",
+        "Archive": "Internal Archive Utility",
+        "Editor": "Internal Editor",
+        "VIM": "VIM Editor"
     }
 }
