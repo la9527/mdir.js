@@ -26,7 +26,7 @@ export abstract class Reader {
     protected _readerFsType: string = null;
     public isUserCanceled = false;
 
-    abstract convertFile( path: string, option ?: { fileInfo ?: any, useThrow ?: boolean, checkRealPath ?: boolean } ): File;
+    abstract convertFile( path: string, option ?: { fileInfo ?: any, useThrow ?: boolean, checkRealPath ?: boolean, virtualFile ?: boolean } ): File;
     abstract readdir( dir: File, option ?: { isExcludeHiddenFile ?: boolean, noChangeDir ?: boolean } ): Promise<File[]>;
     abstract homeDir(): File;
 

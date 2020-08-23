@@ -16,7 +16,7 @@ const log = Logger("archivetar");
 export class ArchiveTarGz extends ArchiveCommon {
     protected isSupportType( file: File ): string {
         let supportType = null;
-        let name = this.originalFile.name;
+        let name = file.name;
         if ( name.match( /(\.tar\.gz$|\.tgz$)/ ) ) {
             supportType = "tgz";
         } else if ( name.match( /(\.tar\.bz2$|\.tar\.bz$|\.tbz2$|\.tbz$)/ ) ) {
@@ -65,6 +65,11 @@ export class ArchiveTarGz extends ArchiveCommon {
                 stream.resume();
                 next();
             });
+
+            stream.on("error", (error) => {
+                log.error( error );
+                reject(error);
+            })
             
             if ( this.supportType === "tgz" ) {
                 outstream = stream.pipe(zlib.createGunzip());
@@ -126,22 +131,34 @@ export class ArchiveTarGz extends ArchiveCommon {
                 });
                 extractFiles.push( tarFileInfo );
             });
-            
-            if ( this.supportType === "tgz" ) {
-                outstream = tarStream.pipe(zlib.createGunzip());
-            } else if ( this.supportType === "tbz2" ) {
-                outstream = tarStream.pipe(bunzip2());
-            }
-            outstream = outstream.pipe( extract );
-            outstream.on("error", (error) => {
-                log.error( "ERROR [%s]", error );
+
+            try {
+                if ( this.supportType === "tgz" ) {
+                    let gunzip = zlib.createGunzip();
+                    gunzip.on("error", (error) => {
+                        log.error( "ERROR [%s]", error );
+                        extract.destroy();
+                        reject(error);    
+                    });
+                    outstream = tarStream.pipe(gunzip);
+                } else if ( this.supportType === "tbz2" ) {
+                    outstream = tarStream.pipe(bunzip2());
+                }
+                outstream = outstream.pipe( extract );
+                outstream.on("error", (error) => {
+                    log.error( "ERROR [%s]", error );
+                    extract.destroy();
+                    reject(error);
+                })
+                .on("finish", () => {
+                    log.info( "finish : [%d]", extractFiles.length );
+                    resolve();
+                });
+            } catch( err ) {
+                log.error( "ERROR [%s]", err );
                 extract.destroy();
-                reject(error);
-            })
-            .on("finish", () => {
-                log.info( "finish : [%d]", extractFiles.length );
-                resolve();
-            });
+                reject(err);
+            }
         });
     }
 
@@ -161,12 +178,21 @@ export class ArchiveTarGz extends ArchiveCommon {
                     reject(error);
                 });
                 if ( this.supportType === "tgz" ) {
-                    outstream = pack.pipe(zlib.createGzip()).pipe(writeTarStream);
+                    let gzip = zlib.createGzip();
+                    gzip.on("error", (error) => {
+                        log.error( "ERROR [%s]", error );
+                        pack.destroy(error);
+                        writeTarStream.close();
+                        reject(error);
+                    });
+                    outstream = pack.pipe(gzip).pipe(writeTarStream);
                 } else {
                     outstream = pack.pipe(writeTarStream);
                 }
                 outstream.on("error", (error) => {
                     log.error( "ERROR [%s]", error );
+                    pack.destroy();
+                    writeTarStream.close();
                     reject(error);
                 }).on("finish", () => {
                     log.info( "Compress Finish !!!" );

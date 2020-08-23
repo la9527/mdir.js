@@ -56,7 +56,8 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         mountListPromise: { name: T( os.platform() === "win32" ? "Func.DriveList" : "Func.MountList"), key: "f11" },
         helpPromise: { name: T("Func.Help"), key: "f1" },
         editorPromise: { name: T("Func.Editor"), key: "f3" },
-        panelSyncPromise: "C-s"
+        panelSyncPromise: "C-s",
+        createArchiveFilePromise: "C-p"
     },
     Menu: {
         keyUp: "up",

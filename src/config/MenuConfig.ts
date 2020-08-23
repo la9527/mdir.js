@@ -38,6 +38,8 @@ export const menuConfig: IFrameMenuConfig = {
             { name: T("Menu.Cut"), method: "Common.clipboardCut" },
             { name: T("Menu.Paste"), method: "Common.clipboardPastePromise" },
             "-",
+            { name : T("Menu.Archive"), method: "Common.createArchiveFilePromise" },
+            "-",
             { name: T("Menu.Find") },
             { name: T("Menu.Diff") }
         ],

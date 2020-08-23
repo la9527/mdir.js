@@ -34,9 +34,16 @@ export abstract class ArchiveCommon {
 
     public compress( sourceFile: File[], baseDir: File, targetDirOrNewFile: File, progress?: ProgressFunc ): Promise<void> {
         return new Promise( async (resolve, reject) => {
-            let tmpWriteFileName = this.originalFile.fullname + ".bak";
+            let tmpWriteFileName = null;
             if ( targetDirOrNewFile.fstype === "file" ) {
                 tmpWriteFileName = targetDirOrNewFile.fullname;
+
+            } else if ( this.originalFile ) {
+                this.originalFile.fullname + ".bak"
+            }
+            
+            if ( !this.originalFile ) {
+                this.supportType = this.isSupportType( targetDirOrNewFile );
             }
             let writeNewTarStream = fs.createWriteStream( tmpWriteFileName );
             try {
@@ -54,8 +61,10 @@ export abstract class ArchiveCommon {
                         await this.packEntry(item, fileHeader, stream, pack);
                     }
                 });
-                fs.unlinkSync( this.originalFile.fullname );
-                fs.renameSync( tmpWriteFileName, this.originalFile.fullname );
+                if ( this.originalFile ) {
+                    fs.unlinkSync( this.originalFile.fullname );
+                    fs.renameSync( tmpWriteFileName, this.originalFile.fullname );
+                }
                 resolve();
             } catch( err ) {
                 if ( fs.existsSync(tmpWriteFileName) ) {

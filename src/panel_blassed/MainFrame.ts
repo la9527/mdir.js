@@ -36,6 +36,8 @@ import { ImageViewBox } from "./widget/ImageBox";
 import { File } from "../common/File";
 import { ArchiveReader } from "../panel/archive/ArchiveReader";
 import { FileReader } from "../panel/FileReader";
+import { ArchiveZip } from "../panel/archive/ArchiveZip";
+import { ArchiveTarGz } from "../panel/archive/ArchiveTarGz";
 
 const log = Logger("MainFrame");
 
@@ -451,12 +453,6 @@ export class MainFrame implements IHelpService {
         }
         this.viewRender();
 
-        if ( (global as any).debug ) {
-            this.screen.key("C-p", () => {
-                process.exit(0);
-            });
-        }
-        
         this.eventStart();
         this.screen.render();
     }
@@ -465,6 +461,12 @@ export class MainFrame implements IHelpService {
         this.screen.off('keypress');
         this.screen.on('keypress', async (ch, keyInfo) => {
             log.debug( "keypress !!!" );
+            if ( ch === "\u001c" && (global as any).debug ) { // Ctrl + |
+                log.debug( "force quit !!!" );
+                process.exit(0);
+                return;
+            }
+
             if ( this._keyLockScreen ) {
                 log.debug( "_keyLockScreen !!!");
                 return;
@@ -1435,6 +1437,105 @@ export class MainFrame implements IHelpService {
                 this.screen.render();
             }, 100);
         }
+    }
+
+    async createArchiveFilePromise(): Promise<RefreshType> {
+        const activePanel = this.activePanel();
+        let selectFiles = [];
+        if ( activePanel instanceof BlessedPanel ) {
+            selectFiles = activePanel.getSelectFiles();
+        } else {
+            return RefreshType.NONE;
+        }
+
+        let reader = activePanel.getReader();
+        let selection = new Selection();
+        selection.set( selectFiles, activePanel.currentPath(), ClipBoard.CLIP_COPY, reader );
+        await selection.expandDir();
+        
+        let files = selection.getFiles();
+        if ( !files || files.length === 0 ) {
+            log.debug( "CLIPBOARD Length: 0");
+            return RefreshType.NONE;
+        }
+
+        const archiveType = await messageBox({
+            parent: this.baseWidget,
+            title: T("Archive"),
+            msg: T("What archive one would you choose?"),
+            button: [ "ZIP", "TAR.GZ" ]
+        });
+        if ( !archiveType ) {
+            return RefreshType.NONE;
+        }
+
+        let name = files[0].name;
+        if ( archiveType === "ZIP" ) {
+            name += ".zip";
+        } else if ( archiveType === "TAR.GZ" ) {
+            name += ".tar.gz";
+        }
+        const result = await inputBox( { 
+            parent: this.baseWidget,
+            title: T("Archive File"),
+            defaultText: name,
+            button: [ T("OK"), T("Cancel") ]
+        });
+
+        if ( result && result[1] === T("OK") && result[0] ) {
+            const progressBox = new ProgressBox( { title: T("Message.Archive"), msg: T("Message.Calculating"), cancel: () => {
+                reader.isUserCanceled = true;
+            }}, { parent: this.baseWidget } );
+            this.screen.render();
+            await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
+            
+            let copyBytes = 0;
+            let befCopyInfo = { beforeTime: Date.now(), copyBytes };
+        
+            let refreshTimeMs = 100;
+            let fullFileSize = selection.getExpandSize();
+            const progressStatus: ProgressFunc = ( source, processSize, size, chunkLength ) => {
+                copyBytes = processSize;
+                let repeatTime = Date.now() - befCopyInfo.beforeTime;
+                if ( repeatTime > refreshTimeMs ) {
+                    let bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
+                    let lastText = (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
+                                    (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(fullFileSize, false, 1).trim());
+                    progressBox.updateProgress( source.fullname, lastText, copyBytes, fullFileSize );
+                    befCopyInfo.beforeTime = Date.now();
+                    befCopyInfo.copyBytes = copyBytes;
+                }
+                return reader.isUserCanceled ? ProgressResult.USER_CANCELED : ProgressResult.SUCCESS;
+            };
+
+            try {
+                let targetFile = reader.convertFile( activePanel.currentPath().fullname + reader.sep() + result[0], { virtualFile: true } );
+                log.debug( "ORIGINAL SOURCE : [%s]", JSON.stringify(files.map( item => item.toString() ), null, 2) );
+                if ( archiveType === "ZIP" ) {
+                    await new ArchiveZip().compress( files, activePanel.currentPath(), targetFile, progressStatus );
+                    await activePanel.refreshPromise();
+                    return RefreshType.ALL;
+                } else if ( archiveType === "TAR.GZ" ) {
+                    await new ArchiveTarGz().compress( files, activePanel.currentPath(), targetFile, progressStatus );
+                    await activePanel.refreshPromise();
+                    return RefreshType.ALL;
+                }
+            } catch( e ) {
+                log.error( e );
+                await messageBox( {
+                    parent: this.baseWidget,
+                    title: T("ERROR"),
+                    msg: e.stack,
+                    textAlign: "left",
+                    scroll: true,
+                    button: [ T("OK") ]
+                });
+                return RefreshType.ALL;
+            } finally {
+                progressBox.destroy();
+            }
+        }
+        return RefreshType.NONE;
     }
 
     static instance() {
