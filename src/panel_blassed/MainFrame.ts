@@ -229,6 +229,13 @@ export class MainFrame implements IHelpService {
         if ( cmd ) {
             const panel = this.activePanel();
             if ( panel instanceof BlessedPanel && panel.currentFile() ) {
+                let wrap = (text) => {
+                    if ( os.platform() === "win32" ) {
+                        return `""${text}""`;
+                    }
+                    return `"${text}"`;
+                };
+
                 /**
                     %1,%F	filename.ext (ex. test.txt)
                     %N 	    filename (ex. test)
@@ -246,15 +253,15 @@ export class MainFrame implements IHelpService {
                  */
                 result.cmd = result.cmd.replace( /(%[1|F|N|E|S|A|D|Q|P|W|B|T|R])/g, (substr) => {
                     if ( substr.match( /(%1|%F)/ ) ) {
-                        return panel.currentFile().fullname;
+                        return wrap(panel.currentFile().fullname);
                     } else if ( substr === "%N" ) {
-                        return path.parse(panel.currentFile().fullname).name;
+                        return wrap(path.parse(panel.currentFile().fullname).name);
                     } else if ( substr === "%E" ) {
-                        return panel.currentFile().extname;
+                        return wrap(panel.currentFile().extname);
                     } else if ( substr === "%S" ) {
-                        return panel.getSelectFiles().map(item => `"${item.fullname}"`).join(" ");
+                        return panel.getSelectFiles().map(item => wrap(item.fullname)).join(" ");
                     } else if ( substr === "%A" ) {
-                        return panel.currentPath().fullname;
+                        return wrap(panel.currentPath().fullname);
                     } else if ( substr === "%%" ) {
                         return "%";
                     } else if ( substr === "%Q" ) {

@@ -41,6 +41,8 @@ $ mdir
 
 ### Version History
 
+- v0.8.4
+    - [bugfix] execute a file name with blank characters.(win32)
 - v0.8.3
     - Add option to select a program when running the program. (Ctrl+R)
     - Add configuration file.
