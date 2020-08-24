@@ -218,7 +218,7 @@ export class MainFrame implements IHelpService {
         }
     }
 
-    private commandParsing( cmd: string ) {
+    private commandParsing( cmd: string, isInsideTerminal: boolean = false ) {
         const result = {
             cmd,
             ask: false,
@@ -230,7 +230,7 @@ export class MainFrame implements IHelpService {
         };
         if ( cmd ) {
             const panel = this.activePanel();
-            const isInsideTerminal = cmd.indexOf("%T") > -1;
+            isInsideTerminal = isInsideTerminal || cmd.indexOf("%T") > -1;
 
             if ( panel instanceof BlessedPanel && panel.currentFile() ) {
                 let wrap = (text) => {
@@ -299,7 +299,7 @@ export class MainFrame implements IHelpService {
     @Help(T("Help.Terminal"))
     async terminalPromise(isEscape = false, shellCmd: string = null ) {
         let view = this.blessedFrames[this.activeFrameNum];        
-        let result = this.commandParsing( shellCmd );
+        let result = this.commandParsing( shellCmd, true );
         let shell = result.cmd ? result.cmd.split(" ") : null;
 
         if ( view instanceof BlessedPanel ) {
