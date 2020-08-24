@@ -1455,7 +1455,6 @@ export class MainFrame implements IHelpService {
         
         let files = selection.getFiles();
         if ( !files || files.length === 0 ) {
-            log.debug( "CLIPBOARD Length: 0");
             return RefreshType.NONE;
         }
 
