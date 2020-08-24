@@ -230,12 +230,14 @@ export class MainFrame implements IHelpService {
         };
         if ( cmd ) {
             const panel = this.activePanel();
+            const isInsideTerminal = cmd.indexOf("%T") > -1;
+
             if ( panel instanceof BlessedPanel && panel.currentFile() ) {
                 let wrap = (text) => {
                     if ( os.platform() === "win32" ) {
                         return `""${text}""`;
                     }
-                    return `"${text}"`;
+                    return isInsideTerminal ? `${text}` : `"${text}"`;
                 };
 
                 /**
