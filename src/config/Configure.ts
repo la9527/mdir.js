@@ -10,16 +10,16 @@ const log = Logger("Configure");
 
 export interface IMimeTypeAlias {
     name: {
-        [aliasName: string]: string | string[]
-    },
+        [aliasName: string]: string | string[];
+    };
     ext: {
-        [aliasName: string]: string | string[]
-    }
+        [aliasName: string]: string | string[];
+    };
 }
 
 export interface IProgramServiceInfo {
     name: string;
-    command?: string | { win32: string; darwin: string; linux: string; };
+    command?: string | { win32: string; darwin: string; linux: string };
     method?: string;
     methodParam?: string[];
     mterm?: boolean;
@@ -40,7 +40,7 @@ export interface IConfigure {
     ProgramMatching: IProgramMatching;
     Option: {
         [name: string]: string | boolean | number;
-    }
+    };
 }
 
 export interface IProgramInfo {
@@ -93,20 +93,20 @@ export default class Configure {
     }
 
     public getMimeTypeAlias( file: File ): string {
-        let mimeTypeAlias = this.configInfo.MimeTypeAlias;
-        let filename = path.parse(file.name).name.toLowerCase();
-        let fileext = file.extname.toLowerCase();
+        const mimeTypeAlias = this.configInfo.MimeTypeAlias;
+        const filename = path.parse(file.name).name.toLowerCase();
+        const fileext = file.extname.toLowerCase();
 
-        let convertStrSplitArray = (item: string | string[]): string[] => {
+        const convertStrSplitArray = (item: string | string[]): string[] => {
             if ( !item ) {
                 return [];
             }
-            let text = Array.isArray(item) ? item.join("") : item;
+            const text = Array.isArray(item) ? item.join("") : item;
             return text ? (text as string).toLowerCase().split(";").filter(item => !!item) : [];
         };
 
         let result = Object.keys(mimeTypeAlias.name)
-                        .find( aliasName => convertStrSplitArray(mimeTypeAlias.name[aliasName]).indexOf(filename) > -1);
+            .find( aliasName => convertStrSplitArray(mimeTypeAlias.name[aliasName]).indexOf(filename) > -1);
         if ( result ) {
             return result;
         }
@@ -115,16 +115,16 @@ export default class Configure {
         return result;
     }
 
-    protected convertCmdProgramInfo( cmdText: string, file: File ): IProgramInfo {
-        let item : IProgramInfo = null;
-        let matchInfo = cmdText.match( /<(\w+)>/ );
+    protected convertCmdProgramInfo( cmdText: string, _file: File ): IProgramInfo {
+        //let item : IProgramInfo = null;
+        const matchInfo = cmdText.match( /<(\w+)>/ );
         if ( matchInfo.length !== 2 ) {
             return {
                 orgCmdText: cmdText
             };
         }
 
-        let result = this.configInfo.ProgramService[ matchInfo[1] ];
+        const result = this.configInfo.ProgramService[ matchInfo[1] ];
         if ( !result ) {
             throw new Error("parsing fail: " + cmdText );
         }

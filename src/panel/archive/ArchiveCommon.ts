@@ -33,31 +33,32 @@ export abstract class ArchiveCommon {
     public abstract uncompress( extractDir: File, files ?: File[], progress?: ProgressFunc ): Promise<void>;
 
     public compress( sourceFile: File[], baseDir: File, targetDirOrNewFile: File, progress?: ProgressFunc ): Promise<void> {
+        // eslint-disable-next-line no-async-promise-executor
         return new Promise( async (resolve, reject) => {
             let tmpWriteFileName = null;
             if ( targetDirOrNewFile.fstype === "file" ) {
                 tmpWriteFileName = targetDirOrNewFile.fullname;
 
             } else if ( this.originalFile ) {
-                this.originalFile.fullname + ".bak"
+                this.originalFile.fullname + ".bak";
             }
             
             if ( !this.originalFile ) {
                 this.supportType = this.isSupportType( targetDirOrNewFile );
             }
-            let writeNewTarStream = fs.createWriteStream( tmpWriteFileName );
+            const writeNewTarStream = fs.createWriteStream( tmpWriteFileName );
             try {
                 await this.commonCompress( writeNewTarStream, async (pack) => {
                     if ( targetDirOrNewFile.fstype === "archive" ) {
                         await this.originalPacking(pack, null, progress);
                     }            
-                    for ( let item of sourceFile ) {
+                    for ( const item of sourceFile ) {
                         let stream = null;
                         if ( !item.dir && !item.link ) {
                             stream = fs.createReadStream(item.fullname);
                         }
-                        let targetDir = targetDirOrNewFile.fstype === "archive" ? targetDirOrNewFile.fullname : "";
-                        let fileHeader = this.convertFileToHeader(item, baseDir, targetDir);
+                        const targetDir = targetDirOrNewFile.fstype === "archive" ? targetDirOrNewFile.fullname : "";
+                        const fileHeader = this.convertFileToHeader(item, baseDir, targetDir);
                         await this.packEntry(item, fileHeader, stream, pack);
                     }
                 });
@@ -85,9 +86,10 @@ export abstract class ArchiveCommon {
             }
             return true;
         };
+        // eslint-disable-next-line no-async-promise-executor
         return new Promise( async (resolve, reject) => {
-            let tmpWriteFileName = this.originalFile.fullname + ".bak";
-            let writeNewTarStream = fs.createWriteStream( tmpWriteFileName );
+            const tmpWriteFileName = this.originalFile.fullname + ".bak";
+            const writeNewTarStream = fs.createWriteStream( tmpWriteFileName );
             try {
                 await this.commonCompress( writeNewTarStream, async (pack) => {
                     await this.originalPacking( pack, filterEntryFunc, progress );
@@ -112,9 +114,10 @@ export abstract class ArchiveCommon {
             return true;
         };
 
+        // eslint-disable-next-line no-async-promise-executor
         return new Promise( async (resolve, reject) => {
-            let tmpWriteFileName = this.originalFile.fullname + ".bak";
-            let writeNewTarStream = fs.createWriteStream( tmpWriteFileName );
+            const tmpWriteFileName = this.originalFile.fullname + ".bak";
+            const writeNewTarStream = fs.createWriteStream( tmpWriteFileName );
             try {
                 await this.commonCompress( writeNewTarStream, async (pack) => {
                     await this.originalPacking( pack, filterEntryFunc, progress );
@@ -137,13 +140,13 @@ export abstract class ArchiveCommon {
     protected abstract convertFileToHeader(file: File, srcBaseDir: File, targetDir: string): any;
 
     protected subDirectoryCheck(files: File[]): File[] {
-        let dirFilter = files.filter( item => item.dir );
-        let addFiles: File[] = [];
+        const dirFilter = files.filter( item => item.dir );
+        const addFiles: File[] = [];
 
         files.forEach( item => {
             if ( item.fullname !== path.posix.sep && item.dirname !== path.posix.sep && addFiles.findIndex( (addItem) => addItem.fullname === item.dirname + "/" ) === -1 ) {
                 if ( dirFilter.findIndex( (dirItem) => dirItem.fullname === item.dirname + path.posix.sep ) === -1 ) {
-                    let file = item.clone();
+                    const file = item.clone();
                     file.fullname = item.dirname + path.posix.sep;
                     file.name = path.basename(item.dirname);
                     file.orgname = file.fullname.replace(/^\//, "");
@@ -161,8 +164,8 @@ export abstract class ArchiveCommon {
         try {
             let filename = extractDir.fullname + ((filesBaseDir && filesBaseDir !== "/") ? file.fullname.substr(filesBaseDir.length) : file.fullname);
             filename = path.normalize( filename );
-            let dirname = path.dirname(filename);
-            let mode = convertAttrToStatMode(file);
+            const dirname = path.dirname(filename);
+            const mode = convertAttrToStatMode(file);
 
             // console.log( filename, dirname );
             if ( !fs.existsSync( dirname ) ) {
@@ -191,8 +194,8 @@ export abstract class ArchiveCommon {
                 readStream && readStream.resume();
                 next("directory");
             } else if ( readStream ) {
-                let writeStream = fs.createWriteStream(filename, { mode });
-                let rejectFunc = (err) => {
+                const writeStream = fs.createWriteStream(filename, { mode });
+                const rejectFunc = (err) => {
                     readStream.destroy();
                     writeStream.end(() => {
                         try {
@@ -202,9 +205,9 @@ export abstract class ArchiveCommon {
                     log.debug( "Uncompress error - " + err );
                     next("error", err);
                 };
-                readStream.on('error', rejectFunc);
-                writeStream.on('error', rejectFunc);
-                writeStream.on('finish', () => {
+                readStream.on("error", rejectFunc);
+                writeStream.on("error", rejectFunc);
+                writeStream.on("finish", () => {
                     try {
                         fs.chownSync( filename, file.uid, file.gid );
                     } catch( e ) {
@@ -223,7 +226,7 @@ export abstract class ArchiveCommon {
             log.error( "%s", e.stack );
             next("error", e);
         }
-    };
+    }
 
     protected decodeString(buffer) {
         let result = null;

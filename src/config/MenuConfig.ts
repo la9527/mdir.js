@@ -2,13 +2,13 @@ import { T } from "../common/Translation";
 
 export interface ISubMenuConfig {
     name: string;
-    method ?: string;
-    funcParam ?: any[];
-    key ?: string;
+    method?: string;
+    funcParam?: any[];
+    key?: string;
 }
 
 export interface IMainMenuConfig {
-    [mainMenu: string]: (ISubMenuConfig | string)[]
+    [mainMenu: string]: (ISubMenuConfig | string)[];
 }
 
 export interface IFrameMenuConfig {
@@ -66,7 +66,7 @@ export const menuConfig: IFrameMenuConfig = {
             { name: T("Menu.Column 4"), method: "Panel.setViewColumn", funcParam: [ 4 ] },
             "-",
             { name: T("Menu.Hidden file on/off"), method: "Panel.toggleExcludeHiddenFilePromise" },
-            (process.platform !== 'win32' ? { name: T("Menu.Owner show on/off"), method: "Panel.viewOwnerPromise" } : null),
+            (process.platform !== "win32" ? { name: T("Menu.Owner show on/off"), method: "Panel.viewOwnerPromise" } : null),
             { name: T("Menu.Sort change"), method: "Panel.sortChangePromise" },
             { name: T("Menu.Sort Asc/Descend"), method: "Panel.sortReversePromise" },
             "-",

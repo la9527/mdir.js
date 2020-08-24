@@ -2,7 +2,7 @@ export enum STATE_CLIPBOARD {
     Copy,
     Cut,
     None
-};
+}
 
 export class EditorClipboard {
     clips: string[];
@@ -23,7 +23,7 @@ export class EditorClipboard {
         }
         return (global as any).editorClipboard;
     }
-};
+}
 
 /// Undo, Redo Implement
 export class DoData {

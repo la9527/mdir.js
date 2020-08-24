@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { sprintf } from "sprintf-js";
 import { strWidth, isSurrogate, charWidth } from "neo-blessed/lib/unicode";
 import { Logger } from "./Logger";
@@ -46,7 +47,7 @@ export class StringUtils {
         if ( text.length <= maxWidth ) {
             return text;
         }
-        let cutPos = Math.floor(maxWidth / 2);
+        const cutPos = Math.floor(maxWidth / 2);
         return text.substr(0, cutPos - 3) + "..." + text.substr( text.length - cutPos );
     }
 
@@ -78,7 +79,7 @@ export class StringUtils {
     // ("123456", 3, "7", true) ==> "1237456"
     // ("1", 0, 1) ===> ""
     static scrStrReplace( text: string, firstPos: number, removeLenChStr: string | number = -1, isInsert: boolean = false ): string {
-        let resultText = StringUtils.scrSubstr(text, 0, firstPos);
+        const resultText = StringUtils.scrSubstr(text, 0, firstPos);
         if ( typeof(removeLenChStr) == "string" ) {
             if ( isInsert ) {
                 return resultText + removeLenChStr + StringUtils.scrSubstr(text, firstPos);

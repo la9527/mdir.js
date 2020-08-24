@@ -1,3 +1,4 @@
+/* eslint-disable no-async-promise-executor */
 import * as tar from "tar-stream";
 import * as path from "path";
 import * as fs from "fs";
@@ -6,17 +7,17 @@ import * as bunzip2 from "unbzip2-stream";
 
 import { ArchiveCommon } from "./ArchiveCommon";
 import { File, FileLink } from "../../common/File";
-import { Reader, ProgressFunc, IMountList, ProgressResult } from "../../common/Reader";
+import { ProgressFunc, ProgressResult } from "../../common/Reader";
 import { Logger } from "../../common/Logger";
-import { Transform, Readable, Stream } from "stream";
-import { convertAttrToStatMode, FileReader } from "../FileReader";
+import { Transform, Readable } from "stream";
+import { convertAttrToStatMode } from "../FileReader";
 
 const log = Logger("archivetar");
 
 export class ArchiveTarGz extends ArchiveCommon {
     protected isSupportType( file: File ): string {
         let supportType = null;
-        let name = file.name;
+        const name = file.name;
         if ( name.match( /(\.tar\.gz$|\.tgz$)/ ) ) {
             supportType = "tgz";
         } else if ( name.match( /(\.tar\.bz2$|\.tar\.bz$|\.tbz2$|\.tbz$)/ ) ) {
@@ -34,7 +35,7 @@ export class ArchiveTarGz extends ArchiveCommon {
     getArchivedFiles(progress?: ProgressFunc): Promise<File[]> {
         return new Promise( (resolve, reject) => {
             if ( this.supportType === "gz" ) {
-                let file = this.originalFile.clone();
+                const file = this.originalFile.clone();
                 file.fstype = "archive";
                 file.name = file.name.substr(file.name.length - 3);
                 file.fullname = file.fullname.substr(file.fullname.length - 3);
@@ -43,7 +44,7 @@ export class ArchiveTarGz extends ArchiveCommon {
             }
 
             let resultFiles = [];
-            let file = this.originalFile;
+            const file = this.originalFile;
             let stream: any = fs.createReadStream(file.fullname);
             let chunkSum = 0;
 
@@ -59,7 +60,7 @@ export class ArchiveTarGz extends ArchiveCommon {
             stream = stream.pipe( reportProgress );
 
             let outstream: any = null;
-            let extract = tar.extract();
+            const extract = tar.extract();
             extract.on("entry", (header, stream, next) => {
                 resultFiles.push(this.convertTarToFile(header));
                 stream.resume();
@@ -69,7 +70,7 @@ export class ArchiveTarGz extends ArchiveCommon {
             stream.on("error", (error) => {
                 log.error( error );
                 reject(error);
-            })
+            });
             
             if ( this.supportType === "tgz" ) {
                 outstream = stream.pipe(zlib.createGunzip());
@@ -80,8 +81,7 @@ export class ArchiveTarGz extends ArchiveCommon {
             outstream.on("error", (error) => {
                 log.error( error );
                 reject(error);
-            })
-            .on("finish", () => {
+            }).on("finish", () => {
                 log.info( "finish : [%d]", resultFiles.length );
                 resultFiles = this.subDirectoryCheck( resultFiles );
                 log.info( "finish 2 : [%d]", resultFiles.length );
@@ -90,15 +90,15 @@ export class ArchiveTarGz extends ArchiveCommon {
         });
     }
 
-    uncompress( extractDir: File, files ?: File[], progress?: ProgressFunc ): Promise<void> {
+    uncompress( extractDir: File, files?: File[], progress?: ProgressFunc ): Promise<void> {
         return new Promise((resolve, reject) => {
-            let extractFiles = [];
-            let file = this.originalFile;
-            let tarStream: any = fs.createReadStream(file.fullname);
-            let filesBaseDir = files && files.length > 0 ? files[0].dirname : "";
+            const extractFiles = [];
+            const file = this.originalFile;
+            const tarStream: any = fs.createReadStream(file.fullname);
+            const filesBaseDir = files && files.length > 0 ? files[0].dirname : "";
 
             let outstream: any = null;
-            let extract = tar.extract();
+            const extract = tar.extract();
             extract.on("entry", (header, stream, next: any) => {
                 const tarFileInfo = this.convertTarToFile(header);
                 if ( files ) {
@@ -134,7 +134,7 @@ export class ArchiveTarGz extends ArchiveCommon {
 
             try {
                 if ( this.supportType === "tgz" ) {
-                    let gunzip = zlib.createGunzip();
+                    const gunzip = zlib.createGunzip();
                     gunzip.on("error", (error) => {
                         log.error( "ERROR [%s]", error );
                         extract.destroy();
@@ -149,8 +149,7 @@ export class ArchiveTarGz extends ArchiveCommon {
                     log.error( "ERROR [%s]", error );
                     extract.destroy();
                     reject(error);
-                })
-                .on("finish", () => {
+                }).on("finish", () => {
                     log.info( "finish : [%d]", extractFiles.length );
                     resolve();
                 });
@@ -162,7 +161,7 @@ export class ArchiveTarGz extends ArchiveCommon {
         });
     }
 
-    protected commonCompress( writeTarStream: fs.WriteStream, packFunc: (pack: tar.Pack) => Promise<void>, progress?: ProgressFunc ): Promise<void> {
+    protected commonCompress( writeTarStream: fs.WriteStream, packFunc: (pack: tar.Pack) => Promise<void>, _progress?: ProgressFunc ): Promise<void> {
         const pack = tar.pack();
         return new Promise( async (resolve, reject) => {
             if ( this.supportType === "tbz2" ) {
@@ -178,7 +177,7 @@ export class ArchiveTarGz extends ArchiveCommon {
                     reject(error);
                 });
                 if ( this.supportType === "tgz" ) {
-                    let gzip = zlib.createGzip();
+                    const gzip = zlib.createGzip();
                     gzip.on("error", (error) => {
                         log.error( "ERROR [%s]", error );
                         pack.destroy(error);
@@ -211,15 +210,15 @@ export class ArchiveTarGz extends ArchiveCommon {
 
     protected originalPacking( pack: tar.Pack, filterEntryFunc: (tarFileInfo: File, header) => boolean, progress?: ProgressFunc ): Promise<void> {
         return new Promise( (resolve, reject) => {
-            let tarStream: any = fs.createReadStream(this.originalFile.fullname);
-            let extract = tar.extract();
+            const tarStream: any = fs.createReadStream(this.originalFile.fullname);
+            const extract = tar.extract();
             extract.on("entry", (header, stream, next: any) => {
                 const tarFileInfo = this.convertTarToFile(header);
 
                 if ( filterEntryFunc && !filterEntryFunc( tarFileInfo, header ) ) {
-                    stream.on('end', function() {
+                    stream.on("end", function() {
                         next();
-                      })
+                    });
                     stream.resume();
                     return;
                 }
@@ -259,8 +258,7 @@ export class ArchiveTarGz extends ArchiveCommon {
                 log.error( "ERROR [%s]", error );
                 extract.destroy();
                 reject(error);
-            })
-            .on("finish", () => {
+            }).on("finish", () => {
                 log.info( "originalFileLoader finish !!" );
                 resolve();
             });
@@ -273,7 +271,7 @@ export class ArchiveTarGz extends ArchiveCommon {
                 log.debug( "Insert Directory : [%s] [%s]", file.fullname, header.name );
                 pack.entry( header, (err) => err ? reject(err) : resolve());
             } else {
-                let entry = pack.entry( header, (err) => {
+                const entry = pack.entry( header, (err) => {
                     log.debug( "Insert File : [%s] [%s]", file.fullname, header.name );
                     if ( err ) {
                         reject(err);
@@ -291,7 +289,7 @@ export class ArchiveTarGz extends ArchiveCommon {
                 }
             }
         });
-    };
+    }
 
     private convertAttr( stats: tar.Headers ): string {
         const fileMode: string[] = "----------".split("");    
@@ -311,10 +309,10 @@ export class ArchiveTarGz extends ArchiveCommon {
         fileMode[8] = stats.mode & fs.constants.S_IWOTH ? "w" : "-";
         fileMode[9] = stats.mode & fs.constants.S_IXOTH ? "x" : "-";
         return fileMode.join("");
-    };
+    }
 
     private convertTarToFile(header: tar.Headers): File {
-        let file = new File();
+        const file = new File();
         file.fstype = "archive";
         file.fullname = header.name[0] !== path.posix.sep ? path.posix.sep + header.name : header.name;
         file.orgname = header.name;
@@ -330,9 +328,9 @@ export class ArchiveTarGz extends ArchiveCommon {
         file.root = this.originalFile.fullname;
         file.attr = this.convertAttr(header);
         file.size = header.size;
-        file.dir = file.attr[0] === 'd';
+        file.dir = file.attr[0] === "d";
         return file;
-    };
+    }
 
     protected convertFileToHeader(file: File, srcBaseDir: File, targetDir: string): tar.Headers {
         const header: tar.Headers = {
@@ -355,5 +353,5 @@ export class ArchiveTarGz extends ArchiveCommon {
             header.size = 0;
         }
         return header;
-    };
+    }
 }

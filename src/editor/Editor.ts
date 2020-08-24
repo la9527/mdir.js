@@ -11,31 +11,31 @@ import * as iconv from "iconv-lite";
 const log = Logger( "editor" );
 
 export interface IViewBuffer {
-    textLine ?: number;       // Text Position
-    viewLine ?: number;       // screen view position
-    nextLineNum ?: number;    // if over the one line, line number.
-    isNext ?: boolean;        // Is this line over the one line?
-    text ?: string;
-    selectInfo ?: {           // selected position
-        all ?: boolean;         // selected line all
-        start ?: number;        // selected start position 
-        end ?: number;          // selected end position
-    }
-};
+    textLine?: number;       // Text Position
+    viewLine?: number;       // screen view position
+    nextLineNum?: number;    // if over the one line, line number.
+    isNext?: boolean;        // Is this line over the one line?
+    text?: string;
+    selectInfo?: {           // selected position
+        all?: boolean;         // selected line all
+        start?: number;        // selected start position 
+        end?: number;          // selected end position
+    };
+}
 
 export interface IEditSelect {
     x1: number;
     y1: number; // select first position(x,y)
     x2: number; 
     y2: number; // select last position (x,y)
-};
+}
 
 export enum EDIT_MODE {
     EDIT,            /// Edit Mode
     SELECT,            /// Select Mode
     BLOCK,            /// Block Select Mode
     SHIFT_SELECT    /// Shift Mode
-};
+}
 
 export abstract class Editor {
     line: number = 0;
@@ -76,6 +76,7 @@ export abstract class Editor {
     doInfo: DoData[];
     lastDoInfoLength: number = 0;
 
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     constructor() {
         
     }
@@ -87,14 +88,14 @@ export abstract class Editor {
     abstract postLoad(): void;
     abstract postUpdateLines( line?: number, height?: number ): void;
 
-    abstract inputBox(title: string, text: string, inputedText ?: string, buttons ?: string[]): Promise<string[]>;
-    abstract messageBox(title, text, buttons ?: string[]): Promise<string>;
+    abstract inputBox(title: string, text: string, inputedText?: string, buttons?: string[]): Promise<string[]>;
+    abstract messageBox(title, text, buttons?: string[]): Promise<string>;
 
     public selectSort(editSelect: IEditSelect) {
         if ( !editSelect ) return;
 
-        let swap = ( obj: any, keyA: string, keyB: string ) => {
-            let tmp = obj[keyA];
+        const swap = ( obj: any, keyA: string, keyB: string ) => {
+            const tmp = obj[keyA];
             obj[keyA] = obj[keyB];
             obj[keyB] = tmp;
         };
@@ -121,21 +122,21 @@ export abstract class Editor {
         }
 
         if ( this.editSelect.y1 === this.editSelect.y2 ) {
-            let str = this.buffers[ this.editSelect.y1 ];
+            const str = this.buffers[ this.editSelect.y1 ];
 
             this.doInfo.push( new DoData(this.curLine, this.curColumn, [ str ] ));
 
-            let str1 = StringUtils.scrSubstr(str, 0, this.editSelect.x1);
-            let str2 = StringUtils.scrSubstr(str, this.editSelect.x2, StringUtils.strWidth(str) - this.editSelect.x2 );
+            const str1 = StringUtils.scrSubstr(str, 0, this.editSelect.x1);
+            const str2 = StringUtils.scrSubstr(str, this.editSelect.x2, StringUtils.strWidth(str) - this.editSelect.x2 );
             this.buffers[ this.editSelect.y1 ] = str1 + str2;
         } else {
-            let saveTexts = [];
+            const saveTexts = [];
 
-            let str1 = this.buffers[ this.editSelect.y1 ];
-            let str2 = this.buffers[ this.editSelect.y2 ];
-            let str3 = StringUtils.scrSubstr(str1, 0, this.editSelect.x1);
-            let str4 = StringUtils.scrSubstr(str2, this.editSelect.x2);
-            let str = str3 + str4;
+            const str1 = this.buffers[ this.editSelect.y1 ];
+            const str2 = this.buffers[ this.editSelect.y2 ];
+            const str3 = StringUtils.scrSubstr(str1, 0, this.editSelect.x1);
+            const str4 = StringUtils.scrSubstr(str2, this.editSelect.x2);
+            const str = str3 + str4;
 
             for ( let y = this.editSelect.y1; y < this.editSelect.y2; ++y ) {
                 if ( this.editSelect.y1 === y ) {
@@ -186,11 +187,11 @@ export abstract class Editor {
             }
         }
 
-        let isInside = (start: number, end: number, pos: number) => {
+        const isInside = (start: number, end: number, pos: number) => {
             return (start <= pos && end >= pos);
         };
 
-        let editSelect = { ...this.editSelect };
+        const editSelect = { ...this.editSelect };
         this.selectSort(editSelect);
 
         log.debug( "screenMemSave: line [%d] column [%d]", line, column);
@@ -200,7 +201,7 @@ export abstract class Editor {
             if (viewLine < 0) return;
     
             this.viewBuffers = [];
-            let strLineToken = new StringLineToken();
+            const strLineToken = new StringLineToken();
 
             let isNext = false;
             for ( let t = 0; t < line; t++ ) {
@@ -213,8 +214,8 @@ export abstract class Editor {
                     if ( viewLine >= this.buffers.length ) break;
                     strLineToken.setString( this.buffers[viewLine++], column );
                 }
-                let { text: viewStr, pos, endPos } = strLineToken.getToken() || { text: "", pos: 0 };
-                let lineInfo: IViewBuffer = {};
+                const { text: viewStr, pos, endPos } = strLineToken.getToken() || { text: "", pos: 0 };
+                const lineInfo: IViewBuffer = {};
                 lineInfo.viewLine = t;
                 lineInfo.textLine = viewLine - 1;
                 lineInfo.text = viewStr;
@@ -222,8 +223,8 @@ export abstract class Editor {
                 lineInfo.nextLineNum = strLineToken.curLine;
 
                 if ( this.editMode === EDIT_MODE.SELECT || this.editMode === EDIT_MODE.SHIFT_SELECT ) {
-                    let selectInfo: any = {};
-                    let { x1, y1, x2, y2 } = editSelect;
+                    const selectInfo: any = {};
+                    const { x1, y1, x2, y2 } = editSelect;
                     if ( y1 < lineInfo.textLine && y2 > lineInfo.textLine ) {
                         selectInfo.all = true;
                     } else if ( y1 === lineInfo.textLine && y2 === lineInfo.textLine ) {
@@ -324,7 +325,7 @@ export abstract class Editor {
             throw new Error("file size is too large. " + file.size);
         }
 
-        let fsData: Buffer = fs.readFileSync( file.fullname ) as any;
+        const fsData: Buffer = fs.readFileSync( file.fullname ) as any;
         if ( !fsData ) {
             return false;
         }
@@ -357,7 +358,7 @@ export abstract class Editor {
                 this.buffers = [];
                 let dosMode = false;
                 data.split("\n").map( (item) => {
-                    let item2 = item.replace( new RegExp("\r"), "");
+                    const item2 = item.replace( "\r", "" );
                     if ( item2 !== item ) {
                         dosMode = true;
                     }
@@ -377,17 +378,17 @@ export abstract class Editor {
     }
 
     save( file: File, encoding: string = null, isBackup: boolean = false ): boolean {
-        let fileName = file.fullname;
+        const fileName = file.fullname;
         if ( !fileName ) {
             return false;
         }
 
-        let mode = convertAttrToStatMode(file) || 0o644;
-        let tmpFileName = fileName + ".tmp";
+        const mode = convertAttrToStatMode(file) || 0o644;
+        const tmpFileName = fileName + ".tmp";
         try {
-            let saveData = this.buffers.join( this.isDosMode ? "\r\n" : "\n" );
+            const saveData = this.buffers.join( this.isDosMode ? "\r\n" : "\n" );
             if ( this.encoding !== "utf8" ) {
-                let bufSaveData: Buffer = iconv.encode(saveData, this.encoding);
+                const bufSaveData: Buffer = iconv.encode(saveData, this.encoding);
                 fs.writeFileSync( tmpFileName, bufSaveData, { mode });
             } else {
                 fs.writeFileSync( tmpFileName, saveData, { 
@@ -421,7 +422,7 @@ export abstract class Editor {
 
     keyLeft() {
         if ( this.curColumn > 0 ) {
-            let text = StringUtils.scrSubstr(this.buffers[this.curLine], 0, this.curColumn);
+            const text = StringUtils.scrSubstr(this.buffers[this.curLine], 0, this.curColumn);
             this.curColumn = StringUtils.strWidth(text.substr(0, text.length - 1));
         } else if ( this.curLine > 0) {
             this.curColumn = StringUtils.strWidth(this.buffers[ --this.curLine ]);
@@ -430,10 +431,10 @@ export abstract class Editor {
     }
 
     keyRight() {
-        let str = this.buffers[this.curLine];
-        let strlen = StringUtils.strWidth(str);
+        const str = this.buffers[this.curLine];
+        const strlen = StringUtils.strWidth(str);
         if ( strlen > this.curColumn ) {
-            let text = StringUtils.scrSubstr(this.buffers[this.curLine], this.curColumn, StringUtils.strWidth("\t"));
+            const text = StringUtils.scrSubstr(this.buffers[this.curLine], this.curColumn, StringUtils.strWidth("\t"));
             if ( text ) {
                 this.curColumn += StringUtils.strWidth(text.substr(0, 1));
             }
@@ -453,7 +454,7 @@ export abstract class Editor {
             this.curColumn = this.curColumnMax;
         }
 
-        let strlen = StringUtils.strWidth(this.buffers[this.curLine]);
+        const strlen = StringUtils.strWidth(this.buffers[this.curLine]);
         if ( strlen < this.curColumn ) {
             this.curColumn = strlen;
         } else {
@@ -475,7 +476,7 @@ export abstract class Editor {
             this.curColumn = this.curColumnMax;
         }
 
-        let strlen = StringUtils.strWidth(this.buffers[this.curLine]);
+        const strlen = StringUtils.strWidth(this.buffers[this.curLine]);
         if ( strlen < this.curColumn ) {
             this.curColumn = strlen;
         } else {
@@ -526,14 +527,14 @@ export abstract class Editor {
         if ( this.curColumn < StringUtils.strWidth(line) ) {
             this.doInfo.push( new DoData(this.curLine, this.curColumn, [ line ]));
 
-            let firstText = StringUtils.scrSubstr(line, 0, this.curColumn);
-            let lastText = line.substr(firstText.length + 1);
+            const firstText = StringUtils.scrSubstr(line, 0, this.curColumn);
+            const lastText = line.substr(firstText.length + 1);
 
             line = firstText + lastText;
             this.buffers[this.curLine] = line;
             this.postUpdateLines(this.curLine);
         } else if ( this.curLine + 1 < this.buffers.length ) {
-            let line2 = this.buffers[this.curLine + 1];
+            const line2 = this.buffers[this.curLine + 1];
             this.doInfo.push( new DoData(this.curLine, this.curColumn, [ line2 ] ));
 
             this.buffers[this.curLine] = line + line2;
@@ -562,14 +563,14 @@ export abstract class Editor {
         if ( this.curLine === 0 && this.curColumn === 0 ) return;
 
         if ( this.buffers.length > this.curLine ) {
-            let line = this.buffers[this.curLine];
+            const line = this.buffers[this.curLine];
 
             let line2 = "";
             if ( this.curColumn === 0 && this.buffers.length > 0 && this.curLine > 0 ) {
                 line2 = this.buffers[this.curLine - 1];
                 this.doInfo.push( new DoData(this.curLine - 1, this.curColumn, [ line2, line ] ));
 
-                let tmpLine2Width = StringUtils.strWidth( line2 );
+                const tmpLine2Width = StringUtils.strWidth( line2 );
                 this.buffers[ this.curLine - 1 ] = line2 + line;
                 this.buffers.splice( this.curLine, 1 );
 
@@ -577,12 +578,12 @@ export abstract class Editor {
                 this.keyUp();
                 this.curColumn = tmpLine2Width;
             } else {
-                let strSize = StringUtils.strWidth( this.buffers[ this.curLine ] );
+                const strSize = StringUtils.strWidth( this.buffers[ this.curLine ] );
                 if ( this.curColumn <= strSize ) {
                     this.doInfo.push( new DoData(this.curLine, this.curColumn, [ line ] ));
 
                     let firstText = StringUtils.scrSubstr( this.buffers[this.curLine], 0, this.curColumn );
-                    let lastText = this.buffers[this.curLine].substr(firstText.length);
+                    const lastText = this.buffers[this.curLine].substr(firstText.length);
                     firstText = firstText.substr(0, firstText.length - 1);
                     line2 = firstText + lastText;
                     this.curColumn = StringUtils.strWidth(firstText);
@@ -603,7 +604,7 @@ export abstract class Editor {
         if ( this.editMode !== EDIT_MODE.EDIT ) {
             this.selectSort( this.editSelect );
 
-            let save: string[] = [];
+            const save: string[] = [];
             for ( let y = this.editSelect.y1; y <= this.editSelect.y2; y++ ) {
                 save.push( this.buffers[ y ] );
             }
@@ -624,7 +625,7 @@ export abstract class Editor {
         if ( this.editMode !== EDIT_MODE.EDIT ) {
             this.selectSort( this.editSelect );
 
-            let save: string[] = [];
+            const save: string[] = [];
             for ( let y = this.editSelect.y1; y <= this.editSelect.y2; y++ ) {
                 save.push( this.buffers[ y ] );
             }
@@ -670,10 +671,11 @@ export abstract class Editor {
     }
         
     keyHome() {
-        let line = this.buffers[this.curLine];
-        let ne = 0, old = this.curColumn;
+        const line = this.buffers[this.curLine];
+        let ne = 0;
+        const old = this.curColumn;
         for ( let n = 0; n < line.length; n++ ) {
-            if (line[n] !== ' ' && line[n] !== "\t") {
+            if (line[n] !== " " && line[n] !== "\t") {
                 ne = n;
                 break;
             }
@@ -692,8 +694,8 @@ export abstract class Editor {
     }
 
     keyPgUp() {
-        let size = this.lastLine - this.firstLine;
-        let cur = this.curLine - this.firstLine;
+        const size = this.lastLine - this.firstLine;
+        const cur = this.curLine - this.firstLine;
 
         if ( this.firstLine === 0 ) {
             this.curLine = 0;
@@ -710,7 +712,7 @@ export abstract class Editor {
             this.curColumn = this.curColumnMax;
         }
 
-        let strlen = StringUtils.strWidth(this.buffers[this.curLine]);
+        const strlen = StringUtils.strWidth(this.buffers[this.curLine]);
         if ( strlen < this.curColumn ) {
             this.curColumn = strlen;
         }
@@ -722,8 +724,8 @@ export abstract class Editor {
     }
 
     keyPgDn() {
-        let size = this.lastLine - this.firstLine;
-        let cur = this.curLine - this.firstLine;
+        const size = this.lastLine - this.firstLine;
+        const cur = this.curLine - this.firstLine;
 
         if ( this.buffers.length < this.line - 1 ) {
             this.curLine = this.buffers.length - 1;
@@ -747,7 +749,7 @@ export abstract class Editor {
             this.curColumn = this.curColumnMax;
         }
 
-        let strlen = StringUtils.strWidth(this.buffers[this.curLine]);
+        const strlen = StringUtils.strWidth(this.buffers[this.curLine]);
         if ( strlen < this.curColumn ) {
             this.curColumn = strlen;
         }
@@ -766,11 +768,11 @@ export abstract class Editor {
             this.editMode = EDIT_MODE.EDIT;
         }
 
-        let line = this.buffers[this.curLine];
+        const line = this.buffers[this.curLine];
         let p1 = "";
         if ( this.indentMode ) {
             for ( let n = 0; n < line.length; n++ ) {
-                if (line[n] !== ' ' && line[n] !== "\t") {
+                if (line[n] !== " " && line[n] !== "\t") {
                     p1 = line.substr(0, n);
                     break;
                 }
@@ -780,8 +782,8 @@ export abstract class Editor {
         this.doInfo.push( new DoData(this.curLine, this.curColumn, [line], 2) );
 
         if ( this.buffers.length > this.curLine ) {
-            let firstLine = StringUtils.scrSubstr(line, 0, this.curColumn);
-            let lastLine = p1 + line.substr(firstLine.length);
+            const firstLine = StringUtils.scrSubstr(line, 0, this.curColumn);
+            const lastLine = p1 + line.substr(firstLine.length);
             this.buffers.splice( this.curLine, 0, lastLine );
             this.buffers[ this.curLine ] = firstLine;
             this.buffers[ this.curLine+1 ] = lastLine;
@@ -797,6 +799,7 @@ export abstract class Editor {
         this.keyDown();
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     keyMouse() {}
     
     async gotoLinePromise() {
@@ -844,10 +847,10 @@ export abstract class Editor {
             return;
         }
 
-        let strTexts = [];
+        const strTexts = [];
 
         if ( this.editSelect.y1 === this.editSelect.y2 ) {
-            let str = StringUtils.scrSubstr(this.buffers[ this.editSelect.y1 ], this.editSelect.x1, this.editSelect.x2 - this.editSelect.x1 );
+            const str = StringUtils.scrSubstr(this.buffers[ this.editSelect.y1 ], this.editSelect.x1, this.editSelect.x2 - this.editSelect.x1 );
             strTexts.push( str );
         } else {
             for ( let y = this.editSelect.y1; y <= this.editSelect.y2; y++ ) {
@@ -878,10 +881,10 @@ export abstract class Editor {
             return;
         }
 
-        let strTexts = [];
+        const strTexts = [];
 
         if ( this.editSelect.y1 === this.editSelect.y2 ) {
-            let str = StringUtils.scrSubstr(this.buffers[ this.editSelect.y1 ], this.editSelect.x1, this.editSelect.x2 - this.editSelect.x1 );
+            const str = StringUtils.scrSubstr(this.buffers[ this.editSelect.y1 ], this.editSelect.x1, this.editSelect.x2 - this.editSelect.x1 );
             strTexts.push( str );
         } else {
             for ( let y = this.editSelect.y1; y <= this.editSelect.y2; y++ ) {
@@ -909,14 +912,14 @@ export abstract class Editor {
 
         if ( this.editMode !== EDIT_MODE.EDIT ) this.selectedDel();
 
-        let clips = EditorClipboard.instance().get();
+        const clips = EditorClipboard.instance().get();
 
-        let str = this.buffers[this.curLine];
-        let str1 = StringUtils.scrSubstr(str, 0, this.curColumn );
-        let str2 = StringUtils.scrSubstr(str, this.curColumn );
+        const str = this.buffers[this.curLine];
+        const str1 = StringUtils.scrSubstr(str, 0, this.curColumn );
+        const str2 = StringUtils.scrSubstr(str, this.curColumn );
 
         if ( clips.length === 1 ) {
-            let clipStr = clips[0];
+            const clipStr = clips[0];
             
             this.doInfo.push( new DoData(this.curLine, this.curColumn, [this.buffers[this.curLine]]) );
             
@@ -930,8 +933,8 @@ export abstract class Editor {
                 if ( y === 0 ) {
                     this.buffers[ this.curLine ] = str + clips[y];
                 } else if ( y === clips.length - 1 ) {
-                    let clip = clips[y];
-                    let clip2 = clip + str2;
+                    const clip = clips[y];
+                    const clip2 = clip + str2;
                     this.buffers.splice( this.curLine + y, 0, clip2 );
                     this.curColumn = StringUtils.strWidth(clip2);
                     this.curLine += clips.length - 1;
@@ -958,7 +961,7 @@ export abstract class Editor {
         doData = this.doInfo[ this.doInfo.length - 1 ];
         if ( !doData ) return;
 
-        let line = doData.line;
+        const line = doData.line;
 
         if ( doData.delSize === -1 ) { // paste tab
             for ( let n = 0; n < doData.texts.length; n++ ) {
@@ -983,7 +986,7 @@ export abstract class Editor {
                 this.firstLine = this.curLine;
             }
         } else { // inputed data (delete)
-            let delSize = doData.delSize;
+            const delSize = doData.delSize;
             let str;
 
             if ( doData.texts.length === 1 ) {
@@ -1036,7 +1039,7 @@ export abstract class Editor {
 
     blockSelect() {
         this.editMode = EDIT_MODE.BLOCK;
-	    this.editSelect.x2 = this.curColumn;
+        this.editSelect.x2 = this.curColumn;
         this.editSelect.y2 = this.curLine;
         this.editSelect.x1 = this.curColumn;
         this.editSelect.y1 = this.curLine;
@@ -1049,13 +1052,13 @@ export abstract class Editor {
         }
 
         if ( this.lastDoInfoLength !== this.doInfo.length ) {
-            let result = await this.messageBox( T("EditorMsg.NewFile"), T("EditorMsg.QUESTION_SAVE_FILE"), [ T("Yes"), T("No") ] );
+            const result = await this.messageBox( T("EditorMsg.NewFile"), T("EditorMsg.QUESTION_SAVE_FILE"), [ T("Yes"), T("No") ] );
             if ( result === T("Yes") ) {
                 await this.fileSavePromise();
             }
         }
 
-        let [ fileName, button ] = await this.inputBox( T("EditorMsg.NewFile"), T("EditorMsg.INPUT_FILENAME"), "", [ T("OK"), T("Cancel")] );
+        const [ fileName, button ] = await this.inputBox( T("EditorMsg.NewFile"), T("EditorMsg.INPUT_FILENAME"), "", [ T("OK"), T("Cancel")] );
         if ( button === T("Cancel") ) {
             return false;
         }
@@ -1063,7 +1066,7 @@ export abstract class Editor {
             return false;
         }
 
-        let file = FileReader.createFile( fileName, { virtualFile: true } );
+        const file = FileReader.createFile( fileName, { virtualFile: true } );
         this.newFile( file );
         return true;
     }
@@ -1087,7 +1090,7 @@ export abstract class Editor {
     }
 
     async fileSaveAsPromise(): Promise<boolean> {
-        let [ fileName, button ] = await this.inputBox( T("EditorMsg.NewFile"), T("EditorMsg.INPUT_FILENAME"), "", [ T("OK"), T("Cancel")]);
+        const [ fileName, button ] = await this.inputBox( T("EditorMsg.NewFile"), T("EditorMsg.INPUT_FILENAME"), "", [ T("OK"), T("Cancel")]);
         if ( button === T("Cancel")) {
             return false;
         }
@@ -1109,8 +1112,8 @@ export abstract class Editor {
     }
 
     async findPromise() {
-        let find = this.findStr;
-        let [ inputText, button ] = await this.inputBox( T("Find"), T("EditorMsg.INPUT_SEARCH_TEXT"), find, [ T("OK"), T("Cancel")] );
+        const find = this.findStr;
+        const [ inputText, button ] = await this.inputBox( T("Find"), T("EditorMsg.INPUT_SEARCH_TEXT"), find, [ T("OK"), T("Cancel")] );
         if ( button === T("Cancel")) {
             return;
         }
@@ -1134,9 +1137,9 @@ export abstract class Editor {
 
         for(;;) {
             for( let n = this.indexFindPosY; n < this.buffers.length; n++ ) {
-                let idx = this.buffers[n].indexOf(this.findStr, this.indexFindPosX);
+                const idx = this.buffers[n].indexOf(this.findStr, this.indexFindPosX);
                 if ( idx > -1 ) {
-                    let textSize = StringUtils.strWidth(this.findStr);
+                    const textSize = StringUtils.strWidth(this.findStr);
                     this.indexFindPosX = idx + textSize;
                     this.indexFindPosY = n;
                     this.editMode = EDIT_MODE.SHIFT_SELECT;
@@ -1154,7 +1157,7 @@ export abstract class Editor {
             }
             this.indexFindPosY = 0;
 
-            let result = await this.messageBox( T("EditorMsg.FIND_NEXT"), T("EditorMsg.FIND_END_DOCUMENT"), [ T("Yes"), T("No") ] );
+            const result = await this.messageBox( T("EditorMsg.FIND_NEXT"), T("EditorMsg.FIND_END_DOCUMENT"), [ T("Yes"), T("No") ] );
             if ( result === T("Yes") ) {
                 break;
             }
@@ -1173,9 +1176,9 @@ export abstract class Editor {
 
         for(;;) {
             for( let n = this.indexFindPosY; n >= 0; --n ) {
-                let idx = this.buffers[n].lastIndexOf(this.findStr);
+                const idx = this.buffers[n].lastIndexOf(this.findStr);
                 if ( idx > -1 ) {
-                    let textSize = StringUtils.strWidth(this.findStr);
+                    const textSize = StringUtils.strWidth(this.findStr);
                     this.indexFindPosX = idx;
                     this.indexFindPosY = n;
                     this.editMode = EDIT_MODE.SHIFT_SELECT;
@@ -1195,7 +1198,7 @@ export abstract class Editor {
             }
             this.indexFindPosY = this.buffers.length - 1;
 
-            let result = await this.messageBox( T("FIND_PREVIOUS"), T("EditorMsg.FIND_FIRST_DOCUMENT"), [ T("Yes"), T("No") ] );
+            const result = await this.messageBox( T("FIND_PREVIOUS"), T("EditorMsg.FIND_FIRST_DOCUMENT"), [ T("Yes"), T("No") ] );
             if ( result === T("Yes") ) {
                 break;
             }
@@ -1210,7 +1213,7 @@ export abstract class Editor {
 
         log.debug( "DO INFO [%j]", this.doInfo );
         if ( this.lastDoInfoLength !== this.doInfo.length ) {
-            let result = await this.messageBox( T("Save"), T("EditorMsg.QUIT_QUESTION_UNSAVED"), [ T("Yes"), T("No"), T("Cancel") ]);
+            const result = await this.messageBox( T("Save"), T("EditorMsg.QUIT_QUESTION_UNSAVED"), [ T("Yes"), T("No"), T("Cancel") ]);
             if ( result === T("Yes") ) {
                 await this.fileSavePromise();
             } if ( result === T("No") ) {
@@ -1235,4 +1238,4 @@ export abstract class Editor {
             this.editMode = EDIT_MODE.EDIT;
         }
     }
-};
+}

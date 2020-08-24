@@ -1,14 +1,12 @@
-import { Logger, updateDebugFile } from "./common/Logger";
+import { updateDebugFile } from "./common/Logger";
 import { i18nInit, T, changeLanguage } from "./common/Translation";
 import osLocale from "os-locale";
 import yargs from "yargs";
 import { stdout } from "process";
-import { progressbar } from "neo-blessed";
 import Configure from "./config/Configure";
 import { ColorConfig } from "./config/ColorConfig";
 import colors from "colors";
 import { StringUtils } from "./common/StringUtils";
-import { sprintf } from "sprintf-js";
 
 (async () => {
     (global as any).LOCALE = await osLocale();
@@ -19,7 +17,7 @@ import { sprintf } from "sprintf-js";
         reargv = process.argv.slice(2);
     }
 
-    let argv = yargs( reargv )
+    const argv = yargs( reargv )
         .usage("Mdir.js is user-friendly graphic shell.")
         .options({
             "lang": {
@@ -67,6 +65,6 @@ import { sprintf } from "sprintf-js";
     consoleMessage( T("Start.LoadConfigure"), configure.getConfigPath() );
     consoleMessage( T("Start.LoadConfigureColor"), colorConfig.getConfigPath() );
     
-    let mainFrame = (await import("./panel_blassed/MainFrame")).default();
+    const mainFrame = (await import("./panel_blassed/MainFrame")).default();
     await mainFrame.start();
 })();

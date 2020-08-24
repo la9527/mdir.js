@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable no-async-promise-executor */
 import * as path from "path";
 import * as fs from "fs";
 import * as yazl from "yazl";
@@ -13,12 +15,12 @@ const log = Logger("archivetar");
 
 export class ArchiveZip extends ArchiveCommon {
     isSupportType( file: File ): string {
-        return this.originalFile.name.match(/(\.zip$)/) ? "zip" : null;
+        return file.name.match(/(\.zip$)/) ? "zip" : null;
     }
 
     async getArchivedFiles(progress?: ProgressFunc): Promise<File[]> {
         return new Promise( (resolve, reject) => {
-            let resultFiles = [];
+            const resultFiles = [];
             yauzl.open( this.originalFile.fullname, { lazyEntries: true, autoClose: false, decodeStrings: false }, (err, zipfile: yauzl.ZipFile) =>{
                 if ( err ) {
                     reject( err );
@@ -39,14 +41,14 @@ export class ArchiveZip extends ArchiveCommon {
         });
     }
 
-    uncompress( extractDir: File, uncompressFiles ?: File[], progress?: ProgressFunc ): Promise<void> {
+    uncompress( extractDir: File, uncompressFiles?: File[], progress?: ProgressFunc ): Promise<void> {
         return new Promise((resolve, reject) => {
             if ( !extractDir || (uncompressFiles && uncompressFiles.length === 0) ) {
                 reject( "Uncompress files empty !!!" );
                 return;
             }
 
-            let filesBaseDir = uncompressFiles && uncompressFiles.length > 0 ? uncompressFiles[0].dirname : "";
+            const filesBaseDir = uncompressFiles && uncompressFiles.length > 0 ? uncompressFiles[0].dirname : "";
 
             yauzl.open( this.originalFile.fullname, { lazyEntries: true, autoClose: false, decodeStrings: false }, (err, zipfile: yauzl.ZipFile) =>{
                 if ( err ) {
@@ -54,7 +56,7 @@ export class ArchiveZip extends ArchiveCommon {
                     return;
                 }
                 zipfile.on("entry", (entry: yauzl.Entry) => {
-                    let zipFileInfo = this.convertZipToFile(entry);
+                    const zipFileInfo = this.convertZipToFile(entry);
                     if ( uncompressFiles ) {
                         if ( !uncompressFiles.find( item => zipFileInfo.fullname.startsWith(item.fullname) ) ) {
                             zipfile.readEntry();
@@ -86,7 +88,7 @@ export class ArchiveZip extends ArchiveCommon {
                             transform(chunk: Buffer, encoding, callback) {
                                 chunkCopyLength += chunk.length;
                                 if ( progress ) {
-                                    let result = progress( zipFileInfo, chunkCopyLength, zipFileInfo.size, chunk.length );
+                                    const result = progress( zipFileInfo, chunkCopyLength, zipFileInfo.size, chunk.length );
                                     // log.debug( "Uncompress: %s => %s (%d / %d)", zipFileInfo.fullname, extractDir.fullname, chunkCopyLength, zipFileInfo.size );
                                     if ( result === ProgressResult.USER_CANCELED ) {
                                         zipfile.close();
@@ -127,7 +129,7 @@ export class ArchiveZip extends ArchiveCommon {
         });
     }
 
-    protected commonCompress( writeTarStream: fs.WriteStream, packFunc: (zip: yazl.ZipFile) => Promise<void>, progress?: ProgressFunc ): Promise<void> {
+    protected commonCompress( writeTarStream: fs.WriteStream, packFunc: (zip: yazl.ZipFile) => Promise<void>, _progress?: ProgressFunc ): Promise<void> {
         const zip = new yazl.ZipFile();
         return new Promise( async (resolve, reject) => {
             try {
@@ -135,7 +137,7 @@ export class ArchiveZip extends ArchiveCommon {
                     log.error( "ERROR [%s]", error );
                     reject(error);
                 });                
-                let outstream = zip.outputStream.pipe(writeTarStream);
+                const outstream = zip.outputStream.pipe(writeTarStream);
                 outstream.on("error", (error) => {
                     log.error( "ERROR [%s]", error );
                     reject(error);
@@ -162,8 +164,8 @@ export class ArchiveZip extends ArchiveCommon {
                 }
                 zipfile.on("entry", (entry: yauzl.Entry) => {
                     try {
-                        let zipFileInfo = this.convertZipToFile(entry);
-                        let header = this.convertFileToHeader(zipFileInfo, null, null);
+                        const zipFileInfo = this.convertZipToFile(entry);
+                        const header = this.convertFileToHeader(zipFileInfo, null, null);
 
                         if ( filterEntryFunc && !filterEntryFunc( zipFileInfo, header ) ) {
                             zipfile.readEntry();
@@ -191,7 +193,7 @@ export class ArchiveZip extends ArchiveCommon {
                                 transform(chunk: Buffer, encoding, callback) {
                                     chunkCopyLength += chunk.length;
                                     if ( progress ) {
-                                        let result = progress( zipFileInfo, chunkCopyLength, zipFileInfo.size, chunk.length );
+                                        const result = progress( zipFileInfo, chunkCopyLength, zipFileInfo.size, chunk.length );
                                         // log.debug( "Uncompress: %s => %d (%d / %d)", zipFileInfo.fullname, chunk.length, chunkCopyLength, zipFileInfo.size );
                                         if ( result === ProgressResult.USER_CANCELED ) {
                                             zipfile.close();
@@ -255,10 +257,10 @@ export class ArchiveZip extends ArchiveCommon {
                 pack.addReadStream( stream, header.name, header.option );
             }
         });
-    };
+    }
 
     protected convertFileToHeader( file: File, srcBaseDir: File, targetDir: string ) {
-        let header: any = {
+        const header: any = {
             name: file.orgname,
             option: {
                 mtime: file.mtime,
@@ -274,7 +276,7 @@ export class ArchiveZip extends ArchiveCommon {
     }
 
     private convertZipToFile(zipHeader: yauzl.Entry): File {
-        let file = new File();
+        const file = new File();
         file.fstype = "archive";
 
         const filename = this.decodeString(zipHeader.fileName);
@@ -289,7 +291,7 @@ export class ArchiveZip extends ArchiveCommon {
         file.ctime = zipHeader.getLastModDate();
         file.root = this.originalFile.fullname;
         file.attr = filename[filename.length - 1] === "/" ? "drwxr-xr-x" : "-rw-r--r--";
-        file.dir = file.attr[0] === 'd';
+        file.dir = file.attr[0] === "d";
         file.size = zipHeader.uncompressedSize;
 
         if ( zipHeader.extraFields ) {
@@ -299,17 +301,17 @@ export class ArchiveZip extends ArchiveCommon {
             zipHeader.extraFields.map( item => {
                 if ( item.id === 0x7875 ) { // Info-ZIP New Unix Extra Field
                     let offset = 0;
-                    let extraVer = item.data.readInt8(0);
+                    const extraVer = item.data.readInt8(0);
                     offset += 1;
                     if (extraVer === 1) {
-                        let uidSize = item.data.readUInt8(offset);
+                        const uidSize = item.data.readUInt8(offset);
                         offset += 1;
                         if (uidSize <= 6) {
                             file.uid = item.data.readUIntLE(offset, uidSize);
                         }
                         offset += uidSize;
     
-                        let gidSize = item.data.readUInt8(offset);
+                        const gidSize = item.data.readUInt8(offset);
                         offset += 1;
                         if (gidSize <= 6) {
                             file.gid = item.data.readUIntLE(offset, gidSize);
@@ -317,7 +319,7 @@ export class ArchiveZip extends ArchiveCommon {
                     }
                 } else if ( item.id === 0x5455 ) { // extended timestamp
                     let offset = 0;
-                    let timestampFields = item.data.readInt8(0);
+                    const timestampFields = item.data.readInt8(0);
                     offset += 1;
                     if (item.data.byteLength >= 5 && timestampFields & 1) {
                         file.mtime = new Date(item.data.readUInt32LE(offset) * 1000);
@@ -333,9 +335,9 @@ export class ArchiveZip extends ArchiveCommon {
                 } else if ( item.id === 0x5855 || item.id === 0x000d ) { // "Info-ZIP UNIX (type 1)", "PKWARE Unix"
                     let offset = 0;
                     if (item.data.byteLength >= 8) {
-                        let atime = new Date(item.data.readUInt32LE(offset) * 1000);
+                        const atime = new Date(item.data.readUInt32LE(offset) * 1000);
                         offset += 4;
-                        let mtime = new Date(item.data.readUInt32LE(offset) * 1000);
+                        const mtime = new Date(item.data.readUInt32LE(offset) * 1000);
                         offset += 4;
                         file.atime = atime;
                         file.mtime = mtime;
@@ -359,7 +361,7 @@ export class ArchiveZip extends ArchiveCommon {
                     if (item.data.byteLength >= 14) {
                         let crc = item.data.readUInt32LE(offset);
                         offset += 4;
-                        let mode = item.data.readUInt16LE(offset);
+                        const mode = item.data.readUInt16LE(offset);
                         offset += 2;
                         let sizdev = item.data.readUInt32LE(offset);
                         offset += 4;
@@ -369,9 +371,9 @@ export class ArchiveZip extends ArchiveCommon {
                         offset += 2;
                         this.convertUnixPermission(file, mode);
                         if (item.data.byteLength > 14) {
-                            let start = offset;
-                            let end = item.data.byteLength - 14;
-                            let symlinkName = this.decodeString(item.data.slice(start, end));
+                            const start = offset;
+                            const end = item.data.byteLength - 14;
+                            const symlinkName = this.decodeString(item.data.slice(start, end));
                             if ( symlinkName ) {
                                 file.link = new FileLink( symlinkName, null );
                             }
@@ -384,22 +386,25 @@ export class ArchiveZip extends ArchiveCommon {
                         offset += 2;
                         let size1 = item.data.readUInt16LE(offset);
                         offset += 2;
-                        let mtime = item.data.readBigInt64LE(offset);
+                        const mtime = item.data.readBigInt64LE(offset);
                         offset += 8;
-                        let atime = item.data.readBigInt64LE(offset);
+                        const atime = item.data.readBigInt64LE(offset);
                         offset += 8;
-                        let ctime = item.data.readBigInt64LE(offset);
+                        const ctime = item.data.readBigInt64LE(offset);
 
                         try {
+                            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                             // @ts-ignore
-                            let EPOCH_OFFSET = -116444736000000000n;
+                            const EPOCH_OFFSET = -116444736000000000n;
                             const convertWin32Time = (time) => {
+                                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                                 // @ts-ignore
-                                return new Date(Number((time + EPOCH_OFFSET) / 10000n))
+                                return new Date(Number((time + EPOCH_OFFSET) / 10000n));
                             };
                             file.mtime = convertWin32Time(mtime);
                             file.atime = convertWin32Time(atime);
                             file.ctime = convertWin32Time(ctime);
+                        // eslint-disable-next-line no-empty
                         } catch( e ) {}
                     }
                 }
@@ -407,10 +412,10 @@ export class ArchiveZip extends ArchiveCommon {
         }
         log.debug( "File [%s] - ORG [%s]", file.fullname, filename);
         return file;
-    };
+    }
 
     private convertUnixPermission( file: File, mode: number ) {
-        let fileMode: string[] = file.attr ? file.attr.split("") : "----------".split("");
+        const fileMode: string[] = file.attr ? file.attr.split("") : "----------".split("");
         fileMode[1] = mode & fs.constants.S_IRUSR ? "r" : "-";
         fileMode[2] = mode & fs.constants.S_IWUSR ? "w" : "-";
         fileMode[3] = mode & fs.constants.S_IXUSR ? "x" : "-";

@@ -1,8 +1,9 @@
+/* eslint-disable prefer-spread */
 import { Logger } from "../common/Logger";
 import { IFrameMenuConfig, ISubMenuConfig } from "./MenuConfig";
 import { sprintf } from "sprintf-js";
 import { T } from "../common/Translation";
-import * as os from 'os';
+import * as os from "os";
 
 const log = Logger("MainFrame");
 
@@ -12,13 +13,13 @@ type KeyName = string;
 interface IFuncParam {
     key: KeyName | KeyName[];
     funcParam?: any[];
-    name ?: string;
+    name?: string;
 }
 
 interface IMethodParam {
     method: MethodName;
     funcParam: any[];
-    name : string;
+    name: string;
 }
 
 export enum RefreshType {
@@ -28,11 +29,11 @@ export enum RefreshType {
 }
 
 export interface IKeyMapping {
-    [methodName: string]: KeyName | KeyName[] | IFuncParam | IFuncParam[]
+    [methodName: string]: KeyName | KeyName[] | IFuncParam | IFuncParam[];
 }
 
 interface IAllKeyMappingInfo {
-    [widgetName: string]: IKeyMapping
+    [widgetName: string]: IKeyMapping;
 }
 
 export const SearchDisallowKeys = [ "escape", "tab", "~", "/", "space", "delete", "home", "end", "backspace", "\\" ];
@@ -190,13 +191,13 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
 };
 
 interface IFuncMapping {
-    [keyName: string]: MethodName | MethodName[] | IMethodParam | IMethodParam[]
+    [keyName: string]: MethodName | MethodName[] | IMethodParam | IMethodParam[];
 }
 
 const convertFunctionToKey = ( keyFrame: IKeyMapping ): IFuncMapping => {
-    let result: IFuncMapping = {};
+    const result: IFuncMapping = {};
     Object.keys(keyFrame).forEach( item => {
-        let obj = keyFrame[item];
+        const obj = keyFrame[item];
         if ( Array.isArray(obj) ) {
             (obj as any[]).forEach( item2 => {
                 if ( typeof(item2) === "string" ) {
@@ -209,7 +210,7 @@ const convertFunctionToKey = ( keyFrame: IKeyMapping ): IFuncMapping => {
                     }
                 }
             });
-        } else if ( typeof(obj) === 'string' ) {
+        } else if ( typeof(obj) === "string" ) {
             result[obj] = item;
         } else if ( obj.key ) {
             if ( Array.isArray( obj.key ) ) {
@@ -230,12 +231,13 @@ const convertFunctionToKey = ( keyFrame: IKeyMapping ): IFuncMapping => {
         }
     });
     return result;
-}
+};
 
 export function KeyMapping( keyFrame: IKeyMapping ) {
     const keyInfo = convertFunctionToKey(keyFrame);
     log.debug( keyInfo );
-    return function <T extends { new(...args: any[]): {} }>(constructor: T) {
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    return function <T extends new(...args: any[]) => {}>(constructor: T) {
         return class extends constructor {
             keyInfo = keyInfo;
         };
@@ -247,7 +249,7 @@ export function methodToKeyname( baseObject, method ) {
         return null;
     }
 
-    for ( let key of Object.keys(baseObject.keyInfo) ) {
+    for ( const key of Object.keys(baseObject.keyInfo) ) {
         if ( baseObject.keyInfo[key] === method ) {
             try {
                 if ( typeof(key) === "string" && key ) {
@@ -269,7 +271,7 @@ export interface IHintInfo {
 }
 
 export function Hint( { hint, order }: IHintInfo ) {
-    return function(target: any, propName: string, description: PropertyDescriptor) {
+    return function(target: any, propName: string, _description: PropertyDescriptor) {
         target.hintInfo = target.hintInfo || {};
         target.hintInfo[ propName ] = { hint, order: order || 10 };
     };
@@ -278,10 +280,10 @@ export function Hint( { hint, order }: IHintInfo ) {
 export interface IHelpInfo {
     [ frame: string ]: {
         [ methodName: string ]: {
-            method ?: string;
-            text ?: string;
-            key ?: string | string[];
-            humanKeyName ?: string;
+            method?: string;
+            text?: string;
+            key?: string | string[];
+            humanKeyName?: string;
         };
     };
 }
@@ -290,11 +292,11 @@ export interface IHelpService {
     viewName(): string;
 }
 
-let helpInfo = {};
+const helpInfo = {};
 
 export function Help( helpText: string ) {
-    return function(target: any, propName: string, description: PropertyDescriptor) {
-        let name = target.viewName();
+    return function(target: any, propName: string, _description: PropertyDescriptor) {
+        const name = target.viewName();
         if ( name ) {
             helpInfo[name] = helpInfo[name] || {};
 
@@ -308,7 +310,7 @@ export function Help( helpText: string ) {
                 return item;
             };
 
-            let key = keyInfo();
+            const key = keyInfo();
             let humanKeyName = "";
             if ( Array.isArray(key) ) {
                 humanKeyName = key.map( (item1) => {
@@ -328,7 +330,7 @@ export function getHelpInfo(): IHelpInfo {
 }
 
 export function functionKeyInfo( baseObject ) {
-    let functionKeyInfo = {};
+    const functionKeyInfo = {};
 
     if ( !baseObject || !baseObject.keyInfo ) {
         return functionKeyInfo;
@@ -336,11 +338,11 @@ export function functionKeyInfo( baseObject ) {
 
     const keyFrame = baseObject.keyInfo as IFuncMapping;
     for ( let i = 1; i <= 12; i++ ) {
-        if ( keyFrame['f' + i] ) {
-            if ( typeof(keyFrame['f' + i]) === "string" ) {
-                functionKeyInfo['F' + i] = keyFrame['f' + i];
-            } else if ( (keyFrame['f' + i] as IMethodParam) && (keyFrame['f' + i] as IMethodParam).name ) {
-                functionKeyInfo['F' + i] = (keyFrame['f' + i] as IMethodParam).name;
+        if ( keyFrame["f" + i] ) {
+            if ( typeof(keyFrame["f" + i]) === "string" ) {
+                functionKeyInfo["F" + i] = keyFrame["f" + i];
+            } else if ( (keyFrame["f" + i] as IMethodParam) && (keyFrame["f" + i] as IMethodParam).name ) {
+                functionKeyInfo["F" + i] = (keyFrame["f" + i] as IMethodParam).name;
             }
         }
     }
@@ -424,7 +426,7 @@ export function keyHumanReadable(key: string): string {
 export function menuKeyMapping( allkeyMappingInfo: IAllKeyMappingInfo, menuObject: IFrameMenuConfig ) {
     const getKeyName = (method, funcParam): string => {
         try {
-            let methodInfo = method.split(".");
+            const methodInfo = method.split(".");
             let keyInfo = allkeyMappingInfo[ methodInfo[0] ][ methodInfo[1] ];
             if ( keyInfo && (keyInfo as any).key ) {
                 keyInfo = (keyInfo as any).key;
@@ -434,7 +436,7 @@ export function menuKeyMapping( allkeyMappingInfo: IAllKeyMappingInfo, menuObjec
                     return keyInfo[0];
                 } else if ( funcParam ) {
                     const keyInfoSub: IFuncParam = (keyInfo as IFuncParam[]).find( 
-                            fP => fP.funcParam && JSON.stringify(fP.funcParam) === JSON.stringify(funcParam) );
+                        fP => fP.funcParam && JSON.stringify(fP.funcParam) === JSON.stringify(funcParam) );
                     if ( !keyInfoSub ) {
                         return null;
                     }
@@ -454,7 +456,7 @@ export function menuKeyMapping( allkeyMappingInfo: IAllKeyMappingInfo, menuObjec
         Object.keys(menuObject[i]).forEach( j => {            
             menuObject[i][j].map( (item: ISubMenuConfig | string ) => {
                 if ( typeof(item) === "object" && item && item.method ) {
-                    let key = getKeyName(item.method, item.funcParam);
+                    const key = getKeyName(item.method, item.funcParam);
                     if ( key ) {
                         item.key = key;
                     }

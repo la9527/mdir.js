@@ -65,7 +65,7 @@ export class File {
     }
 
     clone(): File {
-        let renew = new File();
+        const renew = new File();
         renew.fstype = this.fstype;
         renew.root = this.root;
         renew.fullname = this.fullname;

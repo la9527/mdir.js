@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/member-ordering */
+/* eslint-disable no-control-regex */
 import { Widget } from "./widget/Widget";
 import { IPty } from "node-pty";
 import * as NodePTY from "node-pty";
-import * as os from 'os';
+import * as os from "os";
 import { Logger } from "../common/Logger";
 import { IBlessedView } from "./IBlessedView";
 import { Reader } from "../common/Reader";
@@ -9,8 +11,8 @@ import { File } from "../common/File";
 import { XTerminal } from "./xterm/XTerminal";
 import { AttributeData } from "./xterm/common/buffer/AttributeData";
 import { ColorConfig } from "../config/ColorConfig";
-import which from 'which';
-import { KeyMappingInfo, KeyMapping, IHelpService, Hint, Help, RefreshType } from '../config/KeyMapConfig';
+import which from "which";
+import { KeyMappingInfo, KeyMapping, IHelpService, Hint, Help, RefreshType } from "../config/KeyMapConfig";
 import { T } from "../common/Translation";
 
 const log = Logger("BlassedXTerm");
@@ -97,7 +99,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         this.termName = options.terminal
                 || options.term
                 || process.env.TERM
-                || 'xterm';
+                || "xterm";
 
         this.panel.on("detach", () => {
             log.debug( "HIDE CURSOR !!!");
@@ -129,11 +131,12 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
     }
 
     shellCheck( cmd: string[] ) {
-        for ( let item of cmd ) {
+        for ( const item of cmd ) {
             try {
                 if ( which.sync(item) ) {
                     return item;
                 }
+            // eslint-disable-next-line no-empty
             } catch ( e ) {}
         }
         return null;
@@ -155,19 +158,19 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         });
         */
 
-        this.panel.on('focus', () => {
+        this.panel.on("focus", () => {
             this.term.focus();
         });
 
-        this.panel.on('blur', () => {
+        this.panel.on("blur", () => {
             this.term && this.term.blur();
         });
 
-        this.on('focus', () => {
+        this.on("focus", () => {
             this.term.focus();
         });
         
-        this.on('blur', () => {
+        this.on("blur", () => {
             this.term && this.term.blur();
         });
         
@@ -175,7 +178,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             this.header.setContent( title || "" );
         });
 
-        this.term.onData( (data) => {
+        this.term.onData( () => {
             this._render();
         });
 
@@ -183,11 +186,11 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             this._render(startRow, endRow);
         });
         
-        this.panel.box.once('render', () => {
+        this.panel.box.once("render", () => {
             this.term && this.term.resize((box.width as number) - (box.iwidth as number), (box.height as number) - (box.iheight as number));
         });
         
-        this.panel.on('destroy', () => {
+        this.panel.on("destroy", () => {
             this.kill();
         });
 
@@ -212,7 +215,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
 
         this.header.setContent( [ this.shell, ...(this.args || []) ].join(" ") || "" );
 
-        this.on('resize', () => {
+        this.on("resize", () => {
             log.debug( "PANEL - resize !!!" );
             process.nextTick(() => {
                 log.debug( "BLESSED TERM RESIZE !!! - TERMINAL");
@@ -228,18 +231,18 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             });
         });
 
-        this.pty.on('data', (data) => {
+        this.pty.on("data", (data) => {
             // log.debug( "screen write : [%s] [%d]", data.trim(), data.length );
             this.parseOSC1337(data); 
             this.write(data);
         });
 
-        this.pty.on('exit', (code) => {
+        this.pty.on("exit", (code) => {
             log.debug( "on exit !!! - %d", code );
             this.box.emit( "process_exit", code );
         });
 
-        this.panel.box.onScreenEvent('keypress', () => {
+        this.panel.box.onScreenEvent("keypress", () => {
             log.error( "onScreenEvent - box keypress !!!" );
             this.box.render();
         });
@@ -254,16 +257,16 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
      */
     parseOSC1337( data ) {
         const convertProps = ( text ) => {
-            let j = text.split("=");
+            const j = text.split("=");
             if (j.length > 1) {
                 this.osc1337[ j[0] ] = j.slice(1).join("=");
             }
         };
 
         const findOSC1337 = ( text ) => {
-            let idx1 = text.indexOf("\x1b]1337;");
+            const idx1 = text.indexOf("\x1b]1337;");
             if ( idx1 > -1 ) {
-                let idx2 = text.indexOf("\x07", idx1);
+                const idx2 = text.indexOf("\x07", idx1);
                 if ( idx2 > -1 ) {
                     text.substring(idx1 + 7, idx2).split(";").forEach((item) => convertProps(item));
                     findOSC1337( text.substr(idx2+1) );
@@ -306,8 +309,8 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
 
     public clear(): void {
         if (this.term.buffer.ybase === 0 && this.term.buffer.y === 0) {
-          // Don't clear if it's already clear
-          return;
+            // Don't clear if it's already clear
+            return;
         }
         this.term.clear();
         this._render();
@@ -339,20 +342,17 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
 
         box.dattr = box.sattr(box.style);
       
-        let xi = ret.xi + box.ileft
-          , xl = ret.xl - box.iright
-          , yi = ret.yi + box.itop
-          , yl = ret.yl - box.ibottom
-          , cursor;
+        // eslint-disable-next-line prefer-const
+        let xi = ret.xi + box.ileft, xl = ret.xl - box.iright, yi = ret.yi + box.itop, yl = ret.yl - box.ibottom, cursor;
       
         //let scrollback = this.term.buffer.lines.length - (yl - yi);
         // let scrollback = this.term.buffer.ydisp - (yl - yi);
-        let scrollback = this.term.buffer.ydisp;
+        const scrollback = this.term.buffer.ydisp;
 
         this.cursorPos = { y: yi + this.term.buffer.y, x: xi + this.term.buffer.x };
 
         for (let y = Math.max(yi, 0); y < yl; y++) {
-            let line = screen.lines[y];
+            const line = screen.lines[y];
             const bufferLine = this.term.buffer.lines.get(scrollback + y - yi);
             if ( !bufferLine ) {
                 continue;
@@ -373,7 +373,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             // const str = bufferLine.translateToString(true);
             // log.debug( "line : %d, COLOR [%d/%d] [%d] [%s]", scrollback + y - yi, bufferLine.getFg(0), bufferLine.getBg(0), str.length, str );
 
-            let attr = new AttributeData();
+            const attr = new AttributeData();
 
             for (let x = Math.max(xi, 0); x < xl; x++) {
                 if (!line[x]) break;
@@ -403,7 +403,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
                         fg: box.style.fg,
                     }) | (8 << 18);
                 }
-                line[x][1] = bufferLine.getString(x - xi) || ' ';
+                line[x][1] = bufferLine.getString(x - xi) || " ";
 
                 /*
                 if ( line[x][1] === "." ) {
@@ -437,9 +437,9 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         if (Buffer.isBuffer(s)) {
             if (s[0] > 127 && s[1] === undefined) {
                 s[0] -= 128;
-                s = '\x1b' + s.toString('utf-8');
+                s = "\x1b" + s.toString("utf-8");
             } else {
-                s = s.toString('utf-8');
+                s = s.toString("utf-8");
             }
         }
         return (buf[0] === 0x1b && buf[1] === 0x5b && buf[2] === 0x4d)
@@ -453,12 +453,12 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
 
     setScroll(offset) {
         this.term.buffer.ydisp = offset;
-        return this.panel.box.emit('scroll');
+        return this.panel.box.emit("scroll");
     }
 
     scrollTo(offset) {
         this.term.buffer.ydisp = offset;
-        return this.panel.box.emit('scroll');
+        return this.panel.box.emit("scroll");
     }
 
     getScroll() {
@@ -468,33 +468,33 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
     resetScroll() {
         this.term.buffer.ydisp = 0;
         this.term.buffer.ybase = 0;
-        return this.panel.box.emit('scroll');
-    };
+        return this.panel.box.emit("scroll");
+    }
 
     getScrollHeight() {
         return this.term.rows - 1;
-    };
+    }
 
     getScrollPerc() {
         return (this.term.buffer.ydisp / this.term.buffer.ybase) * 100;
-    };
+    }
 
     setScrollPerc(i) {
         return this.setScroll((i / 100) * this.term.buffer.ybase | 0);
-    };
+    }
 
     screenshot(xi, xl, yi, yl) {
         xi = 0 + (xi || 0);
         if (xl != null) {
-          xl = 0 + (xl || 0);
+            xl = 0 + (xl || 0);
         } else {
-          xl = this.term.buffer.lines[0].length;
+            xl = this.term.buffer.lines[0].length;
         }
         yi = 0 + (yi || 0);
         if (yl != null) {
-          yl = 0 + (yl || 0);
+            yl = 0 + (yl || 0);
         } else {
-          yl = this.term.buffer.lines.length;
+            yl = this.term.buffer.lines.length;
         }
         return this.screen.screenshot(xi, xl, yi, yl, this.term);
     }
@@ -506,14 +506,14 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         });
         */
         if ( this.term ) {
-            this.term.write('\x1b[H\x1b[J');
+            this.term.write("\x1b[H\x1b[J");
             this.term.dispose();
             delete this.term;
             this.term = null;
         }
         if (this.pty) {
             try {
-                (this.pty as any).emit('exit', 0);
+                (this.pty as any).emit("exit", 0);
                 log.debug( "PROCESS KILL - %d", this.pty.pid );
                 process.kill( this.pty.pid );
                 /* BUG - process stop

@@ -8,6 +8,7 @@
 */
 
 export const ColorDefault = {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     version: require("../../package.json").version,
     base: {
         default: "7,-1",

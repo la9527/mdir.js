@@ -1,5 +1,4 @@
-import * as blessed from "neo-blessed";
-import { Widgets, program } from "../../@types/blessed.d";
+import { Widgets } from "../../@types/blessed.d";
 import { strWidth, charWidth } from "neo-blessed/lib/unicode";
 import * as unicode from "neo-blessed/lib/unicode";
 import { Widget } from "./widget/Widget";
@@ -7,17 +6,15 @@ import { Logger } from "../common/Logger";
 import { StringUtils } from "../common/StringUtils";
 import { ColorConfig } from "../config/ColorConfig";
 import { Reader } from "../common/Reader";
-import { KeyMapping, RefreshType, SearchDisallowKeys, Hint, Help, IHelpService } from '../config/KeyMapConfig';
+import { KeyMapping, RefreshType, IHelpService } from "../config/KeyMapConfig";
 import { KeyMappingInfo } from "../config/KeyMapConfig";
 import { IBlessedView } from "./IBlessedView";
 import { messageBox } from "./widget/MessageBox";
 import { inputBox } from "./widget/InputBox";
-import { T } from "../common/Translation";
 
-import { Editor, IViewBuffer, EDIT_MODE } from '../editor/Editor';
+import { Editor, IViewBuffer, EDIT_MODE } from "../editor/Editor";
 import { Color } from "../common/Color";
 import mainFrame from "./MainFrame";
-import { File } from "../common/File";
 
 const log = Logger( "BlassedEditor" );
 
@@ -116,7 +113,7 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
             }
         });
 
-        this.editor.on('resize', () => {
+        this.editor.on("resize", () => {
             process.nextTick(() => {
                 this.column = this.editor.width as number - (this.hasBoxDraw() ? 2 : 0);
                 this.line = this.editor.height as number - (this.hasBoxDraw() ? 2 : 0);
@@ -270,10 +267,10 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
         box.dattr = box.sattr(box.style);
       
         let xi = ret.xi + box.ileft
-          , xl = ret.xl - box.iright 
-          , yi = ret.yi + box.itop
-          , yl = ret.yl - box.ibottom
-          , cursor;
+            , xl = ret.xl - box.iright 
+            , yi = ret.yi + box.itop
+            , yl = ret.yl - box.ibottom
+            , cursor;
 
         this.line = box.height - 2;
         this.column = box.width - 2;
@@ -323,7 +320,7 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
                     }) | (8 << 18);
                 }
 
-                line[x][1] = ' ';
+                line[x][1] = " ";
                 if ( x - xi > -1 && bufferLine && bufferLine.text && tpos < bufferLine.text.length ) {
                     if ( bufferLine.selectInfo ) {
                         const { all, start, end } = bufferLine.selectInfo;
@@ -348,12 +345,12 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
                     let ch = bufferLine.text[tpos++];
                     let chSize = unicode.charWidth( ch );
                     if (chSize === 0 ) {
-                        ch = '';
+                        ch = "";
                     } else {
                         line[x][1] = ch;
                         if ( chSize > 1 ) {
                             if ( ch === "\t" ) {
-                                line[x][1] = ' ';
+                                line[x][1] = " ";
                             }
                             for ( let i = 1; i < chSize; i++ ) {
                                 line[x+i][0] = (box as any).sattr({
@@ -365,7 +362,7 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
                                     bg: box.style.bg,
                                     fg: box.style.fg,
                                 });
-                                line[x+i][1] = ' ';
+                                line[x+i][1] = " ";
                             }
                             x += chSize - 1;
                         }

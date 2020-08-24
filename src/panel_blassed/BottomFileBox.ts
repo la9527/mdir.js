@@ -1,17 +1,14 @@
 import { sprintf } from "sprintf-js";
-import { BlessedProgram, Widgets, box, text, colors } from "neo-blessed";
+import { Widgets } from "neo-blessed";
 import { strWidth } from "neo-blessed/lib/unicode";
 import { Widget } from "./widget/Widget";
 import mainFrame from "./MainFrame";
-import { Logger } from "../common/Logger";
 import { File } from "../common/File";
 import { StringUtils } from "../common/StringUtils";
 import { scrstrncpy } from "./ScreenUtils";
 import { ColorConfig } from "../config/ColorConfig";
 import { Color } from "../common/Color";
-import { BlessedPanel } from './BlessedPanel';
-
-const log = Logger("BottomFilesBox");
+import { BlessedPanel } from "./BlessedPanel";
 
 export default class BottomFilesBox extends Widget {
     colorFunc: Color = null;
@@ -37,7 +34,7 @@ export default class BottomFilesBox extends Widget {
     }
 
     draw() {
-        let panel = mainFrame().activePanel();
+        const panel = mainFrame().activePanel();
         if ( !(panel instanceof BlessedPanel) ) {
             return;
         }
@@ -56,11 +53,11 @@ export default class BottomFilesBox extends Widget {
         const textFileName = this.convertFilename(file, this.width as number - 50);
         let viewText = null;
         if ( process.platform === "win32" ) {
-            viewText = sprintf(`{bold}%s{/bold} | {bold}%s{/bold} {bold}%s{/bold} | {bold}%20s{/bold} | {bold}%s{/bold}`, 
-                                file.attr, date, time, StringUtils.toregular(file.size), textFileName);
+            viewText = sprintf("{bold}%s{/bold} | {bold}%s{/bold} {bold}%s{/bold} | {bold}%20s{/bold} | {bold}%s{/bold}", 
+                file.attr, date, time, StringUtils.toregular(file.size), textFileName);
         } else {
-            viewText = sprintf(`{bold}%s{/bold} | {bold}%s{/bold} {bold}%s{/bold} | {bold}%10s{/bold} | {bold}%s %s{/bold} | {bold}%s{/bold}`, 
-                                file.attr, (file.owner || file.uid), (file.group || file.gid), StringUtils.toregular(file.size), date, time, textFileName);
+            viewText = sprintf("{bold}%s{/bold} | {bold}%s{/bold} {bold}%s{/bold} | {bold}%10s{/bold} | {bold}%s %s{/bold} | {bold}%s{/bold}", 
+                file.attr, (file.owner || file.uid), (file.group || file.gid), StringUtils.toregular(file.size), date, time, textFileName);
         }
         if ( file.mimetype ) {
             viewText += ` | {bold}${file.mimetype}{/bold}`;

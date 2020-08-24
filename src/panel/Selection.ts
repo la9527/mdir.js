@@ -1,7 +1,5 @@
 import { Reader } from "../common/Reader";
 import { File } from "../common/File";
-import { fileURLToPath } from "url";
-import { log } from "winston";
 
 export enum ClipBoard {
     CLIP_NONE,
@@ -77,14 +75,14 @@ export class Selection {
             checked: boolean;
         }
 
-        let arrDirs: IDir[] = [];
+        const arrDirs: IDir[] = [];
         this.arrFiles.forEach( (item) => item.dir && !item.link && arrDirs.push( { dirFile: item, checked: false } ) );
 
         let result = false;
 
         const beforeDir = this.reader.currentDir();
         for ( ;; ) {
-            let dir = arrDirs.find( (item) => !item.checked );
+            const dir = arrDirs.find( (item) => !item.checked );
             if ( !dir ) {
                 result = true;
                 break;

@@ -55,7 +55,7 @@ export class SearchFileBox extends Widget {
         if ( this.keylock ) {
             return false;
         }
-        let viewText = this.viewText;
+        const viewText = this.viewText;
         this.keylock = true;
         const keyRelease = () => {
             if (this.viewText !== viewText) {
@@ -90,6 +90,7 @@ export class SearchFileBox extends Widget {
             keyRelease();
             return false;
         }
+        // eslint-disable-next-line no-control-regex
         if ( ch && !/^[\x00-\x08\x0b-\x0c\x0e-\x1f\x7f]$/.test(ch)) {
             this.viewText += ch;
             result = true;

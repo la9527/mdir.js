@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/member-ordering */
 import * as blessed from "neo-blessed";
 import { Widgets } from "neo-blessed";
 
@@ -8,11 +9,11 @@ import { StringUtils } from "../common/StringUtils";
 import { PanelFileBox } from "./PanelFileBox";
 import { ColorConfig } from "../config/ColorConfig";
 import { Reader } from "../common/Reader";
-import { KeyMapping, RefreshType, SearchDisallowKeys, Hint, Help, IHelpService } from '../config/KeyMapConfig';
+import { KeyMapping, RefreshType, SearchDisallowKeys, Hint, Help, IHelpService } from "../config/KeyMapConfig";
 import { KeyMappingInfo } from "../config/KeyMapConfig";
 import { IBlessedView } from "./IBlessedView";
-import mainFrame from './MainFrame';
-import { SearchFileBox } from './SearchFileBox';
+import mainFrame from "./MainFrame";
+import { SearchFileBox } from "./SearchFileBox";
 import { File } from "../common/File";
 import { messageBox, MSG_BUTTON_TYPE } from "./widget/MessageBox";
 import { T } from "../common/Translation";
@@ -135,6 +136,7 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
         this.initRender();
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     setBoxDraw( boxDraw: boolean ) {
         return true;
     }
@@ -187,7 +189,7 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
     initRender() {
         log.info("initRender : fileBox.size : %d", this.fileBox.length);
         this.panel.on("prerender", () => {
-            let startTime = Date.now();
+            const startTime = Date.now();
             log.debug("Panel prerender !!! - Start %d", this.baseWidget._viewCount);
             this.resize();
             this.beforeRender();
@@ -197,7 +199,7 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
             // log.debug( "header prerender !!! - Start %d", this.baseWidget._viewCount );
             if (this._currentDir) {
                 if ( this._currentDir.fstype === "archive" ) {
-                    let file = FileReader.convertFile(this._currentDir.root);
+                    const file = FileReader.convertFile(this._currentDir.root);
                     this.header.setContent( file?.name + ":" + this._currentDir.fullname);
                 } else {
                     this.header.setContent(this._currentDir.fullname);
@@ -253,9 +255,9 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
             log.debug( currentFile );
             return RefreshType.NONE;
         }
-        let programInfo = Configure.instance().getMatchProgramInfo( currentFile );
+        const programInfo = Configure.instance().getMatchProgramInfo( currentFile );
         if ( programInfo && programInfo.length > 0 ) {
-            let buttons = programInfo.map( (item, i) => `${i+1}. ${T(item.name)}` );
+            const buttons = programInfo.map( (item, i) => `${i+1}. ${T(item.name)}` );
 
             const result = await messageBox({
                 parent: this.getWidget(),
@@ -301,7 +303,7 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
                 return RefreshType.NONE;
             }
             try {
-                let result = Configure.instance().getMatchProgramInfo( currentFile );
+                const result = Configure.instance().getMatchProgramInfo( currentFile );
                 if ( result && result.length > 0 && result[0].command ) {
                     await mainFrame().commandRun(result[0].command, true);
                 } else if ( result && result.length > 0 && result[0].method ) {
@@ -381,8 +383,7 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
     }
 
     resize() {
-        const MAX_COLUMN = 6;
-
+        // const MAX_COLUMN = 6;
         const dirLength = this.dirFiles.length;
         const viewHeight = this.baseWidget.height as number - 2;
         if (this.viewColumn === 0 || this.viewColumn > 6) {
@@ -400,10 +401,10 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
                 this.column = 6;
             }
             
-            let MIN_COLUMN_SIZE = 20;
-            let checkColumnSize = Array(this.column).fill(0).reduce( (pre, n, i) => {
-                let checkNum = this.column - i;
-                let columnSize = Math.round(this.baseWidget.width as number / checkNum);
+            const MIN_COLUMN_SIZE = 20;
+            const checkColumnSize = Array(this.column).fill(0).reduce( (pre, n, i) => {
+                const checkNum = this.column - i;
+                const columnSize = Math.round(this.baseWidget.width as number / checkNum);
                 if ( columnSize <= MIN_COLUMN_SIZE ) {
                     return checkNum;
                 }
@@ -441,7 +442,7 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
 
     checkDoubleClick(e) {
         let isDoubleClick = false;
-        let clickTime = Date.now() - this._befClickData.now;
+        const clickTime = Date.now() - this._befClickData.now;
         if ( e.x === this._befClickData.x && e.y === this._befClickData.y && clickTime < 600 ) {
             isDoubleClick = true;
         }
@@ -519,7 +520,7 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
 
     isViewChange() {
         const getMatchData = (data) => {
-            let result = { ...data };
+            const result = { ...data };
             delete result.currentPos;
             return JSON.stringify(result);
         };
@@ -554,45 +555,45 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
 
     @Hint({ hint: T("Hint.Shell"), order: 4 })
     @Help( T("Help.CommandBox") )
-    commandBoxShow() {
+    public commandBoxShow() {
         mainFrame().commandBoxShow();
     }
 
-    async mkdirPromise() {
+    public async mkdirPromise() {
         return await mainFrame().mkdirPromise();
     }
 
-    async renamePromise() {
+    public async renamePromise() {
         return await mainFrame().renamePromise();
     }
 
-    async consoleViewPromise() {
+    public async consoleViewPromise() {
         await mainFrame().consoleViewPromise();
     }
 
     @Help( T("Help.SelectAll") )
-    selectAllFiles() {
+    public selectAllFiles() {
         super.selectAllFiles();
         this.resetViewCache();
         return RefreshType.OBJECT;
     }
 
     @Help( T("Help.SortChange") )
-    async sortChangePromise() {
+    public async sortChangePromise() {
         super.sortChange();
         await this.refreshPromise();
         return RefreshType.ALL;
     }
 
     @Help( T("Help.SortReverse") )
-    async sortReversePromise() {
+    public async sortReversePromise() {
         super.sortReverse();
         await this.refreshPromise();
         return RefreshType.ALL;
     }
 
     @Help( T("Help.HiddenFiles") )
-    async toggleExcludeHiddenFilePromise() {
+    public async toggleExcludeHiddenFilePromise() {
         super.toggleExcludeHiddenFile();
         await this.refreshPromise();
         return RefreshType.ALL;

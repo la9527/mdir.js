@@ -1,11 +1,9 @@
-import * as fs from "fs";
 import * as path from "path";
 
 import { SortType } from "../common/Sort";
 import { Dir } from "../common/Dir";
-import { Reader } from '../common/Reader';
+import { Reader } from "../common/Reader";
 import { File } from "../common/File";
-import { readerControl } from "./readerControl";
 import { Logger } from "../common/Logger";
 import { Help, IHelpService } from "../config/KeyMapConfig";
 import { T } from "../common/Translation";
@@ -56,7 +54,7 @@ export class Mcd implements IHelpService {
         await this.scanDir( dir );
     }
 
-    async rescan( depth: number = 0): Promise<Boolean> {
+    async rescan( depth: number = 0): Promise<boolean> {
         this.arrOrder = [];
 
         this.rootDir = new Dir(this.reader.rootDir(), null, false);
@@ -64,8 +62,8 @@ export class Mcd implements IHelpService {
         return result;
     }
 
-    async scan( dir: Dir, depth = 0 ): Promise<Boolean> {
-        let arrDir: Dir[] = [];
+    async scan( dir: Dir, depth = 0 ): Promise<boolean> {
+        const arrDir: Dir[] = [];
         let pTree: Dir = null;
         let depthCount = 1;
         if ( this.rootDir == null ) {
@@ -134,7 +132,7 @@ export class Mcd implements IHelpService {
         let orgDepth = -1;
 
         this.arrOrder = [];
-        let temp = [];
+        const temp = [];
         temp.push( this.rootDir );
 
         while( temp.length != 0 ) {
@@ -172,8 +170,8 @@ export class Mcd implements IHelpService {
     }
 
     getDirRowArea( findRow: number, depth: number, curDir: Dir = null ): Dir {
-        let tempNodeOver = [];
-        let tempNodeUnder = [];
+        const tempNodeOver = [];
+        const tempNodeUnder = [];
         
         this.arrOrder.filter(item => item.depth === depth ).map( (item) => {
             if ( item.row <= findRow ) {
@@ -184,8 +182,8 @@ export class Mcd implements IHelpService {
             }
         });
 
-        let overDir: Dir = tempNodeOver.length > 0 ? tempNodeOver[0] : null;
-        let underDir: Dir = tempNodeUnder.length > 0 ? tempNodeUnder[tempNodeUnder.length - 1] : null;
+        const overDir: Dir = tempNodeOver.length > 0 ? tempNodeOver[0] : null;
+        const underDir: Dir = tempNodeUnder.length > 0 ? tempNodeUnder[tempNodeUnder.length - 1] : null;
 
         if ( overDir && underDir ) {
             if ( curDir && curDir.row === underDir.row ) {
@@ -220,12 +218,12 @@ export class Mcd implements IHelpService {
             return findSubDir( findDir, pathArr );
         };
 
-        let pathOnly = dirPath.substr(path.parse(dirPath).root.length);
-        let pathArr = pathOnly.split(path.sep);
+        const pathOnly = dirPath.substr(path.parse(dirPath).root.length);
+        const pathArr = pathOnly.split(path.sep);
         return findSubDir( this.rootDir, pathArr );
     }
 
-    async addDirectory( dirPath: string ): Promise<Boolean> {
+    async addDirectory( dirPath: string ): Promise<boolean> {
         if ( this.rootDir == null ) {
             await this.rescan( 1 );
         }
@@ -331,14 +329,14 @@ export class Mcd implements IHelpService {
 
     @Help(T("Help.SubDirScan"))
     async subDirScanPromise( depth: number = 1 ) {
-        let node = this.currentDir();
+        const node = this.currentDir();
         this.hideSubDir( node );
         await this.scan( node, depth );
     }
 
     @Help(T("Help.SubDirHide"))
     subDirHide() {
-        let node = this.currentDir();
+        const node = this.currentDir();
         this.hideSubDir( node );
     }
 }

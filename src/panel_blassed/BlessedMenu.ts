@@ -1,13 +1,12 @@
-import { BlessedProgram, Widgets, box, text, line, colors } from "neo-blessed";
+import { Widgets, text, line } from "neo-blessed";
 import { strWidth } from "neo-blessed/lib/unicode";
-import { Color } from '../common/Color';
-import { ColorConfig } from '../config/ColorConfig';
-import { ISubMenuConfig, menuConfig, IMainMenuConfig } from '../config/MenuConfig';
-import { Widget } from './widget/Widget';
-import { sprintf } from "sprintf-js";
-import { KeyMapping, KeyMappingInfo, keyHumanReadable, RefreshType, IHelpService } from '../config/KeyMapConfig';
+import { Color } from "../common/Color";
+import { ColorConfig } from "../config/ColorConfig";
+import { ISubMenuConfig, IMainMenuConfig } from "../config/MenuConfig";
+import { Widget } from "./widget/Widget";
+import { KeyMapping, KeyMappingInfo, keyHumanReadable, RefreshType, IHelpService } from "../config/KeyMapConfig";
 import { Logger } from "../common/Logger";
-import mainFrame from './MainFrame';
+import mainFrame from "./MainFrame";
 import { T } from "../common/Translation";
 
 const log = Logger("blessed-menu");
@@ -43,7 +42,7 @@ class BlassedMenuBox extends Widget {
         }
 
         this.box.style = { ...this.menuColor.blessed, border: this.menuColor.blessed };
-        let opt = { parent: this.box, left: 0, width: (this.width as number) - 2, height: 1 };
+        const opt = { parent: this.box, left: 0, width: (this.width as number) - 2, height: 1 };
         let top = 0;
         this.menuItem.forEach( (item: string | ISubMenuConfig, i: number) => {
             let lineBox = null;
@@ -52,11 +51,11 @@ class BlassedMenuBox extends Widget {
             } else if ( (item as ISubMenuConfig) && (item as ISubMenuConfig).name ) {
                 log.debug( "SUBMENU: %s", item );
 
-                let keyName = i !== this.selectPos ? 
+                const keyName = i !== this.selectPos ? 
                     this.menuAColor.fontHexBlessFormat(keyHumanReadable((item as ISubMenuConfig).key || "")) : 
                     keyHumanReadable((item as ISubMenuConfig).key || "");
 
-                let style = i === this.selectPos ? this.menuSelColor.blessed : this.menuColor.blessed;
+                const style = i === this.selectPos ? this.menuSelColor.blessed : this.menuColor.blessed;
                 lineBox = text( { ...opt, top: top++, content: " " + (item as ISubMenuConfig).name + "{|}" + keyName + " ", style, tags: true } );
                 // log.debug( "SUBMENU: %s", (item as ISubMenuConfig).name );
             }
@@ -84,7 +83,7 @@ class BlassedMenuBox extends Widget {
             if ( this.selectPos >= this.menuItem.length ) {
                 this.selectPos = 0;
             }
-        } while( this.menuItem[this.selectPos] === "-" || !this.menuItem[this.selectPos] )
+        } while( this.menuItem[this.selectPos] === "-" || !this.menuItem[this.selectPos] );
     }
 
     getFocusMenu(): ISubMenuConfig {
@@ -99,7 +98,7 @@ export class BlessedMenu implements IHelpService {
     menuColor: Color = null;
     menuAColor: Color = null;
     menuSelColor: Color = null;
-    menuBox:BlassedMenuBox = null;
+    menuBox: BlassedMenuBox = null;
     menuConfig: IMainMenuConfig = null;
     opt = null;
 
@@ -127,8 +126,8 @@ export class BlessedMenu implements IHelpService {
     }
 
     updateSubMenu() {
-        let menuList = Object.keys(this.menuConfig);
-        let name = menuList[this.menuPos];
+        const menuList = Object.keys(this.menuConfig);
+        const name = menuList[this.menuPos];
         if ( name ) {
             this.menuBox.setMenu( this.menuConfig[name] );
         }
@@ -162,9 +161,9 @@ export class BlessedMenu implements IHelpService {
         this.topMenu.height = 1;
 
         let menuBoxPos = 4;
-        let prefix = Array(menuBoxPos).join(" ");
-        let viewText = Object.keys(this.menuConfig).map( (name, i) => {
-            let nm = T("Menu." + name);
+        const prefix = Array(menuBoxPos).join(" ");
+        const viewText = Object.keys(this.menuConfig).map( (name, i) => {
+            const nm = T("Menu." + name);
             if ( i < this.menuPos )  {
                 menuBoxPos += strWidth(nm) + 2;
             }
@@ -181,7 +180,7 @@ export class BlessedMenu implements IHelpService {
     }
 
     async keyEnterPromise() {
-        let menuInfo = this.menuBox.getFocusMenu();
+        const menuInfo = this.menuBox.getFocusMenu();
         this.close();
         
         await mainFrame().methodRun( menuInfo.method, menuInfo.funcParam );

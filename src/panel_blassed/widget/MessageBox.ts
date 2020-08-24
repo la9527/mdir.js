@@ -1,6 +1,4 @@
-import { Widgets, text, button } from "neo-blessed";
-import { strWidth } from "neo-blessed/lib/unicode";
-
+import { Widgets } from "neo-blessed";
 import { Widget } from "./Widget";
 import { ColorConfig } from "../../config/ColorConfig";
 import { Logger } from "../../common/Logger";
@@ -17,13 +15,13 @@ export enum MSG_BUTTON_TYPE {
 interface IMessageOption {
     parent: Widget | Widgets.Screen;
     title: string;
-    msg ?: string | any;
+    msg?: string | any;
     button: string[];
-    buttonType ?: MSG_BUTTON_TYPE;
-    textAlign ?: string;
-    buttonTextAlign ?: string;
-    scroll ?: boolean;
-    result?: (button: string, buttonPos ?: number ) => void;
+    buttonType?: MSG_BUTTON_TYPE;
+    textAlign?: string;
+    buttonTextAlign?: string;
+    scroll?: boolean;
+    result?: (button: string, buttonPos?: number ) => void;
 }
 
 export class MessageBox extends Widget {
@@ -57,15 +55,15 @@ export class MessageBox extends Widget {
 
         const MIN_BUTTON_WIDTH = 12;
         this.buttonWidth = this.msgOption.button.reduce( (pre: number, item) => {
-            let strWidth = this.box.strWidth(item);
+            const strWidth = this.box.strWidth(item);
             return pre < strWidth ? strWidth : pre;
         }, MIN_BUTTON_WIDTH);
 
-        let buttonAllWidth = this.msgOption.button.length * (this.buttonWidth + 2);
+        const buttonAllWidth = this.msgOption.button.length * (this.buttonWidth + 2);
         
-        let widthTitle = Math.min( this.box.strWidth(this.msgOption.title), MAX_WIDTH );
-        let msgLines = this.msgOption.msg ? this.msgOption.msg.split("\n") : [];
-        let widthMsg = msgLines.reduce( (pre: number, cur: string ) => {
+        const widthTitle = Math.min( this.box.strWidth(this.msgOption.title), MAX_WIDTH );
+        const msgLines = this.msgOption.msg ? this.msgOption.msg.split("\n") : [];
+        const widthMsg = msgLines.reduce( (pre: number, cur: string ) => {
             log.debug( "MessageBox: [%s]", cur );
             return Math.min( Math.max(pre, this.box.strWidth(cur) + 4), MAX_WIDTH );
         }, MIN_WIDTH );
@@ -100,17 +98,17 @@ export class MessageBox extends Widget {
             }
         }
 
-        let len = this.msgOption.button.length;
+        const len = this.msgOption.button.length;
         this.buttonWidgets.map( (item, i) => {
             if ( this.buttonType === MSG_BUTTON_TYPE.HORIZONTAL ) {
-                let left = (Math.floor((this.box.width as number) / (len+1)) * (i+1)) - Math.floor(this.buttonWidth / 2);
+                const left = (Math.floor((this.box.width as number) / (len+1)) * (i+1)) - Math.floor(this.buttonWidth / 2);
                 item.bottom = 1;
                 item.left = left;
                 item.width = this.buttonWidth;
             } else {
                 // VERITCAL
-                let left = Math.floor((this.box.width as number) / 2) - Math.floor(this.buttonWidth / 2);
-                let bottom = len - i;
+                const left = Math.floor((this.box.width as number) / 2) - Math.floor(this.buttonWidth / 2);
+                const bottom = len - i;
                 item.left = left - 1;
                 item.bottom = bottom;
                 item.width = this.buttonWidth;
@@ -139,7 +137,7 @@ export class MessageBox extends Widget {
         log.debug( "init: %s", this.msgOption );
 
         if ( this.msgOption.msg ) {
-            let scrollOption = this.msgOption.scroll ?
+            const scrollOption = this.msgOption.scroll ?
                 {
                     alwaysScroll: true,
                     scrollable: true,
@@ -171,10 +169,10 @@ export class MessageBox extends Widget {
 
         log.debug( "buttonWidth : %d", this.buttonWidth);
 
-        let len = this.msgOption.button.length;
+        const len = this.msgOption.button.length;
         this.msgOption.button.map( (item, i) => {
             if ( this.buttonType === MSG_BUTTON_TYPE.HORIZONTAL ) {
-                let left = (Math.floor((this.box.width as number) / (len+1)) * (i+1)) - Math.floor(this.buttonWidth / 2);
+                const left = (Math.floor((this.box.width as number) / (len+1)) * (i+1)) - Math.floor(this.buttonWidth / 2);
                 this.buttonWidgets.push( 
                     new Widget( {
                         parent: this, 
@@ -191,8 +189,8 @@ export class MessageBox extends Widget {
                 );
             } else {
                 // VERITCAL
-                let left = Math.round((this.box.width as number) / 2) - Math.round(this.buttonWidth / 2);
-                let bottom = len - i - 1;
+                const left = Math.round((this.box.width as number) / 2) - Math.round(this.buttonWidth / 2);
+                const bottom = len - i - 1;
                 this.buttonWidgets.push(
                     new Widget( {
                         parent: this,
@@ -213,7 +211,7 @@ export class MessageBox extends Widget {
         this.resize();
 
         this.box.off("keypress");
-        this.box.on("element click", (el, name) => {
+        this.box.on("element click", (el) => {
             const number = this.buttonWidgets.findIndex( i => el === i.box );
             if ( number > -1 ) {
                 this.destroy();
@@ -306,7 +304,7 @@ export function messageBox( msgOpt: IMessageOption, opts: Widgets.BoxOptions = {
                 textAlign: msgOpt.textAlign,
                 buttonTextAlign: msgOpt.buttonTextAlign,
                 scroll: msgOpt.scroll,
-                result: (button, buttonPos) => {
+                result: (button) => {
                     screen.render();
                     resolve( button );
                 }
@@ -316,7 +314,8 @@ export function messageBox( msgOpt: IMessageOption, opts: Widgets.BoxOptions = {
             log.error( e );
             try {
                 messgaeBox.destroy();
-            } finally {};
+            // eslint-disable-next-line no-empty
+            } finally {}
             screen.render();
             reject(e);
         }

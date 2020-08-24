@@ -1,4 +1,4 @@
-import { File } from '../common/File';
+import { File } from "../common/File";
 
 export class Dir {
     public file: File = null;

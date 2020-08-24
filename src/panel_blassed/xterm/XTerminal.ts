@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { CoreTerminal } from "./common/CoreTerminal";
 import { ICoreTerminal, CharData, ITerminalOptions } from "./common/Types";
 import { EventEmitter, IEvent, forwardEvent } from "./common/EventEmitter";
@@ -44,14 +45,14 @@ export class XTerminal extends CoreTerminal {
 
     focus() {
         if (this._coreService.decPrivateModes.sendFocus) {
-            this._coreService.triggerDataEvent(C0.ESC + '[I');
+            this._coreService.triggerDataEvent(C0.ESC + "[I");
         }
         this._showCursor();
     }
 
     blur() {
         if (this._coreService.decPrivateModes.sendFocus) {
-            this._coreService.triggerDataEvent(C0.ESC + '[O');
+            this._coreService.triggerDataEvent(C0.ESC + "[O");
             this._onRefreshRows.fire(this.buffer.y, this.buffer.y);
         }
     }
@@ -63,7 +64,7 @@ export class XTerminal extends CoreTerminal {
         this.buffer.ybase = 0;
         this.buffer.y = 0;
         for (let i = 1; i < this.rows; i++) {
-          this.buffer.lines.push(this.buffer.getBlankLine(DEFAULT_ATTR_DATA));
+            this.buffer.lines.push(this.buffer.getBlankLine(DEFAULT_ATTR_DATA));
         }
     }
 

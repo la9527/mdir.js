@@ -1,10 +1,9 @@
 import { Widget } from "./widget/Widget";
 import { Widgets } from "neo-blessed";
-import mainFrame from './MainFrame';
-import { IHintInfo, keyHumanReadable, methodToKeyname, TerminalAllowKeys } from '../config/KeyMapConfig';
+import mainFrame from "./MainFrame";
+import { IHintInfo, methodToKeyname, TerminalAllowKeys } from "../config/KeyMapConfig";
 import { strWidth } from "neo-blessed/lib/unicode";
-import { Logger } from '../common/Logger';
-import { Color } from "../common/Color";
+import { Logger } from "../common/Logger";
 import { BlessedXterm } from "./BlessedXterm";
 import { T } from "../common/Translation";
 
@@ -16,13 +15,13 @@ export class HintBox extends Widget {
     }
 
     hintInfo() {
-        let item: IHintInfo[] = [];
-        let activePanel = mainFrame().activePanel();
+        const item: IHintInfo[] = [];
+        const activePanel = mainFrame().activePanel();
 
         const addHintInfo = (view: any) => {
             if ( view.hintInfo && view.keyInfo ) {
-                for ( let method of Object.keys(view.hintInfo) ) {
-                    let { humanKeyName, key } = methodToKeyname(view, method) || {};
+                for ( const method of Object.keys(view.hintInfo) ) {
+                    const { humanKeyName, key } = methodToKeyname(view, method) || {};
                     if ( activePanel instanceof BlessedXterm && TerminalAllowKeys.indexOf(key) === -1 ) {
                         continue;
                     }
@@ -43,12 +42,12 @@ export class HintBox extends Widget {
     }
 
     draw() {
-        let width = this.box.screen.width;
+        const width = this.box.screen.width;
         let hintText = T("HINT") + ": ";
         let colorHintText = hintText;
         this.hintInfo().map( (item: IHintInfo) => {
             if ( item.key ) {
-                let keyHint = `${item.key}-${item.hint}`;
+                const keyHint = `${item.key}-${item.hint}`;
                 if ( strWidth(hintText + " " + keyHint) < width ) {
                     hintText += keyHint;
                     colorHintText += `{cyan-fg}${item.key}{/}-${item.hint} `;

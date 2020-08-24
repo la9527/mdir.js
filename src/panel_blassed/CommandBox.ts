@@ -1,16 +1,15 @@
-import { Widget } from './widget/Widget';
-import { Widgets, screen } from 'neo-blessed';
+import { Widget } from "./widget/Widget";
+import { Widgets } from "neo-blessed";
 import * as unicode from "neo-blessed/lib/unicode";
 import * as os from "os";
 import * as path from "path";
-import { Reader } from "../common/Reader";
 import { File } from "../common/File";
 import { Logger } from "../common/Logger";
-import { IBlessedView } from './IBlessedView';
-import mainFrame from './MainFrame';
-import { ColorConfig } from '../config/ColorConfig';
-import { BlessedPanel } from './BlessedPanel';
-import { RefreshType } from '../config/KeyMapConfig';
+import { IBlessedView } from "./IBlessedView";
+import mainFrame from "./MainFrame";
+import { ColorConfig } from "../config/ColorConfig";
+import { BlessedPanel } from "./BlessedPanel";
+import { RefreshType } from "../config/KeyMapConfig";
 
 const log = Logger("CommandBox");
 
@@ -138,20 +137,20 @@ export class CommandBox extends Widget {
         }
     }
 
-    async pathComplatePromise( pathStr: string ): Promise<{ path: File, files: File[] }> {
+    async pathComplatePromise( pathStr: string ): Promise<{ path: File; files: File[] }> {
         try {
-            let reader = this.panelView && this.panelView.getReader();
+            const reader = this.panelView && this.panelView.getReader();
             if ( !reader ) {
                 return null;
             }
 
-            let pathInfo = path.parse(pathStr);
-            let isDirCheck = pathStr[ pathStr.length - 1 ] === path.sep;
-            let pathFile = reader.convertFile( isDirCheck ? pathStr : pathInfo.dir, { checkRealPath: true } );
+            const pathInfo = path.parse(pathStr);
+            const isDirCheck = pathStr[ pathStr.length - 1 ] === path.sep;
+            const pathFile = reader.convertFile( isDirCheck ? pathStr : pathInfo.dir, { checkRealPath: true } );
             if ( !pathFile ) {
                 return null;
             }
-            let pathFiles = await reader.readdir( pathFile );
+            const pathFiles = await reader.readdir( pathFile );
             return {
                 path: pathFile,
                 files: pathFiles.filter( (item) => {
@@ -168,9 +167,9 @@ export class CommandBox extends Widget {
     }
 
     draw() {
-        let panel = (mainFrame().activePanel() as BlessedPanel);
+        const panel = (mainFrame().activePanel() as BlessedPanel);
         if ( panel ) {
-            let dir: File = panel.currentPath();
+            const dir: File = panel.currentPath();
             if ( dir ) {
                 //log.debug( "CommandBox - PATH: [%s]", dir.fullname );
                 this.promptText = this.prompt( dir.fullname );
@@ -191,7 +190,7 @@ export class CommandBox extends Widget {
     }
 
     keyDown() {
-        let result = gCmdHistory.down();
+        const result = gCmdHistory.down();
         if ( result !== null ) {
             this.commandValue = result;
             this.cursorPos = unicode.strWidth(this.commandValue);
@@ -199,7 +198,7 @@ export class CommandBox extends Widget {
     }
 
     keyUp() {
-        let result = gCmdHistory.up();
+        const result = gCmdHistory.up();
         if ( result !== null ) {
             this.commandValue = result;
             this.cursorPos = unicode.strWidth(this.commandValue);
@@ -248,11 +247,11 @@ export class CommandBox extends Widget {
 
     async keyTabPromise() {
         try {
-            let cmd = this.commandValue;
-            let lastIndex = cmd.lastIndexOf(" ");
-            let firstText = cmd.substr(0, lastIndex > -1 ? (lastIndex + 1) : cmd.length );
-            let lastPath = cmd.substr(lastIndex+1);
-            let currentPath: File = (mainFrame().activePanel() as BlessedPanel).currentPath();
+            const cmd = this.commandValue;
+            const lastIndex = cmd.lastIndexOf(" ");
+            const firstText = cmd.substr(0, lastIndex > -1 ? (lastIndex + 1) : cmd.length );
+            const lastPath = cmd.substr(lastIndex+1);
+            const currentPath: File = (mainFrame().activePanel() as BlessedPanel).currentPath();
 
             if ( this.tabFileInfo ) {
                 this.tabFileInfo.index++;
@@ -269,8 +268,8 @@ export class CommandBox extends Widget {
             }
 
             if ( this.tabFileInfo ) {
-                let pathInfo = path.parse(lastPath);
-                let tabFile = this.tabFileInfo.files[this.tabFileInfo.index];
+                const pathInfo = path.parse(lastPath);
+                const tabFile = this.tabFileInfo.files[this.tabFileInfo.index];
                 this.commandValue = firstText + (pathInfo.dir ? (pathInfo.dir + path.sep) : "") + tabFile.name + (tabFile.dir ? path.sep : "");
                 this.cursorPos = unicode.strWidth(this.commandValue);
             }
@@ -285,7 +284,7 @@ export class CommandBox extends Widget {
         }
         this.keylock = true;
 
-        let camelize = (str) => {
+        const camelize = (str) => {
             return str.replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) => {
                 return index === 0 ? word.toLowerCase() : word.toUpperCase();
             }).replace(/\s+/g, "");
@@ -296,7 +295,7 @@ export class CommandBox extends Widget {
                 this.tabFileInfo = null;
             }
 
-            let methodName = camelize("key " + key.name);
+            const methodName = camelize("key " + key.name);
             log.debug( "CommandBox.%s()", methodName );
             if ( this[methodName] ) {
                 this[methodName]();
@@ -317,7 +316,8 @@ export class CommandBox extends Widget {
             return;
         }
 
-        let value = this.commandValue;
+        const value = this.commandValue;
+        // eslint-disable-next-line no-control-regex
         if ( ch && !/^[\x00-\x08\x0b-\x0c\x0e-\x1f\x7f]$/.test(ch)) {
             this.commandValue = this.commandValue.substr(0, this.cursorPos) + ch + this.commandValue.substr(this.cursorPos);
             this.cursorPos += unicode.strWidth(ch);

@@ -1,3 +1,4 @@
+/* eslint-disable prefer-spread */
 import i18n from "i18next";
 import I18nextCLILanguageDetector from "i18next-cli-language-detector";
 import en from "../translation/en.json";
@@ -20,4 +21,4 @@ export async function changeLanguage( lang: string ) {
 
 export function T( ...a ): string {
     return i18n.t.apply( i18n, a );
-};
+}

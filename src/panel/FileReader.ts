@@ -7,7 +7,6 @@ import { File, FileLink } from "../common/File";
 import { Logger } from "../common/Logger";
 import { Reader, IMountList, ProgressFunc, ProgressResult } from "../common/Reader";
 
-import { ColorConfig } from "../config/ColorConfig";
 import { Transform } from "stream";
 import * as FileType from "file-type";
 
@@ -16,10 +15,10 @@ import fswin from "fswin";
 const log = Logger("FileReader");
 
 interface Win32Attributes {
-    CREATION_TIME: Date,
-    LAST_ACCESS_TIME: Date,
-    LAST_WRITE_TIME: Date,
-    SIZE: number,
+    CREATION_TIME: Date;
+    LAST_ACCESS_TIME: Date;
+    LAST_WRITE_TIME: Date;
+    SIZE: number;
     IS_ARCHIVED: boolean;
     IS_COMPRESSED: boolean;
     IS_DEVICE: boolean;
@@ -61,15 +60,15 @@ const convertAttr = ( stats: fs.Stats ): string => {
 export function convertAttrToStatMode( file: File ): number {
     if ( file instanceof File && file.attr && file.attr.length === 10 ) {
         let mode = 0;
-        mode = mode | (file.attr[1] === 'r' ? fs.constants.S_IRUSR : 0);
-        mode = mode | (file.attr[2] === 'w' ? fs.constants.S_IWUSR : 0);
-        mode = mode | (file.attr[3] === 'x' ? fs.constants.S_IXUSR : 0);
-        mode = mode | (file.attr[4] === 'r' ? fs.constants.S_IRGRP : 0);
-        mode = mode | (file.attr[5] === 'w' ? fs.constants.S_IWGRP : 0);
-        mode = mode | (file.attr[6] === 'x' ? fs.constants.S_IXGRP : 0);
-        mode = mode | (file.attr[7] === 'r' ? fs.constants.S_IROTH : 0);
-        mode = mode | (file.attr[8] === 'w' ? fs.constants.S_IWOTH : 0);
-        mode = mode | (file.attr[9] === 'x' ? fs.constants.S_IXOTH : 0);
+        mode = mode | (file.attr[1] === "r" ? fs.constants.S_IRUSR : 0);
+        mode = mode | (file.attr[2] === "w" ? fs.constants.S_IWUSR : 0);
+        mode = mode | (file.attr[3] === "x" ? fs.constants.S_IXUSR : 0);
+        mode = mode | (file.attr[4] === "r" ? fs.constants.S_IRGRP : 0);
+        mode = mode | (file.attr[5] === "w" ? fs.constants.S_IWGRP : 0);
+        mode = mode | (file.attr[6] === "x" ? fs.constants.S_IXGRP : 0);
+        mode = mode | (file.attr[7] === "r" ? fs.constants.S_IROTH : 0);
+        mode = mode | (file.attr[8] === "w" ? fs.constants.S_IWOTH : 0);
+        mode = mode | (file.attr[9] === "x" ? fs.constants.S_IXOTH : 0);
         return mode;
     }
     return 0;
@@ -94,12 +93,12 @@ const convertAttrWin32 = ( stat: Win32Attributes ): string => {
 const PASSWD_FILE = "/etc/passwd";
 
 interface ISystemUserInfo {
-    name ?: string;
-    uid ?: number;
-    gid ?: number;
-    fullname ?: string;
-    homepath ?: string;
-    sh ?: string;
+    name?: string;
+    uid?: number;
+    gid?: number;
+    fullname?: string;
+    homepath?: string;
+    sh?: string;
 }
 
 export class SystemUserInfo {
@@ -112,15 +111,15 @@ export class SystemUserInfo {
     reload() {
         try {
             if ( fs.existsSync( PASSWD_FILE ) ) {
-                let valueKeys = [ "name", "", "uid", "gid", "fullname", "homepath", "sh" ];
+                const valueKeys = [ "name", "", "uid", "gid", "fullname", "homepath", "sh" ];
                 
                 // root:x:0:0:root:/root:/bin/bash
                 const buffer = fs.readFileSync( PASSWD_FILE, "utf8" );
-                let userInfos = [];
+                const userInfos = [];
                 buffer.split("\n").forEach( userInfoLine => {
                     if ( !userInfoLine.startsWith("#" ) ) {
                         const userInfoArr = userInfoLine.split(":");
-                        let userInfo = {};
+                        const userInfo = {};
                         valueKeys.forEach( (key, i) => {
                             if ( key ) {
                                 if ( [ "uid", "gid" ].indexOf(key) > -1 ) {
@@ -170,8 +169,8 @@ export class FileReader extends Reader {
     }
 
     async mountList(): Promise<IMountList[]> {
-        let mounts: IMountList[] = [];
-        let drives = await drivelist.list();
+        const mounts: IMountList[] = [];
+        const drives = await drivelist.list();
         drives.forEach( item => {
             log.debug( "MOUNT INFO : %j", item );
             item.mountpoints.forEach( (i) => {
@@ -190,12 +189,12 @@ export class FileReader extends Reader {
         return mounts;
     }
 
-    static convertFile( filePath: string, option ?: { fileInfo ?: any, useThrow ?: boolean, checkRealPath ?: boolean } ): File {
-        let fileReader = new FileReader();
+    static convertFile( filePath: string, option?: { fileInfo?: any; useThrow?: boolean; checkRealPath?: boolean } ): File {
+        const fileReader = new FileReader();
         return fileReader.convertFile( filePath, option );
     }
 
-    convertFile( filePath: string, option ?: { fileInfo ?: any, useThrow ?: boolean, checkRealPath ?: boolean, virtualFile ?: boolean } ): File {
+    convertFile( filePath: string, option?: { fileInfo?: any; useThrow?: boolean; checkRealPath?: boolean; virtualFile?: boolean } ): File {
         const { fileInfo, useThrow, checkRealPath } = option || {};
         const file = new File();
         file.fstype = this._readerFsType;
@@ -296,7 +295,7 @@ export class FileReader extends Reader {
         return this.convertFile(process.cwd());
     }
 
-    readdir( dirFile: File, option ?: { isExcludeHiddenFile ?: boolean, noChangeDir ?: boolean } ): Promise<File[]> {
+    readdir( dirFile: File, option?: { isExcludeHiddenFile?: boolean; noChangeDir?: boolean } ): Promise<File[]> {
         return new Promise<File[]>( (resolve, reject ) => {
             if ( !dirFile.dir ) {
                 reject(`Not directory. ${dirFile.name}`);
@@ -311,7 +310,7 @@ export class FileReader extends Reader {
 
                 const fileList: fs.Dirent[] = (fs as any).readdirSync( dirFile.fullname, { encoding: "utf8", withFileTypes: true  } );
                 log.info( "READDIR: PATH: [%s], FILES: %j", dirFile.fullname, fileList );
-                for ( let file of fileList ) {
+                for ( const file of fileList ) {
                     let dirPath = dirFile.fullname;
                     if ( dirPath.substr(dirPath.length - 1, 1) !== path.sep) {
                         dirPath += path.sep;
@@ -344,7 +343,7 @@ export class FileReader extends Reader {
     }
 
     async fileTypeUpdate( fileItem: File[] ) {
-        for ( let item of fileItem ) {
+        for ( const item of fileItem ) {
             if ( !item.dir && !item.link ) {
                 try {
                     const fileType = await FileType.fromFile( item.fullname );
@@ -369,7 +368,7 @@ export class FileReader extends Reader {
         return fs.existsSync( source );
     }
 
-    mkdir( path: string | File, progress?: ProgressFunc ) {
+    mkdir( path: string | File, _progress?: ProgressFunc ) {
         if ( path instanceof File ) {
             if ( !path.dir ) {
                 return;
@@ -380,7 +379,7 @@ export class FileReader extends Reader {
         }
     }
     
-    rename( source: File, rename: string, progress?: ProgressFunc ): Promise<void> {
+    rename( source: File, rename: string, _progress?: ProgressFunc ): Promise<void> {
         return new Promise( (resolve, reject) => {
             fs.rename( source.fullname, rename, (err) => {
                 if ( err ) {
@@ -393,14 +392,13 @@ export class FileReader extends Reader {
     }
 
     copy(source: File | File[], sourceBaseDir: File, targetDir: File, progress?: ProgressFunc): Promise<void> {
-        let reader = this;
         return new Promise( ( resolve, reject ) => {
             if ( Array.isArray(source) ) {
                 reject( "Unsupport file array type !!!" );
                 return;
             }
 
-            let srcFile =  source.link ? source.link.file : source;
+            const srcFile =  source.link ? source.link.file : source;
             if ( srcFile.dir || targetDir.dir ) {
                 reject("Unable to copy from a source directory.");
                 return;
@@ -413,10 +411,10 @@ export class FileReader extends Reader {
             }
 
             let chunkCopyLength = 0;
-            let rd = fs.createReadStream(srcFile.fullname);
-            let wr = fs.createWriteStream(targetDir.fullname);
+            const rd = fs.createReadStream(srcFile.fullname);
+            const wr = fs.createWriteStream(targetDir.fullname);
 
-            let rejectFunc = (err) => {
+            const rejectFunc = (err) => {
                 rd.destroy();
                 wr.end(() => {
                     fs.unlinkSync( targetDir.fullname );
@@ -425,9 +423,9 @@ export class FileReader extends Reader {
                 reject(err);
             };
 
-            rd.on('error', rejectFunc);
-            wr.on('error', rejectFunc);
-            wr.on('finish', () => {
+            rd.on("error", rejectFunc);
+            wr.on("error", rejectFunc);
+            wr.on("finish", () => {
                 resolve();
             });
 
@@ -474,7 +472,7 @@ export class FileReader extends Reader {
         });
     }
 
-    createFile( fullname: string, option ?: { virtualFile ?: boolean } ): File {
+    createFile( fullname: string, option?: { virtualFile?: boolean } ): File {
         if ( !(option && option.virtualFile) ) {
             fs.writeFileSync( fullname, "", { mode: 0o644 } );
             return this.convertFile( fullname, { checkRealPath: true } );
@@ -482,8 +480,8 @@ export class FileReader extends Reader {
         return this.convertFile( fullname, { virtualFile: true } );
     }
 
-    static createFile( fullname: string, option ?: { virtualFile ?: boolean } ): File {
-        let fileReader = new FileReader();
-        return fileReader.createFile( fullname );
+    static createFile( fullname: string, option?: { virtualFile?: boolean } ): File {
+        const fileReader = new FileReader();
+        return fileReader.createFile( fullname, option );
     }
 }

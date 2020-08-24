@@ -1,3 +1,4 @@
+/* eslint-disable no-async-promise-executor */
 import { Reader, ProgressFunc, IMountList } from "../../common/Reader";
 import { File, FileLink } from "../../common/File";
 import { Logger } from "../../common/Logger";
@@ -16,7 +17,7 @@ export class ArchiveReader extends Reader {
     protected _readerFsType = "archive";
 
     async setArchiveFile( file: File, progressFunc: ProgressFunc ): Promise<boolean> {
-        let archiveObjs = [ new ArchiveTarGz(), new ArchiveZip() ];
+        const archiveObjs = [ new ArchiveTarGz(), new ArchiveZip() ];
         this.archiveObj = archiveObjs.find( item => item.setFile( file ) );
         if ( !this.archiveObj ) {
             return false;
@@ -28,7 +29,7 @@ export class ArchiveReader extends Reader {
         return true;
     }
 
-    convertFile(path: string, option?: any): File {
+    convertFile(path: string, _option?: any): File {
         if ( !path ) {
             return null;
         } else if ( path === "." ) {
@@ -50,7 +51,7 @@ export class ArchiveReader extends Reader {
         }).clone();
     }
 
-    readdir(dir: File, option ?: { isExcludeHiddenFile ?: boolean, noChangeDir ?: boolean }): Promise<File[]> {
+    readdir(dir: File, _option?: { isExcludeHiddenFile?: boolean; noChangeDir?: boolean }): Promise<File[]> {
         let resultFile = [];
         if ( dir.fstype === "archive" ) {
             resultFile = this.archiveFiles.filter( (item) => {
@@ -58,7 +59,7 @@ export class ArchiveReader extends Reader {
                     return false;
                 }
                 if ( item.fullname.startsWith(dir.fullname) ) {
-                    let idx = item.fullname.indexOf("/", dir.fullname.length);
+                    const idx = item.fullname.indexOf("/", dir.fullname.length);
                     if ( idx === -1 || idx === item.fullname.length - 1) {
                         return true;
                     }
@@ -77,7 +78,7 @@ export class ArchiveReader extends Reader {
     }
 
     rootDir(): File {
-        let file = new File();
+        const file = new File();
         file.fstype = "archive";
         file.fullname = "/";
         file.orgname = "";
@@ -100,7 +101,7 @@ export class ArchiveReader extends Reader {
         return null;
     }
 
-    changeDir(dirFile: File) {
+    changeDir(_dirFile: File) {
         throw new Error("Unsupport changedir");
     }
 

@@ -1,5 +1,4 @@
 import { File } from "./File";
-import { ReadStream, WriteStream, FSWatcher } from "fs";
 
 export interface IMountList {
     device: string;
@@ -26,13 +25,13 @@ export abstract class Reader {
     protected _readerFsType: string = null;
     public isUserCanceled = false;
 
-    abstract convertFile( path: string, option ?: { fileInfo ?: any, useThrow ?: boolean, checkRealPath ?: boolean, virtualFile ?: boolean } ): File;
-    abstract readdir( dir: File, option ?: { isExcludeHiddenFile ?: boolean, noChangeDir ?: boolean } ): Promise<File[]>;
+    abstract convertFile( path: string, option?: { fileInfo?: any; useThrow?: boolean; checkRealPath?: boolean; virtualFile?: boolean } ): File;
+    abstract readdir( dir: File, option?: { isExcludeHiddenFile?: boolean; noChangeDir?: boolean } ): Promise<File[]>;
     abstract homeDir(): File;
 
     abstract rootDir(): File;
 
-    abstract mountList(): Promise<IMountList[]>
+    abstract mountList(): Promise<IMountList[]>;
 
     get readerName() {
         return this._readerFsType;

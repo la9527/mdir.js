@@ -32,7 +32,7 @@ export class ColorConfig {
     public load() {
         try {
             if ( fs.existsSync(this.getConfigPath()) ) {
-                let result = fs.readFileSync( this.getConfigPath(), { encoding: "utf8" } );
+                const result = fs.readFileSync( this.getConfigPath(), { encoding: "utf8" } );
                 const colorConfigInfo = JSON.parse( result );
                 if ( colorConfigInfo.version !== ColorDefault.version ) {
                     process.stdout.write( colors.bold("Warning: ") + colors.red(`Invalid version - file ${this.getConfigPath()}. restore to initial file after backup.`) + "\n" );

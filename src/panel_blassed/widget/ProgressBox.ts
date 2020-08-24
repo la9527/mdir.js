@@ -1,18 +1,16 @@
-import { Widget } from './Widget';
-import { Widgets, text, button, progressbar } from 'neo-blessed';
-import { ColorConfig } from '../../config/ColorConfig';
+import { Widget } from "./Widget";
+import { Widgets, progressbar } from "neo-blessed";
+import { ColorConfig } from "../../config/ColorConfig";
 import { Logger } from "../../common/Logger";
-import { strWidth } from "neo-blessed/lib/unicode";
-import mainFrame from '../MainFrame';
-import { StringUtils } from '../../common/StringUtils';
-import { program } from '../../../@types/blessed';
+import mainFrame from "../MainFrame";
+import { StringUtils } from "../../common/StringUtils";
 
 const log = Logger("MessageBox");
 
 export interface IProgressOpt {
     title: string;
-    msg ?: string;
-    cancel ?: () => void;
+    msg?: string;
+    cancel?: () => void;
 }
 
 export class ProgressBox extends Widget {
@@ -132,7 +130,7 @@ export class ProgressBox extends Widget {
         this.resize();
 
         this.box.off("keypress");
-        this.box.on("element click", (el, name) => {
+        this.box.on("element click", () => {
             this.destroy();
             this.box.emit("cancel");
         });

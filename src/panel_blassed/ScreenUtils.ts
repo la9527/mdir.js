@@ -12,6 +12,7 @@ export function screenPrintf( parent, y, x ) {
     const printfOptions = [];
     if ( arguments.length > 3 ) {
         for ( let i = 3; i < arguments.length; i++ ) {
+            // eslint-disable-next-line prefer-rest-params
             printfOptions.push( arguments[i] );
         }
     }

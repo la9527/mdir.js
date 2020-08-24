@@ -95,6 +95,7 @@
     "@typescript-eslint/parser": "^3.9.1",
     "babel-jest": "^26.3.0",
     "eslint": "^7.7.0",
+    "eslint-plugin-jest": "^23.20.0",
     "jest": "24.9.0",
     "jest-environment-jsdom-fourteen": "1.0.1",
     "jest-pnp-resolver": "1.0.2",

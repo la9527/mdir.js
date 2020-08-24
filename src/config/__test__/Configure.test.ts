@@ -1,3 +1,4 @@
+import "jest";
 import Configure from "../Configure";
 import * as fs from "fs";
 import * as path from "path";
@@ -41,5 +42,5 @@ describe( "Configure", () => {
         expect( configure.getOption( "TestBoolean" ) ).toBeTruthy();
         expect( configure.getOption( "TestStr" ) ).toBe("TEST");
         expect( configure.getOption( "TestNumber" ) ).toBe(1234);
-    })
+    });
 });

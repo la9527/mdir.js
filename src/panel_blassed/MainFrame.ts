@@ -1,13 +1,14 @@
+/* eslint-disable @typescript-eslint/member-ordering */
 import which from "which";
-import * as os from 'os';
-import * as fs from 'fs';
-import * as path from 'path';
-import { BlessedProgram, Widgets, box, text, screen } from "neo-blessed";
+import * as os from "os";
+import * as fs from "fs";
+import * as path from "path";
+import { Widgets, screen } from "neo-blessed";
 import { Logger } from "../common/Logger";
-import { BlessedPanel } from './BlessedPanel';
-import { FuncKeyBox } from './FuncKeyBox';
+import { BlessedPanel } from "./BlessedPanel";
+import { FuncKeyBox } from "./FuncKeyBox";
 import BottomFilesBox from "./BottomFileBox";
-import { readerControl } from '../panel/readerControl';
+import { readerControl } from "../panel/readerControl";
 import { Widget } from "./widget/Widget";
 import { keyMappingExec, menuKeyMapping, KeyMappingInfo, 
     KeyMapping, RefreshType, 
@@ -15,9 +16,9 @@ import { keyMappingExec, menuKeyMapping, KeyMappingInfo,
     Help, getHelpInfo, IHelpInfo, IHelpService } from "../config/KeyMapConfig";
 import { menuConfig } from "../config/MenuConfig";
 import { BlessedMenu } from "./BlessedMenu";
-import { BlessedMcd } from './BlessedMcd';
+import { BlessedMcd } from "./BlessedMcd";
 import { BlessedEditor } from "./BlessedEditor";
-import { CommandBox } from './CommandBox';
+import { CommandBox } from "./CommandBox";
 import { exec } from "child_process";
 import colors from "colors";
 import selection, { Selection, ClipBoard } from "../panel/Selection";
@@ -49,6 +50,10 @@ enum VIEW_TYPE {
     HORIZONTAL_SPLIT = 2
 }
 
+export default function mainFrame(): MainFrame {
+    return MainFrame.instance();
+}
+
 @KeyMapping( KeyMappingInfo.Common )
 export class MainFrame implements IHelpService {
     private screen: Widgets.Screen = null;
@@ -61,8 +66,9 @@ export class MainFrame implements IHelpService {
     private hintBox = null;
     private activeFrameNum = 0;
     private commandBox: CommandBox = null;
-    public keyLock = false;
     private _keyLockScreen = false;
+
+    public keyLock = false;
 
     constructor() {
         menuKeyMapping( KeyMappingInfo, menuConfig );
@@ -74,7 +80,7 @@ export class MainFrame implements IHelpService {
 
     @Help(T("Help.Editor"))
     async editorPromise(file: File = null) {
-        let view = this.blessedFrames[this.activeFrameNum];
+        const view = this.blessedFrames[this.activeFrameNum];
         if ( view instanceof BlessedPanel ) {
             view.destroy();
 
@@ -112,7 +118,7 @@ export class MainFrame implements IHelpService {
     @Hint({ hint: T("Hint.Mcd") })
     @Help(T("Help.Mcd"))
     async mcdPromise(isEscape = false) {
-        let view = this.blessedFrames[this.activeFrameNum];
+        const view = this.blessedFrames[this.activeFrameNum];
         if ( view instanceof BlessedPanel ) {
             view.destroy();
 
@@ -136,7 +142,7 @@ export class MainFrame implements IHelpService {
     }
 
     async archivePromise(file: File = null) {
-        let view = this.blessedFrames[this.activeFrameNum];
+        const view = this.blessedFrames[this.activeFrameNum];
         if ( !file && view instanceof BlessedPanel ) {
             file = view.currentFile();
         }
@@ -145,7 +151,7 @@ export class MainFrame implements IHelpService {
         }
 
         if ( view instanceof BlessedPanel && file.fstype === "file" ) {
-            let reader = new ArchiveReader();
+            const reader = new ArchiveReader();
             const progressBox = new ProgressBox( { title: T("Message.Archive"), msg: T("Message.Calculating"), cancel: () => {
                 reader.isUserCanceled = true;
             }}, { parent: this.baseWidget } );
@@ -153,16 +159,17 @@ export class MainFrame implements IHelpService {
             await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
             
             let copyBytes = 0;
-            let befCopyInfo = { beforeTime: Date.now(), copyBytes };
+            const befCopyInfo = { beforeTime: Date.now(), copyBytes };
         
-            let refreshTimeMs = 100;
-            let fullFileSize = file.size;
+            const refreshTimeMs = 100;
+            const fullFileSize = file.size;
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const progressStatus: ProgressFunc = ( source, processSize, size, chunkLength ) => {
                 copyBytes = processSize;
-                let repeatTime = Date.now() - befCopyInfo.beforeTime;
+                const repeatTime = Date.now() - befCopyInfo.beforeTime;
                 if ( repeatTime > refreshTimeMs ) {
-                    let bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
-                    let lastText = (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
+                    // let bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
+                    const lastText = (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
                                     (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(fullFileSize, false, 1).trim());
                     progressBox.updateProgress( source.fullname, lastText, copyBytes, fullFileSize );
                     befCopyInfo.beforeTime = Date.now();
@@ -192,9 +199,11 @@ export class MainFrame implements IHelpService {
             file.fstype === "archive" && 
             view.getReader().currentDir().fullname === "/" &&
             file.fullname === "/" && file.name === ".." ) {
-            let fileReader = new FileReader();
+
+            const fileReader = new FileReader();
             view.setReader( fileReader );
-            let archiveFile = fileReader.convertFile( file.root, { checkRealPath: true } );
+
+            const archiveFile = fileReader.convertFile( file.root, { checkRealPath: true } );
             await view.read( fileReader.convertFile( archiveFile.dirname ) );
             view.focusFile( archiveFile );
         }
@@ -202,10 +211,10 @@ export class MainFrame implements IHelpService {
 
     async vimPromise() {
         try {
-            let result = await which("vim");
+            const result = await which("vim");
             if ( result ) {
                 log.debug( result );
-                await this.terminalPromise( false, `vim %1` );
+                await this.terminalPromise( false, "vim %1" );
             }
         } catch ( e ) {
             log.error( e );
@@ -233,7 +242,7 @@ export class MainFrame implements IHelpService {
             isInsideTerminal = isInsideTerminal || cmd.indexOf("%T") > -1;
 
             if ( panel instanceof BlessedPanel && panel.currentFile() ) {
-                let wrap = (text) => {
+                const wrap = (text) => {
                     if ( os.platform() === "win32" ) {
                         return `""${text}""`;
                     }
@@ -297,16 +306,18 @@ export class MainFrame implements IHelpService {
 
     @Hint({ hint: T("Hint.Terminal"), order: 4 })
     @Help(T("Help.Terminal"))
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async terminalPromise(isEscape = false, shellCmd: string = null ) {
-        let view = this.blessedFrames[this.activeFrameNum];        
-        let result = this.commandParsing( shellCmd, true );
-        let shell = result.cmd ? result.cmd.split(" ") : null;
+        const view = this.blessedFrames[this.activeFrameNum];        
+        const result = this.commandParsing( shellCmd, true );
+        const shell = result.cmd ? result.cmd.split(" ") : null;
 
         if ( view instanceof BlessedPanel ) {
             view.destroy();
 
-            const newView = new BlessedXterm( { parent: this.baseWidget, 
-                cursor: 'line',
+            const newView = new BlessedXterm( { 
+                parent: this.baseWidget, 
+                cursor: "line",
                 cursorBlink: true,
                 screenKeys: false,
                 shell: shell ? shell[0] : null,
@@ -334,13 +345,15 @@ export class MainFrame implements IHelpService {
         } else if ( view instanceof BlessedMcd ) {
             view.destroy();
 
-            const newView = new BlessedXterm( { parent: this.baseWidget, viewCount: viewCount++,
-                    cursor: 'block',
-                    cursorBlink: true,
-                    screenKeys: false,
-                    shell: shell ? shell[0] : null,
-                    args: shell ? shell.splice(1) : null,
-                }, view.getReader(), view.currentPathFile() );
+            const newView = new BlessedXterm( { 
+                parent: this.baseWidget,
+                viewCount: viewCount++,
+                cursor: "block",
+                cursorBlink: true,
+                screenKeys: false,
+                shell: shell ? shell[0] : null,
+                args: shell ? shell.splice(1) : null,
+            }, view.getReader(), view.currentPathFile() );
             newView.on("process_exit", () => {
                 process.nextTick( () => {
                     this.terminalPromise( true );
@@ -371,8 +384,7 @@ export class MainFrame implements IHelpService {
             widget.show();
         };
 
-        let { width, height } = this.baseWidget.width;
-
+        const { width, height } = this.baseWidget;
         log.debug( "mainFrame: width [%d] height [%d]", width, height );
 
         if ( this.viewType === VIEW_TYPE.NORMAL ) {
@@ -422,6 +434,7 @@ export class MainFrame implements IHelpService {
         };
         this.screen.enableMouse();
 
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
         this.screen.title = "MDIR.js v" + require("../../package.json").version;
 
         this.baseWidget = new Widget( { parent: this.screen, left: 0, top: 0, width: "100%", height: "100%" } );
@@ -436,8 +449,8 @@ export class MainFrame implements IHelpService {
 
         this.hintBox = new HintBox( { parent: this.baseWidget } );
 
-        let lastPath = this.getLastPath();
-        for ( var i = 0; i < this.blessedFrames.length; i++ ) {
+        const lastPath = this.getLastPath();
+        for ( let i = 0; i < this.blessedFrames.length; i++ ) {
             const panel = this.blessedFrames[i];
             if ( panel instanceof BlessedPanel ) {
                 panel.setReader(readerControl("file"));
@@ -460,8 +473,8 @@ export class MainFrame implements IHelpService {
     }
 
     eventStart() {
-        this.screen.off('keypress');
-        this.screen.on('keypress', async (ch, keyInfo) => {
+        this.screen.off("keypress");
+        this.screen.on("keypress", async (ch, keyInfo) => {
             log.debug( "keypress !!!" );
             if ( ch === "\u001c" && (global as any).debug ) { // Ctrl + |
                 log.debug( "force quit !!!" );
@@ -484,7 +497,7 @@ export class MainFrame implements IHelpService {
             const keyName = keyInfo.full || keyInfo.name;
             log.debug( "KEYPRESS [%s] - START", keyName );
 
-            let starTime = Date.now();
+            const starTime = Date.now();
             this._keyLockScreen = true;
 
             const panel = this.activeFocusObj();
@@ -526,7 +539,7 @@ export class MainFrame implements IHelpService {
                 };
                 
                 if ( panel instanceof BlessedXterm ) {
-                    let keyPressFunc = () => {
+                    const keyPressFunc = () => {
                         return panel.ptyKeyWrite(keyInfo);
                     };
                     if ( TerminalAllowKeys.indexOf( keyName ) > -1 ) {
@@ -565,7 +578,7 @@ export class MainFrame implements IHelpService {
             this.screen.realloc();
             this.blessedFrames.forEach( item => {
                 if ( item instanceof BlessedPanel ) {
-                    item.resetViewCache() 
+                    item.resetViewCache();
                 }
             });
             this.baseWidget.render();
@@ -577,10 +590,10 @@ export class MainFrame implements IHelpService {
                 this.bottomFilesBox.render();
             }
         }
-    };
+    }
 
     async refreshPromise() {
-        for ( let item of this.blessedFrames ) {
+        for ( const item of this.blessedFrames ) {
             if ( item instanceof BlessedPanel ) {
                 await item.refreshPromise();
             }
@@ -603,7 +616,7 @@ export class MainFrame implements IHelpService {
     @Hint({ hint: T("Hint.Quit"), order: 1 })
     @Help(T("Help.Quit"))
     async quitPromise() {
-        let result = await messageBox( { 
+        const result = await messageBox( { 
             parent: this.baseWidget, 
             title: T("Question"), 
             msg: T("Message.QuitProgram"), 
@@ -618,7 +631,7 @@ export class MainFrame implements IHelpService {
             this.activePanel().getReader() && 
             this.activePanel().getReader().currentDir() && 
             this.activePanel().getReader().readerName === "file" ) {
-            let lastPath = this.activePanel().getReader().currentDir().fullname;
+            const lastPath = this.activePanel().getReader().currentDir().fullname;
             log.debug( "CHDIR : %s", lastPath );
             process.chdir( lastPath );
             try {
@@ -678,7 +691,7 @@ export class MainFrame implements IHelpService {
         if ( (activePanel instanceof BlessedXterm) ) {
             return RefreshType.NONE;
         }
-        let viewName = this.activeFocusObj().viewName() || "Common";
+        const viewName = this.activeFocusObj().viewName() || "Common";
         if ( !menuConfig[ viewName ] ) {
             return RefreshType.NONE;
         }
@@ -706,8 +719,8 @@ export class MainFrame implements IHelpService {
     async panelSyncPromise() {
         const activePanel = this.activePanel();
         const anotherPanel = this.blessedFrames.find( (item, i) => {
-                return item instanceof BlessedPanel && item.getReader().readerName === "file" && this.activeFrameNum !== i;
-            });
+            return item instanceof BlessedPanel && item.getReader().readerName === "file" && this.activeFrameNum !== i;
+        });
         if ( activePanel.getReader().readerName === "file" && activePanel instanceof BlessedPanel && anotherPanel instanceof BlessedPanel ) {
             await activePanel.read(anotherPanel.currentPath());
             return RefreshType.ALL;
@@ -748,11 +761,11 @@ export class MainFrame implements IHelpService {
     @Hint({ hint: T("Hint.ConsoleView") })
     @Help(T("Help.ConsoleView"))
     consoleViewPromise(): Promise<RefreshType> {
-        return new Promise( (resolve, reject) => {
-            let program = this.screen.program;
+        return new Promise( (resolve) => {
+            const program = this.screen.program;
             this._keyLockScreen = true;
             this.screen.leave();
-            program.once( 'keypress', async () => {
+            program.once( "keypress", async () => {
                 this.screen.enter();
                 await this.refreshPromise();
                 this._keyLockScreen = false;
@@ -768,9 +781,9 @@ export class MainFrame implements IHelpService {
         }
 
         if ( !fileRunMode ) {
-            let cmds = cmd.split(" ");
+            const cmds = cmd.split(" ");
             if ( cmds[0] === "cd" && cmds[1] ) {
-                let chdirPath = cmds[1] === "-" ? activePanel.previousDir : cmds[1];
+                const chdirPath = cmds[1] === "-" ? activePanel.previousDir : cmds[1];
                 if ( cmds[1] === "~" ) {
                     return activePanel.gotoHomePromise();
                 }
@@ -788,8 +801,8 @@ export class MainFrame implements IHelpService {
 
         process.chdir( activePanel.currentPath().fullname );
 
-        return new Promise( (resolve, reject) => {
-            let program = this.screen.program;
+        return new Promise( (resolve) => {
+            const program = this.screen.program;
             if ( !cmd ) {
                 resolve();
                 return;
@@ -798,7 +811,7 @@ export class MainFrame implements IHelpService {
             this._keyLockScreen = true;
             this.screen.leave();
 
-            let cmdParse = this.commandParsing( cmd );
+            const cmdParse = this.commandParsing( cmd );
             
             if ( fileRunMode ) {
                 cmd = cmdParse.cmd;
@@ -832,7 +845,7 @@ export class MainFrame implements IHelpService {
                 };
                 if ( !fileRunMode || cmdParse.wait ) {
                     process.stdout.write( colors.yellow(T("Message.ANY_KEY_RETURN_M_JS")) + "\n" );
-                    program.once( 'keypress', returnFunc );
+                    program.once( "keypress", returnFunc );
                 } else {
                     returnFunc();
                 }
@@ -841,10 +854,10 @@ export class MainFrame implements IHelpService {
     }
 
     async methodRun( methodString, param ): Promise<RefreshType> {
-        let item = methodString.split(".");
+        const item = methodString.split(".");
         
-        let viewName: string = item[0] || "";
-        let methodName = item[1] || "";
+        const viewName: string = item[0] || "";
+        const methodName = item[1] || "";
         let object = null;
         if ( viewName.toLowerCase() === this.activePanel().viewName().toLowerCase() ) {
             object = this.activePanel();
@@ -857,8 +870,10 @@ export class MainFrame implements IHelpService {
             log.info( "methodRun [%s] - method: [ %s.%s(%s) ]", methodString, object.viewName(), methodName, param ? param.join(",") : "" );
 
             if ( /(p|P)romise/.exec(methodName as string) ) {
+                // eslint-disable-next-line prefer-spread
                 result = await object[ (methodName as string) ].apply(object, param);
             } else {
+                // eslint-disable-next-line prefer-spread
                 result = object[ (methodName as string) ].apply(object, param);
             }
         }
@@ -868,11 +883,12 @@ export class MainFrame implements IHelpService {
     aboutPromise(): Promise<RefreshType> {
         return new Promise( (resolve) => {
             setTimeout( async () => {
-                let version = require("../../package.json").version;
+                // eslint-disable-next-line @typescript-eslint/no-var-requires
+                const version = require("../../package.json").version;
                 await messageBox( {
                     parent: this.baseWidget,
                     title: "Mdir.js - v" + version,
-                    msg: T("About", { joinArrays: '\n' }),
+                    msg: T("About", { joinArrays: "\n" }),
                     textAlign: "left",
                     button: [ T("OK") ]
                 });
@@ -889,18 +905,18 @@ export class MainFrame implements IHelpService {
             return RefreshType.NONE;
         }
 
-        let result = await messageBox( { 
-                    parent: this.baseWidget, 
-                    title: T("Question"), 
-                    msg: T("Message.REMOVE_SELECTED_FILES"), 
-                    button: [ T("OK"), T("Cancel") ] 
-                });
+        const result = await messageBox( { 
+            parent: this.baseWidget, 
+            title: T("Question"), 
+            msg: T("Message.REMOVE_SELECTED_FILES"), 
+            button: [ T("OK"), T("Cancel") ] 
+        });
 
         if ( result !== T("OK") ) {
             return RefreshType.NONE;
         }
 
-        let select = new Selection();
+        const select = new Selection();
         select.set( activePanel.getSelectFiles(), activePanel.currentPath(), ClipBoard.CLIP_NONE, activePanel.getReader() );
 
         const reader = activePanel.getReader();
@@ -917,7 +933,7 @@ export class MainFrame implements IHelpService {
             return RefreshType.NONE;
         }
 
-        let files = select.getFiles();
+        const files = select.getFiles();
         if ( !files || files.length === 0 ) {
             log.debug( "REMOVE FILES: 0");
             progressBox.destroy();
@@ -928,11 +944,11 @@ export class MainFrame implements IHelpService {
         files.sort( (a, b) => b.fullname.length - a.fullname.length);
 
         let beforeTime = Date.now();
-        let refreshTimeMs = 300;
+        const refreshTimeMs = 300;
 
         if ( activePanel.getReader().readerName === "file" ) {
             for ( let i = 0; i < files.length; i++ ) {
-                let src = files[i];
+                const src = files[i];
                 try {
                     log.debug( "REMOVE : [%s]", src.fullname);
                     if ( Date.now() - beforeTime > refreshTimeMs ) {
@@ -945,30 +961,29 @@ export class MainFrame implements IHelpService {
                     }
                     await reader.remove( src );
                 } catch ( err ) {
-                    let result = await messageBox( {
+                    const result2 = await messageBox( {
                         parent: this.baseWidget,
                         title: T("Error"),
                         msg: err,
                         button: [ T("Continue"), T("Cancel") ]
                     });
-                    if ( result === T("Cancel") ) {
+                    if ( result2 === T("Cancel") ) {
                         break;
                     }
                 }
             }
         } else {
             let copyBytes = 0;
-            let befCopyInfo = { beforeTime: Date.now(), copyBytes };
-            let fullFileSize = 0;
+            const befCopyInfo = { beforeTime: Date.now(), copyBytes };
+            const fullFileSize = 0;
 
             const progressStatus: ProgressFunc = ( source, copySize, size, chunkLength ) => {
                 copyBytes += chunkLength;
-                let repeatTime = Date.now() - befCopyInfo.beforeTime;
+                const repeatTime = Date.now() - befCopyInfo.beforeTime;
                 if ( repeatTime > refreshTimeMs ) {
-                    let bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
-                    let lastText = (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
+                    // const bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
+                    const lastText = (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
                                     (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(fullFileSize, false, 1).trim());
-                                    // + `(${StringUtils.sizeConvert(bytePerSec, false, 1).trim()}s)`;
                     progressBox.updateProgress( source.fullname, lastText, copyBytes, fullFileSize );
                     befCopyInfo.beforeTime = Date.now();
                     befCopyInfo.copyBytes = copyBytes;
@@ -1042,17 +1057,16 @@ export class MainFrame implements IHelpService {
         const sourceBasePath = clipSelected.getSelecteBaseDir().fullname;
 
         let copyBytes = 0;
-        let befCopyInfo = { beforeTime: Date.now(), copyBytes };
+        const befCopyInfo = { beforeTime: Date.now(), copyBytes };
         
-        let refreshTimeMs = 300;
+        const refreshTimeMs = 300;
         const progressStatus: ProgressFunc = ( source, copySize, size, chunkLength ) => {
             copyBytes += chunkLength;
-            let repeatTime = Date.now() - befCopyInfo.beforeTime;
+            const repeatTime = Date.now() - befCopyInfo.beforeTime;
             if ( repeatTime > refreshTimeMs ) {
-                let bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
-                let lastText = (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
+                // const bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
+                const lastText = (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
                                 (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(fullFileSize, false, 1).trim());
-                                // + `(${StringUtils.sizeConvert(bytePerSec, false, 1).trim()}s)`;
                 progressBox.updateProgress( source.fullname, lastText, copyBytes, fullFileSize );
                 befCopyInfo.beforeTime = Date.now();
                 befCopyInfo.copyBytes = copyBytes;
@@ -1076,14 +1090,13 @@ export class MainFrame implements IHelpService {
             const reader = activePanel.getReader();
             log.debug( "READER : [%s] => [%s]", reader.readerName, files[0].fstype );
             if ( files[0].fstype === "file" && reader.readerName === "file" && files[0].fstype === clipSelected.getReader().readerName ) {
-                let targetPath = activePanel.currentPath();
-                let i = 0, skipAll = false, overwriteAll = false;
-                for ( let src of files ) {
+                let overwriteAll = false;
+                for ( const src of files ) {
                     if ( progressBox.getCanceled() ) {
                         break;
                     }
                     if ( !reader.exist(src.fullname) ) {
-                        let result = await messageBox( {
+                        const result = await messageBox( {
                             parent: this.baseWidget,
                             title: T("Error"),
                             msg: T("{{filename}}_FILE_NOT_EXISTS", { filename: src.name }),
@@ -1095,13 +1108,13 @@ export class MainFrame implements IHelpService {
                         continue;
                     }
 
-                    let targetBasePath = activePanel.currentPath().fullname;
+                    const targetBasePath = activePanel.currentPath().fullname;
 
-                    let target = src.clone();
+                    const target = src.clone();
                     target.fullname = targetBasePath + target.fullname.substr(sourceBasePath.length);
                     
                     if ( !overwriteAll && reader.exist( target.fullname ) ) {
-                        let result = await messageBox( {
+                        const result = await messageBox( {
                             parent: this.baseWidget,
                             title: T("Copy"),
                             msg: T("Message.{{filename}}_FILE_NOT_EXISTS", { filename: src.name }),
@@ -1144,7 +1157,7 @@ export class MainFrame implements IHelpService {
                         if ( err === "USER_CANCEL" ) {
                             break;
                         } else {
-                            let result = await messageBox( {
+                            const result = await messageBox( {
                                 parent: this.baseWidget,
                                 title: T("Copy"),
                                 msg: `${T("Error")}: ${src.name} - ${err}`,
@@ -1158,9 +1171,7 @@ export class MainFrame implements IHelpService {
                 }
             } else if ( files[0].fstype === clipSelected.getReader().readerName ) {
                 try {
-                    let reader = clipSelected.getReader().readerName !== "file" ? 
-                        clipSelected.getReader() : activePanel.getReader();
-
+                    const reader = clipSelected.getReader().readerName !== "file" ? clipSelected.getReader() : activePanel.getReader();
                     await reader.copy( files, clipSelected.getSelecteBaseDir(), activePanel.currentPath(), progressStatus );
                 } catch( err ) {
                     log.error( err );
@@ -1207,18 +1218,18 @@ export class MainFrame implements IHelpService {
                         await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
 
                         let copyBytes = 0;
-                        let befCopyInfo = { beforeTime: Date.now(), copyBytes };
-                        let fullFileSize = 0;
-                        let refreshTimeMs = 100;
+                        const befCopyInfo = { beforeTime: Date.now(), copyBytes };
+                        const fullFileSize = 0;
+                        const refreshTimeMs = 100;
 
                         const progressStatus: ProgressFunc = ( source, copySize, size, chunkLength ) => {
                             copyBytes += chunkLength;
-                            let repeatTime = Date.now() - befCopyInfo.beforeTime;
+                            const repeatTime = Date.now() - befCopyInfo.beforeTime;
                             if ( repeatTime > refreshTimeMs ) {
-                                let bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
-                                let lastText = (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
+                                // const bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
+                                const lastText = (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
                                                 (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(fullFileSize, false, 1).trim());
-                                                // + `(${StringUtils.sizeConvert(bytePerSec, false, 1).trim()}s)`;
+                                // + `(${StringUtils.sizeConvert(bytePerSec, false, 1).trim()}s)`;
                                 progressBox.updateProgress( source.fullname, lastText, copyBytes, fullFileSize );
                                 befCopyInfo.beforeTime = Date.now();
                                 befCopyInfo.copyBytes = copyBytes;
@@ -1268,21 +1279,21 @@ export class MainFrame implements IHelpService {
                 try {
                     if ( reader.readerName !== "file ") {
                         let copyBytes = 0;
-                        let befCopyInfo = { beforeTime: Date.now(), copyBytes };
-                        let fullFileSize = 0;
-                        let refreshTimeMs = 300;
+                        const befCopyInfo = { beforeTime: Date.now(), copyBytes };
+                        const fullFileSize = 0;
+                        const refreshTimeMs = 300;
 
                         this.screen.render();
                         await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
 
                         const progressStatus: ProgressFunc = ( source, copySize, size, chunkLength ) => {
                             copyBytes += chunkLength;
-                            let repeatTime = Date.now() - befCopyInfo.beforeTime;
+                            const repeatTime = Date.now() - befCopyInfo.beforeTime;
                             if ( repeatTime > refreshTimeMs ) {
-                                let bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
-                                let lastText = (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
+                                // const bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
+                                const lastText = (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
                                                 (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(fullFileSize, false, 1).trim());
-                                                // + `(${StringUtils.sizeConvert(bytePerSec, false, 1).trim()}s)`;
+                                // + `(${StringUtils.sizeConvert(bytePerSec, false, 1).trim()}s)`;
                                 progressBox.updateProgress( source.fullname, lastText, copyBytes, fullFileSize );
                                 befCopyInfo.beforeTime = Date.now();
                                 befCopyInfo.copyBytes = copyBytes;
@@ -1312,7 +1323,7 @@ export class MainFrame implements IHelpService {
         if ( panel instanceof BlessedPanel || panel instanceof BlessedMcd ) {
             const mountList: IMountList[] = await panel.getReader().mountList();
             if ( mountList ) {
-                let maxLength = [ 0, 0 ];
+                const maxLength = [ 0, 0 ];
                 mountList.sort( (a, b) => {
                     maxLength[0] = Math.max( maxLength[0], a.mountPath.fullname.length );
                     maxLength[1] = Math.max( maxLength[1], a.description.length );
@@ -1322,7 +1333,7 @@ export class MainFrame implements IHelpService {
                     return 0;
                 });
 
-                let viewMountInfo = mountList.map( (item) => {
+                const viewMountInfo = mountList.map( (item) => {
                     return sprintf(`%-${maxLength[0] + 2}s | %-${maxLength[1] + 2}s | %s`, item.mountPath.fullname, item.description, StringUtils.sizeConvert(item.size, true));
                 });
 
@@ -1354,7 +1365,7 @@ export class MainFrame implements IHelpService {
         for ( const frame of [ "Common", "Panel", "Mcd", "XTerm" ] ) {
             viewText.push(`${T(frame)})` );
 
-            let subText = [];
+            const subText = [];
             for ( const item in helpInfo[frame] ) {
                 if ( helpInfo[frame][item].humanKeyName ) {
                     subText.push( sprintf("{yellow-fg}%14s{/yellow-fg} : %s", helpInfo[frame][item].humanKeyName, helpInfo[frame][item].text ) );
@@ -1391,12 +1402,12 @@ export class MainFrame implements IHelpService {
         if ( !file ) {
             return;
         }
-        if (process.env.TERM_PROGRAM === 'iTerm.app') {
+        if (process.env.TERM_PROGRAM === "iTerm.app") {
             const buffer = await fs.promises.readFile(file.fullname);
 
-            let iTermImage = (buffer, options: { width?: number | string, height?: number | string, preserveAspectRatio?: boolean } = {}) => {
-                const OSC = '\u001B]';
-                const BEL = '\u0007';
+            const iTermImage = (buffer, options: { width?: number | string; height?: number | string; preserveAspectRatio?: boolean } = {}) => {
+                const OSC = "\u001B]";
+                const BEL = "\u0007";
                 let ret = `${OSC}1337;File=inline=1`;            
                 if (options.width) {
                     ret += `;width=${options.width}`;
@@ -1407,18 +1418,18 @@ export class MainFrame implements IHelpService {
                 }
             
                 if (options.preserveAspectRatio === false) {
-                    ret += ';preserveAspectRatio=0';
+                    ret += ";preserveAspectRatio=0";
                 }
             
-                return ret + ':' + buffer.toString('base64') + BEL;
+                return ret + ":" + buffer.toString("base64") + BEL;
             };
 
-            await new Promise( (resolve, reject) => {
-                let program = this.screen.program;
+            await new Promise( (resolve) => {
+                const program = this.screen.program;
                 this.screen.leave();
                 process.stdout.write( iTermImage(buffer, { height: "95%" }) );
                 process.stdout.write( "\n" + colors.white(T("Message.ANY_KEY_RETURN_M_JS")) + "\n" );
-                program.once( 'keypress', () => {
+                program.once( "keypress", () => {
                     resolve();
                 });
             });
@@ -1427,7 +1438,7 @@ export class MainFrame implements IHelpService {
             this.execRefreshType( RefreshType.ALL );
         } else {
             setTimeout( async () => {
-                let imageViewBox = new ImageViewBox( { parent: this.baseWidget } );
+                const imageViewBox = new ImageViewBox( { parent: this.baseWidget } );
                 this.screen.render();
                 await imageViewBox.setImageOption({
                     file: file,
@@ -1450,12 +1461,12 @@ export class MainFrame implements IHelpService {
             return RefreshType.NONE;
         }
 
-        let reader = activePanel.getReader();
-        let selection = new Selection();
+        const reader = activePanel.getReader();
+        const selection = new Selection();
         selection.set( selectFiles, activePanel.currentPath(), ClipBoard.CLIP_COPY, reader );
         await selection.expandDir();
         
-        let files = selection.getFiles();
+        const files = selection.getFiles();
         if ( !files || files.length === 0 ) {
             return RefreshType.NONE;
         }
@@ -1491,16 +1502,17 @@ export class MainFrame implements IHelpService {
             await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
             
             let copyBytes = 0;
-            let befCopyInfo = { beforeTime: Date.now(), copyBytes };
+            const befCopyInfo = { beforeTime: Date.now(), copyBytes };
         
-            let refreshTimeMs = 100;
-            let fullFileSize = selection.getExpandSize();
+            const refreshTimeMs = 100;
+            const fullFileSize = selection.getExpandSize();
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const progressStatus: ProgressFunc = ( source, processSize, size, chunkLength ) => {
                 copyBytes = processSize;
-                let repeatTime = Date.now() - befCopyInfo.beforeTime;
+                const repeatTime = Date.now() - befCopyInfo.beforeTime;
                 if ( repeatTime > refreshTimeMs ) {
-                    let bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
-                    let lastText = (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
+                    // const bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
+                    const lastText = (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
                                     (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(fullFileSize, false, 1).trim());
                     progressBox.updateProgress( source.fullname, lastText, copyBytes, fullFileSize );
                     befCopyInfo.beforeTime = Date.now();
@@ -1510,7 +1522,7 @@ export class MainFrame implements IHelpService {
             };
 
             try {
-                let targetFile = reader.convertFile( activePanel.currentPath().fullname + reader.sep() + result[0], { virtualFile: true } );
+                const targetFile = reader.convertFile( activePanel.currentPath().fullname + reader.sep() + result[0], { virtualFile: true } );
                 log.debug( "ORIGINAL SOURCE : [%s]", JSON.stringify(files.map( item => item.toString() ), null, 2) );
                 if ( archiveType === "ZIP" ) {
                     await new ArchiveZip().compress( files, activePanel.currentPath(), targetFile, progressStatus );
@@ -1548,6 +1560,3 @@ export class MainFrame implements IHelpService {
     }
 }
 
-export default function mainFrame(): MainFrame {
-    return MainFrame.instance();   
-}

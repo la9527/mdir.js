@@ -1,5 +1,5 @@
 import * as blessed from "neo-blessed";
-import { ImageWidget } from '../panel_blassed/widget/ImageBox';
+import { ImageWidget } from "../panel_blassed/widget/ImageBox";
 import { draw } from "../panel_blassed/widget/BlessedDraw";
 
 const screen = blessed.screen({

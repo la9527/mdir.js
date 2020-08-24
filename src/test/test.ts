@@ -1,13 +1,14 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import * as blessed from "neo-blessed";
 import { BlessedProgram, Widgets, box, text, colors } from "neo-blessed";
 import { Logger, updateDebugFile } from "../common/Logger";
-import { messageBox, MSG_BUTTON_TYPE } from '../panel_blassed/widget/MessageBox';
+import { messageBox, MSG_BUTTON_TYPE } from "../panel_blassed/widget/MessageBox";
 import mainFrame from "../panel_blassed/MainFrame";
 import { ProgressBox } from "../panel_blassed/widget/ProgressBox";
-import { StringUtils } from '../common/StringUtils';
+import { StringUtils } from "../common/StringUtils";
 import { Color } from "../common/Color";
 import { inputBox } from "../panel_blassed/widget/InputBox";
-import { Hint, KeyMappingInfo, menuKeyMapping, keyMappingExec, getHelpInfo } from '../config/KeyMapConfig';
+import { Hint, KeyMappingInfo, menuKeyMapping, keyMappingExec, getHelpInfo } from "../config/KeyMapConfig";
 import { BlessedXterm } from "../panel_blassed/BlessedXterm";
 import { menuConfig } from "../config/MenuConfig";
 import { BlessedMenu } from "../panel_blassed/BlessedMenu";
@@ -17,10 +18,10 @@ import { Mcd } from "../panel/Mcd";
 import { FileReader } from "../panel/FileReader";
 import { sprintf } from "sprintf-js";
 import i18n from "i18next";
-import I18nextCLILanguageDetector from 'i18next-cli-language-detector';
+import I18nextCLILanguageDetector from "i18next-cli-language-detector";
 import en from "../translation/en.json";
 import ko from "../translation/ko.json";
-import { button } from '../../@types/blessed';
+import { button } from "../../@types/blessed";
 import { BlessedEditor } from "../panel_blassed/BlessedEditor";
 
 /*

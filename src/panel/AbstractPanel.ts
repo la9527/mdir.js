@@ -83,6 +83,7 @@ export abstract class AbstractPanel {
             this.page = Math.floor(this._currentPos / (this.column * this.row));
         }
     }
+
     get currentPos(): number {
         return this._currentPos;
     }
@@ -113,7 +114,7 @@ export abstract class AbstractPanel {
     }
 
     sort() {
-        let fileSort = (isType: SortType, a: File, b: File): number => {
+        const fileSort = (isType: SortType, a: File, b: File): number => {
             if ( isType === SortType.COLOR ) {
                 return b.color.number - a.color.number;
             }
@@ -156,7 +157,7 @@ export abstract class AbstractPanel {
                 return 0;
             }
 
-            for ( let order of this.sortOrder ) {
+            for ( const order of this.sortOrder ) {
                 const sortNum = this._sortReverse ? fileSort(order, b, a) : fileSort(order, a, b);
                 if ( sortNum !== 0 ) {
                     return sortNum;

@@ -1,14 +1,14 @@
 import { Widget } from "./Widget";
-import { Widgets, text, input, button, form } from "neo-blessed";
+import { Widgets } from "neo-blessed";
 import { strWidth } from "neo-blessed/lib/unicode";
 import { ColorConfig } from "../../config/ColorConfig";
-import { Logger } from '../../common/Logger';
+import { Logger } from "../../common/Logger";
 import mainFrame from "../MainFrame";
 
 const log = Logger("InputBox");
 
 interface InputBoxOption {
-    parent: Widget | Widgets.Screen,
+    parent: Widget | Widgets.Screen;
     title: string;
     defaultText?: string;
     button: string[];
@@ -24,7 +24,6 @@ export class InputBox extends Widget {
     private titleWidget: Widget = null;
     private buttonWidgets: Widget[] = [];
 
-    private promptText: string = "";
     private value: string = "";
     private cursorPos = 0;
     private keylock = false;
@@ -90,18 +89,18 @@ export class InputBox extends Widget {
         const maxWidth = this.box.screen.width as number;
         this.buttonWidth = this.inputBoxOption.button.reduce( (pre, item) => pre < strWidth(item) + 2 ? strWidth(item) + 2 : pre, MIN_BUTTON_WIDTH);
 
-        let buttonAllWidth = this.inputBoxOption.button.length * (this.buttonWidth + 2);
+        const buttonAllWidth = this.inputBoxOption.button.length * (this.buttonWidth + 2);
         
-        let width = Math.min( Math.max(strWidth(this.inputBoxOption.title), buttonAllWidth), maxWidth );
+        const width = Math.min( Math.max(strWidth(this.inputBoxOption.title), buttonAllWidth), maxWidth );
         this.buttonWidth = Math.max(this.buttonWidth, MIN_BUTTON_WIDTH);
 
         this.box.width = Math.max( width, MIN_WIDTH);
         this.box.height = Math.min( 6 + this.inputBoxOption.button.length, MIN_HEIGHT);
         log.debug( "RESIZE - (%d, %d)", this.box.width, this.box.height );
 
-        let len = this.inputBoxOption.button.length;
+        const len = this.inputBoxOption.button.length;
         this.buttonWidgets.map( (item, i) => {
-            let left = (Math.floor((this.box.width as number) / (len+1)) * (i+1)) - Math.floor(this.buttonWidth / 2);
+            const left = (Math.floor((this.box.width as number) / (len+1)) * (i+1)) - Math.floor(this.buttonWidth / 2);
             item.bottom = 0;
             item.left = left;
             item.width = this.buttonWidth;
@@ -125,19 +124,19 @@ export class InputBox extends Widget {
             align: "center" } );
 
         this.inputWidget = new Widget( { 
-                parent: this, 
-                top: 2, 
-                left: "center",
-                width: "100%-4",
-                tags: false, 
-                height: 1, 
-                style: this.inputColor.blessed, 
-                align: "left" 
-            });
+            parent: this, 
+            top: 2, 
+            left: "center",
+            width: "100%-4",
+            tags: false, 
+            height: 1, 
+            style: this.inputColor.blessed, 
+            align: "left" 
+        });
 
         const len = this.inputBoxOption.button.length;
-        this.inputBoxOption.button.map( (item, i, arr) => {
-            let left = (Math.floor((this.box.width as number) / (len+1)) * (i+1)) - Math.floor(this.buttonWidth / 2);
+        this.inputBoxOption.button.map( (item, i) => {
+            const left = (Math.floor((this.box.width as number) / (len+1)) * (i+1)) - Math.floor(this.buttonWidth / 2);
             this.buttonWidgets.push( 
                 new Widget( {
                     parent: this, 
@@ -267,14 +266,14 @@ export class InputBox extends Widget {
             this.keylock = false;
         };
 
-        let camelize = (str) => {
+        const camelize = (str) => {
             return str.replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) => {
                 return index === 0 ? word.toLowerCase() : word.toUpperCase();
             }).replace(/\s+/g, "");
         };
 
         if ( key && key.name ) {
-            let methodName = camelize("key " + key.name);
+            const methodName = camelize("key " + key.name);
             log.debug( "InputBox.%s()", methodName );
             if ( this[methodName] ) {
                 this[methodName]();
@@ -298,7 +297,7 @@ export class InputBox extends Widget {
             return;
         }
 
-        let value = this.value;
+        // eslint-disable-next-line no-control-regex
         if ( ch && !/^[\x00-\x08\x0b-\x0c\x0e-\x1f\x7f]$/.test(ch)) {
             this.value = this.value.substr(0, this.cursorPos) + ch + this.value.substr(this.cursorPos);
             this.cursorPos += strWidth(ch);
@@ -313,7 +312,7 @@ export class InputBox extends Widget {
 }
 
 export function inputBox( msgOpt: InputBoxOption, opts: Widgets.BoxOptions = {} ): Promise<string[]> {
-    return new Promise(( resolve, reject ) => {
+    return new Promise(( resolve ) => {
         const screen = msgOpt.parent.screen || opts.parent.screen;
         const input = new InputBox({
             parent: msgOpt.parent,

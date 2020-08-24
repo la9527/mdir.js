@@ -1,8 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import path from "path";
 import os from "os";
 import winston from "winston";
-import * as fs from 'fs';
-import colors from "colors";
+import * as fs from "fs";
 
 const { combine, timestamp, label, printf, prettyPrint } = winston.format;
 
@@ -17,7 +17,7 @@ export function updateDebugFile( filePath: string = "" ) {
 export function Logger( labelName: string ): winston.Logger {
     let logger = null;
     if ( (global as any).DEBUG_FILE || (global as any).DEBUG_STDOUT ) {
-        let transports: any[] = [];
+        const transports: any[] = [];
         let isColor = false;
         if ( (global as any).DEBUG_STDOUT ) {
             isColor = true;
@@ -27,7 +27,7 @@ export function Logger( labelName: string ): winston.Logger {
                 isColor = true;
             } else {
                 try {
-                    let stats = fs.lstatSync((global as any).DEBUG_FILE);
+                    const stats = fs.lstatSync((global as any).DEBUG_FILE);
                     if ( !stats.isFile() && stats.isCharacterDevice() ) {
                         isColor = true;
                     }
@@ -62,6 +62,7 @@ export function Logger( labelName: string ): winston.Logger {
                         } else {
                             try {
                                 info.message = JSON.stringify( info.message );
+                            // eslint-disable-next-line no-empty
                             } catch ( e ) {}
                         }
                     }

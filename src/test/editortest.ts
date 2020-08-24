@@ -1,7 +1,9 @@
+/* eslint-disable prefer-const */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import * as blessed from "neo-blessed";
 import { BlessedProgram, Widgets, box, colors } from "neo-blessed";
 import { Logger, updateDebugFile } from "../common/Logger";
-import { ImageWidget } from '../panel_blassed/widget/ImageBox';
+import { ImageWidget } from "../panel_blassed/widget/ImageBox";
 import { draw } from "../panel_blassed/widget/BlessedDraw";
 import { FileReader } from "../panel/FileReader";
 import { BlessedEditor } from "../panel_blassed/BlessedEditor";

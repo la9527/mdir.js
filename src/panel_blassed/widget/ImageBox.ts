@@ -1,7 +1,8 @@
+/* eslint-disable prefer-const */
 import { Widget } from "./Widget";
-import { Widgets, text, input, button, form } from "neo-blessed";
+import { Widgets } from "neo-blessed";
 import { File } from "../../common/File";
-import { Logger } from '../../common/Logger';
+import { Logger } from "../../common/Logger";
 import fs from "fs";
 import Jimp from "jimp";
 import chalk from "chalk";
@@ -11,7 +12,7 @@ import mainFrame from "../MainFrame";
 import { supportsColor } from "supports-color";
 
 const log = Logger("InputBox");
-const PIXEL = '\u2584';
+const PIXEL = "\u2584";
 
 const supportColorLevel = supportsColor(process.stdout);
 
@@ -27,14 +28,14 @@ export class ImageWidget extends Widget {
         };
     }
 
-    pixelToCell(pixel, pixel2 ?: any, ch ?: any ) {
+    pixelToCell(pixel, pixel2?: any, ch?: any ) {
         let bga = 1.0
-          , fga = 0.5
-          , a = pixel.a / 255
-          , bg
-          , fg;
+            , fga = 0.5
+            , a = pixel.a / 255
+            , bg
+            , fg;
       
-        bg = colors.match(pixel.r * bga | 0, pixel.g * bga | 0, pixel.b * bga | 0);      
+        bg = colors.match(pixel.r * bga | 0, pixel.g * bga | 0, pixel.b * bga | 0);
 
         if (ch && pixel2) {
             fg = colors.match( pixel2.r * fga | 0, pixel2.g * fga | 0, pixel2.b * fga | 0);
@@ -43,7 +44,7 @@ export class ImageWidget extends Widget {
             ch = null;
         }
         // if (a === 0) bg = 0x1ff;      
-        return [(0 << 18) | (fg << 9) | (bg << 0), ch || ' ', a];
+        return [(0 << 18) | (fg << 9) | (bg << 0), ch || " ", a];
     }
 
     async setImage( imagefile: File | string ) {
@@ -53,18 +54,18 @@ export class ImageWidget extends Widget {
     }
 
     getImageText() {
-        let result = '';
+        let result = "";
         for (let y = 0; y < this.imageBuffer.bitmap.height - 1; y += 2) {
             for (let x = 0; x < this.imageBuffer.bitmap.width; x++) {
                 const {r, g, b, a} = Jimp.intToRGBA(this.imageBuffer.getPixelColor(x, y));
                 const {r: r2, g: g2, b: b2} = Jimp.intToRGBA(this.imageBuffer.getPixelColor(x, y + 1));    
                 if (a === 0) {
-                    result += chalk.reset(' ');
+                    result += chalk.reset(" ");
                 } else {
                     result += chalk.bgRgb(r, g, b).rgb(r2, g2, b2)(PIXEL);
                 }
             }
-            result += '\n';
+            result += "\n";
         }
         return result;
     }
@@ -118,7 +119,7 @@ export class ImageWidget extends Widget {
                         const {r: r2, g: g2, b: b2} = Jimp.intToRGBA(this.imageBuffer.getPixelColor(x - xi, iy + 1));
                         const cell = this.pixelToCell( { r, g, b, a }, {r: r2, g: g2, b: b2} );
                         line[x][0] = cell[0];
-                        line[x][1] = '\u2584';
+                        line[x][1] = "\u2584";
                         line[x][2] = { bg: {r, g, b, a}, fg: {r: r2, g: g2, b: b2} };
                     }
                 } else {
@@ -127,7 +128,7 @@ export class ImageWidget extends Widget {
                         const {r, g, b, a} = Jimp.intToRGBA(this.imageBuffer.getPixelColor(x - xi, iy));
                         const cell = this.pixelToCell( { r, g, b, a } );
                         line[x][0] = cell[0];
-                        line[x][1] = ' ';
+                        line[x][1] = " ";
                     }
                 }
             }
@@ -151,9 +152,6 @@ export class ImageViewBox extends Widget {
     private imageWidget: ImageWidget = null;
     private titleWidget: Widget = null;
     private color = null;
-    private btnColor = null;
-    private focusBtnNum: number = 0;
-    private file: File = null;
     private option: IImageBoxOptions = null;
 
     constructor( opts: Widgets.BoxOptions | any ) {
@@ -168,13 +166,13 @@ export class ImageViewBox extends Widget {
         await this.imageWidget.setImage( option.file );
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     resize() {
         
     }
 
     init() {
         this.color = ColorConfig.instance().getBaseColor("dialog");
-        this.btnColor = ColorConfig.instance().getBaseTwoColor("dialog", "func");
 
         log.debug( "this.color : %s", this.color);
 
@@ -202,7 +200,7 @@ export class ImageViewBox extends Widget {
         this.resize();
 
         this.box.off("keypress");
-        this.box.on("element click", (el, name) => {
+        this.box.on("element click", () => {
             this.destroy();
             this.option && this.option.closeFunc();
         });

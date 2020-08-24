@@ -1,4 +1,6 @@
-import { BlessedProgram, Widgets, box, text, colors } from "neo-blessed";
+/* eslint-disable prefer-const */
+/* eslint-disable @typescript-eslint/member-ordering */
+import { Widgets, box } from "neo-blessed";
 import { Logger } from "../../common/Logger";
 import { Color } from "../../common/Color";
 import { sprintf } from "sprintf-js";
@@ -7,8 +9,8 @@ const log = Logger("main");
 
 export class Widget {
     private _box: Widgets.BoxElement;
-    _viewCount: number = -1;
     protected destroyed = false;
+    _viewCount: number = -1;
 
     constructor( opts: Widgets.BoxOptions | any ) {
         if ( opts.parent && opts.parent instanceof Widget ) {
@@ -29,7 +31,7 @@ export class Widget {
     setBorderLine( isBorder: boolean ) {
         (this._box.border as any) = isBorder ? {
             type: "line",
-            ch: ' ',
+            ch: " ",
             left: true,
             top: true,
             right: true,
@@ -49,6 +51,7 @@ export class Widget {
         this._box.setBack();
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     draw(): void {}
 
     off() {
@@ -81,13 +84,13 @@ export class Widget {
     }
 
     render() {
-        let startTime = Date.now();
+        const startTime = Date.now();
         // log.debug( "WIDGET RENDER START [%s]", this.constructor.name );
         const result = this._box.render();
         if ( result ) {
             const item: any = (this._box.screen as Widgets.Screen);
-            let start = Math.max( 0, Math.min(result.yi, result.yl) );
-            let end = Math.min( Math.max(result.yi, result.yl), item.lines.length - 1 );
+            const start = Math.max( 0, Math.min(result.yi, result.yl) );
+            const end = Math.min( Math.max(result.yi, result.yl), item.lines.length - 1 );
 
             this._box.screen.draw( start, end );
             log.debug( "WIDGET RENDER [%s] [%d,%d] - [%sms]", this.constructor.name, start, end, Date.now() - startTime );
@@ -103,6 +106,7 @@ export class Widget {
     }
 
     setContentFormat( ...args ) {
+        // eslint-disable-next-line prefer-spread
         this.setContent( sprintf.apply( null, args ) );
     }
 
@@ -123,8 +127,8 @@ export class Widget {
         const lpos = box.lpos;
         if (!lpos) return null;
 
-        let y = program.y - (lpos.yi + box.itop);
-        let x = program.x - (lpos.xi + box.ileft);
+        const y = program.y - (lpos.yi + box.itop);
+        const x = program.x - (lpos.xi + box.ileft);
 
         return { x, y };
     }
@@ -138,10 +142,7 @@ export class Widget {
             return;
         }
       
-        let program = screen.program
-          , line
-          , cx
-          , cy;
+        let program = screen.program, line, cx, cy;
       
         line = Math.min(y, (lpos.yl - lpos.yi) - box.iheight - 1);      
         line = Math.max(0, line);

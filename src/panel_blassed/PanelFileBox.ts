@@ -1,4 +1,5 @@
-import { BlessedProgram, Widgets, box, text, colors } from "neo-blessed";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { Widgets } from "neo-blessed";
 import { strWidth } from "neo-blessed/lib/unicode";
 import { Widget } from "./widget/Widget";
 import { File } from "../common/File";
@@ -130,7 +131,7 @@ export class PanelFileBox extends Widget {
 
         let viewText = null;
         if ( this._viewFocus ) {
-            viewText = sprintf(`%s%s %10s`, select, textFileName, tailview);
+            viewText = sprintf("%s%s %10s", select, textFileName, tailview);
         } else {
             viewText = sprintf(`%s{${fontHex}-fg}%s %10s{/${fontHex}-fg}`, select, textFileName, tailview);
         }
@@ -145,7 +146,7 @@ export class PanelFileBox extends Widget {
 
         let viewText = null;
         if ( this._viewFocus ) {
-            viewText = sprintf(`%s%s`, select, textFileName);
+            viewText = sprintf("%s%s", select, textFileName);
         } else {
             viewText = sprintf(`%s{${fontColorName}-fg}%s{/}`, select, textFileName);
         }
