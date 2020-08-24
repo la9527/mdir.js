@@ -359,10 +359,12 @@ export class ArchiveZip extends ArchiveCommon {
                 } else if ( item.id === 0x756e ) { // ASi Unix Extra Field
                     let offset = 0;
                     if (item.data.byteLength >= 14) {
+                        // eslint-disable-next-line prefer-const
                         let crc = item.data.readUInt32LE(offset);
                         offset += 4;
                         const mode = item.data.readUInt16LE(offset);
                         offset += 2;
+                        // eslint-disable-next-line prefer-const
                         let sizdev = item.data.readUInt32LE(offset);
                         offset += 4;
                         file.uid = item.data.readUInt16LE(offset);
@@ -382,8 +384,10 @@ export class ArchiveZip extends ArchiveCommon {
                 } else if ( item.id === 0x000a ) { // NTFS (Win9x/WinNT FileTimes)
                     let offset = 4;
                     if ( item.data.byteLength >= 24 + 4 + 4 ) {
+                        // eslint-disable-next-line prefer-const
                         let tag1 = item.data.readUInt16LE(offset);
                         offset += 2;
+                        // eslint-disable-next-line prefer-const
                         let size1 = item.data.readUInt16LE(offset);
                         offset += 2;
                         const mtime = item.data.readBigInt64LE(offset);

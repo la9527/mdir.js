@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import "jest";
 import Configure from "../Configure";
 import * as fs from "fs";
@@ -25,7 +26,7 @@ describe( "Configure", () => {
         const configure = Configure.instance();
 
         expect( configure.getMimeTypeAlias( file ) ).toBe(aliasName);
-        let result = configure.getMatchProgramInfo( file );
+        const result = configure.getMatchProgramInfo( file );
         expect( result ).toBeDefined();
     });
 

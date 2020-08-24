@@ -30,7 +30,7 @@ export abstract class ArchiveCommon {
 
     protected abstract isSupportType( file: File ): string;
     public abstract getArchivedFiles(progress?: ProgressFunc): Promise<File[]>;
-    public abstract uncompress( extractDir: File, files ?: File[], progress?: ProgressFunc ): Promise<void>;
+    public abstract uncompress( extractDir: File, files?: File[], progress?: ProgressFunc ): Promise<void>;
 
     public compress( sourceFile: File[], baseDir: File, targetDirOrNewFile: File, progress?: ProgressFunc ): Promise<void> {
         // eslint-disable-next-line no-async-promise-executor
@@ -107,7 +107,7 @@ export abstract class ArchiveCommon {
     }
 
     public remove( sourceFile: File[], progress?: ProgressFunc ): Promise<void> {
-        const filterEntryFunc = (tarFileInfo: File, header): boolean => {
+        const filterEntryFunc = (tarFileInfo: File, _header): boolean => {
             if ( sourceFile.find( item => item.fullname == tarFileInfo.fullname ) ) {
                 return false;
             }
@@ -160,7 +160,7 @@ export abstract class ArchiveCommon {
         return files.concat( addFiles );
     }
 
-    protected fileStreamWrite(extractDir: File, filesBaseDir: string, file: File, readStream: Readable, reportProgress: Transform, next: (status: string, err?:any) => void) {
+    protected fileStreamWrite(extractDir: File, filesBaseDir: string, file: File, readStream: Readable, reportProgress: Transform, next: (status: string, err?: any) => void) {
         try {
             let filename = extractDir.fullname + ((filesBaseDir && filesBaseDir !== "/") ? file.fullname.substr(filesBaseDir.length) : file.fullname);
             filename = path.normalize( filename );
@@ -200,6 +200,7 @@ export abstract class ArchiveCommon {
                     writeStream.end(() => {
                         try {
                             fs.unlinkSync( filename );
+                        // eslint-disable-next-line no-empty
                         } catch( e ) {}
                     });
                     log.debug( "Uncompress error - " + err );

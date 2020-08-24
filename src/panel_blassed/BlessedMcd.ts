@@ -100,7 +100,7 @@ export class BlessedMcd extends Mcd implements IBlessedView, IHelpService {
         this.lineColor = colorConfig.getBaseColor("mcd_line");
         this.lineColor = colorConfig.getBaseColor("mcd_line");
         this.mcdHighlightColor = colorConfig.getBaseColor("mcd_highlight");
-        let statColor = colorConfig.getBaseColor("stat");
+        const statColor = colorConfig.getBaseColor("stat");
         
         this.baseWidget = new Widget( { ...opts } );
         this.mcdWidget = new Widget( { parent: this.baseWidget, top: 1, left: 0, height: "100%", width: "100%", border: "line", style: { ...this.mcdColor.blessed, border: this.lineColor.blessed } } );
@@ -125,7 +125,7 @@ export class BlessedMcd extends Mcd implements IBlessedView, IHelpService {
         return "Mcd";
     }
 
-    setBoxDraw( boxDraw: boolean ) {
+    setBoxDraw( _boxDraw: boolean ) {
         return true;
     }
 
@@ -220,7 +220,7 @@ export class BlessedMcd extends Mcd implements IBlessedView, IHelpService {
         }
 
         const arrayLineCh = [];
-        let row = 0, col = 0, nODep = 0, j = 0;
+        let row = 0, col = 0, nODep = 0;
         const height = (this.mcdWidget.height as number);
         const curDir: Dir = this.currentDir();
         

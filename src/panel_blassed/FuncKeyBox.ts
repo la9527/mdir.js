@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Widgets } from "neo-blessed";
 
 import { Widget } from "./widget/Widget";

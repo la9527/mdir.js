@@ -203,7 +203,6 @@ export abstract class Editor {
             this.viewBuffers = [];
             const strLineToken = new StringLineToken();
 
-            let isNext = false;
             for ( let t = 0; t < line; t++ ) {
                 if ( line <= this.viewBuffers.length ) {
                     log.debug( "this.viewBuffers.length [%d] line [%d]", this.viewBuffers.length, line );
@@ -318,7 +317,7 @@ export abstract class Editor {
         }
     }
 
-    load( file: File, isReadonly: boolean = false ): boolean {
+    load( file: File, _isReadonly: boolean = false ): boolean {
         this.newFile(file);
 
         if ( file && file.size > 3000000 ) {

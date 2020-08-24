@@ -21,7 +21,7 @@ const log = Logger( "BlassedEditor" );
 @KeyMapping(KeyMappingInfo.Editor)
 export class BlessedEditor extends Editor implements IBlessedView, IHelpService {
 
-    colorEdit:Color = null;
+    colorEdit: Color = null;
     colorStat: Color = null;
     colorEditInfo: Color = null;
     colorEditInfoA: Color = null;
@@ -139,8 +139,8 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
 
     keyWrite( keyInfo ): RefreshType {
         if ( keyInfo && keyInfo.name !== "return" ) {
-            let ch = keyInfo.sequence || keyInfo.ch;
-            let chlen = charWidth( ch );
+            const ch = keyInfo.sequence || keyInfo.ch;
+            const chlen = charWidth( ch );
             log.debug( "keywrite : [%j] charlen [%d]", keyInfo, chlen );
             if ( chlen > 0 ) {
                 this.inputData( ch );
@@ -155,11 +155,11 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
     postLoad(): void {
         // TODO: editor file highlight
     }
-    postUpdateLines(line?: number, height?: number): void {
+    postUpdateLines(_line?: number, _height?: number): void {
         // TODO: editor file highlight
     }
 
-    inputBox(title: string, text: string, inputedText?: string, buttons ?: string[]): Promise<string[]> {
+    inputBox(title: string, text: string, inputedText?: string, buttons?: string[]): Promise<string[]> {
         return inputBox({
             parent: this.baseWidget.screen,
             title: title, 
@@ -219,14 +219,14 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
     }
 
     _cursorCheck() {
-        let viewLines = this.viewBuffers.filter( item => item.textLine === this.curLine );
+        const viewLines = this.viewBuffers.filter( item => item.textLine === this.curLine );
         
         let x = this.curColumn;
         let length = 0;
         let y = 0;
         let n = 0;
         for ( n = 0; n < viewLines.length; n++ ) {
-            let strLen = strWidth(viewLines[n].text);
+            const strLen = strWidth(viewLines[n].text);
             length += strLen;
             if ( length >= this.curColumn ) {
                 y = viewLines[n].viewLine;
@@ -266,11 +266,8 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
 
         box.dattr = box.sattr(box.style);
       
-        let xi = ret.xi + box.ileft
-            , xl = ret.xl - box.iright 
-            , yi = ret.yi + box.itop
-            , yl = ret.yl - box.ibottom
-            , cursor;
+        // eslint-disable-next-line prefer-const
+        let xi = ret.xi + box.ileft, xl = ret.xl - box.iright, yi = ret.yi + box.itop, yl = ret.yl - box.ibottom, cursor;
 
         this.line = box.height - 2;
         this.column = box.width - 2;
@@ -282,7 +279,7 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
 
         // log.debug( "[%d/%d] cursor : [%d] [%d] [%d] [%d]", this.line, this.column, this.curColumn, curX, curY, cursor );
         for (let y = Math.max(yi, 0); y < yl; y++) {
-            let line = screen.lines[y];
+            const line = screen.lines[y];
             if (!line) break;
 
             if (curY === y - yi && this.hasFocus() ) {
@@ -343,7 +340,7 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
                         }
                     }
                     let ch = bufferLine.text[tpos++];
-                    let chSize = unicode.charWidth( ch );
+                    const chSize = unicode.charWidth( ch );
                     if (chSize === 0 ) {
                         ch = "";
                     } else {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Widget } from "./widget/Widget";
 import { Widgets } from "neo-blessed";
 import mainFrame from "./MainFrame";

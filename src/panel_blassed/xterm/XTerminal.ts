@@ -32,6 +32,7 @@ export class XTerminal extends CoreTerminal {
 
     public dispose(): void {
         super.dispose();
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
         this.write = () => { };
     }
 

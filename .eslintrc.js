@@ -15,13 +15,10 @@ module.exports = {
     ],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
-        "project": require('path').resolve(__dirname, "./tsconfig.json"),
+        "project": "./tsconfig.json",
         "tsconfigRootDir": __dirname,
         "sourceType": "module",
-        "ecmaVersion": 2019,
-        "ecmaFeatures": {
-            "jsx": true
-        }
+        "ecmaVersion": 2019
     },
     "settings": {
         

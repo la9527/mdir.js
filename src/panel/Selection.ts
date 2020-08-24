@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Reader } from "../common/Reader";
 import { File } from "../common/File";
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable no-async-promise-executor */
 import { Reader, ProgressFunc, IMountList } from "../../common/Reader";
 import { File, FileLink } from "../../common/File";
