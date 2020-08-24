@@ -2,7 +2,7 @@
 const unicode = require("neo-blessed/lib/unicode");
 const { supportsColor } = require("supports-color");
 
-var angles = {
+const angles = {
     "\u2518": true, // '┘'
     "\u2510": true, // '┐'
     "\u250c": true, // '┌'
@@ -185,7 +185,8 @@ exports.draw = function(start, end) {
                         }
                     } else {
                         if (bg !== 0x1ff) {
-                            bg = this._reduceColor(bg);
+                            // why reduce color? recovery original color
+                            // bg = this._reduceColor(bg, this.tput.colors);
                             if (bg < 16) {
                                 if (bg < 8) {
                                     bg += 40;
@@ -200,7 +201,8 @@ exports.draw = function(start, end) {
                         }
     
                         if (fg !== 0x1ff) {
-                            fg = this._reduceColor(fg);
+                            // why reduce color? recovery original color
+                            // fg = this._reduceColor(fg);
                             if (fg < 16) {
                                 if (fg < 8) {
                                     fg += 30;
