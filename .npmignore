@@ -8,8 +8,11 @@ package-lock.json
 
 tsconfig.json
 src
+test
 
 # VS CODE
+.eslintrc.js
+*.config.js
 .git
 .github
 binary
