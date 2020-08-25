@@ -31,8 +31,7 @@ function fileAppendText( insertText, fileName, matchText ) {
 function scriptUpdate() {
     let basePath = fs.realpathSync( __dirname );
     basePath = fs.realpathSync( basePath + "/..");
-
-    if ( !fs.existsSync(`${basePath}/.github`) ) {
+    if ( !fs.existsSync(`${basePath}/.git`) ) {
         try {
             console.log( `Update: ${basePath}/bin/mdir -> ${basePath}/bin/mdir.js` );
             fs.copyFileSync( basePath + "/bin/mdir", basePath + "/bin/mdir.js" );

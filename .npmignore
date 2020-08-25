@@ -10,6 +10,8 @@ tsconfig.json
 src
 
 # VS CODE
+.git
+.github
 binary
 .vscode
 images
