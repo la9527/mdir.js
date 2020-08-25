@@ -88,7 +88,8 @@
         "GotoLine": "Go to line",
         "GotoTop": "Go to top line",
         "GotoLast": "Go to last line",
-        "PanelSync": "Panels to same directory"
+        "PanelSync": "Panels to same directory",
+        "Archive": "Archive"
     },
     "Hint": {
         "Help": "Help",

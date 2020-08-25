@@ -88,7 +88,8 @@
         "GotoLine": "라인 이동",
         "GotoTop": "맨위로",
         "GotoLast": "마지막으로",
-        "PanelSync": "같은 디렉토리로 동기화"
+        "PanelSync": "같은 디렉토리로 동기화",
+        "Archive": "압축"
     },
     "Hint": {
         "Help": "도움말",
