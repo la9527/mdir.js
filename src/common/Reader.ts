@@ -24,6 +24,7 @@ export type ProgressFunc = (source: File, copySize: number, size: number, chunkL
 export abstract class Reader {
     protected _readerFsType: string = null;
     public isUserCanceled = false;
+    protected watchEventFunc: (event?: string, name?: string) => void = null;
 
     abstract convertFile( path: string, option?: { fileInfo?: any; useThrow?: boolean; checkRealPath?: boolean; virtualFile?: boolean } ): File;
     abstract readdir( dir: File, option?: { isExcludeHiddenFile?: boolean; noChangeDir?: boolean } ): Promise<File[]>;
@@ -35,6 +36,10 @@ export abstract class Reader {
 
     get readerName() {
         return this._readerFsType;
+    }
+
+    onWatch( eventFunc: (event?: string, name?: string) => void ) {
+        this.watchEventFunc = eventFunc;
     }
 
     abstract changeDir( dirFile: File );

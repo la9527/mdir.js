@@ -33,7 +33,8 @@ export abstract class Panel extends AbstractPanel implements IHelpService {
         const previousDir: File = this._currentDir;
 
         const file = (path instanceof File) ? path : this.reader.convertFile( path, { useThrow: true, checkRealPath: true } );
-        log.info( "Panel: %s", file.fullname );
+        log.info( "Panel - read: [%s]", file.fullname );
+
         this.dirFiles = await this.reader.readdir( file, { isExcludeHiddenFile: this._excludeHiddenFile } );
 
         this._currentDir = file;
@@ -53,7 +54,7 @@ export abstract class Panel extends AbstractPanel implements IHelpService {
         } catch ( e ) {
             log.error( "PARENT DIR READ FAILED %s", e.stack );
         }
-        log.info( "FIND LIST: %s", JSON.stringify(this.dirFiles.map((item) => `${item.attr} [${item.fullname}] [${item.name}]`), null, 2) );
+        //log.info( "FIND LIST: %s", JSON.stringify(this.dirFiles.map((item) => `${item.attr} [${item.fullname}] [${item.name}]`), null, 2) );
         this.colorUpdate();
         this.sort();
         

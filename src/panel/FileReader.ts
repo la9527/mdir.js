@@ -154,6 +154,7 @@ export class SystemUserInfo {
 export class FileReader extends Reader {
     protected _readerFsType = "file";
     protected systemUserInfo = null;
+    protected watcher = null;
 
     constructor() {
         super();
@@ -285,6 +286,14 @@ export class FileReader extends Reader {
         return file;
     }
 
+    onWatch( eventFunc: (event?: string, name?: string) => void ) {
+        if ( this.watcher ) {
+            this.watcher.close();
+            this.watcher = null;
+        }
+        this.watchEventFunc = eventFunc;
+    }
+
     changeDir( dirFile: File ) {
         if ( dirFile && dirFile.fullname ) {
             process.chdir( dirFile.fullname );
@@ -309,7 +318,8 @@ export class FileReader extends Reader {
                 }
 
                 const fileList: fs.Dirent[] = (fs as any).readdirSync( dirFile.fullname, { encoding: "utf8", withFileTypes: true  } );
-                log.info( "READDIR: PATH: [%s], FILES: %j", dirFile.fullname, fileList );
+                // log.info( "READDIR: PATH: [%s], FILES: %j", dirFile.fullname, fileList );
+
                 for ( const file of fileList ) {
                     let dirPath = dirFile.fullname;
                     if ( dirPath.substr(dirPath.length - 1, 1) !== path.sep) {
@@ -317,7 +327,7 @@ export class FileReader extends Reader {
                     }
 
                     const item = this.convertFile(dirPath + file.name, { fileInfo: file } );
-                    //log.info( "dirInfo [%s][%s][%s]", dirPath, file.name, item.fullname );
+                    log.info( "dirInfo [%s][%s][%s]", dirPath, file.name, item.fullname );
                     if ( option && option.isExcludeHiddenFile ) {
                         if ( process.platform !== "win32" && item.name !== ".." && item.name[0] === "." ) {
                             continue;
@@ -326,6 +336,16 @@ export class FileReader extends Reader {
                     if ( item ) {
                         fileItem.push( item );
                     }
+                }
+
+                if ( this.watcher ) {
+                    this.watcher.close();
+                    this.watcher = null;
+                }
+                if ( this.watchEventFunc ) {
+                    this.watcher = fs.watch( dirFile.fullname, (event, eventName) => {
+                        this.watchEventFunc && this.watchEventFunc( event, eventName );
+                    });
                 }
             } catch ( e ) {
                 log.error( "READDIR () - ERROR %j", e );

@@ -201,6 +201,7 @@ export class MainFrame implements IHelpService {
             file.fullname === "/" && file.name === ".." ) {
 
             const fileReader = new FileReader();
+            fileReader.onWatch( (event, filename) => this.onWatchDirectory(event, filename) );
             view.setReader( fileReader );
 
             const archiveFile = fileReader.convertFile( file.root, { checkRealPath: true } );
@@ -454,6 +455,7 @@ export class MainFrame implements IHelpService {
             const panel = this.blessedFrames[i];
             if ( panel instanceof BlessedPanel ) {
                 panel.setReader(readerControl("file"));
+                panel.getReader().onWatch( (event, filename) => this.onWatchDirectory(event, filename) );
                 try {
                     await panel.read( i !== 0 ? (lastPath || ".") : ".", false );
                 } catch ( e ) {
@@ -470,6 +472,18 @@ export class MainFrame implements IHelpService {
 
         this.eventStart();
         this.screen.render();
+    }
+
+    protected calledTime = Date.now();
+    onWatchDirectory( event, filename ) {
+        log.debug( "onWatchDirectory [%s] [%s]", event, filename );
+        if ( Date.now() - this.calledTime > 1000 ) {
+            process.nextTick( async () => {
+                await this.refreshPromise();
+                this.execRefreshType( RefreshType.ALL );
+                this.calledTime = Date.now();
+            });
+        }
     }
 
     eventStart() {

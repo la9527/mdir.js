@@ -41,6 +41,8 @@ $ mdir
 
 ### Version History
 
+- v0.8.5
+    - [improve] auto detect when the directory change.
 - v0.8.4
     - [bugfix] bugfix for execute a file name with blank characters.(win32)
     - [improve] js, ts files apply a ESLint.
