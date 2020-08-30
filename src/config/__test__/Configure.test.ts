@@ -21,8 +21,8 @@ describe( "Configure", () => {
     it.each([
         [ "./package.json", "editor" ],
         [ "./fixture.jpg", "supportImage" ]
-    ])("Configure.instance create - %s", (textFileName, aliasName) => {
-        const file = FileReader.convertFile(textFileName, { checkRealPath: true } );
+    ])("Configure.instance create - %s", async (textFileName, aliasName) => {
+        const file = await FileReader.convertFile(textFileName, { checkRealPath: true } );
         const configure = Configure.instance();
 
         expect( configure.getMimeTypeAlias( file ) ).toBe(aliasName);

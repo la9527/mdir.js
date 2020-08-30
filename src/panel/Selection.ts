@@ -81,7 +81,7 @@ export class Selection {
 
         let result = false;
 
-        const beforeDir = this.reader.currentDir();
+        const beforeDir = await this.reader.currentDir();
         for ( ;; ) {
             const dir = arrDirs.find( (item) => !item.checked );
             if ( !dir ) {

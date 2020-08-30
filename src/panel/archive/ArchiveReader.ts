@@ -26,26 +26,26 @@ export class ArchiveReader extends Reader {
         this.baseArchiveFile = file;
         log.info( "Archive Type: [%s] [%s]", file.name, this.archiveObj.getSupportType());
         this.archiveFiles = await this.archiveObj.getArchivedFiles(progressFunc);
-        this.baseDir = this.rootDir();
+        this.baseDir = await this.rootDir();
         return true;
     }
 
-    convertFile(path: string, _option?: any): File {
+    async convertFile(path: string, _option?: any): Promise<File> {
         if ( !path ) {
             return null;
         } else if ( path === "." ) {
             return this.baseDir;
         } else if ( path === ".." ) {
-            let file = this.rootDir();
+            let file = await this.rootDir();
             if ( this.baseDir.fullname !== this.sep() && this.baseDir.dirname !== this.sep() ) {
-                file = this.convertFile(this.baseDir.dirname + this.sep());
+                file = await this.convertFile(this.baseDir.dirname + this.sep());
             } else {
-                file = this.rootDir();
+                file = await this.rootDir();
             }
             file.name = "..";
             return file;
         } else if ( path === this.sep() ) {
-            return this.rootDir();
+            return await this.rootDir();
         }
         return this.archiveFiles.find( (item) => {
             return item.fullname === path;
@@ -74,11 +74,11 @@ export class ArchiveReader extends Reader {
         });
     }
  
-    homeDir(): File {
+    async homeDir(): Promise<File> {
         return this.rootDir(); 
     }
 
-    rootDir(): File {
+    async rootDir(): Promise<File> {
         const file = new File();
         file.fstype = "archive";
         file.fullname = "/";
@@ -102,11 +102,11 @@ export class ArchiveReader extends Reader {
         return null;
     }
 
-    changeDir(_dirFile: File) {
+    async changeDir(_dirFile: File) {
         throw new Error("Unsupport changedir");
     }
 
-    currentDir(): File {
+    async currentDir(): Promise<File> {
         return this.baseDir;
     }
 
@@ -114,7 +114,7 @@ export class ArchiveReader extends Reader {
         return "/";
     }
 
-    exist(source: string | File): boolean {
+    async exist(source: string | File): Promise<boolean> {
         if ( !source ) {
             return false;
         }
@@ -126,7 +126,7 @@ export class ArchiveReader extends Reader {
         });
     }
 
-    mkdir(pathStr: string | File, progress?: ProgressFunc) {
+    async mkdir(pathStr: string | File, progress?: ProgressFunc): Promise<void> {
         let file: File = null;
         if ( typeof(pathStr) === "string" ) {
             file = this.baseDir.clone();

@@ -195,11 +195,11 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
             this.beforeRender();
             log.debug("BlessedPanel prerender !!! - End %d - [%dms]", this.baseWidget._viewCount, Date.now() - startTime);
         });
-        this.header.on("prerender", () => {
+        this.header.on("prerender", async () => {
             // log.debug( "header prerender !!! - Start %d", this.baseWidget._viewCount );
             if (this._currentDir) {
                 if ( this._currentDir.fstype === "archive" ) {
-                    const file = FileReader.convertFile(this._currentDir.root);
+                    const file = await FileReader.convertFile(this._currentDir.root);
                     this.header.setContent( file?.name + ":" + this._currentDir.fullname);
                 } else {
                     this.header.setContent(this._currentDir.fullname);
@@ -290,7 +290,7 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
     async keyEnterPromise(): Promise<any> {
         this.searchFileBox && this.searchFileBox.clear();
         const currentFile: File = this.dirFiles[this.currentPos];
-        if ( currentFile.fstype === "archive" && this.reader.currentDir().fullname === "/" &&
+        if ( currentFile.fstype === "archive" && (await this.reader.currentDir()).fullname === "/" &&
             currentFile.fullname === "/" && currentFile.name === ".." ) {
             await mainFrame().archivePromise(currentFile);
             return RefreshType.ALL;

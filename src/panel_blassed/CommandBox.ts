@@ -146,7 +146,7 @@ export class CommandBox extends Widget {
 
             const pathInfo = path.parse(pathStr);
             const isDirCheck = pathStr[ pathStr.length - 1 ] === path.sep;
-            const pathFile = reader.convertFile( isDirCheck ? pathStr : pathInfo.dir, { checkRealPath: true } );
+            const pathFile = await reader.convertFile( isDirCheck ? pathStr : pathInfo.dir, { checkRealPath: true } );
             if ( !pathFile ) {
                 return null;
             }

@@ -103,7 +103,7 @@ export class MainFrame implements IHelpService {
             view.destroy();
 
             const newView = new BlessedPanel( { parent: this.baseWidget, viewCount: viewCount++ }, view.getReader() );
-            await newView.read( view.getReader().currentDir() || "." );
+            await newView.read( await view.getReader().currentDir() || "." );
             newView.setFocus();
             newView.focusFile( view.getFile() );
             this.blessedFrames[this.activeFrameNum] = newView;
@@ -181,7 +181,7 @@ export class MainFrame implements IHelpService {
             try {
                 if ( await reader.setArchiveFile( file, progressStatus ) ) {
                     view.setReader( reader );
-                    await view.read( reader.rootDir() );
+                    await view.read( await reader.rootDir() );
                     view.setFocus();
                     view.resetPosition();
                 }
@@ -197,15 +197,15 @@ export class MainFrame implements IHelpService {
             }
         } else if ( view instanceof BlessedPanel && 
             file.fstype === "archive" && 
-            view.getReader().currentDir().fullname === "/" &&
+            (await view.getReader().currentDir()).fullname === "/" &&
             file.fullname === "/" && file.name === ".." ) {
 
             const fileReader = new FileReader();
             fileReader.onWatch( (event, filename) => this.onWatchDirectory(event, filename) );
             view.setReader( fileReader );
 
-            const archiveFile = fileReader.convertFile( file.root, { checkRealPath: true } );
-            await view.read( fileReader.convertFile( archiveFile.dirname ) );
+            const archiveFile = await fileReader.convertFile( file.root, { checkRealPath: true } );
+            await view.read( await fileReader.convertFile( archiveFile.dirname ) );
             view.focusFile( archiveFile );
         }
     }
@@ -366,7 +366,7 @@ export class MainFrame implements IHelpService {
             view.destroy();
 
             const newView = new BlessedPanel( { parent: this.baseWidget, viewCount: viewCount++ }, view.getReader() );
-            await newView.read( view.getCurrentPath() || view.getReader().currentDir() || "." );
+            await newView.read( view.getCurrentPath() || await view.getReader().currentDir() || "." );
             newView.setFocus();
             this.blessedFrames[this.activeFrameNum] = newView;
         }
@@ -645,7 +645,7 @@ export class MainFrame implements IHelpService {
             this.activePanel().getReader() && 
             this.activePanel().getReader().currentDir() && 
             this.activePanel().getReader().readerName === "file" ) {
-            const lastPath = this.activePanel().getReader().currentDir().fullname;
+            const lastPath = (await this.activePanel().getReader().currentDir()).fullname;
             log.debug( "CHDIR : %s", lastPath );
             process.chdir( lastPath );
             try {
@@ -960,7 +960,7 @@ export class MainFrame implements IHelpService {
         let beforeTime = Date.now();
         const refreshTimeMs = 300;
 
-        if ( activePanel.getReader().readerName === "file" ) {
+        if ( [ "file", "sftp" ].indexOf(activePanel.getReader().readerName) > -1 ) {
             for ( let i = 0; i < files.length; i++ ) {
                 const src = files[i];
                 try {
@@ -1103,13 +1103,13 @@ export class MainFrame implements IHelpService {
             
             const reader = activePanel.getReader();
             log.debug( "READER : [%s] => [%s]", reader.readerName, files[0].fstype );
-            if ( files[0].fstype === "file" && reader.readerName === "file" && files[0].fstype === clipSelected.getReader().readerName ) {
+            if ( [ "file", "sftp" ].indexOf(files[0].fstype) > -1 && reader.readerName === "file" && files[0].fstype === clipSelected.getReader().readerName ) {
                 let overwriteAll = false;
                 for ( const src of files ) {
                     if ( progressBox.getCanceled() ) {
                         break;
                     }
-                    if ( !reader.exist(src.fullname) ) {
+                    if ( await reader.exist(src.fullname) === false ) {
                         const result = await messageBox( {
                             parent: this.baseWidget,
                             title: T("Error"),
@@ -1126,8 +1126,9 @@ export class MainFrame implements IHelpService {
 
                     const target = src.clone();
                     target.fullname = targetBasePath + target.fullname.substr(sourceBasePath.length);
+                    target.fstype = reader.readerName;
                     
-                    if ( !overwriteAll && reader.exist( target.fullname ) ) {
+                    if ( !overwriteAll && await reader.exist( target.fullname ) ) {
                         const result = await messageBox( {
                             parent: this.baseWidget,
                             title: T("Copy"),
@@ -1162,7 +1163,7 @@ export class MainFrame implements IHelpService {
                     try {
                         if ( src.dir ) {
                             log.debug( "COPY DIR - [%s] => [%s]", src.fullname, target.fullname );
-                            reader.mkdir( target );
+                            await reader.mkdir( target );
                         } else {
                             log.debug( "COPY - [%s] => [%s]", src.fullname, target.fullname );
                             await reader.copy( src, null, target, progressStatus );
@@ -1536,7 +1537,7 @@ export class MainFrame implements IHelpService {
             };
 
             try {
-                const targetFile = reader.convertFile( activePanel.currentPath().fullname + reader.sep() + result[0], { virtualFile: true } );
+                const targetFile = await reader.convertFile( activePanel.currentPath().fullname + reader.sep() + result[0], { virtualFile: true } );
                 log.debug( "ORIGINAL SOURCE : [%s]", JSON.stringify(files.map( item => item.toString() ), null, 2) );
                 if ( archiveType === "ZIP" ) {
                     await new ArchiveZip().compress( files, activePanel.currentPath(), targetFile, progressStatus );

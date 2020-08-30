@@ -1065,7 +1065,7 @@ export abstract class Editor {
             return false;
         }
 
-        const file = FileReader.createFile( fileName, { virtualFile: true } );
+        const file = await FileReader.createFile( fileName, { virtualFile: true } );
         this.newFile( file );
         return true;
     }
@@ -1098,7 +1098,7 @@ export abstract class Editor {
         }
 
         try {
-            this.file = FileReader.createFile( fileName );
+            this.file = await FileReader.createFile( fileName );
             if ( this.save( this.file, this.encoding, this.isBackup ) ) {
                 this.lastDoInfoLength = this.doInfo.length;
             }

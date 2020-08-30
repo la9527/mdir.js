@@ -32,7 +32,7 @@ export abstract class Panel extends AbstractPanel implements IHelpService {
     async read( path: string | File ): Promise<void> {
         const previousDir: File = this._currentDir;
 
-        const file = (path instanceof File) ? path : this.reader.convertFile( path, { useThrow: true, checkRealPath: true } );
+        const file = (path instanceof File) ? path : await this.reader.convertFile( path, { useThrow: true, checkRealPath: true } );
         log.info( "Panel - read: [%s]", file.fullname );
 
         this.dirFiles = await this.reader.readdir( file, { isExcludeHiddenFile: this._excludeHiddenFile } );
@@ -41,7 +41,7 @@ export abstract class Panel extends AbstractPanel implements IHelpService {
         file.name = ".";
 
         try {
-            const parentFile = this.reader.convertFile("..");
+            const parentFile = await this.reader.convertFile("..");
             if ( parentFile ) {
                 log.debug( "read() - parentFile [%s] [%s] [%s]", parentFile.fstype, parentFile.fullname, parentFile.name);
             }
@@ -171,12 +171,12 @@ export abstract class Panel extends AbstractPanel implements IHelpService {
 
     @Help(T("Help.GotoHome"))
     async gotoHomePromise() {
-        await this.read( this.reader.homeDir() );
+        await this.read( await this.reader.homeDir() );
     }
 
     @Help(T("Help.GotoRoot"))
     async gotoRootPromise() {
-        await this.read( this.reader.rootDir() );
+        await this.read( await this.reader.rootDir() );
     }
 
     @Help(T("Help.GotoParent"))
@@ -191,6 +191,6 @@ export abstract class Panel extends AbstractPanel implements IHelpService {
     viewReset() {
         this._excludeHiddenFile = false;
         this._sortReverse = false;
-        this.sortType = SortType.COLOR;        
+        this.sortType = SortType.COLOR;
     }
 }

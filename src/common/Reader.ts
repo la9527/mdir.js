@@ -26,11 +26,11 @@ export abstract class Reader {
     public isUserCanceled = false;
     protected watchEventFunc: (event?: string, name?: string) => void = null;
 
-    abstract convertFile( path: string, option?: { fileInfo?: any; useThrow?: boolean; checkRealPath?: boolean; virtualFile?: boolean } ): File;
+    abstract convertFile( path: string, option?: { fileInfo?: any; useThrow?: boolean; checkRealPath?: boolean; virtualFile?: boolean } ): Promise<File>;
     abstract readdir( dir: File, option?: { isExcludeHiddenFile?: boolean; noChangeDir?: boolean } ): Promise<File[]>;
-    abstract homeDir(): File;
+    abstract homeDir(): Promise<File>;
 
-    abstract rootDir(): File;
+    abstract rootDir(): Promise<File>;
 
     abstract mountList(): Promise<IMountList[]>;
 
@@ -42,12 +42,12 @@ export abstract class Reader {
         this.watchEventFunc = eventFunc;
     }
 
-    abstract changeDir( dirFile: File );
-    abstract currentDir(): File;
+    abstract changeDir( dirFile: File ): Promise<void>;
+    abstract currentDir(): Promise<File>;
     
     abstract sep(): string;
-    abstract exist( source: File | string ): boolean;
-    abstract mkdir( path: string | File, progress?: ProgressFunc );
+    abstract exist( source: File | string ): Promise<boolean>;
+    abstract mkdir( path: string | File, progress?: ProgressFunc ): Promise<void>;
     abstract rename( source: File, rename: string, progress?: ProgressFunc ): Promise<void>;
     abstract copy(source: File | File[], sourceBaseDir: File, targetDir: File, progress?: ProgressFunc): Promise<void>;
     abstract remove( source: File | File[], progress?: ProgressFunc ): Promise<void>;

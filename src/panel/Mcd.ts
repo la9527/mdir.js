@@ -50,14 +50,14 @@ export class Mcd implements IHelpService {
     }
 
     async scanCurrentDir() {
-        const dir: File = this.reader.currentDir();
+        const dir: File = await this.reader.currentDir();
         await this.scanDir( dir );
     }
 
     async rescan( depth: number = 0): Promise<boolean> {
         this.arrOrder = [];
 
-        this.rootDir = new Dir(this.reader.rootDir(), null, false);
+        this.rootDir = new Dir(await this.reader.rootDir(), null, false);
         const result = await this.scan( this.rootDir, depth );
         return result;
     }

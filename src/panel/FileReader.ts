@@ -45,30 +45,30 @@ const convertAttr = ( stats: fs.Stats ): string => {
     fileMode[0] = stats.isDirectory() ? "d" : fileMode[0];
     fileMode[0] = stats.isSymbolicLink() ? "l" : fileMode[0];
     
-    fileMode[1] = stats.mode & fs.constants.S_IRUSR ? "r" : "-";
-    fileMode[2] = stats.mode & fs.constants.S_IWUSR ? "w" : "-";
-    fileMode[3] = stats.mode & fs.constants.S_IXUSR ? "x" : "-";
-    fileMode[4] = stats.mode & fs.constants.S_IRGRP ? "r" : "-";
-    fileMode[5] = stats.mode & fs.constants.S_IWGRP ? "w" : "-";
-    fileMode[6] = stats.mode & fs.constants.S_IXGRP ? "x" : "-";
-    fileMode[7] = stats.mode & fs.constants.S_IROTH ? "r" : "-";
-    fileMode[8] = stats.mode & fs.constants.S_IWOTH ? "w" : "-";
-    fileMode[9] = stats.mode & fs.constants.S_IXOTH ? "x" : "-";
+    fileMode[1] = stats.mode & 256 ? "r" : "-";
+    fileMode[2] = stats.mode & 128 ? "w" : "-";
+    fileMode[3] = stats.mode & 64 ? "x" : "-";
+    fileMode[4] = stats.mode & 32 ? "r" : "-";
+    fileMode[5] = stats.mode & 16 ? "w" : "-";
+    fileMode[6] = stats.mode & 8 ? "x" : "-";
+    fileMode[7] = stats.mode & 4 ? "r" : "-";
+    fileMode[8] = stats.mode & 2 ? "w" : "-";
+    fileMode[9] = stats.mode & 1 ? "x" : "-";
     return fileMode.join("");
 };
 
 export function convertAttrToStatMode( file: File ): number {
     if ( file instanceof File && file.attr && file.attr.length === 10 ) {
         let mode = 0;
-        mode = mode | (file.attr[1] === "r" ? fs.constants.S_IRUSR : 0);
-        mode = mode | (file.attr[2] === "w" ? fs.constants.S_IWUSR : 0);
-        mode = mode | (file.attr[3] === "x" ? fs.constants.S_IXUSR : 0);
-        mode = mode | (file.attr[4] === "r" ? fs.constants.S_IRGRP : 0);
-        mode = mode | (file.attr[5] === "w" ? fs.constants.S_IWGRP : 0);
-        mode = mode | (file.attr[6] === "x" ? fs.constants.S_IXGRP : 0);
-        mode = mode | (file.attr[7] === "r" ? fs.constants.S_IROTH : 0);
-        mode = mode | (file.attr[8] === "w" ? fs.constants.S_IWOTH : 0);
-        mode = mode | (file.attr[9] === "x" ? fs.constants.S_IXOTH : 0);
+        mode = mode | (file.attr[1] === "r" ? 256 : 0);
+        mode = mode | (file.attr[2] === "w" ? 128 : 0);
+        mode = mode | (file.attr[3] === "x" ? 64 : 0);
+        mode = mode | (file.attr[4] === "r" ? 32 : 0);
+        mode = mode | (file.attr[5] === "w" ? 16 : 0);
+        mode = mode | (file.attr[6] === "x" ? 8 : 0);
+        mode = mode | (file.attr[7] === "r" ? 4 : 0);
+        mode = mode | (file.attr[8] === "w" ? 2 : 0);
+        mode = mode | (file.attr[9] === "x" ? 1 : 0);
         return mode;
     }
     return 0;
@@ -161,12 +161,12 @@ export class FileReader extends Reader {
         this.systemUserInfo = new SystemUserInfo();
     }
 
-    rootDir(): File {
-        return this.convertFile( path.parse(fs.realpathSync(".")).root );
+    async rootDir(): Promise<File> {
+        return await this.convertFile( path.parse(fs.realpathSync(".")).root );
     }
 
-    homeDir(): File {
-        return this.convertFile( os.homedir() );
+    async homeDir(): Promise<File> {
+        return await this.convertFile( os.homedir() );
     }
 
     async mountList(): Promise<IMountList[]> {
@@ -174,11 +174,12 @@ export class FileReader extends Reader {
         const drives = await drivelist.list();
         drives.forEach( item => {
             log.debug( "MOUNT INFO : %j", item );
-            item.mountpoints.forEach( (i) => {
+            item.mountpoints.forEach( async (i) => {
+                const mountFile = await this.convertFile( i.path );
                 mounts.push( {
                     device: item.device,
                     description: item.description,
-                    mountPath: this.convertFile( i.path ),
+                    mountPath: mountFile,
                     size: item.size,
                     isCard: item.isCard,
                     isUSB: item.isUSB,
@@ -190,100 +191,106 @@ export class FileReader extends Reader {
         return mounts;
     }
 
-    static convertFile( filePath: string, option?: { fileInfo?: any; useThrow?: boolean; checkRealPath?: boolean } ): File {
+    static async convertFile( filePath: string, option?: { fileInfo?: any; useThrow?: boolean; checkRealPath?: boolean } ): Promise<File> {
         const fileReader = new FileReader();
-        return fileReader.convertFile( filePath, option );
+        return await fileReader.convertFile( filePath, option );
     }
 
-    convertFile( filePath: string, option?: { fileInfo?: any; useThrow?: boolean; checkRealPath?: boolean; virtualFile?: boolean } ): File {
-        const { fileInfo, useThrow, checkRealPath } = option || {};
-        const file = new File();
-        file.fstype = this._readerFsType;
+    convertFile( filePath: string, option?: { fileInfo?: any; useThrow?: boolean; checkRealPath?: boolean; virtualFile?: boolean } ): Promise<File> {
+        // eslint-disable-next-line no-async-promise-executor
+        return new Promise( async (resolve) => {
+            const { fileInfo, useThrow, checkRealPath } = option || {};
+            const file = new File();
+            file.fstype = this._readerFsType;
 
-        try {
-            if ( filePath === "~" || filePath[0] === "~" ) {
-                file.fullname = os.homedir() + filePath.substr(1);
-            } else if ( filePath === ".." || filePath === "." ) {
-                file.fullname = fs.realpathSync( filePath );
-            } else {
-                file.fullname = checkRealPath ? fs.realpathSync(filePath) : filePath;
+            try {
+                if ( filePath === "~" || filePath[0] === "~" ) {
+                    file.fullname = os.homedir() + filePath.substr(1);
+                } else if ( filePath === ".." || filePath === "." ) {
+                    file.fullname = fs.realpathSync( filePath );
+                } else {
+                    file.fullname = checkRealPath ? fs.realpathSync(filePath) : filePath;
+                }
+                const pathInfo = path.parse( file.fullname );
+                file.root = pathInfo.root;
+                file.name = pathInfo.base || pathInfo.root;
+            } catch( e ) {
+                log.error( "convertfile - FAIL : [%s] %j", filePath, e);
+                if ( useThrow ) {
+                    throw e;
+                }
+                resolve(null);
+                return;
             }
-            const pathInfo = path.parse( file.fullname );
-            file.root = pathInfo.root;
-            file.name = pathInfo.base || pathInfo.root;
-        } catch( e ) {
-            log.error( "convertfile - FAIL : [%s] %j", filePath, e);
-            if ( useThrow ) {
-                throw e;
-            }
-            return null;
-        }
-        
-        if ( option && option.virtualFile ) {
-            file.dir = false;
-            file.uid = -1;
-            file.gid = -1;
-            file.ctime = new Date(0);
-            file.mtime = new Date(0);
-            file.atime = new Date(0);
-            return file;
-        }
-
-        try {
-            if ( process.platform === "win32" ) {
-                const item: Win32Attributes = fswin.getAttributesSync(file.fullname);
-                // log.debug( "%s, %j", fullPathname, JSON.stringify( item ) );
-                file.attr = convertAttrWin32( item );
-                file.dir = item.IS_DIRECTORY;
-                file.size = item.SIZE;
-                file.ctime = item.CREATION_TIME;
-                file.mtime = item.LAST_WRITE_TIME;
-                file.atime = item.LAST_ACCESS_TIME;
-            } else {
-                const stat = fs.lstatSync( file.fullname );
-                file.dir = stat.isDirectory();
-                file.size = stat.size;
-                file.attr = convertAttr( stat );
-                file.uid = stat.uid;
-                file.gid = stat.gid;
-                file.owner = this.systemUserInfo.findUid(stat.uid, "name");
-                file.group = this.systemUserInfo.findGid(stat.gid, "name");
-                file.ctime = stat.ctime;
-                file.mtime = stat.mtime;
-                file.atime = stat.atime;
-            }
-        } catch ( e ) {
-            log.error( "convertfile - FAIL 2 : [%s] %j", filePath, e);
-            if ( fileInfo ) {
-                file.dir = fileInfo.isDirectory();
-                file.attr = convertAttrFsDirect( fileInfo );
+            
+            if ( option && option.virtualFile ) {
+                file.dir = false;
                 file.uid = -1;
                 file.gid = -1;
                 file.ctime = new Date(0);
                 file.mtime = new Date(0);
                 file.atime = new Date(0);
-            } else {
-                if ( useThrow ) {
-                    throw e;
-                }
-                return null;
+                resolve(file);
+                return;
             }
-        }
 
-        if ( (file.attr && file.attr[0] === "l") || (fileInfo && fileInfo.isSymbolicLink()) ) {
             try {
-                const linkOrgName = fs.readlinkSync( file.fullname );
-                file.link = new FileLink( path.basename( linkOrgName ) );
-
-                const linkStat = fs.lstatSync( linkOrgName );
-                if ( linkStat && !linkStat.isSymbolicLink() ) {
-                    file.link.file = this.convertFile( linkOrgName );
+                if ( process.platform === "win32" ) {
+                    const item: Win32Attributes = fswin.getAttributesSync(file.fullname);
+                    // log.debug( "%s, %j", fullPathname, JSON.stringify( item ) );
+                    file.attr = convertAttrWin32( item );
+                    file.dir = item.IS_DIRECTORY;
+                    file.size = item.SIZE;
+                    file.ctime = item.CREATION_TIME;
+                    file.mtime = item.LAST_WRITE_TIME;
+                    file.atime = item.LAST_ACCESS_TIME;
+                } else {
+                    const stat = fs.lstatSync( file.fullname );
+                    file.dir = stat.isDirectory();
+                    file.size = stat.size;
+                    file.attr = convertAttr( stat );
+                    file.uid = stat.uid;
+                    file.gid = stat.gid;
+                    file.owner = this.systemUserInfo.findUid(stat.uid, "name");
+                    file.group = this.systemUserInfo.findGid(stat.gid, "name");
+                    file.ctime = stat.ctime;
+                    file.mtime = stat.mtime;
+                    file.atime = stat.atime;
                 }
             } catch ( e ) {
-                log.error( "convertfile - FAIL 3 : [%s] %j", filePath, e);
+                log.error( "convertfile - FAIL 2 : [%s] %j", filePath, e);
+                if ( fileInfo ) {
+                    file.dir = fileInfo.isDirectory();
+                    file.attr = convertAttrFsDirect( fileInfo );
+                    file.uid = -1;
+                    file.gid = -1;
+                    file.ctime = new Date(0);
+                    file.mtime = new Date(0);
+                    file.atime = new Date(0);
+                } else {
+                    if ( useThrow ) {
+                        throw e;
+                    }
+                    resolve(null);
+                    return null;
+                }
             }
-        }
-        return file;
+
+            if ( (file.attr && file.attr[0] === "l") || (fileInfo && fileInfo.isSymbolicLink()) ) {
+                try {
+                    const linkOrgName = fs.readlinkSync( file.fullname );
+                    file.link = new FileLink( path.basename( linkOrgName ) );
+
+                    const linkStat = fs.lstatSync( linkOrgName );
+                    if ( linkStat && !linkStat.isSymbolicLink() ) {
+                        file.link.file = await this.convertFile( linkOrgName );
+                    }
+                } catch ( e ) {
+                    log.error( "convertfile - FAIL 3 : [%s] %j", filePath, e);
+                }
+            }
+            resolve(file);
+        });
     }
 
     onWatch( eventFunc: (event?: string, name?: string) => void ) {
@@ -294,72 +301,68 @@ export class FileReader extends Reader {
         this.watchEventFunc = eventFunc;
     }
 
-    changeDir( dirFile: File ) {
+    async changeDir( dirFile: File ): Promise<void> {
         if ( dirFile && dirFile.fullname ) {
             process.chdir( dirFile.fullname );
         }
     }
 
-    currentDir(): File {
-        return this.convertFile(process.cwd());
+    async currentDir(): Promise<File> {
+        return await this.convertFile(process.cwd());
     }
 
-    readdir( dirFile: File, option?: { isExcludeHiddenFile?: boolean; noChangeDir?: boolean } ): Promise<File[]> {
-        return new Promise<File[]>( (resolve, reject ) => {
-            if ( !dirFile.dir ) {
-                reject(`Not directory. ${dirFile.name}`);
-                return;
+    async readdir( dirFile: File, option?: { isExcludeHiddenFile?: boolean; noChangeDir?: boolean } ): Promise<File[]> {
+        if ( !dirFile.dir ) {
+            throw new Error(`Not directory. ${dirFile.name}`);
+        }
+
+        const fileItem: File[] = [];
+        try {
+            if ( !(option && option.noChangeDir) ) {
+                process.chdir(dirFile.fullname);
             }
 
-            const fileItem: File[] = [];
-            try {
-                if ( !(option && option.noChangeDir) ) {
-                    process.chdir(dirFile.fullname);
+            const fileList: fs.Dirent[] = (fs as any).readdirSync( dirFile.fullname, { encoding: "utf8", withFileTypes: true  } );
+            // log.info( "READDIR: PATH: [%s], FILES: %j", dirFile.fullname, fileList );
+
+            for ( const file of fileList ) {
+                let dirPath = dirFile.fullname;
+                if ( dirPath.substr(dirPath.length - 1, 1) !== path.sep) {
+                    dirPath += path.sep;
                 }
 
-                const fileList: fs.Dirent[] = (fs as any).readdirSync( dirFile.fullname, { encoding: "utf8", withFileTypes: true  } );
-                // log.info( "READDIR: PATH: [%s], FILES: %j", dirFile.fullname, fileList );
-
-                for ( const file of fileList ) {
-                    let dirPath = dirFile.fullname;
-                    if ( dirPath.substr(dirPath.length - 1, 1) !== path.sep) {
-                        dirPath += path.sep;
-                    }
-
-                    const item = this.convertFile(dirPath + file.name, { fileInfo: file } );
-                    log.info( "dirInfo [%s][%s][%s]", dirPath, file.name, item.fullname );
-                    if ( option && option.isExcludeHiddenFile ) {
-                        if ( process.platform !== "win32" && item.name !== ".." && item.name[0] === "." ) {
-                            continue;
-                        }
-                    }
-                    if ( item ) {
-                        fileItem.push( item );
+                const item = await this.convertFile(dirPath + file.name, { fileInfo: file } );
+                log.info( "dirInfo [%s][%s][%s]", dirPath, file.name, item.fullname );
+                if ( option && option.isExcludeHiddenFile ) {
+                    if ( process.platform !== "win32" && item.name !== ".." && item.name[0] === "." ) {
+                        continue;
                     }
                 }
-
-                if ( this.watcher ) {
-                    this.watcher.close();
-                    this.watcher = null;
+                if ( item ) {
+                    fileItem.push( item );
                 }
-                if ( this.watchEventFunc ) {
-                    this.watcher = fs.watch( dirFile.fullname, (event, eventName) => {
-                        this.watchEventFunc && this.watchEventFunc( event, eventName );
-                    });
-                }
-            } catch ( e ) {
-                log.error( "READDIR () - ERROR %j", e );
-                reject(e);
-                return;
             }
 
-            /*
-            this.fileTypeUpdate(fileItem).finally( () => {
-                resolve( fileItem );
-            });
-            */
+            if ( this.watcher ) {
+                this.watcher.close();
+                this.watcher = null;
+            }
+            if ( this.watchEventFunc ) {
+                this.watcher = fs.watch( dirFile.fullname, (event, eventName) => {
+                    this.watchEventFunc && this.watchEventFunc( event, eventName );
+                });
+            }
+        } catch ( e ) {
+            log.error( "READDIR () - ERROR %j", e );
+            throw e;
+        }
+
+        /*
+        this.fileTypeUpdate(fileItem).finally( () => {
             resolve( fileItem );
         });
+        */
+        return fileItem;
     }
 
     async fileTypeUpdate( fileItem: File[] ) {
@@ -381,22 +384,40 @@ export class FileReader extends Reader {
         return path.sep;
     }
 
-    exist( source: File | string ) {
-        if ( source instanceof File ) {
-            return fs.existsSync( source.fullname );
-        }
-        return fs.existsSync( source );
-    }
-
-    mkdir( path: string | File, _progress?: ProgressFunc ) {
-        if ( path instanceof File ) {
-            if ( !path.dir ) {
+    exist( source: File | string ): Promise<boolean> {
+        return new Promise( resolve => {
+            if ( source instanceof File ) {
+                resolve(fs.existsSync( source.fullname ));
                 return;
             }
-            fs.mkdirSync( path.fullname, { mode: convertAttrToStatMode(path) } );
-        } else {
-            fs.mkdirSync( path );
-        }
+            resolve(fs.existsSync( source ));
+            return;
+        });
+    }
+
+    async mkdir( path: string | File, _progress?: ProgressFunc ): Promise<void> {
+        return new Promise( (resolve, reject) => {
+            if ( path instanceof File ) {
+                if ( !path.dir ) {
+                    return;
+                }
+                fs.mkdir( path.fullname, { mode: convertAttrToStatMode(path) }, (err) => {
+                    if ( err ) {
+                        resolve();
+                    } else {
+                        reject( err );
+                    }
+                });
+            } else {
+                fs.mkdir( path, (err) => {
+                    if ( err ) {
+                        resolve();
+                    } else {
+                        reject( err );
+                    }
+                });
+            }
+        });
     }
     
     rename( source: File, rename: string, _progress?: ProgressFunc ): Promise<void> {
@@ -492,7 +513,7 @@ export class FileReader extends Reader {
         });
     }
 
-    createFile( fullname: string, option?: { virtualFile?: boolean } ): File {
+    createFile( fullname: string, option?: { virtualFile?: boolean } ): Promise<File> {
         if ( !(option && option.virtualFile) ) {
             fs.writeFileSync( fullname, "", { mode: 0o644 } );
             return this.convertFile( fullname, { checkRealPath: true } );
@@ -500,7 +521,7 @@ export class FileReader extends Reader {
         return this.convertFile( fullname, { virtualFile: true } );
     }
 
-    static createFile( fullname: string, option?: { virtualFile?: boolean } ): File {
+    static createFile( fullname: string, option?: { virtualFile?: boolean } ): Promise<File> {
         const fileReader = new FileReader();
         return fileReader.createFile( fullname, option );
     }

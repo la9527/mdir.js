@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import path from "path";
 import os from "os";
-import winston from "winston";
+import winston, { log } from "winston";
 import * as fs from "fs";
 
 const { combine, timestamp, label, printf, prettyPrint } = winston.format;
@@ -17,6 +17,7 @@ export function updateDebugFile( filePath: string = "" ) {
 export function Logger( labelName: string ): winston.Logger {
     let logger = null;
     if ( (global as any).DEBUG_FILE || (global as any).DEBUG_STDOUT ) {
+        console.log( "Logger", labelName );
         const transports: any[] = [];
         let isColor = false;
         if ( (global as any).DEBUG_STDOUT ) {
@@ -66,10 +67,15 @@ export function Logger( labelName: string ): winston.Logger {
                             } catch ( e ) {}
                         }
                     }
+                    let result = "";
                     if ( isColor ) {
-                        return `${info.timestamp} - [${info.label.padEnd(10)}] ${level[info.level] || ""}: ` + winston.format.colorize().colorize(info.level, info.message);
+                        result = `${info.timestamp} - [${info.label.padEnd(10)}] ${level[info.level] || ""}: ` + winston.format.colorize().colorize(info.level, info.message);
+                        console.log( result );
+                        return result;
                     }
-                    return `${info.timestamp} - [${info.label.padEnd(10)}] ${level[info.level] || ""}: ${info.message}`;
+                    result = `${info.timestamp} - [${info.label.padEnd(10)}] ${level[info.level] || ""}: ${info.message}`;
+                    console.log( result );
+                    return result;
                 })
             ),
             transports
