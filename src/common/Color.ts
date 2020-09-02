@@ -93,6 +93,10 @@ export class Color {
         return text ? `{${this.fontHex}-fg}{${this.backHex}-bg}${text}{/}{/}` : text;
     }
 
+    hexBlessReverseFormat(text) {
+        return text ? `{${this.backHex}-fg}{${this.fontHex}-bg}${text}{/}{/}` : text;
+    }
+
     fontHexBlessFormat(text) {
         return text ? `{${this.fontHex}-fg}${text}{/}` : text;
     }

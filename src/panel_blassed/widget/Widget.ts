@@ -5,12 +5,14 @@ import { Logger } from "../../common/Logger";
 import { Color } from "../../common/Color";
 import { sprintf } from "sprintf-js";
 
-const log = Logger("main");
+const log = Logger("Widget");
 
 export class Widget {
     private _box: Widgets.BoxElement;
     protected destroyed = false;
     _viewCount: number = -1;
+    protected _aliasName: string = null;
+    protected _disable: boolean = false;
 
     constructor( opts: Widgets.BoxOptions | any ) {
         if ( opts.parent && opts.parent instanceof Widget ) {
@@ -19,13 +21,25 @@ export class Widget {
             this._box = box( { ...opts, tags: true } );
         }
         this._viewCount = opts && opts.viewCount;
+        this._aliasName = opts && opts.aliasName;
         this.on( "prerender", () => {
             this.draw();
         });
     }
 
+    get aliasName() {
+        return this._aliasName;
+    }
+
     get screen() {
         return this.box && this.box.screen;
+    }
+
+    set disable( disable: boolean ) {
+        this._disable = disable;
+    }
+    get disable() {
+        return this._disable;
     }
 
     setBorderLine( isBorder: boolean ) {
@@ -66,6 +80,10 @@ export class Widget {
         } else {
             this._box.on( event, listener );
         }
+    }
+
+    emit( event: string, opt?: any ) {
+        this._box.emit( event, opt );
     }
 
     setFocus() {

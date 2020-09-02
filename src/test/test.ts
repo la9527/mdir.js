@@ -1,3 +1,5 @@
+process.env.NODE_ENV = "test";
+
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import * as blessed from "neo-blessed";
 import { BlessedProgram, Widgets, box, text, colors } from "neo-blessed";
@@ -23,12 +25,12 @@ import en from "../translation/en.json";
 import ko from "../translation/ko.json";
 import { button } from "../../@types/blessed";
 import { BlessedEditor } from "../panel_blassed/BlessedEditor";
+import { ConnectionManager, IConnectionWidgetOption } from "../panel_blassed/widget/ConnectionManager";
 
 /*
 const T = ( ...a ) => {
     return i18n.t.apply( i18n, a );
 };
-
 (async () => {
     const T = await i18n.use(I18nextCLILanguageDetector).init({
         debug: true,
@@ -42,12 +44,7 @@ const T = ( ...a ) => {
     console.log( T("Hint.Paste") );
 })();
 */
-
-// console.log( StringUtils.ellipsis("ABCDEFGHJKLMNOPRSTUVWXYZ1234567890", 20) );
-
-
 // menuKeyMapping( KeyMappingInfo, menuConfig );
-
 // console.log( JSON.stringify( menuConfig, null, 4) );
 
 const screen = blessed.screen({
@@ -64,7 +61,8 @@ const screen = blessed.screen({
 screen.key("q", () => {
     process.exit(0);
 });
-    
+
+/*
 screen.key("t", async () => {
     const result = await messageBox({
         parent: screen,
@@ -75,6 +73,30 @@ screen.key("t", async () => {
         scroll: false,
         button: [ "OK", "Cancel", "ITEM1", "ITEM2" ]
     }, { parent: screen });
+});
+*/
+screen.key("t", async () => {
+    const connectionInfo: IConnectionWidgetOption = {
+        name: "테스트",
+        host: "127.0.0.1",
+        port: 22, // default 22
+        username: "la9527",
+        password: "test",
+        privateKey: "~/.ssh/id_rsa",
+        proxyInfo: {
+            host: "127.0.0.1",
+            port: 4016,
+            type: 5,
+            userId: "la9527",
+            password: "test"
+        },
+        resultFunc: (result, message) => {
+            screen.destroy();
+            console.log( result, message );
+        }
+    };
+    new ConnectionManager(connectionInfo, { parent: screen });
+    screen.render();
 });
 
 screen.render();

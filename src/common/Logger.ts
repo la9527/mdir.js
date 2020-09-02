@@ -74,7 +74,6 @@ export function Logger( labelName: string ): winston.Logger {
                         return result;
                     }
                     result = `${info.timestamp} - [${info.label.padEnd(10)}] ${level[info.level] || ""}: ${info.message}`;
-                    console.log( result );
                     return result;
                 })
             ),
