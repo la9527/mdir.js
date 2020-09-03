@@ -102,12 +102,12 @@ export class ConnectionManager extends Widget {
             { top: 7, type: "input", name: "password", label: "Password", passwordType: true },
             { top: 9, type: "input", name: "privateKey", label: "Private Key File Path" },           
             { top: 10, left: 0, width: "100%-2", type: "line", orientation: "horizontal" },
-            { top: 11, left: 25, width: 10, type: "checkbox", name: "proxy", label: "Use Proxy", default: false },
+            { top: 11, left: 25, width: 20, type: "checkbox", name: "proxy", label: "Use Proxy", default: false },
             { top: 12, type: "input", name: "proxy.host", label: "Proxy Hostname" },
             { top: 13, type: "input", name: "proxy.port", label: "Proxy Port" },
             { top: 14, left: 3, width: 20, type: "label", content: "Proxy Protocol" },
-            { top: 14, left: 25, width: 10, type: "radiobox", name: "proxy.type5", label: "Type 5", default: true },
-            { top: 14, left: 40, width: 10, type: "radiobox", name: "proxy.type4", label: "Type 4", default: false },
+            { top: 14, left: 25, width: 20, type: "radiobox", name: "proxy.type5", label: "Type 5", default: true },
+            { top: 14, left: 40, width: 20, type: "radiobox", name: "proxy.type4", label: "Type 4", default: false },
             { top: 15, type: "input", name: "proxy.userId", label: "Proxy Username" },
             { top: 16, type: "input", name: "proxy.password", label: "Proxy Password", passwordType: true },
 
@@ -133,7 +133,7 @@ export class ConnectionManager extends Widget {
                 text({ ...labelTextOption, ...item });
             } else if ( [ "checkbox", "radiobox" ].indexOf(item.type) > -1 ) {
                 this.eventElements.push(new RadioWidget(
-                    { ...commonOption, top: item.top, left: item.left, aliasName: item.name }, 
+                    { ...commonOption, top: item.top, left: item.left, width: item.width, aliasName: item.name }, 
                     { text: item.label, isCheck: item.type === "checkbox", defaultCheck: item.default || false }));
             }
         });

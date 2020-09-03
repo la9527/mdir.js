@@ -41,25 +41,6 @@ export class Color {
         brightgray: 7
     */
 
-    private _colorHex = [
-        "#000000", // black
-        "#cd0000", // red3
-        "#00cd00", // green3
-        "#cdcd00", // yellow3
-        "#0000ee", // blue2
-        "#cd00cd", // magenta3
-        "#00cdcd", // cyan3
-        "#e5e5e5", // gray90
-        "#7f7f7f", // gray50
-        "#ff0000", // red
-        "#00ff00", // green
-        "#ffff00", // yellow
-        "#5c5cff", // rgb:5c/5c/ff
-        "#ff00ff", // magenta
-        "#00ffff", // cyan
-        "#ffffff"  // white
-    ];
-
     private _colorName = [
         "black",
         "red",
@@ -89,36 +70,28 @@ export class Color {
         }
     }
 
-    hexBlessFormat(text) {
-        return text ? `{${this.fontHex}-fg}{${this.backHex}-bg}${text}{/}{/}` : text;
+    blessFormat(text) {
+        return text ? `{${this.font}-fg}{${this.back}-bg}${text}{/}{/}` : text;
     }
 
-    hexBlessReverseFormat(text) {
-        return text ? `{${this.backHex}-fg}{${this.fontHex}-bg}${text}{/}{/}` : text;
+    blessReverseFormat(text) {
+        return text ? `{${this.font}-fg}{${this.back}-bg}${text}{/}{/}` : text;
     }
 
-    fontHexBlessFormat(text) {
-        return text ? `{${this.fontHex}-fg}${text}{/}` : text;
+    fontBlessFormat(text) {
+        return text ? `{${this.font}-fg}${text}{/}` : text;
     }
 
     backHexBlessFormat(text) {
-        return text ? `{${this.fontHex}-bg}${text}{/}` : text;
+        return text ? `{${this.back}-bg}${text}{/}` : text;
     }
 
     reverse() {
         return new Color( this.back, this.font );
     }
 
-    get backHexBlesssed() {
-        return "#" + (this._colorHex[ this.back ] || "normal") + "-bg";
-    }
-
-    get fontHex() {
-        return this._colorHex[ this.font ] || "normal";
-    }
-
-    get backHex() {
-        return this._colorHex[ this.back ] || "normal";
+    get backStrBlesssed() {
+        return "#" + (this._colorName[ this.back ] || "normal") + "-bg";
     }
 
     get backColorName() {

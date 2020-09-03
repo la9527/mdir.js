@@ -112,7 +112,7 @@ export class BlessedMcd extends Mcd implements IBlessedView, IHelpService {
             type: "bg",
             width: "100%",
             height: 1,
-            bg: statColor.backHex,
+            bg: statColor.back,
             style: {
                 bg: statColor.back,
                 fg: statColor.font

@@ -2,8 +2,8 @@ process.env.NODE_ENV = "test";
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import * as blessed from "neo-blessed";
-import { BlessedProgram, Widgets, box, text, colors } from "neo-blessed";
-import { Logger, updateDebugFile } from "../common/Logger";
+import { BlessedProgram, Widgets, box, text, colors, program } from "neo-blessed";
+import { Logger } from "../common/Logger";
 import { messageBox, MSG_BUTTON_TYPE } from "../panel_blassed/widget/MessageBox";
 import mainFrame from "../panel_blassed/MainFrame";
 import { ProgressBox } from "../panel_blassed/widget/ProgressBox";
@@ -26,6 +26,8 @@ import ko from "../translation/ko.json";
 import { button } from "../../@types/blessed";
 import { BlessedEditor } from "../panel_blassed/BlessedEditor";
 import { ConnectionManager, IConnectionWidgetOption } from "../panel_blassed/widget/ConnectionManager";
+
+const log = Logger("TEST_MAIN");
 
 /*
 const T = ( ...a ) => {
@@ -62,8 +64,22 @@ screen.key("q", () => {
     process.exit(0);
 });
 
-/*
-screen.key("t", async () => {
+const testTextColor = (text, fg, bg) => {
+    const fgF = (screen.program as any)._attr(fg + " fg", true);
+    const fgE = (screen.program as any)._attr(fg + " fg", false);
+    const bgF = (screen.program as any)._attr(bg + " bg", true);
+    const bgE = (screen.program as any)._attr(bg + " bg", false);
+    return fgF + bgF + text + bgE + bgE;
+};
+
+screen.key("e", () => {
+    const test = "TEST";
+    const fg = 3;
+    const bg = 8;
+    log.debug( "[%s] [%s]", test, testTextColor(test, fg, bg) );
+});
+
+screen.key("m", async () => {
     const result = await messageBox({
         parent: screen,
         title: "TEST",
@@ -74,7 +90,17 @@ screen.key("t", async () => {
         button: [ "OK", "Cancel", "ITEM1", "ITEM2" ]
     }, { parent: screen });
 });
-*/
+
+screen.key("i", async () => {
+    const result = await inputBox( {
+        parent: screen,
+        title: "InputBox TITLE",
+        defaultText: "DEFAULT TEST !!!",
+        button: [ "OK", "Cancel" ]
+    });
+    log.info( "RESULT : %j", result );
+});
+
 screen.key("t", async () => {
     const connectionInfo: IConnectionWidgetOption = {
         name: "테스트",

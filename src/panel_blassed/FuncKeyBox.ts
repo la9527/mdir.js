@@ -34,7 +34,7 @@ export class FuncKeyBox extends Widget {
 
         let pos = 0;
         for ( let i = 1; i <= 12; i++ ) {
-            let content = sprintf( "{bold}%s%s{/bold}", this.colorFunca.hexBlessFormat( (i === 1 ? "F" : "") + i), (this.funcList["F" + i] || "") );
+            let content = sprintf( "{bold}%s%s{/bold}", this.colorFunca.blessFormat( (i === 1 ? "F" : "") + i), (this.funcList["F" + i] || "") );
             // '\u2502'; // '│'
             content = (i > 1 ? "{black-fg}\u2502{/black-fg}" : "") + content;
             // log.warn( content );

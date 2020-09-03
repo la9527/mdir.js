@@ -123,7 +123,7 @@ export class PanelFileBox extends Widget {
     }
 
     drawTypeTwo() {
-        const { fontHex, backHex } = this._file.color;
+        const { fontColorName, backColorName } = this._file.color;
 
         const textFileName = this.convertFilename(this.width as number - 12);
         const tailview = this.convertFileSize();
@@ -133,7 +133,7 @@ export class PanelFileBox extends Widget {
         if ( this._viewFocus ) {
             viewText = sprintf("%s%s %10s", select, textFileName, tailview);
         } else {
-            viewText = sprintf(`%s{${fontHex}-fg}%s %10s{/${fontHex}-fg}`, select, textFileName, tailview);
+            viewText = sprintf(`%s{${fontColorName}-fg}%s %10s{/${backColorName}-fg}`, select, textFileName, tailview);
         }
         this.box.setContent(viewText);
     }

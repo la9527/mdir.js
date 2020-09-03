@@ -87,14 +87,14 @@ export class BlessedEditor extends Editor implements IBlessedView, IHelpService 
         this.tailer.on("prerender", () => {
             log.debug( "tailer prerender !!! - Start %d", this.baseWidget._viewCount );
             let status1 = "";
-            status1 = this.lastDoInfoLength !== this.doInfo.length ? "[" + new Color(2).fontHexBlessFormat("Change") + "]" : status1;
-            status1 = this.isReadOnly ? "[" + new Color(2).fontHexBlessFormat("ReadOnly") + "]" : status1;
+            status1 = this.lastDoInfoLength !== this.doInfo.length ? "[" + new Color(2).fontBlessFormat("Change") + "]" : status1;
+            status1 = this.isReadOnly ? "[" + new Color(2).fontBlessFormat("ReadOnly") + "]" : status1;
 
             let status2 = "";
-            status2 = this.isDosMode ? "[" + new Color(2).fontHexBlessFormat("DOS") + "]" : status2;
+            status2 = this.isDosMode ? "[" + new Color(2).fontBlessFormat("DOS") + "]" : status2;
 
-            let status3 = "[" + new Color(2).fontHexBlessFormat(this.isInsert ? "Ins" : "Ovr") + "]";
-            status3 = this.editMode === EDIT_MODE.SELECT ? "[" + new Color(2).fontHexBlessFormat("Select") + "]" : status3;
+            let status3 = "[" + new Color(2).fontBlessFormat(this.isInsert ? "Ins" : "Ovr") + "]";
+            status3 = this.editMode === EDIT_MODE.SELECT ? "[" + new Color(2).fontBlessFormat("Select") + "]" : status3;
 
             this.tailer.setContentFormat("          %-10s{|}Line {bold}%3d{/bold}({bold}%3d{/bold}) Col {bold}%-3d{/bold} [%s]%s%s", 
                 status1, this.curLine + 1, this.buffers.length, this.curColumn + 1, this.encoding.toUpperCase(), status2, status3);

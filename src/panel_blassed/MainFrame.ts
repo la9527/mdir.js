@@ -169,8 +169,8 @@ export class MainFrame implements IHelpService {
                 const repeatTime = Date.now() - befCopyInfo.beforeTime;
                 if ( repeatTime > refreshTimeMs ) {
                     // let bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
-                    const lastText = (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
-                                    (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(fullFileSize, false, 1).trim());
+                    const lastText = (new Color(3, 0)).fontBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
+                                    (new Color(3, 0)).fontBlessFormat(StringUtils.sizeConvert(fullFileSize, false, 1).trim());
                     progressBox.updateProgress( source.fullname, lastText, copyBytes, fullFileSize );
                     befCopyInfo.beforeTime = Date.now();
                     befCopyInfo.copyBytes = copyBytes;
@@ -996,8 +996,8 @@ export class MainFrame implements IHelpService {
                 const repeatTime = Date.now() - befCopyInfo.beforeTime;
                 if ( repeatTime > refreshTimeMs ) {
                     // const bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
-                    const lastText = (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
-                                    (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(fullFileSize, false, 1).trim());
+                    const lastText = (new Color(3, 0)).fontBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
+                                    (new Color(3, 0)).fontBlessFormat(StringUtils.sizeConvert(fullFileSize, false, 1).trim());
                     progressBox.updateProgress( source.fullname, lastText, copyBytes, fullFileSize );
                     befCopyInfo.beforeTime = Date.now();
                     befCopyInfo.copyBytes = copyBytes;
@@ -1079,8 +1079,8 @@ export class MainFrame implements IHelpService {
             const repeatTime = Date.now() - befCopyInfo.beforeTime;
             if ( repeatTime > refreshTimeMs ) {
                 // const bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
-                const lastText = (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
-                                (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(fullFileSize, false, 1).trim());
+                const lastText = (new Color(3, 0)).fontBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
+                                (new Color(3, 0)).fontBlessFormat(StringUtils.sizeConvert(fullFileSize, false, 1).trim());
                 progressBox.updateProgress( source.fullname, lastText, copyBytes, fullFileSize );
                 befCopyInfo.beforeTime = Date.now();
                 befCopyInfo.copyBytes = copyBytes;
@@ -1242,8 +1242,8 @@ export class MainFrame implements IHelpService {
                             const repeatTime = Date.now() - befCopyInfo.beforeTime;
                             if ( repeatTime > refreshTimeMs ) {
                                 // const bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
-                                const lastText = (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
-                                                (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(fullFileSize, false, 1).trim());
+                                const lastText = (new Color(3, 0)).fontBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
+                                                (new Color(3, 0)).fontBlessFormat(StringUtils.sizeConvert(fullFileSize, false, 1).trim());
                                 // + `(${StringUtils.sizeConvert(bytePerSec, false, 1).trim()}s)`;
                                 progressBox.updateProgress( source.fullname, lastText, copyBytes, fullFileSize );
                                 befCopyInfo.beforeTime = Date.now();
@@ -1306,8 +1306,8 @@ export class MainFrame implements IHelpService {
                             const repeatTime = Date.now() - befCopyInfo.beforeTime;
                             if ( repeatTime > refreshTimeMs ) {
                                 // const bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
-                                const lastText = (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
-                                                (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(fullFileSize, false, 1).trim());
+                                const lastText = (new Color(3, 0)).fontBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
+                                                (new Color(3, 0)).fontBlessFormat(StringUtils.sizeConvert(fullFileSize, false, 1).trim());
                                 // + `(${StringUtils.sizeConvert(bytePerSec, false, 1).trim()}s)`;
                                 progressBox.updateProgress( source.fullname, lastText, copyBytes, fullFileSize );
                                 befCopyInfo.beforeTime = Date.now();
@@ -1527,8 +1527,8 @@ export class MainFrame implements IHelpService {
                 const repeatTime = Date.now() - befCopyInfo.beforeTime;
                 if ( repeatTime > refreshTimeMs ) {
                     // const bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
-                    const lastText = (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
-                                    (new Color(3, 0)).fontHexBlessFormat(StringUtils.sizeConvert(fullFileSize, false, 1).trim());
+                    const lastText = (new Color(3, 0)).fontBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
+                                    (new Color(3, 0)).fontBlessFormat(StringUtils.sizeConvert(fullFileSize, false, 1).trim());
                     progressBox.updateProgress( source.fullname, lastText, copyBytes, fullFileSize );
                     befCopyInfo.beforeTime = Date.now();
                     befCopyInfo.copyBytes = copyBytes;

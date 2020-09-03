@@ -31,7 +31,7 @@ export const ColorDefault = {
         button: "4,7",
         buttonA: "4,11",
         radioA: "3,6",
-        radio_disable: "3,8",
+        radio_disable: "7,8",
         input: "11,4",
         input_disable: "6,8",
         select_box: "7,6",

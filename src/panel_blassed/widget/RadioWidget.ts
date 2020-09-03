@@ -56,14 +56,15 @@ export class RadioWidget extends Widget {
         checkChar = this.isChecked ? checkChar : " ";
 
         if ( !this.disable ) {
+            const dialogColor = ColorConfig.instance().getBaseColor("dialog");
+            this.box.style = dialogColor.blessed;
+
             const color = ColorConfig.instance().getBaseColor("radioA");
-            const colorText = this.hasFocus() ? color.hexBlessReverseFormat(checkChar) : color.hexBlessFormat(checkChar);
+            const colorText = this.hasFocus() ? color.blessReverseFormat(checkChar) : color.blessFormat(checkChar);
             this.setContent( `[${colorText}] ${this.option.text}` );
         } else {
-            const color = ColorConfig.instance().getBaseColor("radio_disable");
-            const colorText = color.hexBlessFormat(`[${checkChar}]`) + " " + this.option.text;
-            log.debug( colorText );
-            this.setContent( colorText );
+            this.box.style = ColorConfig.instance().getBaseColor("radio_disable").blessed;
+            this.setContent( `[${checkChar}] ${this.option.text}` );
         }
     }
 

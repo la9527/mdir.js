@@ -60,17 +60,6 @@ export class InputBox extends Widget {
         super.setFocus();
     }
 
-    updateCursor() {
-        const program = this.box.screen.program;
-        if ( this.focusBtnNum === -1 && program.cursorHidden ) {
-            log.debug( "showCursor !!!");
-            program.showCursor();
-        } else if ( this.focusBtnNum > -1 && !program.cursorHidden ) {
-            log.debug( "hideCursor !!!");
-            program.hideCursor();
-        }
-    }
-
     resize() {
         const maxWidth = this.box.screen.width as number;
         this.buttonWidth = this.inputBoxOption.button.reduce( (pre, item) => pre < strWidth(item) + 2 ? strWidth(item) + 2 : pre, MIN_BUTTON_WIDTH);
@@ -140,17 +129,14 @@ export class InputBox extends Widget {
             );
         });
 
-        this.widgetElements = [ this.inputWidget, ...this.buttonWidgets ];
-
         this.resize();
 
         widgetsEventListener( [
             this.inputWidget,
             ...this.buttonWidgets
         ], ( widget, index, eventName ) => {
-            if ( widget.aliasName === "" && widget instanceof ButtonWidget && eventName === "widget.return") {
-                this.inputBoxOption.result( widget.aliasName, this.inputWidget.getValue() );
-                this.inputWidget.setFocus();
+            if ( widget instanceof ButtonWidget && eventName === "widget.return") {
+                this.inputBoxOption.result( this.inputWidget.getValue(), widget.aliasName );
             }
         });
         this.inputWidget.setFocus();

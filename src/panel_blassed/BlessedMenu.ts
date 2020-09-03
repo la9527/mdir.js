@@ -52,7 +52,7 @@ class BlassedMenuBox extends Widget {
                 log.debug( "SUBMENU: %s", item );
 
                 const keyName = i !== this.selectPos ? 
-                    this.menuAColor.fontHexBlessFormat(keyHumanReadable((item as ISubMenuConfig).key || "")) : 
+                    this.menuAColor.fontBlessFormat(keyHumanReadable((item as ISubMenuConfig).key || "")) : 
                     keyHumanReadable((item as ISubMenuConfig).key || "");
 
                 const style = i === this.selectPos ? this.menuSelColor.blessed : this.menuColor.blessed;
@@ -168,9 +168,9 @@ export class BlessedMenu implements IHelpService {
                 menuBoxPos += strWidth(nm) + 2;
             }
             if ( i === this.menuPos ) {
-                return " " + this.menuSelColor.hexBlessFormat(nm) + " ";
+                return " " + this.menuSelColor.blessFormat(nm) + " ";
             }
-            return " " + this.menuAColor.fontHexBlessFormat(nm.substr(0, 1)) + this.menuColor.fontHexBlessFormat(nm.substr(1)) + " ";
+            return " " + this.menuAColor.fontBlessFormat(nm.substr(0, 1)) + this.menuColor.fontBlessFormat(nm.substr(1)) + " ";
         }).join("");
         this.menuBox.left = menuBoxPos;
         this.menuBox.draw();
