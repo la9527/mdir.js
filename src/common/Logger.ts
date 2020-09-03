@@ -17,7 +17,6 @@ export function updateDebugFile( filePath: string = "" ) {
 export function Logger( labelName: string ): winston.Logger {
     let logger = null;
     if ( (global as any).DEBUG_FILE || (global as any).DEBUG_STDOUT ) {
-        console.log( "Logger", labelName );
         const transports: any[] = [];
         let isColor = false;
         if ( (global as any).DEBUG_STDOUT ) {

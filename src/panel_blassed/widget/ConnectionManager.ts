@@ -21,7 +21,7 @@ export interface IConnectionInfo {
         host?: string;
         port?: number;
         type?: 4 | 5;
-        userId?: string;
+        username?: string;
         password?: string;
     };
 }
@@ -48,8 +48,8 @@ export class ConnectionManager extends Widget {
             border: "line",
             clickable: true
         });
-        this.init();
         this.option = option;
+        this.init();
     }
 
     init() {
@@ -94,22 +94,23 @@ export class ConnectionManager extends Widget {
             height: 1
         };
 
+        const proxyInfo = this.option.proxyInfo || {};
         this.elementsInfo = [
-            { top: 2, type: "input", name: "name", label: "Name" },
-            { top: 4, type: "input", name: "addr", label: "Address" },
-            { top: 5, type: "input", name: "port", label: "Port", default: 22 },
-            { top: 6, type: "input", name: "username", label: "Username" },
-            { top: 7, type: "input", name: "password", label: "Password", passwordType: true },
-            { top: 9, type: "input", name: "privateKey", label: "Private Key File Path" },           
+            { top: 2, type: "input", name: "name", label: "Name", default: this.option.name },
+            { top: 4, type: "input", name: "host", label: "Host", default: this.option.host },
+            { top: 5, type: "input", name: "port", label: "Port", default: this.option.port || 22 },
+            { top: 6, type: "input", name: "username", label: "Username", default: this.option.username },
+            { top: 7, type: "input", name: "password", label: "Password", passwordType: true, default: this.option.password },
+            { top: 9, type: "input", name: "privateKey", label: "Private Key File Path", default: this.option.privateKey },
             { top: 10, left: 0, width: "100%-2", type: "line", orientation: "horizontal" },
-            { top: 11, left: 25, width: 20, type: "checkbox", name: "proxy", label: "Use Proxy", default: false },
-            { top: 12, type: "input", name: "proxy.host", label: "Proxy Hostname" },
-            { top: 13, type: "input", name: "proxy.port", label: "Proxy Port" },
+            { top: 11, left: 25, width: 20, type: "checkbox", name: "proxy", label: "Use Proxy", default: !!this.option.proxyInfo },
+            { top: 12, type: "input", name: "proxy.host", label: "Proxy Host", default: proxyInfo.host },
+            { top: 13, type: "input", name: "proxy.port", label: "Proxy Port", default: proxyInfo.port },
             { top: 14, left: 3, width: 20, type: "label", content: "Proxy Protocol" },
-            { top: 14, left: 25, width: 20, type: "radiobox", name: "proxy.type5", label: "Type 5", default: true },
-            { top: 14, left: 40, width: 20, type: "radiobox", name: "proxy.type4", label: "Type 4", default: false },
-            { top: 15, type: "input", name: "proxy.userId", label: "Proxy Username" },
-            { top: 16, type: "input", name: "proxy.password", label: "Proxy Password", passwordType: true },
+            { top: 14, left: 25, width: 20, type: "radiobox", name: "proxy.type5", label: "Type 5", default: proxyInfo.type === 5 },
+            { top: 14, left: 40, width: 20, type: "radiobox", name: "proxy.type4", label: "Type 4", default: proxyInfo.type === 4 },
+            { top: 15, type: "input", name: "proxy.userId", label: "Proxy Username", default: proxyInfo.username },
+            { top: 16, type: "input", name: "proxy.password", label: "Proxy Password", passwordType: true, default: proxyInfo.password },
 
             { top: 17, left: 0, width: "100%-2", type: "line", orientation: "horizontal" },
             { top: 18, left: 10, width: 10, type: "button", name: "ok", label: "Ok" },
@@ -193,12 +194,31 @@ export class ConnectionManager extends Widget {
     }
 
     getInputData() {
-        const result = {};
+        const result: any = {};
+        const proxyInfo: any = {};
+        let proxy = false;
         this.eventElements.map( (item) => {
             if ( item instanceof InputWidget ) {
-                result[ item.aliasName ] = item.getValue();
+                if ( item.aliasName.match( /^proxy\./ ) ) {
+                    const proxyName = item.aliasName.split(".")[1];
+                    proxyInfo[ proxyName ] = item.getValue();
+                } else {
+                    result[ item.aliasName ] = item.getValue();
+                }
+            } else if ( item instanceof RadioWidget ) {
+                if (item.aliasName === "proxy") {
+                    proxy = item.getValue();
+                }
+                if (item.aliasName === "proxy.type5" && item.getValue()) {
+                    proxyInfo.type = 5;
+                } else if (item.aliasName === "proxy.type4" && item.getValue()) {
+                    proxyInfo.type = 4;
+                }
             }
         });
+        if ( proxy ) {
+            result.proxyInfo = proxyInfo;
+        }
         return result;
     }
 }

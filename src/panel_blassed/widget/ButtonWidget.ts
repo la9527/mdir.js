@@ -22,6 +22,14 @@ export class ButtonWidget extends Widget {
             await this.listener(ch, keyinfo);
         });
 
+        this.on( "widget.click", () => {
+            this.setFocus();
+            this.box.screen.render();
+        });
+        this.on( "widget.doubleclick", () => {
+            this.emit( "widget.return" );
+        });
+
         this.on("render", () => {
             this.afterRender();
         });

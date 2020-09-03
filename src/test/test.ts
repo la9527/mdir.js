@@ -113,7 +113,7 @@ screen.key("t", async () => {
             host: "127.0.0.1",
             port: 4016,
             type: 5,
-            userId: "la9527",
+            username: "la9527",
             password: "test"
         },
         resultFunc: (result, message) => {

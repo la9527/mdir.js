@@ -30,7 +30,7 @@ export const ColorDefault = {
         dialog: "7,6",
         button: "4,7",
         buttonA: "4,11",
-        radioA: "3,6",
+        radioA: "11,6",
         radio_disable: "7,8",
         input: "11,4",
         input_disable: "6,8",

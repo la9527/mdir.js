@@ -82,7 +82,7 @@ export class Color {
         return text ? `{${this.font}-fg}${text}{/}` : text;
     }
 
-    backHexBlessFormat(text) {
+    backBlessFormat(text) {
         return text ? `{${this.back}-bg}${text}{/}` : text;
     }
 

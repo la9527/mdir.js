@@ -38,6 +38,11 @@ export class InputWidget extends Widget {
             }
         });
 
+        this.on( "widget.click", () => {
+            this.setFocus();
+            this.box.screen.render();
+        });
+
         this.on("render", () => {
             this.afterRender();
         });
@@ -95,6 +100,12 @@ export class InputWidget extends Widget {
         if ( this.hasFocus() ) {
             log.debug( "moveCursor : %d %d", this.viewCurPos, this.cursorPos);
             this.moveCursor( this.viewCurPos, 0 );
+
+            const program = this.box.screen.program;
+            if ( program.cursorHidden ) {
+                log.debug( "showCursor !!!");
+                program.showCursor();
+            }
         }
     }
 

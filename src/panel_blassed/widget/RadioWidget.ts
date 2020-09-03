@@ -33,6 +33,16 @@ export class RadioWidget extends Widget {
             await this.listener(ch, keyinfo);
         });
 
+        this.on( "widget.doubleclick", () => {
+            this.keyReturn();
+            this.box.screen.render();
+        });
+
+        this.on( "widget.click", () => {
+            this.setFocus();
+            this.box.screen.render();
+        });
+
         this.on("render", () => {
             this.afterRender();
         });
@@ -62,6 +72,7 @@ export class RadioWidget extends Widget {
             const color = ColorConfig.instance().getBaseColor("radioA");
             const colorText = this.hasFocus() ? color.blessReverseFormat(checkChar) : color.blessFormat(checkChar);
             this.setContent( `[${colorText}] ${this.option.text}` );
+            
         } else {
             this.box.style = ColorConfig.instance().getBaseColor("radio_disable").blessed;
             this.setContent( `[${checkChar}] ${this.option.text}` );
@@ -71,6 +82,12 @@ export class RadioWidget extends Widget {
     afterRender() {
         if ( this.hasFocus() ) {
             this.moveCursor( 1, 0 );
+
+            const program = this.box.screen.program;
+            if ( program.cursorHidden ) {
+                log.debug( "showCursor !!!");
+                program.showCursor();
+            }
         }
     }
 

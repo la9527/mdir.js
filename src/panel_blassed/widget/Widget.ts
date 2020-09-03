@@ -13,6 +13,7 @@ export class Widget {
     _viewCount: number = -1;
     protected _aliasName: string = null;
     protected _disable: boolean = false;
+    private _befClickData = { x: 0, y: 0, now: 0 };
 
     constructor( opts: Widgets.BoxOptions | any ) {
         if ( opts.parent && opts.parent instanceof Widget ) {
@@ -22,9 +23,27 @@ export class Widget {
         }
         this._viewCount = opts && opts.viewCount;
         this._aliasName = opts && opts.aliasName;
+
+        this.on( "click", async (e) => {
+            if ( this.checkDoubleClick(e) ) {
+                this.emit( "widget.doubleclick", e);
+            } else {
+                this.emit( "widget.click", e);
+            }
+        });
         this.on( "prerender", () => {
             this.draw();
         });
+    }
+
+    checkDoubleClick(e) {
+        let isDoubleClick = false;
+        const clickTime = Date.now() - this._befClickData.now;
+        if ( e.x === this._befClickData.x && e.y === this._befClickData.y && clickTime < 600 ) {
+            isDoubleClick = true;
+        }
+        this._befClickData = { x: e.x, y: e.y, now: Date.now() };
+        return isDoubleClick;
     }
 
     get aliasName() {
