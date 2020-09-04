@@ -157,14 +157,15 @@ export class ConnectionManager extends Widget {
 
     onClickClose() {
         this.destroy();
+        this.emit("widget.close");
     }
 
     onClickFilelist() {
         const file = this.connectionListWidget.currentFile();
         const data = this.getJsonFileLoad(file);
         log.debug( "emit widget.connect %j", data );
-        this.emit("widget.connect", data );
         this.destroy();
+        this.emit("widget.connect", data );        
     }
 
     onClickInsert() {

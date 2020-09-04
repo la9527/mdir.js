@@ -69,7 +69,6 @@ export function Logger( labelName: string ): winston.Logger {
                     let result = "";
                     if ( isColor ) {
                         result = `${info.timestamp} - [${info.label.padEnd(10)}] ${level[info.level] || ""}: ` + winston.format.colorize().colorize(info.level, info.message);
-                        console.log( result );
                         return result;
                     }
                     result = `${info.timestamp} - [${info.label.padEnd(10)}] ${level[info.level] || ""}: ${info.message}`;

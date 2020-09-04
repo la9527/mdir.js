@@ -76,6 +76,8 @@ export const menuConfig: IFrameMenuConfig = {
             { name: T("Menu.Next Window"), method: "Common.nextWindow" }
         ],
         Terminal: [
+            { name: T("Menu.ConnectionManager"), method: "Common.connectionManager" },
+            "-",
             { name: T("Menu.Terminal"), method: "Common.terminalPromise" },
             "-",
             { name: T("Menu.Vim"), method: "Common.vimPromise" }
