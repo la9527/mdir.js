@@ -48,6 +48,8 @@ export class File {
 
     mimetype:   string = null;
 
+    extendInfo: any = null;
+
     get dirname() {
         return path.dirname(this.fullname);
     }
@@ -87,7 +89,8 @@ export class File {
         renew.color = this.color;
         renew.link = this.link && this.link.clone();
         renew.error = this.error;
-        renew.mimetype = this.mimetype;        
+        renew.mimetype = this.mimetype;
+        renew.extendInfo = this.extendInfo;
         return renew;
     }
 

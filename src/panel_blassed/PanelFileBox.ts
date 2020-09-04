@@ -80,7 +80,7 @@ export class PanelFileBox extends Widget {
     }
 
     convertFileSize() {
-        let tailview = T("[ SubDir ]");
+        let tailview = "[ SubDir ]";
         if ( !this._file.dir ) {
             if ( this._file.size >= 1000000000) {
                 tailview = sprintf("%9.2f{yellow-fg}G{/yellow-fg}", this._file.size / 1073741824);

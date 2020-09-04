@@ -25,7 +25,8 @@ import en from "../translation/en.json";
 import ko from "../translation/ko.json";
 import { button } from "../../@types/blessed";
 import { BlessedEditor } from "../panel_blassed/BlessedEditor";
-import { ConnectionManager, IConnectionWidgetOption } from "../panel_blassed/widget/ConnectionManager";
+import { IConnectionInfo, ConnectionEditor, IConnectionEditorOption } from "../panel_blassed/widget/ConnectionEditor";
+import { ConnectionManager } from "../panel_blassed/widget/ConnectionManager";
 
 const log = Logger("TEST_MAIN");
 
@@ -46,6 +47,7 @@ const T = ( ...a ) => {
     console.log( T("Hint.Paste") );
 })();
 */
+
 // menuKeyMapping( KeyMappingInfo, menuConfig );
 // console.log( JSON.stringify( menuConfig, null, 4) );
 
@@ -102,7 +104,8 @@ screen.key("i", async () => {
 });
 
 screen.key("t", async () => {
-    const connectionInfo: IConnectionWidgetOption = {
+    /*
+    const connectionInfo: IConnectionEditorOption = {
         name: "테스트",
         host: "127.0.0.1",
         port: 22, // default 22
@@ -121,8 +124,11 @@ screen.key("t", async () => {
             console.log( result, message );
         }
     };
-    new ConnectionManager(connectionInfo, { parent: screen });
+    new ConnectionEditor(connectionInfo, { parent: screen });
     screen.render();
+    */
+
+    new ConnectionManager({ parent: screen });
 });
 
 screen.render();

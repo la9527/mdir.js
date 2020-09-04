@@ -311,7 +311,7 @@ export class FileReader extends Reader {
         return await this.convertFile(process.cwd());
     }
 
-    async readdir( dirFile: File, option?: { isExcludeHiddenFile?: boolean; noChangeDir?: boolean } ): Promise<File[]> {
+    async readdir( dirFile: File, option?: { isExcludeHiddenFile?: boolean; noChangeDir?: boolean }, filter?: (file: File) => boolean ): Promise<File[]> {
         if ( !dirFile.dir ) {
             throw new Error(`Not directory. ${dirFile.name}`);
         }
@@ -339,7 +339,10 @@ export class FileReader extends Reader {
                     }
                 }
                 if ( item ) {
-                    fileItem.push( item );
+                    const isPushItem = filter ? filter( item ) : true;
+                    if ( isPushItem ) {
+                        fileItem.push( item );
+                    }
                 }
             }
 

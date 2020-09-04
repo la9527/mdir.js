@@ -2,7 +2,6 @@ import { Widgets } from "neo-blessed";
 import { Widget } from "./Widget";
 import { Logger } from "../../common/Logger";
 import { ColorConfig } from "../../config/ColorConfig";
-import { Color } from "src/common/Color";
 
 const log = Logger("RadioWidget");
 
@@ -29,7 +28,7 @@ export class RadioWidget extends Widget {
         this.isChecked = this.option.defaultCheck || false;
 
         this.on("keypress", async (ch, keyinfo) => {
-            log.debug( "RadioWidget KEY: [%s] [%j]", ch, keyinfo );
+            log.debug( "RadioWidget [%s] KEY: [%s] [%j]", this.aliasName, ch, keyinfo );
             await this.listener(ch, keyinfo);
         });
 
@@ -82,10 +81,8 @@ export class RadioWidget extends Widget {
     afterRender() {
         if ( this.hasFocus() ) {
             this.moveCursor( 1, 0 );
-
             const program = this.box.screen.program;
             if ( program.cursorHidden ) {
-                log.debug( "showCursor !!!");
                 program.showCursor();
             }
         }

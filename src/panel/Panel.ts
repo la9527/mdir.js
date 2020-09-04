@@ -35,7 +35,9 @@ export abstract class Panel extends AbstractPanel implements IHelpService {
         const file = (path instanceof File) ? path : await this.reader.convertFile( path, { useThrow: true, checkRealPath: true } );
         log.info( "Panel - read: [%s]", file.fullname );
 
-        this.dirFiles = await this.reader.readdir( file, { isExcludeHiddenFile: this._excludeHiddenFile } );
+        this.dirFiles = await this.reader.readdir( file, { isExcludeHiddenFile: this._excludeHiddenFile }, (file: File) => {
+            return this.filter( file );
+        });
 
         this._currentDir = file;
         file.name = ".";
@@ -70,6 +72,10 @@ export abstract class Panel extends AbstractPanel implements IHelpService {
             }
             this._previousDir = previousDir;
         }
+    }
+
+    filter( _file: File ): boolean {
+        return true;
     }
 
     colorUpdate() {

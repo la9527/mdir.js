@@ -18,7 +18,7 @@ export class ButtonWidget extends Widget {
         });
 
         this.on("keypress", async (ch, keyinfo) => {
-            log.debug( "ButtonWidget KEY: [%s] [%j]", ch, keyinfo );
+            log.debug( "ButtonWidget [%s] KEY: [%s] [%j]", this.aliasName, ch, keyinfo );
             await this.listener(ch, keyinfo);
         });
 

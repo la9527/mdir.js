@@ -115,15 +115,12 @@ export class InputBox extends Widget {
             this.buttonWidgets.push( 
                 new ButtonWidget( {
                     parent: this, 
-                    tags: true, 
                     content: item, 
                     left, 
                     align: "center",
-                    clickable: true,
                     bottom: 0, 
                     height: 1, 
                     width: this.buttonWidth,
-                    style: i === 0 ? this.btnColor.blessedReverse : this.btnColor.blessed,
                     aliasName: item
                 })
             );
