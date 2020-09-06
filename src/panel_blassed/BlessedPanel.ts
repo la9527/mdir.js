@@ -556,7 +556,7 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
     @Hint({ hint: T("Hint.Shell"), order: 4 })
     @Help( T("Help.CommandBox") )
     public commandBoxShow() {
-        mainFrame().commandBoxShow();
+        return mainFrame().commandBoxShow();
     }
 
     public async mkdirPromise() {

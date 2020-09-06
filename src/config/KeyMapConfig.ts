@@ -24,8 +24,10 @@ interface IMethodParam {
 
 export enum RefreshType {
     ALL = 1,
-    OBJECT = 2,
-    NONE = 3
+    ALL_NOFOCUS = 2,
+    OBJECT = 3,
+    OBJECT_NOFOCUS = 4,
+    NONE = 5
 }
 
 export interface IKeyMapping {

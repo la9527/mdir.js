@@ -23,6 +23,7 @@ export class Widget {
         }
         this._viewCount = opts && opts.viewCount;
         this._aliasName = opts && opts.aliasName;
+        (this._box as any)._widget = this;
 
         this.on( "click", async (e) => {
             if ( this.checkDoubleClick(e) ) {
@@ -116,6 +117,7 @@ export class Widget {
 
     destroy() {
         this._box.off();
+        (this._box as any)._widget = null;
         this._box.destroy();
         this.destroyed = true;
     }

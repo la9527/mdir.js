@@ -15,6 +15,7 @@ export class RadioWidget extends Widget {
     private keylock: boolean = false;
     private option: IRadioWidgetOption = null;
     private isChecked: boolean = false;
+    private cursorUpdateFunc = null;
 
     constructor( opts: Widgets.BoxOptions | any, radioOption: IRadioWidgetOption ) {
         super({
@@ -42,9 +43,10 @@ export class RadioWidget extends Widget {
             this.box.screen.render();
         });
 
-        this.on("render", () => {
-            this.afterRender();
-        });
+        this.cursorUpdateFunc = () => {
+            this.curosrUpdate();
+        };
+        this.screen.on("render", this.cursorUpdateFunc);        
         this.init();
     }
 
@@ -78,7 +80,7 @@ export class RadioWidget extends Widget {
         }
     }
 
-    afterRender() {
+    curosrUpdate() {
         if ( this.hasFocus() ) {
             this.moveCursor( 1, 0 );
             const program = this.box.screen.program;
@@ -177,6 +179,8 @@ export class RadioWidget extends Widget {
     }
 
     destroy() {
+        this.screen.removeListener( "render", this.cursorUpdateFunc);
+        this.cursorUpdateFunc = null;
         super.destroy();
     }
 }

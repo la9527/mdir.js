@@ -406,17 +406,17 @@ export class FileReader extends Reader {
                 }
                 fs.mkdir( path.fullname, { mode: convertAttrToStatMode(path) }, (err) => {
                     if ( err ) {
-                        resolve();
-                    } else {
                         reject( err );
+                    } else {
+                        resolve();
                     }
                 });
             } else {
                 fs.mkdir( path, (err) => {
                     if ( err ) {
-                        resolve();
-                    } else {
                         reject( err );
+                    } else {
+                        resolve();
                     }
                 });
             }

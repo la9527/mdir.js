@@ -18,7 +18,8 @@ export class InputWidget extends Widget {
     private value: string = "";
     private keylock: boolean = false;
     private option: IInputBoxOption = null;
-    
+    private cursorUpdateFunc = null;
+
     constructor( opts: Widgets.BoxOptions | any, option: IInputBoxOption ) {
         super( opts );
 
@@ -33,9 +34,6 @@ export class InputWidget extends Widget {
             log.debug( "InputBox [%s] [%j]", ch, keyinfo );
             await this.listener(ch, keyinfo);
             log.debug( "InputBox text - [%s]", this.value );
-            if ( !this.destroyed ) {
-                this.afterRender();
-            }
         });
 
         this.on( "widget.click", () => {
@@ -43,10 +41,10 @@ export class InputWidget extends Widget {
             this.box.screen.render();
         });
 
-        this.on("render", () => {
-            this.afterRender();
-        });
-
+        this.cursorUpdateFunc = () => {
+            this.curosrUpdate();
+        };
+        this.screen.on("render", this.cursorUpdateFunc);
         this.init();
     }
 
@@ -96,14 +94,14 @@ export class InputWidget extends Widget {
         return super.hasFocus();
     }
 
-    afterRender() {
+    curosrUpdate() {
         if ( this.hasFocus() ) {
-            log.debug( "moveCursor : %d %d", this.viewCurPos, this.cursorPos);
+            log.info( "moveCursor : %d %d - SHOW CUROSR !!!", this.viewCurPos, this.cursorPos);
             this.moveCursor( this.viewCurPos, 0 );
 
             const program = this.box.screen.program;
             if ( program.cursorHidden ) {
-                log.debug( "showCursor !!!");
+                log.info( "showCursor !!!");
                 program.showCursor();
             }
         }
@@ -213,6 +211,8 @@ export class InputWidget extends Widget {
     }
 
     destroy() {
+        this.screen.removeListener( "render", this.cursorUpdateFunc);
+        this.cursorUpdateFunc = null;
         super.destroy();
     }
 }

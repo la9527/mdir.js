@@ -7,7 +7,6 @@ import { ColorConfig } from "../../config/ColorConfig";
 import { InputWidget } from "./InputWidget";
 import { ButtonWidget } from "./ButtonWidget";
 import { RadioWidget } from "./RadioWidget";
-import mainFrame from "../MainFrame";
 
 const log = Logger("ConnectionManager");
 
@@ -145,7 +144,6 @@ export class ConnectionEditor extends Widget {
 
         this.initWidget();
         this.eventElements[0].setFocus();
-        mainFrame().keyLock = true;
     }
 
     destroy() {
@@ -153,7 +151,6 @@ export class ConnectionEditor extends Widget {
             item.destroy();
         });
         super.destroy();
-        mainFrame().keyLock = false;
     }
 
     getAliasWidget( name: string ) {
@@ -182,10 +179,13 @@ export class ConnectionEditor extends Widget {
     onEventListener( widget: Widget, index, eventName, args: any[] ) {
         if ( eventName === "widget.return" ) {
             if ( [ "ok", "cancel" ].indexOf(widget.aliasName) > -1 ) {
-                if ( widget.aliasName === "ok" ) {
-                    this.option.resultFunc( true, this.getInputData() );
-                }
+                const inputData = this.getInputData();
                 this.destroy();
+                if ( widget.aliasName === "ok" ) {
+                    this.option.resultFunc( true, inputData );
+                } else {
+                    this.option.resultFunc( false, null );
+                }
             }
             return;
         }

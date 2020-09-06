@@ -417,10 +417,14 @@ export class BaseMainFrame implements IHelpService {
             const keyName = keyInfo.full || keyInfo.name;
             log.debug( "KEYPRESS [%s] - START", keyName );
 
+            const panel = this.activeFocusObj();
+            if ( !panel.hasFocus() ) {
+                log.debug( "Not has FOCUS !!!" );
+                return;
+            }
+
             const starTime = Date.now();
             this._keyLockScreen = true;
-
-            const panel = this.activeFocusObj();
 
             try {
                 if ( panel instanceof BlessedPanel ) {
@@ -493,7 +497,8 @@ export class BaseMainFrame implements IHelpService {
     }
 
     execRefreshType( type: RefreshType ) {
-        if ( type === RefreshType.ALL ) {
+        log.info( "REFRESH TYPE : %d", type);
+        if ( type === RefreshType.ALL || type === RefreshType.ALL_NOFOCUS ) {
             log.info( "REFRESH - ALL");
             this.screen.realloc();
             this.blessedFrames.forEach( item => {
@@ -503,11 +508,18 @@ export class BaseMainFrame implements IHelpService {
             });
             this.baseWidget.render();
             this.screen.render();
-        } else if ( type === RefreshType.OBJECT ) {
+        } else if ( type === RefreshType.OBJECT || type === RefreshType.OBJECT_NOFOCUS ) {
             log.info( "REFRESH - OBJECT");
             this.activeFocusObj().render();
             if ( this.bottomFilesBox ) {
                 this.bottomFilesBox.render();
+            }
+        }
+        if ( type === RefreshType.ALL || type === RefreshType.OBJECT ) {
+            if ( this.commandBox && !this.commandBox.hasFocus() ) {
+                this.commandBox.setFocus();
+            } else if ( !this.activeFocusObj().hasFocus() ) {
+                this.activeFocusObj().setFocus();
             }
         }
     }
@@ -615,12 +627,18 @@ export class BaseMainFrame implements IHelpService {
             this.bottomFilesBox = null;
         }
 
+        log.info( "commandBoxShow !!!" );
+
         this.commandBox = new CommandBox( { parent: this.baseWidget }, this.activePanel() );
         this.commandBox.setFocus();
         this.commandBox.on("blur", () => {
+            log.info( "commandBoxShow !!! - blur %s", new Error().stack );
             this.commandBoxClose();
         });
-        return RefreshType.ALL;
+
+        log.info( "this.commandBox.setFocus !!!" );
+
+        return RefreshType.ALL_NOFOCUS;
     }
 
     @Help(T("Help.CommandBoxClose"))

@@ -137,7 +137,6 @@ export class InputBox extends Widget {
             }
         });
         this.inputWidget.setFocus();
-        mainFrame().keyLock = true;
     }
 
     draw() {
@@ -147,7 +146,6 @@ export class InputBox extends Widget {
 
     destroy() {
         super.destroy();
-        mainFrame().keyLock = false;
     }
 }
 

@@ -325,6 +325,10 @@ export class ConnectionListWidget extends Panel {
         this.basePath = fullPath;
     }
 
+    getViewJsonFiles() {
+        return this.dirFiles.filter(item => item.extname === ".json" );
+    }
+
     async read(path: string | File, throwMsgBoxShow: boolean = true): Promise<void> {
         try {
             await super.read(path);

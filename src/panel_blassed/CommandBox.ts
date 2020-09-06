@@ -87,6 +87,7 @@ export class CommandBox extends Widget {
         files: File[];
     } = null;
     private keylock = false;
+    private cursorUpdateFunc = null;
 
     constructor( opts: Widgets.BoxOptions, panelView: IBlessedView ) {
         super( { left: 0, top: "100%-1", width: "100%", height: 1, input: true, ...opts } );
@@ -103,13 +104,17 @@ export class CommandBox extends Widget {
             log.debug( "detach !!!" );
             this.box.screen.program.hideCursor();
         });
-        this.on("render", () => {
-            this.afterRender();
-            if ( this.box.screen.program.cursorHidden ) {
-                this.box.screen.program.showCursor();
-            }
-        });
+        this.cursorUpdateFunc = () => {
+            this.curosrUpdate();
+        };
+        this.screen.on("render", this.cursorUpdateFunc);
         this.panelView = panelView;
+    }
+
+    destroy() {
+        this.screen.removeListener( "render", this.cursorUpdateFunc);
+        this.cursorUpdateFunc = null;
+        super.destroy();
     }
 
     setPanelView( panelView: IBlessedView ) {
@@ -178,9 +183,12 @@ export class CommandBox extends Widget {
         }
     }
 
-    afterRender() {
+    curosrUpdate() {
         // log.debug( "moveCursor : %d", this.cursorPos);
         this.moveCursor( unicode.strWidth(this.promptText) + this.cursorPos, 0 );
+        if ( this.box.screen.program.cursorHidden ) {
+            this.box.screen.program.showCursor();
+        }
     }
 
     setFocus() {
@@ -218,8 +226,7 @@ export class CommandBox extends Widget {
         await mainFrame().commandRun( this.commandValue );
         this.cursorPos = 0;
         this.commandValue = "";
-        this.box.screen.program.showCursor();
-        mainFrame().execRefreshType(RefreshType.ALL);
+        mainFrame().execRefreshType(RefreshType.ALL_NOFOCUS);
     }
 
     keyEscape() {

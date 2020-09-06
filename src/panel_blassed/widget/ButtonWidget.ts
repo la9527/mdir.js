@@ -7,6 +7,7 @@ const log = Logger("ButtonWidget");
 
 export class ButtonWidget extends Widget {
     private keylock: boolean = false;
+    private cursorUpdateFunc = null;
 
     constructor( opts: Widgets.BoxOptions | any ) {
         super({
@@ -30,9 +31,10 @@ export class ButtonWidget extends Widget {
             this.emit( "widget.return" );
         });
 
-        this.on("render", () => {
-            this.afterRender();
-        });
+        this.cursorUpdateFunc = () => {
+            this.curosrUpdate();
+        };
+        this.screen.on("render", this.cursorUpdateFunc);
         this.init();
     }
 
@@ -46,9 +48,14 @@ export class ButtonWidget extends Widget {
         this.box.style = this.hasFocus() ? btnFocusColor.blessed : btnColor.blessed;
     }
 
-    afterRender() {
+    curosrUpdate() {
         if ( this.hasFocus() ) {
             this.moveCursor( 0, 0 );
+            const program = this.box.screen.program;
+            if ( program.cursorHidden ) {
+                log.info( "showCursor !!!");
+                program.showCursor();
+            }
         }
     }
 
@@ -136,6 +143,8 @@ export class ButtonWidget extends Widget {
     }
 
     destroy() {
+        this.screen.removeListener( "render", this.cursorUpdateFunc);
+        this.cursorUpdateFunc = null;
         super.destroy();
     }
 }

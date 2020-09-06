@@ -1,4 +1,9 @@
+import * as fs from "fs";
+import * as path from "path";
+
 import { Widgets, line, text } from "neo-blessed";
+
+import { T } from "../../common/Translation";
 import { Widget } from "./Widget";
 
 import { ColorConfig } from "../../config/ColorConfig";
@@ -13,8 +18,10 @@ import { widgetsEventListener } from "./WidgetsEventListener";
 
 import mainFrame from "../MainFrame";
 import { IConnectionEditorOption, ConnectionEditor } from "./ConnectionEditor";
-import * as fs from "fs";
-import * as path from "path";
+import { inputBox } from "./InputBox";
+import { messageBox } from "./MessageBox";
+import { ProgressBox } from "./ProgressBox";
+import { Selection, ClipBoard } from "../../panel/Selection";
 
 const log = Logger( "ConnectionWidget" );
 
@@ -119,13 +126,15 @@ export class ConnectionManager extends Widget {
         }
         
         this.eventElements[0].setFocus();
-        mainFrame().keyLock = true;
         this.box.screen.render();
+
+        if ( this.connectionListWidget.getViewJsonFiles().length === 0 ) {
+            this.onClickInsert();
+        }
     }
 
     destroy() {
         super.destroy();
-        mainFrame().keyLock = false;
     }
 
     async refreshPromise() {
@@ -145,14 +154,19 @@ export class ConnectionManager extends Widget {
             });
         };
 
-        if ( eventName === "widget.return" ) {
+        log.debug( "aliasName: %s, eventName: %s, args: %j", widget.aliasName, eventName, args );
+
+        if ( eventName === "blur" ) {
+            if ( !this.eventElements.find( item => item.hasFocus() ) ) {
+                this.onClickClose();
+            }
+        } else if ( eventName === "widget.return" ) {
             log.debug( "ConnectionManager.onClick" + firstUpperize(widget.aliasName) );
             if ( this["onClick" + firstUpperize(widget.aliasName) ] ) {
                 this["onClick" + firstUpperize(widget.aliasName) ]();
                 return;
             }
         }
-        log.debug( "aliasName: %s, eventName: %s, args: %j", widget.aliasName, eventName, args );
     }
 
     onClickClose() {
@@ -178,6 +192,7 @@ export class ConnectionManager extends Widget {
                         fs.writeFileSync( fileName, JSON.stringify(data, null, 2), { encoding: "utf8" } );
                     }
                     await this.refreshPromise();
+                    this.eventElements[0].setFocus();
                 });
             }
         };
@@ -213,6 +228,7 @@ export class ConnectionManager extends Widget {
                             fs.renameSync( file.fullname, changeFileName );
                         }   
                     }
+                    this.eventElements[0].setFocus();
                     await this.refreshPromise();
                 });
             }
@@ -221,15 +237,92 @@ export class ConnectionManager extends Widget {
     }
 
     async onClickRemove() {
-        const file = this.connectionListWidget.currentFile();        
-        try {
-            if ( file.dir ) {
-                fs.rmdirSync( file.fullname );
-            } else {
-                fs.unlinkSync( file.fullname );
+        const panel = this.connectionListWidget;
+        
+        const result = await messageBox( { 
+            parent: this, 
+            title: T("Question"), 
+            msg: T("Message.REMOVE_SELECTED_FILES"), 
+            button: [ T("OK"), T("Cancel") ] 
+        });
+
+        if ( result !== T("OK") ) {
+            return;
+        }
+
+        const select = new Selection();
+        select.set( panel.getSelectFiles(), panel.currentPath(), ClipBoard.CLIP_NONE, panel.getReader() );
+
+        const reader = panel.getReader();
+        reader.isUserCanceled = false;
+
+        const progressBox = new ProgressBox( { title: T("Message.Remove"), msg: T("Message.Calculating"), cancel: () => {
+            reader.isUserCanceled = true;
+        }}, { parent: this } );
+        this.screen.render();
+        await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
+        
+        if ( await select.expandDir() === false ) {
+            progressBox.destroy();
+            return;
+        }
+
+        const files = select.getFiles();
+        if ( !files || files.length === 0 ) {
+            log.debug( "REMOVE FILES: 0");
+            progressBox.destroy();
+            return;
+        }
+
+        // Sort in filename length descending order.
+        files.sort( (a, b) => b.fullname.length - a.fullname.length);
+
+        let beforeTime = Date.now();
+        const refreshTimeMs = 300;
+
+        for ( let i = 0; i < files.length; i++ ) {
+            const src = files[i];
+            try {
+                log.debug( "REMOVE : [%s]", src.fullname);
+                if ( Date.now() - beforeTime > refreshTimeMs ) {
+                    progressBox.updateProgress( src.fullname, `${i+1} / ${files.length}`, i+1, files.length );
+                    await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
+                    beforeTime = Date.now();
+                }
+                if ( progressBox.getCanceled() ) {
+                    break;
+                }
+                await reader.remove( src );
+            } catch ( err ) {
+                const result2 = await messageBox( {
+                    parent: this,
+                    title: T("Error"),
+                    msg: err,
+                    button: [ T("Continue"), T("Cancel") ]
+                });
+                if ( result2 === T("Cancel") ) {
+                    break;
+                }
             }
-        } catch( e ) {
-            log.error( e );
+        }
+        progressBox.destroy();
+        await this.refreshPromise();
+    }
+
+    async onClickMkdir() {
+        const result = await inputBox( {
+            parent: this,
+            title: T("Message.MakeDirectory"),
+            button: [ T("OK"), T("Cancel") ]
+        }, {  });
+        if ( result && result[1] === T("OK") && result[0] ) {
+            const reader = this.connectionListWidget.getReader();
+            try {
+                await reader.mkdir( this.connectionListWidget.currentPath().fullname + reader.sep() + result[0], null);
+            } catch( e ) {
+                log.debug( e );
+                await messageBox( { parent: this, title: T("Error"), msg: e, button: [ T("OK") ] } );
+            }
         }
         await this.refreshPromise();
     }
