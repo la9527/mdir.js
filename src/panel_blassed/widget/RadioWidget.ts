@@ -46,7 +46,7 @@ export class RadioWidget extends Widget {
         this.cursorUpdateFunc = () => {
             this.curosrUpdate();
         };
-        this.screen.on("render", this.cursorUpdateFunc);        
+        this.screen.on("render", this.cursorUpdateFunc);
         this.init();
     }
 

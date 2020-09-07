@@ -261,7 +261,6 @@ export class MessageBox extends Widget {
             this.box.screen.render();
         });
 
-        mainFrame().keyLock = true;
         this.setFocus();
         this.box.screen.render();
     }
@@ -283,7 +282,6 @@ export class MessageBox extends Widget {
     }
 
     destroy() {
-        mainFrame().keyLock = false;
         this.titleWidget.destroy();
         this.textWidget && this.textWidget.destroy();
         this.buttonWidgets.map( i => i.destroy() );
@@ -313,7 +311,9 @@ export function messageBox( msgOpt: IMessageOption, opts: Widgets.BoxOptions = {
         } catch( e ) {
             log.error( e );
             try {
-                messgaeBox.destroy();
+                if ( messgaeBox ) {
+                    messgaeBox.destroy();
+                }
             // eslint-disable-next-line no-empty
             } finally {}
             screen.render();

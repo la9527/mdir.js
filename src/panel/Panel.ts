@@ -56,7 +56,7 @@ export abstract class Panel extends AbstractPanel implements IHelpService {
         } catch ( e ) {
             log.error( "PARENT DIR READ FAILED %s", e.stack );
         }
-        //log.info( "FIND LIST: %s", JSON.stringify(this.dirFiles.map((item) => `${item.attr} [${item.fullname}] [${item.name}]`), null, 2) );
+        log.info( "FIND LIST: %s", JSON.stringify(this.dirFiles.map((item) => `${item.attr} [${item.fullname}] [${item.name}]`), null, 2) );
         this.colorUpdate();
         this.sort();
         

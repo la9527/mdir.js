@@ -11,7 +11,7 @@ import { menuConfig } from "../config/MenuConfig";
 import { BlessedMcd } from "./BlessedMcd";
 import { BlessedEditor } from "./BlessedEditor";
 import colors from "colors";
-import { IMountList, } from "../common/Reader";
+import { IMountList, ProgressFunc, ProgressResult, } from "../common/Reader";
 import { messageBox, MSG_BUTTON_TYPE } from "./widget/MessageBox";
 import { StringUtils } from "../common/StringUtils";
 import { BlessedXterm } from "./BlessedXterm";
@@ -22,6 +22,17 @@ import { File } from "../common/File";
 import { BaseMainFrame } from "./BaseMainFrame";
 import { ConnectionManager } from "./widget/ConnectionManager";
 import { IConnectionInfo } from "./widget/ConnectionEditor";
+import { ArchiveReader } from "../panel/archive/ArchiveReader";
+import { FileReader } from "../panel/FileReader";
+import { ArchiveZip } from "../panel/archive/ArchiveZip";
+import { ArchiveTarGz } from "../panel/archive/ArchiveTarGz";
+import { Color } from "../common/Color";
+import { ProgressBox } from "./widget/ProgressBox";
+import { inputBox } from "./widget/InputBox";
+import { Selection, ClipBoard } from "../panel/Selection";
+import { SftpReader, ssh2ConnectionInfo } from "../panel/sftp/SftpReader";
+import { SocksClientOptions } from "socks/typings";
+import { connect } from "http2";
 
 const log = Logger("MainFrame");
 
@@ -36,6 +47,244 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
     constructor() {
         super();
         menuKeyMapping( KeyMappingInfo, menuConfig );
+    }
+
+    @Hint({ hint: T("Hint.Terminal"), order: 4 })
+    @Help(T("Help.Terminal"))
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async terminalPromise(isEscape = false, shellCmd: string = null ) {
+        const view = this.blessedFrames[this.activeFrameNum];        
+        const result = this.commandParsing( shellCmd, true );
+        const shell = result.cmd ? result.cmd.split(" ") : null;
+
+        if ( view instanceof BlessedPanel ) {
+            view.destroy();
+
+            const newView = new BlessedXterm( { 
+                parent: this.baseWidget, 
+                cursor: "line",
+                cursorBlink: true,
+                screenKeys: false,
+                shell: shell ? shell[0] : null,
+                args: shell ? shell.splice(1) : null,
+                viewCount: viewCount++ 
+            }, view.getReader(), view.currentPath() );
+            newView.on("process_exit", () => {
+                process.nextTick( () => {
+                    this.terminalPromise( true );
+                });
+            });
+            newView.on("error", (err) => {
+                process.nextTick( async () => {
+                    await messageBox( {
+                        parent: this.baseWidget,
+                        title: T("ERROR"),
+                        msg: err + " - " + shellCmd,
+                        button: [ T("OK") ]
+                    });
+                    await this.terminalPromise( true );
+                });
+            });
+            newView.setFocus();
+            this.blessedFrames[this.activeFrameNum] = newView;
+        } else if ( view instanceof BlessedMcd ) {
+            view.destroy();
+
+            const newView = new BlessedXterm( { 
+                parent: this.baseWidget,
+                viewCount: viewCount++,
+                cursor: "block",
+                cursorBlink: true,
+                screenKeys: false,
+                shell: shell ? shell[0] : null,
+                args: shell ? shell.splice(1) : null,
+            }, view.getReader(), view.currentPathFile() );
+            newView.on("process_exit", () => {
+                process.nextTick( () => {
+                    this.terminalPromise( true );
+                });
+            });
+            newView.setFocus();
+            this.blessedFrames[this.activeFrameNum] = newView;
+        } else if ( view instanceof BlessedXterm ) {
+            view.destroy();
+
+            const newView = new BlessedPanel( { parent: this.baseWidget, viewCount: viewCount++ }, view.getReader() );
+            await newView.read( view.getCurrentPath() || await view.getReader().currentDir() || "." );
+            newView.setFocus();
+            this.blessedFrames[this.activeFrameNum] = newView;
+        }
+        this.viewRender();
+        this.baseWidget.render();
+        return RefreshType.ALL;
+    }
+
+    async archivePromise(file: File = null) {
+        const view = this.blessedFrames[this.activeFrameNum];
+        if ( !file && view instanceof BlessedPanel ) {
+            file = view.currentFile();
+        }
+        if ( !file ) {
+            return;
+        }
+
+        if ( view instanceof BlessedPanel && file.fstype === "file" ) {
+            const reader = new ArchiveReader();
+            const progressBox = new ProgressBox( { title: T("Message.Archive"), msg: T("Message.Calculating"), cancel: () => {
+                reader.isUserCanceled = true;
+            }}, { parent: this.baseWidget } );
+            this.screen.render();
+            await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
+            
+            let copyBytes = 0;
+            const befCopyInfo = { beforeTime: Date.now(), copyBytes };
+        
+            const refreshTimeMs = 100;
+            const fullFileSize = file.size;
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const progressStatus: ProgressFunc = ( source, processSize, size, chunkLength ) => {
+                copyBytes = processSize;
+                const repeatTime = Date.now() - befCopyInfo.beforeTime;
+                if ( repeatTime > refreshTimeMs ) {
+                    // let bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
+                    const lastText = (new Color(3, 0)).fontBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
+                                    (new Color(3, 0)).fontBlessFormat(StringUtils.sizeConvert(fullFileSize, false, 1).trim());
+                    progressBox.updateProgress( source.fullname, lastText, copyBytes, fullFileSize );
+                    befCopyInfo.beforeTime = Date.now();
+                    befCopyInfo.copyBytes = copyBytes;
+                }
+                return reader.isUserCanceled ? ProgressResult.USER_CANCELED : ProgressResult.SUCCESS;
+            };
+
+            try {
+                if ( await reader.setArchiveFile( file, progressStatus ) ) {
+                    view.setReader( reader );
+                    await view.read( await reader.rootDir() );
+                    view.setFocus();
+                    view.resetPosition();
+                }
+            } catch( err ) {
+                await messageBox({
+                    parent: this.baseWidget,
+                    title: T("Error"),
+                    msg: err.message,
+                    button: [ T("OK") ]
+                });
+            } finally {
+                progressBox.destroy();
+            }
+        } else if ( view instanceof BlessedPanel && 
+            file.fstype === "archive" && 
+            (await view.getReader().currentDir()).fullname === "/" &&
+            file.fullname === "/" && file.name === ".." ) {
+
+            const fileReader = new FileReader();
+            fileReader.onWatch( (event, filename) => this.onWatchDirectory(event, filename) );
+            view.setReader( fileReader );
+
+            const archiveFile = await fileReader.convertFile( file.root, { checkRealPath: true } );
+            await view.read( await fileReader.convertFile( archiveFile.dirname ) );
+            view.focusFile( archiveFile );
+        }
+    }
+
+    async createArchiveFilePromise(): Promise<RefreshType> {
+        const activePanel = this.activePanel();
+        let selectFiles = [];
+        if ( activePanel instanceof BlessedPanel ) {
+            selectFiles = activePanel.getSelectFiles();
+        } else {
+            return RefreshType.NONE;
+        }
+
+        const reader = activePanel.getReader();
+        const selection = new Selection();
+        selection.set( selectFiles, activePanel.currentPath(), ClipBoard.CLIP_COPY, reader );
+        await selection.expandDir();
+        
+        const files = selection.getFiles();
+        if ( !files || files.length === 0 ) {
+            return RefreshType.NONE;
+        }
+
+        const archiveType = await messageBox({
+            parent: this.baseWidget,
+            title: T("Archive"),
+            msg: T("What archive one would you choose?"),
+            button: [ "ZIP", "TAR.GZ" ]
+        });
+        if ( !archiveType ) {
+            return RefreshType.NONE;
+        }
+
+        let name = files[0].name;
+        if ( archiveType === "ZIP" ) {
+            name += ".zip";
+        } else if ( archiveType === "TAR.GZ" ) {
+            name += ".tar.gz";
+        }
+        const result = await inputBox( { 
+            parent: this.baseWidget,
+            title: T("Archive File"),
+            defaultText: name,
+            button: [ T("OK"), T("Cancel") ]
+        });
+
+        if ( result && result[1] === T("OK") && result[0] ) {
+            const progressBox = new ProgressBox( { title: T("Message.Archive"), msg: T("Message.Calculating"), cancel: () => {
+                reader.isUserCanceled = true;
+            }}, { parent: this.baseWidget } );
+            this.screen.render();
+            await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
+            
+            let copyBytes = 0;
+            const befCopyInfo = { beforeTime: Date.now(), copyBytes };
+        
+            const refreshTimeMs = 100;
+            const fullFileSize = selection.getExpandSize();
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const progressStatus: ProgressFunc = ( source, processSize, size, chunkLength ) => {
+                copyBytes = processSize;
+                const repeatTime = Date.now() - befCopyInfo.beforeTime;
+                if ( repeatTime > refreshTimeMs ) {
+                    // const bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
+                    const lastText = (new Color(3, 0)).fontBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
+                                    (new Color(3, 0)).fontBlessFormat(StringUtils.sizeConvert(fullFileSize, false, 1).trim());
+                    progressBox.updateProgress( source.fullname, lastText, copyBytes, fullFileSize );
+                    befCopyInfo.beforeTime = Date.now();
+                    befCopyInfo.copyBytes = copyBytes;
+                }
+                return reader.isUserCanceled ? ProgressResult.USER_CANCELED : ProgressResult.SUCCESS;
+            };
+
+            try {
+                const targetFile = await reader.convertFile( activePanel.currentPath().fullname + reader.sep() + result[0], { virtualFile: true } );
+                log.debug( "ORIGINAL SOURCE : [%s]", JSON.stringify(files.map( item => item.toString() ), null, 2) );
+                if ( archiveType === "ZIP" ) {
+                    await new ArchiveZip().compress( files, activePanel.currentPath(), targetFile, progressStatus );
+                    await activePanel.refreshPromise();
+                    return RefreshType.ALL;
+                } else if ( archiveType === "TAR.GZ" ) {
+                    await new ArchiveTarGz().compress( files, activePanel.currentPath(), targetFile, progressStatus );
+                    await activePanel.refreshPromise();
+                    return RefreshType.ALL;
+                }
+            } catch( e ) {
+                log.error( e );
+                await messageBox( {
+                    parent: this.baseWidget,
+                    title: T("ERROR"),
+                    msg: e.stack,
+                    textAlign: "left",
+                    scroll: true,
+                    button: [ T("OK") ]
+                });
+                return RefreshType.ALL;
+            } finally {
+                progressBox.destroy();
+            }
+        }
+        return RefreshType.NONE;
     }
 
     @Help(T("Help.Editor"))
@@ -321,11 +570,11 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
         const refreshNextTick = (connectionInfo: IConnectionInfo = null) => {
             process.nextTick( async () => {
                 this.activePanel().setFocus();
+                if ( connectionInfo ) {
+                    await this.sshConnect( connectionInfo );
+                }
                 await this.refreshPromise();
                 this.execRefreshType(RefreshType.ALL);
-                if ( connectionInfo ) {
-                    this.sshConnect( connectionInfo );
-                }
             });
         };
 
@@ -334,8 +583,75 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
         connectionManager.on( "widget.close", refreshNextTick);
     }
 
-    sshConnect( connectionInfo: IConnectionInfo ) {
+    async sshConnect( connectionInfo: IConnectionInfo ) {
         log.debug( "SSH Connection: %j", connectionInfo );
+
+        const convertInfo = (info: IConnectionInfo): ssh2ConnectionInfo => {
+            let proxyInfo: SocksClientOptions = null;
+            if ( info.proxyInfo ) {
+                proxyInfo = {
+                    command: null,
+                    destination: null,
+                    proxy: {
+                        host: info.proxyInfo.host,
+                        port: info.proxyInfo.port,
+                        type: info.proxyInfo.type,
+                        userId: info.proxyInfo.username,
+                        password: info.proxyInfo.password
+                    }
+                };
+            }
+            return {
+                host: connectionInfo.host,
+                port: connectionInfo.port,
+                username: connectionInfo.username,
+                password: connectionInfo.password,
+                privateKey: connectionInfo.privateKey,
+                proxyInfo: proxyInfo
+            };
+        };
+
+        const activePanel = this.activePanel();
+        if ( activePanel instanceof BlessedPanel ) {
+            const reader = activePanel.getReader();
+            if ( reader instanceof FileReader ) {
+                try {
+                    const sftpReader = new SftpReader();
+                    await sftpReader.connect(convertInfo(connectionInfo));
+                    
+                    const homeDir = await sftpReader.homeDir();
+                    activePanel.setReader( sftpReader );
+                    await activePanel.read( homeDir );
+                    activePanel.setFocus();
+                    activePanel.resetPosition();
+
+                } catch( err ) {
+                    log.error( err.stack );
+                    await messageBox({
+                        parent: this.baseWidget,
+                        title: T("Error"),
+                        msg: err.message,
+                        button: [ T("OK") ]
+                    });
+                    this.sshDisconnect();
+                }
+            } else {
+                this.sshDisconnect();
+            }
+        }
+    }
+
+    sshDisconnect() {
+        const activePanel = this.activePanel();
+        if ( activePanel instanceof BlessedPanel ) {
+            const reader = activePanel.getReader();
+            if ( reader instanceof SftpReader ) {
+                reader.disconnect();
+            }
+            const fileReader = new FileReader();
+            fileReader.onWatch( (event, filename) => this.onWatchDirectory(event, filename) );
+            activePanel.setReader( fileReader );
+        }
     }
 
     static instance() {

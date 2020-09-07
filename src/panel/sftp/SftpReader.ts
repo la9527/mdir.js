@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import * as path from "path";
 import { Client } from "ssh2";
 import { SocksClient, SocksClientOptions } from "socks";
 import { Reader, ProgressFunc, IMountList, ProgressResult } from "../../common/Reader";
@@ -77,12 +78,25 @@ export class SftpReader extends Reader {
 
     constructor() {
         super();
-        this.client = new Client();
+        this.init();
+    }
 
+    public init() {
+        this.disconnect();
+
+        this.client = new Client();
         this.client.on("close", () => {
             log.info( "close !!!");
             this.sftp = null;
         });
+    }
+
+    public disconnect() {
+        if ( this.client ) {
+            this.client.end();
+            this.client.destroy();
+            this.client = null;
+        }
     }
 
     public getSSH2Client() {
@@ -132,6 +146,7 @@ export class SftpReader extends Reader {
                 this.client.removeListener("ready", onceReady);
                 reject( err );
             } );
+            log.debug("connect option : %j", option );
             log.info( "Client connect - [%s:%d] - [%s]", option.host, option.port || 22, option.username );
             this.client.connect( option );
         });
@@ -178,13 +193,14 @@ export class SftpReader extends Reader {
         });
     }
 
-    async convertFile(path: string, _option?: any): Promise<File> {
+    async convertFile(pathStr: string, _option?: any): Promise<File> {
         if ( !this.sftp ) {
             throw new Error("disconnected sftp");
         }
         const file = new File();
         file.fstype = this._readerFsType;
-        file.fullname = await this.sftpRealPath( path );
+        file.fullname = await this.sftpRealPath( pathStr );
+        file.name = path.basename(file.fullname);
         const stat = await this.sftpStat( file.fullname );
         file.attr = convertAttr( stat );
         file.dir = stat.isDirectory();
@@ -192,9 +208,9 @@ export class SftpReader extends Reader {
         file.attr = convertAttr( stat );
         file.uid = stat.uid;
         file.gid = stat.gid;
-        file.ctime = stat.ctime;
-        file.mtime = stat.mtime;
-        file.atime = stat.atime;
+        file.ctime = new Date(stat.ctime);
+        file.mtime = new Date(stat.mtime);
+        file.atime = new Date(stat.atime);
         return file;
     }
     
