@@ -32,7 +32,7 @@ import { inputBox } from "./widget/InputBox";
 import { Selection, ClipBoard } from "../panel/Selection";
 import { SftpReader, ssh2ConnectionInfo } from "../panel/sftp/SftpReader";
 import { SocksClientOptions } from "socks/typings";
-import { connect } from "http2";
+import Configure from "../config/Configure";
 
 const log = Logger("MainFrame");
 
@@ -575,12 +575,25 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                 }
                 await this.refreshPromise();
                 this.execRefreshType(RefreshType.ALL);
+                this.lockKeyRelease("connectionManager");
+            });
+        };
+
+        const jsonEditor = (file: File) => {
+            process.nextTick( async () => {
+                this.lockKeyRelease("connectionManager");
+                if ( file ) {
+                    await this.editorPromise(file);
+                    this.execRefreshType(RefreshType.ALL);
+                }
             });
         };
 
         const connectionManager = new ConnectionManager( { parent: this.baseWidget } );
+        this.lockKey("connectionManager", connectionManager);
         connectionManager.on( "widget.connect", refreshNextTick);
         connectionManager.on( "widget.close", refreshNextTick);
+        connectionManager.on( "widget.jsoneditor", jsonEditor);
     }
 
     async sshConnect( connectionInfo: IConnectionInfo ) {
@@ -590,15 +603,19 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
             let proxyInfo: SocksClientOptions = null;
             if ( info.proxyInfo ) {
                 proxyInfo = {
-                    command: null,
-                    destination: null,
+                    command: "connect",
+                    destination: {
+                        host: info.host,
+                        port: info.port
+                    },
                     proxy: {
                         host: info.proxyInfo.host,
                         port: info.proxyInfo.port,
                         type: info.proxyInfo.type,
                         userId: info.proxyInfo.username,
                         password: info.proxyInfo.password
-                    }
+                    },
+                    timeout: Configure.instance().getOpensshOption("proxyDefaultTimeout"),
                 };
             }
             return {
@@ -607,7 +624,14 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                 username: connectionInfo.username,
                 password: connectionInfo.password,
                 privateKey: connectionInfo.privateKey,
-                proxyInfo: proxyInfo
+                algorithms: Configure.instance().getOpensshOption("algorithms"),
+                keepaliveInterval: Configure.instance().getOpensshOption("keepaliveInterval"),
+                keepaliveCountMax: Configure.instance().getOpensshOption("keepaliveCountMax"),
+                readyTimeout: Configure.instance().getOpensshOption("readyTimeout"),
+                proxyInfo: proxyInfo,
+                debug: ( ...args: any[] ) => {
+                    log.debug( "SFTP DEBUG: %s", args.join(" ") );
+                }
             };
         };
 
@@ -617,7 +641,14 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
             if ( reader instanceof FileReader ) {
                 try {
                     const sftpReader = new SftpReader();
-                    await sftpReader.connect(convertInfo(connectionInfo));
+                    await sftpReader.connect(convertInfo(connectionInfo), (err) => {
+                        if ( err === "close" ) {
+                            process.nextTick( async () => {
+                                log.info( "SSH CLOSE EVENT !!!" );
+                                await this.sshDisconnect();
+                            });
+                        }
+                    });
                     
                     const homeDir = await sftpReader.homeDir();
                     activePanel.setReader( sftpReader );
@@ -633,24 +664,11 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                         msg: err.message,
                         button: [ T("OK") ]
                     });
-                    this.sshDisconnect();
+                    await this.sshDisconnect();
                 }
             } else {
-                this.sshDisconnect();
+                await this.sshDisconnect();
             }
-        }
-    }
-
-    sshDisconnect() {
-        const activePanel = this.activePanel();
-        if ( activePanel instanceof BlessedPanel ) {
-            const reader = activePanel.getReader();
-            if ( reader instanceof SftpReader ) {
-                reader.disconnect();
-            }
-            const fileReader = new FileReader();
-            fileReader.onWatch( (event, filename) => this.onWatchDirectory(event, filename) );
-            activePanel.setReader( fileReader );
         }
     }
 

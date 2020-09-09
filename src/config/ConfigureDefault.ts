@@ -4,7 +4,68 @@ export const ConfigureDefault: IConfigure = {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     Version: require("../../package.json").version,
     Option: {
-        
+            
+    },
+    OpensshOption: {
+        // https://github.com/mscdex/ssh2
+        readyTimeout: 10000,
+        keepaliveInterval: 0,
+        keepaliveCountMax: 3,
+        proxyDefaultTimeout: 10000,
+        // https://github.com/mscdex/ssh2-streams
+        algorithms: { 
+            kex: [ 
+                "diffie-hellman-group1-sha1",
+                "diffie-hellman-group14-sha1", 
+                "ecdh-sha2-nistp256",
+                "ecdh-sha2-nistp384",
+                "ecdh-sha2-nistp521",
+                "diffie-hellman-group-exchange-sha256",
+                "diffie-hellman-group14-sha256",
+                "diffie-hellman-group16-sha512",
+                "diffie-hellman-group18-sha512",
+                "diffie-hellman-group14-sha1" 
+            ],
+            serverHostKey: [ 
+                "ssh-ed25519",
+                "ecdsa-sha2-nistp256",
+                "ecdsa-sha2-nistp384",
+                "ecdsa-sha2-nistp521",
+                "ssh-rsa",
+                // "ssh-dss" 
+            ],
+            cipher: [ 
+                "aes128-ctr",
+                "aes192-ctr",
+                "aes256-ctr",
+                "aes128-gcm",
+                "aes128-gcm@openssh.com",
+                "aes256-gcm",
+                "aes256-gcm@openssh.com", 
+                "3des-cbc", 
+                "blowfish-cbc",
+                /*
+                "aes256-cbc",
+                "aes192-cbc",
+                "aes128-cbc",
+                "arcfour256",
+                "arcfour128",
+                "cast128-cbc",
+                "arcfour"
+                */
+            ],
+            hmac: [ 
+                "hmac-sha2-256", 
+                "hmac-sha2-512", 
+                "hmac-sha1", 
+                "hmac-md5",
+            ],
+            compress: [ 
+                "none", 
+                "zlib@openssh.com", 
+                "zlib" 
+            ]
+        }
     },
     MimeTypeAlias: {
         name: {

@@ -25,6 +25,10 @@ export class Widget {
         this._aliasName = opts && opts.aliasName;
         (this._box as any)._widget = this;
 
+        this.on("focus", () => {
+            log.debug( "onFocus : [%s]", this );
+        });
+
         this.on( "click", async (e) => {
             if ( this.checkDoubleClick(e) ) {
                 this.emit( "widget.doubleclick", e);
@@ -34,6 +38,12 @@ export class Widget {
         });
         this.on( "prerender", () => {
             this.draw();
+        });
+        this.on("detach", () => {
+            try {
+                (this._box as any)._widget = null;
+            // eslint-disable-next-line no-empty
+            } catch( e ) {}
         });
     }
 

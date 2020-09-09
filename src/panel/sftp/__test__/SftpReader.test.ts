@@ -6,11 +6,100 @@ import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 import { Logger } from "../../../common/Logger";
-import { FileReader } from "../../FileReader";
-import { SftpReader } from "../SftpReader";
 
 const log = Logger("SFTP TEST");
 
+describe( "SFTP Proxy Test", () => {
+    const getSftpReaderConnection = async () => {
+        const SftpReader = (await import("../SftpReader")).SftpReader;
+
+        const sftpReader = new SftpReader();
+        log.debug( "CONNECT !!!");
+
+        /*
+            {"command":"connect","destination":{"host":"172.22.247.86","port":22},"proxy":{"host":"sac.skplanet.com","port":10221,"type":5,"userId":"la9527","password":"prince98@"},"timeout":10000
+        */
+        await sftpReader.connect({
+            host: "172.22.247.86",
+            port: 22,
+            username: "1000967",
+            password: "Fkquddud1!",
+            proxyInfo: {
+                command: "connect",
+                destination: {
+                    host: "172.22.247.86",
+                    port: 22
+                },
+                proxy: {
+                    host: "sac.skplanet.com",  // "sac.skplanet.com",
+                    port: 10221, // port: 10221,
+                    type: 5,
+                    userId: "1000967",
+                    password: "prince98@"
+                },
+                timeout: 10000
+            },
+            algorithms: {
+                kex: [ "diffie-hellman-group1-sha1","diffie-hellman-group14-sha1", "ecdh-sha2-nistp256","ecdh-sha2-nistp384","ecdh-sha2-nistp521","diffie-hellman-group-exchange-sha256","diffie-hellman-group14-sha256","diffie-hellman-group16-sha512","diffie-hellman-group18-sha512","diffie-hellman-group14-sha1" ],
+                serverHostKey: [ "ssh-ed25519","ecdsa-sha2-nistp256","ecdsa-sha2-nistp384","ecdsa-sha2-nistp521","ssh-rsa" ],
+                cipher: [ "aes128-ctr","aes192-ctr","aes256-ctr","aes128-gcm","aes128-gcm@openssh.com","aes256-gcm","aes256-gcm@openssh.com", "3des-cbc", "blowfish-cbc" ],
+                hmac: [ "hmac-sha2-256", "hmac-sha2-512", "hmac-sha1", "hmac-md5" ],
+                compress: [ "none", "zlib@openssh.com", "zlib" ]
+            }
+            // debug: console.log
+        }, (err) => {
+            log.error( err );
+        });
+        return sftpReader;
+    };
+
+    it("SFTP TEST", async () => {
+        try {
+            const sftpReader = await getSftpReaderConnection();
+            log.debug( "connect end !!!" );
+            const homeDir = await sftpReader.homeDir();
+            const result = await sftpReader.readdir(homeDir);
+            log.debug( result );
+
+            /*
+            const readmeFile = await FileReader.convertFile( "./README.md", { checkRealPath: true } );
+
+            const targetBasePath = homeDir.fullname;
+            const target = readmeFile.clone();
+            target.fullname = targetBasePath + "/" + target.name;
+            target.fstype = sftpReader.readerName;
+            target.root = "/";
+
+            await sftpReader.mkdir( homeDir.fullname + "/test2" );
+
+            expect(await sftpReader.exist( homeDir.fullname + "/test2" )).toBeTruthy();
+            const convertFile = await sftpReader.convertFile(homeDir.fullname + "/test2");
+            if ( convertFile ) {
+                log.debug( convertFile.fullname );
+                await sftpReader.remove( convertFile );
+            }
+
+            await sftpReader.copy( readmeFile, null, target );
+
+            expect(await sftpReader.exist( target.fullname )).toBeTruthy();
+            const targetFile = await sftpReader.convertFile(target.fullname);
+            log.debug( JSON.stringify(targetFile) );
+
+            const renameFile = targetFile.clone();
+            renameFile.fullname = target.fullname + ".bak";
+            await sftpReader.rename( target, renameFile.fullname );
+
+            expect(await sftpReader.exist( renameFile.fullname )).toBeTruthy();
+            await sftpReader.remove( renameFile );
+            */
+        } catch( e ) {
+            console.error( e );
+            return;
+        }
+    });
+});
+
+/*
 describe( "SFTP Test", () => {
     const getSftpReaderConnection = async () => {
         const sftpReader = new SftpReader();
@@ -66,3 +155,4 @@ describe( "SFTP Test", () => {
         }
     });
 });
+*/

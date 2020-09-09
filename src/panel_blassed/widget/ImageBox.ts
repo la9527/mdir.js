@@ -219,7 +219,7 @@ export class ImageViewBox extends Widget {
             this.box.screen.render();
         });
 
-        mainFrame().keyLock = true;
+        mainFrame().lockKey("imageBox", this);
         this.setFocus();
         this.box.screen.render();
     }
@@ -233,7 +233,7 @@ export class ImageViewBox extends Widget {
     }
 
     destroy() {
-        mainFrame().keyLock = false;
+        mainFrame().lockKeyRelease("imageBox");
         this.imageWidget.destroy();
         this.titleWidget.destroy();
         super.destroy();

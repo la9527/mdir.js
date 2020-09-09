@@ -370,17 +370,19 @@ export async function keyMappingExec( baseObject, keyInfo ): Promise<RefreshType
         }
 
         if ( baseObject[ (method as string) ] ) {
-            log.info( "keypress [%s] - method: [ %s.%s(%s) ]", keyName, baseObject.viewName(), method, param ? param.join(",") : "" );
             let result = RefreshType.NONE;
             try {
                 if ( /(p|P)romise/.exec(method as string) ) {
+                    log.info( "keypress [%s] - METHOD: AWAIT [ %s.%s(%s) ]", keyName, baseObject.viewName(), method, param ? param.join(",") : "" );
                     result = await baseObject[ (method as string) ].apply(baseObject, param);
                 } else {
+                    log.info( "keypress [%s] - METHOD: [ %s.%s(%s) ]", keyName, baseObject.viewName(), method, param ? param.join(",") : "" );
                     result = baseObject[ (method as string) ].apply(baseObject, param);
                 }
             } catch( e ) {
                 throw sprintf( "FAIL : %s.%s(%s)\n%s", baseObject.viewName(), method, param ? param.join(",") : "", e.stack );
             }
+            log.info( "keypress [%s] - METHOD CALLED: [ %s.%s(%s) ]", keyName, baseObject.viewName(), method, param ? param.join(",") : "" );
             return result || RefreshType.OBJECT;
         } else {
             log.info( "keypress [%s] - METHOD UNDEFINED: %s.%s(%s)", keyName, baseObject.viewName(), method, param ? param.join(",") : "" );

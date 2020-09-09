@@ -201,6 +201,8 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
                 if ( this._currentDir.fstype === "archive" ) {
                     const file = await FileReader.convertFile(this._currentDir.root);
                     this.header.setContent( file?.name + ":" + this._currentDir.fullname);
+                } else if ( this._currentDir.fstype === "sftp" ) {
+                    this.header.setContent( this._currentDir.root + this._currentDir.fullname);
                 } else {
                     this.header.setContent(this._currentDir.fullname);
                 }
@@ -451,6 +453,10 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
     }
 
     async onFileBoxClick( clicked: PanelFileBox, e ) {
+        if ( mainFrame().hasLockAndLastFocus() ) {
+            log.debug( "clicked mainFrame - keylock !!" );
+            return;
+        }
         log.debug( "clicked : %s", clicked.getFile().fullname );
         this.setFocus();
         this.focusFile( clicked.getFile() );

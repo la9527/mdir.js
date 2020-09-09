@@ -83,7 +83,7 @@ export abstract class Panel extends AbstractPanel implements IHelpService {
     }
 
     async refreshPromise(): Promise<void> {
-        await this.read( this.currentPath() );
+        await this.read( this.currentPath() || "." );
     }
 
     abstract initRender(): void;

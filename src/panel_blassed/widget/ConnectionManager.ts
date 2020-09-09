@@ -124,6 +124,10 @@ export class ConnectionManager extends Widget {
         } catch( e ) {
             log.error( e );
         }
+
+        this.on("focus", () => {
+            this.setFocus();
+        });
         
         this.eventElements[0].setFocus();
         this.box.screen.render();
@@ -131,6 +135,11 @@ export class ConnectionManager extends Widget {
         if ( this.connectionListWidget.getViewJsonFiles().length === 0 ) {
             this.onClickInsert();
         }
+    }
+
+    setFocus() {
+        log.debug( "ConnectionManger this.eventElements[0].setFocus !!!" );
+        this.eventElements[0].setFocus();
     }
 
     destroy() {
@@ -155,12 +164,7 @@ export class ConnectionManager extends Widget {
         };
 
         log.debug( "aliasName: %s, eventName: %s, args: %j", widget.aliasName, eventName, args );
-
-        if ( eventName === "blur" ) {
-            if ( !this.eventElements.find( item => item.hasFocus() ) ) {
-                this.onClickClose();
-            }
-        } else if ( eventName === "widget.return" ) {
+        if ( eventName === "widget.return" ) {
             log.debug( "ConnectionManager.onClick" + firstUpperize(widget.aliasName) );
             if ( this["onClick" + firstUpperize(widget.aliasName) ] ) {
                 this["onClick" + firstUpperize(widget.aliasName) ]();
@@ -179,7 +183,13 @@ export class ConnectionManager extends Widget {
         const data = this.getJsonFileLoad(file);
         log.debug( "emit widget.connect %j", data );
         this.destroy();
-        this.emit("widget.connect", data );        
+        this.emit("widget.connect", data );
+    }
+
+    onClickJsoneditor() {
+        const file = this.connectionListWidget.currentFile().clone();
+        this.destroy();
+        this.emit("widget.jsoneditor", file );
     }
 
     onClickInsert() {

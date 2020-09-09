@@ -28,6 +28,8 @@ import { HintBox } from "./HintBox";
 import { BlessedXterm } from "./BlessedXterm";
 import { T } from "../common/Translation";
 import { draw } from "./widget/BlessedDraw";
+import { SftpReader } from "../panel/sftp/SftpReader";
+import { FileReader } from "../panel/FileReader";
 
 const log = Logger("MainFrame");
 
@@ -37,6 +39,37 @@ enum VIEW_TYPE {
     NORMAL = 0,
     VERTICAL_SPLIT = 1,
     HORIZONTAL_SPLIT = 2
+}
+
+class ScrLockInfo {
+    private _name: string;
+    private _widget: Widget;
+
+    constructor( name: string, widget: Widget = null ) {
+        this._name = name;
+        this._widget = widget;
+    }
+
+    get name() {
+        return this._name;
+    }
+
+    get widget() {
+        return this._widget;
+    }
+
+    toString() {
+        return this._name;
+    }
+
+    setFocus() {
+        if ( this.widget && this.widget instanceof Widget ) {
+            log.debug( "setFocus() - %s", this.name );
+            this.widget.setFocus();
+        } else {
+            log.debug( "NOT Focus !!! - %s", this.name );
+        }
+    }
 }
 
 export class BaseMainFrame implements IHelpService {
@@ -50,14 +83,47 @@ export class BaseMainFrame implements IHelpService {
     protected hintBox = null;
     protected activeFrameNum = 0;
     protected commandBox: CommandBox = null;
-    protected _keyLockScreen = false;
-
-    public keyLock = false;
+    protected keyLockScreenArr: ScrLockInfo[] = [];
 
     constructor() {}
 
     viewName() {
         return "Common";
+    }
+
+    public hasLock() {
+        return this.keyLockScreenArr.length > 0;
+    }
+
+    public hasLockAndLastFocus() {
+        if ( this.keyLockScreenArr.length > 0 ) {
+            process.nextTick( () => {
+                this.screen.focusPop();
+                this.keyLockScreenArr[0].setFocus();
+            });
+            return true;
+        }
+        return false;
+    }
+
+    public lockKey(name: string, widget: Widget ) {
+        const idx = this.keyLockScreenArr.findIndex( item => item.name === name );
+        if ( idx === -1 ) {
+            log.info( "Key Lock: %s : %j ", name, this.keyLockScreenArr );
+            this.keyLockScreenArr.push( new ScrLockInfo(name, widget) );
+        } else {
+            log.error( "Already Key Lock: %s : %j", name, this.keyLockScreenArr );
+        }
+    }
+
+    public lockKeyRelease(name: string) {
+        const idx = this.keyLockScreenArr.findIndex( item => item.name === name );
+        if ( idx > -1 ) {
+            const removedItem = this.keyLockScreenArr.splice(idx, 1);
+            log.info( "Key Lock Release: %s : %j", removedItem, this.keyLockScreenArr );
+        } else {
+            log.error( "Key Lock Relase: - Undefined [%s]", name );
+        }
     }
 
     protected commandParsing( cmd: string, isInsideTerminal: boolean = false ) {
@@ -240,11 +306,13 @@ export class BaseMainFrame implements IHelpService {
     onWatchDirectory( event, filename ) {
         log.debug( "onWatchDirectory [%s] [%s]", event, filename );
         if ( Date.now() - this.calledTime > 1000 ) {
-            process.nextTick( async () => {
-                await this.refreshPromise();
-                this.execRefreshType( RefreshType.ALL );
-                this.calledTime = Date.now();
-            });
+            if ( !this.hasLock() ) {
+                process.nextTick( async () => {
+                    await this.refreshPromise();
+                    this.execRefreshType( RefreshType.ALL );
+                    this.calledTime = Date.now();
+                });
+            }
         }
     }
 
@@ -258,14 +326,12 @@ export class BaseMainFrame implements IHelpService {
                 return;
             }
 
-            if ( this._keyLockScreen ) {
-                log.debug( "_keyLockScreen !!!");
+            if ( this.hasLock() ) {
+                log.debug( "_keyLockScreen !!! - %s", this.keyLockScreenArr.map( item => item.name ));
+                log.debug( "current focus: %s", (this.screen.focused as any)?._widget );
                 return;
             }
-            if ( this.keyLock ) {
-                log.debug( "keyLock !!!");
-                return;
-            }
+
             if ( this.commandBox ) {
                 log.debug( "CommandBox running !!!" );
                 return;
@@ -276,17 +342,17 @@ export class BaseMainFrame implements IHelpService {
             const panel = this.activeFocusObj();
             if ( !panel.hasFocus() ) {
                 log.debug( "Not has FOCUS !!!" );
+                this.lockKey("keyEvent", panel);
                 return;
             }
 
             const starTime = Date.now();
-            this._keyLockScreen = true;
+            this.lockKey("keyEvent", panel);
 
             try {
                 if ( panel instanceof BlessedPanel ) {
                     if ( await this.activeFocusObj().keyInputSearchFile(ch, keyInfo) ) {
                         this.execRefreshType( RefreshType.OBJECT );
-                        this._keyLockScreen = false;
                         return;
                     }
                 }
@@ -337,6 +403,7 @@ export class BaseMainFrame implements IHelpService {
                 } else {
                     await keyMappingExecute();
                 }
+                log.debug( "eventStart: keyevent - END !!!" );
             } catch ( e ) {
                 log.error( "Exception: - [%s]", e.stack );
                 await messageBox( {
@@ -347,7 +414,8 @@ export class BaseMainFrame implements IHelpService {
                     button: [ T("OK") ] 
                 });
             } finally {
-                this._keyLockScreen = false;
+                log.debug( "eventStart: keyevent - finally" );
+                this.lockKeyRelease("keyEvent");
             }
         });
     }
@@ -389,6 +457,20 @@ export class BaseMainFrame implements IHelpService {
         return RefreshType.ALL;
     }
 
+    async sshDisconnect() {
+        const activePanel = this.activePanel();
+        if ( activePanel instanceof BlessedPanel ) {
+            const reader = activePanel.getReader();
+            if ( reader instanceof SftpReader ) {
+                reader.disconnect();
+            }
+            const fileReader = new FileReader();
+            fileReader.onWatch( (event, filename) => this.onWatchDirectory(event, filename) );
+            activePanel.setReader( fileReader );
+            await activePanel.read(".");
+        }
+    }
+
     @Hint({ hint: T("Hint.Split"), order: 2 })
     @Help(T("Help.SplitWindow"))
     split() {
@@ -404,6 +486,21 @@ export class BaseMainFrame implements IHelpService {
     @Hint({ hint: T("Hint.Quit"), order: 1 })
     @Help(T("Help.Quit"))
     async quitPromise() {
+        if (this.activePanel() && 
+            this.activePanel().getReader() && 
+            this.activePanel().getReader().readerName === "sftp") {
+            const result = await messageBox( { 
+                parent: this.baseWidget, 
+                title: T("Question"), 
+                msg: T("Message.QuitSftp"), 
+                button: [ T("OK"), T("Cancel") ] 
+            });
+            if ( result === T("OK") ) {    
+                await this.sshDisconnect();
+            }
+            return RefreshType.ALL;
+        }
+
         const result = await messageBox( { 
             parent: this.baseWidget, 
             title: T("Question"), 
@@ -513,12 +610,12 @@ export class BaseMainFrame implements IHelpService {
     consoleViewPromise(): Promise<RefreshType> {
         return new Promise( (resolve) => {
             const program = this.screen.program;
-            this._keyLockScreen = true;
+            this.lockKey("consoleView", null);
             this.screen.leave();
             program.once( "keypress", async () => {
                 this.screen.enter();
                 await this.refreshPromise();
-                this._keyLockScreen = false;
+                this.lockKeyRelease("consoleView");
                 resolve(RefreshType.ALL);
             });
         });
@@ -558,7 +655,7 @@ export class BaseMainFrame implements IHelpService {
                 return;
             }
 
-            this._keyLockScreen = true;
+            this.lockKey("commandRun", null);
             this.screen.leave();
 
             const cmdParse = this.commandParsing( cmd );
@@ -590,7 +687,7 @@ export class BaseMainFrame implements IHelpService {
                 const returnFunc = async () => {
                     this.screen.enter();
                     await this.refreshPromise();
-                    this._keyLockScreen = false;
+                    this.lockKeyRelease("commandRun");
                     resolve(RefreshType.ALL);
                 };
                 if ( !fileRunMode || cmdParse.wait ) {
@@ -767,11 +864,11 @@ export class BaseMainFrame implements IHelpService {
             return RefreshType.NONE;
         }
 
-        const reader = activePanel.getReader();
-        reader.isUserCanceled = false;
+        const targetReader = activePanel.getReader();
+        targetReader.isUserCanceled = false;
 
         const progressBox = new ProgressBox( { title: T("Message.Copy"), msg: T("Message.Calculating"), cancel: () => {
-            reader.isUserCanceled = true;
+            targetReader.isUserCanceled = true;
         }}, { parent: this.baseWidget } );
         this.screen.render();
         await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
@@ -804,7 +901,7 @@ export class BaseMainFrame implements IHelpService {
                 befCopyInfo.beforeTime = Date.now();
                 befCopyInfo.copyBytes = copyBytes;
             }
-            return reader.isUserCanceled ? ProgressResult.USER_CANCELED : ProgressResult.SUCCESS;
+            return targetReader.isUserCanceled ? ProgressResult.USER_CANCELED : ProgressResult.SUCCESS;
         };
 
         if ( activePanel instanceof BlessedPanel ) {
@@ -820,15 +917,25 @@ export class BaseMainFrame implements IHelpService {
                 return RefreshType.NONE;
             }
             
-            const reader = activePanel.getReader();
-            log.debug( "READER : [%s] => [%s]", reader.readerName, files[0].fstype );
-            if ( [ "file", "sftp" ].indexOf(files[0].fstype) > -1 && reader.readerName === "file" && files[0].fstype === clipSelected.getReader().readerName ) {
+            const originalReader = clipSelected.getReader();
+
+            let anotherReader = activePanel.getReader();
+            if ( originalReader.readerName !== "file" ) {
+                anotherReader = originalReader;
+            } else if ( targetReader.readerName !== "file" ) {
+                anotherReader = targetReader;
+            }
+
+            log.debug( "READER : [%s] => [%s]", originalReader.readerName, targetReader.readerName );
+            if ( [ "file", "sftp" ].indexOf(originalReader.readerName) > -1 && 
+                 [ "file", "sftp" ].indexOf(targetReader.readerName) > -1 && 
+                 files[0].fstype === clipSelected.getReader().readerName ) {
                 let overwriteAll = false;
                 for ( const src of files ) {
                     if ( progressBox.getCanceled() ) {
                         break;
                     }
-                    if ( await reader.exist(src.fullname) === false ) {
+                    if ( await originalReader.exist(src.fullname) === false ) {
                         const result = await messageBox( {
                             parent: this.baseWidget,
                             title: T("Error"),
@@ -845,9 +952,9 @@ export class BaseMainFrame implements IHelpService {
 
                     const target = src.clone();
                     target.fullname = targetBasePath + target.fullname.substr(sourceBasePath.length);
-                    target.fstype = reader.readerName;
+                    target.fstype = targetReader.readerName;
                     
-                    if ( !overwriteAll && await reader.exist( target.fullname ) ) {
+                    if ( !overwriteAll && await targetReader.exist( target.fullname ) ) {
                         const result = await messageBox( {
                             parent: this.baseWidget,
                             title: T("Copy"),
@@ -872,7 +979,7 @@ export class BaseMainFrame implements IHelpService {
                                 button: [ T("OK"), T("Cancel") ]
                             });
                             if ( result && result[1] === T("OK") && result[0] ) {
-                                target.fullname = targetBasePath + reader.sep() + result[0];
+                                target.fullname = targetBasePath + targetReader.sep() + result[0];
                             } else {
                                 continue;   
                             }
@@ -882,31 +989,32 @@ export class BaseMainFrame implements IHelpService {
                     try {
                         if ( src.dir ) {
                             log.debug( "COPY DIR - [%s] => [%s]", src.fullname, target.fullname );
-                            await reader.mkdir( target );
+                            await targetReader.mkdir( target );
                         } else {
                             log.debug( "COPY - [%s] => [%s]", src.fullname, target.fullname );
-                            await reader.copy( src, null, target, progressStatus );
+                            if ( anotherReader ) {
+                                await anotherReader.copy( src, null, target, progressStatus );
+                            }
                         }
                     } catch( err ) {
+                        progressBox.destroy();
                         if ( err === "USER_CANCEL" ) {
                             break;
                         } else {
-                            const result = await messageBox( {
+                            await messageBox( {
                                 parent: this.baseWidget,
                                 title: T("Copy"),
                                 msg: `${T("Error")}: ${src.name} - ${err}`,
-                                button: [ T("OK"), T("Cancel") ]
+                                button: [ T("OK") ]
                             });
-                            if ( result === T("Cancel") ) {
-                                break;
-                            }
+                            await this.refreshPromise();
+                            return RefreshType.ALL;
                         }
                     }
                 }
             } else if ( files[0].fstype === clipSelected.getReader().readerName ) {
                 try {
-                    const reader = clipSelected.getReader().readerName !== "file" ? clipSelected.getReader() : activePanel.getReader();
-                    await reader.copy( files, clipSelected.getSelecteBaseDir(), activePanel.currentPath(), progressStatus );
+                    await anotherReader.copy( files, clipSelected.getSelecteBaseDir(), activePanel.currentPath(), progressStatus );
                 } catch( err ) {
                     log.error( err );
                     progressBox.destroy();

@@ -38,8 +38,13 @@ export interface IConfigure {
     MimeTypeAlias: IMimeTypeAlias;
     ProgramService: IProgramService;
     ProgramMatching: IProgramMatching;
+    OpensshOption: {
+        [name: string]: string | number | {
+            [aliasName: string]: string | string[];
+        };
+    };
     Option: {
-        [name: string]: string | boolean | number;
+        [name: string]: string | boolean | number | any;
     };
 }
 
@@ -162,12 +167,16 @@ export default class Configure {
         });
     }
 
-    public getOption( key: string ): string | boolean | number {
+    public getOption( key: string ): string | boolean | number | any {
         return this.configInfo.Option[ key ];
     }
 
-    public setOption( key: string, value: string | boolean | number ) {
+    public setOption( key: string, value: string | boolean | number | any ) {
         this.configInfo.Option[key] = value;
+    }
+
+    public getOpensshOption( key: string ): any {
+        return this.configInfo.OpensshOption[ key ];
     }
 
     static instance(): Configure {

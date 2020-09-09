@@ -154,7 +154,7 @@ export class ProgressBox extends Widget {
             this.progressOpt && this.progressOpt.cancel && this.progressOpt.cancel();
         });
 
-        mainFrame().keyLock = true;
+        mainFrame().lockKey("progressBar", this);
         this.setFocus();
         this.box.screen.render();
     }
@@ -173,7 +173,7 @@ export class ProgressBox extends Widget {
         if ( this.destroyed ) {
             return;
         }
-        mainFrame().keyLock = false;
+        mainFrame().lockKeyRelease("progressBar");
         this.cancelButton.destroy();
         this.titleWidget.destroy();
         this.leftWidget.destroy();

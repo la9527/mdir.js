@@ -38,8 +38,16 @@ class McdDirButton extends Widget {
         this.showCheck = false;
         this.parentMcd = parent;
 
-        this.on("click", () => {
-            this.parentMcd && this.parentMcd.onDirButtonClick(this);
+        this.on("widget.click", () => {
+            if ( !mainFrame().hasLockAndLastFocus() ) {
+                this.parentMcd && this.parentMcd.onDirButtonClick(this);
+            }
+        });
+        this.on("widget.click", async () => {
+            if ( !mainFrame().hasLockAndLastFocus() ) {
+                this.parentMcd && await this.parentMcd.keyEnterPromise();
+                mainFrame().execRefreshType( RefreshType.ALL );
+            }
         });
     }
 

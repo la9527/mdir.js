@@ -109,7 +109,7 @@ export class ConnectionEditor extends Widget {
             { top: 14, left: 3, width: 20, type: "label", content: "Proxy Protocol" },
             { top: 14, left: 25, width: 20, type: "radiobox", name: "proxy.type5", label: "Type 5", default: proxyInfo.type === 5 },
             { top: 14, left: 40, width: 20, type: "radiobox", name: "proxy.type4", label: "Type 4", default: proxyInfo.type === 4 },
-            { top: 15, type: "input", name: "proxy.userId", label: "Proxy Username", default: proxyInfo.username },
+            { top: 15, type: "input", name: "proxy.username", label: "Proxy Username", default: proxyInfo.username },
             { top: 16, type: "input", name: "proxy.password", label: "Proxy Password", passwordType: true, default: proxyInfo.password },
             { top: 17, left: 0, width: "100%-2", type: "line", orientation: "horizontal" },
             { top: 18, left: 10, width: 10, type: "button", name: "ok", label: "Ok" },
@@ -136,6 +136,10 @@ export class ConnectionEditor extends Widget {
                     { ...commonOption, top: item.top, left: item.left, width: item.width, aliasName: item.name }, 
                     { text: item.label, isCheck: item.type === "checkbox", defaultCheck: item.default || false }));
             }
+        });
+
+        this.on("focus", () => {
+            this.eventElements[0].setFocus();
         });
 
         widgetsEventListener( this.eventElements, (widget: Widget, index: number, eventName: string, args: any[] ) => {
@@ -208,9 +212,17 @@ export class ConnectionEditor extends Widget {
             if ( item instanceof InputWidget ) {
                 if ( item.aliasName.match( /^proxy\./ ) ) {
                     const proxyName = item.aliasName.split(".")[1];
-                    proxyInfo[ proxyName ] = item.getValue();
+                    if ( item.aliasName.indexOf("port") > -1 ) {
+                        proxyInfo[ proxyName ] = parseInt(item.getValue(), 10);
+                    } else {
+                        proxyInfo[ proxyName ] = item.getValue();
+                    }
                 } else {
-                    result[ item.aliasName ] = item.getValue();
+                    if ( item.aliasName.indexOf("port") > -1 ) {
+                        result[ item.aliasName ] = parseInt(item.getValue(), 10);
+                    } else {
+                        result[ item.aliasName ] = item.getValue();
+                    }
                 }
             } else if ( item instanceof RadioWidget ) {
                 if (item.aliasName === "proxy") {

@@ -29,6 +29,10 @@ export class FileBox extends Widget {
             wrap: false
         });
         this.connectionListWidget = parent;
+
+        this.on("focus", () => {
+            this.connectionListWidget.setFocus();
+        });
     }
 
     getPosNo() {
@@ -216,7 +220,8 @@ export class ConnectionListWidget extends Panel {
     }
 
     setFocus() {
-        return this.baseWidget.setFocus();
+        log.debug( "ConnectionListWidget focus !!!");
+        this.baseWidget.setFocus();
     }
 
     init() {
