@@ -16,29 +16,11 @@ describe( "SFTP Proxy Test", () => {
         const sftpReader = new SftpReader();
         log.debug( "CONNECT !!!");
 
-        /*
-            {"command":"connect","destination":{"host":"172.22.247.86","port":22},"proxy":{"host":"sac.skplanet.com","port":10221,"type":5,"userId":"la9527","password":"prince98@"},"timeout":10000
-        */
         await sftpReader.connect({
-            host: "172.22.247.86",
+            host: "localhost",
             port: 22,
-            username: "1000967",
-            password: "Fkquddud1!",
-            proxyInfo: {
-                command: "connect",
-                destination: {
-                    host: "172.22.247.86",
-                    port: 22
-                },
-                proxy: {
-                    host: "sac.skplanet.com",  // "sac.skplanet.com",
-                    port: 10221, // port: 10221,
-                    type: 5,
-                    userId: "1000967",
-                    password: "prince98@"
-                },
-                timeout: 10000
-            },
+            username: "la9527",
+            password: "???",
             algorithms: {
                 kex: [ "diffie-hellman-group1-sha1","diffie-hellman-group14-sha1", "ecdh-sha2-nistp256","ecdh-sha2-nistp384","ecdh-sha2-nistp521","diffie-hellman-group-exchange-sha256","diffie-hellman-group14-sha256","diffie-hellman-group16-sha512","diffie-hellman-group18-sha512","diffie-hellman-group14-sha1" ],
                 serverHostKey: [ "ssh-ed25519","ecdsa-sha2-nistp256","ecdsa-sha2-nistp384","ecdsa-sha2-nistp521","ssh-rsa" ],
