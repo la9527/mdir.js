@@ -7,6 +7,7 @@ import { ColorConfig } from "../../config/ColorConfig";
 import { InputWidget } from "./InputWidget";
 import { ButtonWidget } from "./ButtonWidget";
 import { RadioWidget } from "./RadioWidget";
+import { T } from "../../common/Translation";
 
 const log = Logger("ConnectionManager");
 
@@ -96,24 +97,24 @@ export class ConnectionEditor extends Widget {
 
         const proxyInfo = this.option.proxyInfo || {};
         this.elementsInfo = [
-            { top: 2, type: "input", name: "name", label: "Name", default: this.option.name },
-            { top: 4, type: "input", name: "host", label: "Host", default: this.option.host },
-            { top: 5, type: "input", name: "port", label: "Port", default: this.option.port || 22 },
-            { top: 6, type: "input", name: "username", label: "Username", default: this.option.username },
-            { top: 7, type: "input", name: "password", label: "Password", passwordType: true, default: this.option.password },
-            { top: 9, type: "input", name: "privateKey", label: "Private Key File Path", default: this.option.privateKey },
+            { top: 2, type: "input", name: "name", label: T("ConnectionManager.Name"), default: this.option.name },
+            { top: 4, type: "input", name: "host", label: T("ConnectionManager.Host"), default: this.option.host },
+            { top: 5, type: "input", name: "port", label: T("ConnectionManager.Port"), default: this.option.port || 22 },
+            { top: 6, type: "input", name: "username", label: T("ConnectionManager.Username"), default: this.option.username },
+            { top: 7, type: "input", name: "password", label: T("ConnectionManager.Password"), passwordType: true, default: this.option.password },
+            { top: 9, type: "input", name: "privateKey", label: T("ConnectionManager.PrivateKeyPath"), default: this.option.privateKey },
             { top: 10, left: 0, width: "100%-2", type: "line", orientation: "horizontal" },
-            { top: 11, left: 25, width: 20, type: "checkbox", name: "proxy", label: "Use Proxy", default: !!this.option.proxyInfo },
-            { top: 12, type: "input", name: "proxy.host", label: "Proxy Host", default: proxyInfo.host },
-            { top: 13, type: "input", name: "proxy.port", label: "Proxy Port", default: proxyInfo.port },
-            { top: 14, left: 3, width: 20, type: "label", content: "Proxy Protocol" },
-            { top: 14, left: 25, width: 20, type: "radiobox", name: "proxy.type5", label: "Type 5", default: proxyInfo.type === 5 },
-            { top: 14, left: 40, width: 20, type: "radiobox", name: "proxy.type4", label: "Type 4", default: proxyInfo.type === 4 },
-            { top: 15, type: "input", name: "proxy.username", label: "Proxy Username", default: proxyInfo.username },
-            { top: 16, type: "input", name: "proxy.password", label: "Proxy Password", passwordType: true, default: proxyInfo.password },
+            { top: 11, left: 25, width: 20, type: "checkbox", name: "proxy", label: T("ConnectionManager.UseProxy"), default: !!this.option.proxyInfo },
+            { top: 12, type: "input", name: "proxy.host", label: T("ConnectionManager.ProxyHost"), default: proxyInfo.host },
+            { top: 13, type: "input", name: "proxy.port", label: T("ConnectionManager.ProxyPort"), default: proxyInfo.port },
+            { top: 14, left: 3, width: 20, type: "label", content: T("ConnectionManager.ProxyProtocol") },
+            { top: 14, left: 25, width: 20, type: "radiobox", name: "proxy.type5", label: T("ConnectionManager.ProxyType5"), default: proxyInfo.type === 5 },
+            { top: 14, left: 40, width: 20, type: "radiobox", name: "proxy.type4", label: T("ConnectionManager.ProxyType4"), default: proxyInfo.type === 4 },
+            { top: 15, type: "input", name: "proxy.username", label: T("ConnectionManager.ProxyUsername"), default: proxyInfo.username },
+            { top: 16, type: "input", name: "proxy.password", label: T("ConnectionManager.ProxyPassword"), passwordType: true, default: proxyInfo.password },
             { top: 17, left: 0, width: "100%-2", type: "line", orientation: "horizontal" },
-            { top: 18, left: 10, width: 10, type: "button", name: "ok", label: "Ok" },
-            { top: 18, left: 40, width: 10, type: "button", name: "cancel", label: "Cancel" }
+            { top: 18, left: 10, width: 10, type: "button", name: "ok", label: T("Ok") },
+            { top: 18, left: 40, width: 10, type: "button", name: "cancel", label: T("Cancel") }
         ];
 
         this.eventElements = [];

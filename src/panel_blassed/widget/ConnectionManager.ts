@@ -56,7 +56,7 @@ export class ConnectionManager extends Widget {
             width: "100%-2", 
             height: 1, 
             tags: true, 
-            content: "SSH Connection Manager", 
+            content: T("ConnectionManager.Title"), 
             style: this.color.blessedReverse, 
             align: "center" } );
 
@@ -81,15 +81,15 @@ export class ConnectionManager extends Widget {
 
         this.elementsInfo = [
             { top: 2, left: 2, width: 50, height: 20, type: "filelist", name: "filelist" },
-            { top: 2, left: 53, type: "button", name: "insert", label: "Insert" },
-            { top: 3, left: 53, type: "button", name: "modify", label: "Modify" },
-            { top: 4, left: 53, type: "button", name: "remove", label: "Remove" },
+            { top: 2, left: 53, type: "button", name: "insert", label: T("ConnectionManager.Insert") },
+            { top: 3, left: 53, type: "button", name: "modify", label: T("ConnectionManager.Modify") },
+            { top: 4, left: 53, type: "button", name: "remove", label: T("ConnectionManager.Remove") },
             
-            { top: 6, left: 53, type: "button", name: "mkdir", label: "Make Directory" },
-            { top: 8, left: 53, type: "button", name: "jsonEditor", label: "JSON Editor" },
+            { top: 6, left: 53, type: "button", name: "mkdir", label: T("ConnectionManager.MakeDirectory") },
+            { top: 8, left: 53, type: "button", name: "jsonEditor", label: T("ConnectionManager.JSONEditor") },
             
             { top: 23, left: 0, width: "100%-2", type: "line", orientation: "horizontal" },
-            { top: 24, left: 53, type: "button", name: "close", label: "Close" }
+            { top: 24, left: 53, type: "button", name: "close", label: T("ConnectionManager.Close") }
         ];
 
         this.eventElements = [];

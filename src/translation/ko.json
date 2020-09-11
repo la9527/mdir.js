@@ -89,7 +89,8 @@
         "GotoTop": "맨위로",
         "GotoLast": "마지막으로",
         "PanelSync": "같은 디렉토리로 동기화",
-        "Archive": "압축"
+        "Archive": "압축",
+        "ConnectionManager": "접속 관리자"
     },
     "Hint": {
         "Help": "도움말",
@@ -201,5 +202,28 @@
         "Archive": "내부 압축 유틸리티",
         "Editor": "내부 편집기",
         "VIM": "VIM 편집기"
+    },
+    "ConnectionManager": {
+        "Title": "SSH 접속 관리자",
+        "Insert": "추가",
+        "Modify": "변경",
+        "Remove": "삭제",
+        "MakeDirectory": "디렉토리 생성",
+        "JSONEditor": "RAW 편집",
+        "Close": "닫기",
+        "Name": "이름",
+        "Host": "호스트",
+        "Port": "포트",
+        "Username": "사용자ID",
+        "Password": "패스워드",
+        "PrivateKeyPath": "개인 키 파일위치",
+        "UseProxy": "프록시 사용",
+        "ProxyHost": "프록시 호스트",
+        "ProxyPort": "프록시 포트",
+        "ProxyProtocol": "프록시 프로토콜",
+        "ProxyType5": "타입 5",
+        "ProxyType4": "타입 4",
+        "ProxyUsername": "프록시 사용자ID",
+        "ProxyPassword": "프록시 패스워드"
     }
 }

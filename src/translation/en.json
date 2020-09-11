@@ -89,7 +89,8 @@
         "GotoTop": "Go to top line",
         "GotoLast": "Go to last line",
         "PanelSync": "Panels to same directory",
-        "Archive": "Archive"
+        "Archive": "Archive",
+        "ConnectionManager": "Connection Manager"
     },
     "Hint": {
         "Help": "Help",
@@ -203,5 +204,28 @@
         "Archive": "Internal Archive Utility",
         "Editor": "Internal Editor",
         "VIM": "VIM Editor"
+    },
+    "ConnectionManager": {
+        "Title": "SSH Connection Manager",
+        "Insert": "Insert",
+        "Modify": "Modify",
+        "Remove": "Remove",
+        "MakeDirectory": "Make directory",
+        "JSONEditor": "Raw Editor",
+        "Close": "Close",
+        "Name": "Name",
+        "Host": "Host",
+        "Port": "Port",
+        "Username": "Username",
+        "Password": "Password",
+        "PrivateKeyPath": "Private Key File Path",
+        "UseProxy": "Use Proxy",
+        "ProxyHost": "Proxy Host",
+        "ProxyPort": "Proxy Port",
+        "ProxyProtocol": "Proxy Protocol",
+        "ProxyType5": "Type 5",
+        "ProxyType4": "Type 4",
+        "ProxyUsername": "Proxy Username",
+        "ProxyPassword": "Proxy Password"
     }
 }
