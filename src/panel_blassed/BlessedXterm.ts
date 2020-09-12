@@ -121,10 +121,6 @@ class SshPty implements IPty {
     kill(signal: string): void {
         this.stream?.signal( signal || "KILL" );
     }
-
-    exit() {
-        // this.stream?.end("exit\n");
-    }
 }
 
 
@@ -148,7 +144,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
 
     osc1337: IOSC1337 = {};
 
-    isCursorDraw: boolean = true;
+    isCursorDraw: boolean = false;
     cursorPos = { y: -1, x: -1 };
 
     constructor( options: any, reader: Reader, firstPath: File ) {
@@ -634,7 +630,6 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         if (this.pty instanceof SshPty ) {
             try {
                 (this.pty as SshPty).kill( "QUIT" );
-                (this.pty as SshPty).exit();
                 delete this.pty;
             } catch ( e ) {
                 log.error( e );

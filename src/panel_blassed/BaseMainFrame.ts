@@ -575,6 +575,10 @@ export class BaseMainFrame implements IHelpService {
             return RefreshType.NONE;
         }
 
+        if ( !(activePanel.getReader() instanceof FileReader) ) {
+            return RefreshType.NONE;
+        }
+
         if ( this.bottomFilesBox ) {
             this.bottomFilesBox.destroy();
             this.bottomFilesBox = null;
@@ -951,7 +955,14 @@ export class BaseMainFrame implements IHelpService {
                     const targetBasePath = activePanel.currentPath().fullname;
 
                     const target = src.clone();
-                    target.fullname = targetBasePath + target.fullname.substr(sourceBasePath.length);
+
+                    let targetName = target.fullname.substr(sourceBasePath.length);
+                    if ( originalReader.sep() === "\\" ) {
+                        targetName = targetName.replace( /\\/g, targetReader.sep() );
+                    } else if ( originalReader.sep() === "/" ) {
+                        targetName = targetName.replace( /\//g, targetReader.sep() );
+                    }
+                    target.fullname = targetBasePath + targetName;
                     target.fstype = targetReader.readerName;
                     
                     if ( !overwriteAll && await targetReader.exist( target.fullname ) ) {
