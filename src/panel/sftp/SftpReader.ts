@@ -83,6 +83,10 @@ export class SftpReader extends Reader {
         this.init();
     }
 
+    public destory() {
+        this.disconnect();
+    }
+
     public init() {
         this.disconnect();
         this.client = new Client();
@@ -107,7 +111,7 @@ export class SftpReader extends Reader {
         return `sftp://${username}@${host}:${port}`;
     }
 
-    public connect( option: ssh2ConnectionInfo, connectionErrorFunc: ( errInfo: any ) => void ): Promise<void> {
+    public connect( option: ssh2ConnectionInfo, connectionErrorFunc: ( errInfo: any ) => void, connectionOnly: boolean = false ): Promise<void> {
         log.debug( "CONNECTION INFO: %s", JSON.stringify(option, null, 2) );
         // eslint-disable-next-line no-async-promise-executor
         return new Promise( async (resolve, reject) => {
@@ -128,33 +132,38 @@ export class SftpReader extends Reader {
                     this.client.removeListener("error", onceReady);
                     reject( err );
                     return;
-                }                
-                this.client.sftp( async (err, sftp) => {
-                    if ( err ) {
-                        log.error( "SFTP SESSION - ERORR: %s", err );
-                        reject( err );
-                        return;
-                    }
-                    this.sftp = sftp;
-                    log.info( "SFTP connected !!!" );
-                    this.client.on("error", (err) => {
-                        log.error( "SFTP client error: %s", err);
-                        connectionErrorFunc(err);
-                    });
-                    this.client.on("close", (err) => {
-                        log.error( "SFTP client close", err);
-                        this.disconnect();
-                        connectionErrorFunc("close");
-                    });
+                }
 
-                    try {
-                        this.homeDirFile = await this.convertFile( await this.sftpRealPath(".") );
-                        this.currentPath = this.homeDirFile;
-                    } catch( e ) {
-                        log.error( "GET HOME ERROR [%s]", e );
-                    }
+                if ( !connectionOnly ) {
+                    this.client.sftp( async (err, sftp) => {
+                        if ( err ) {
+                            log.error( "SFTP SESSION - ERORR: %s", err );
+                            reject( err );
+                            return;
+                        }
+                        this.sftp = sftp;
+                        log.info( "SFTP connected !!!" );
+                        this.client.on("error", (err) => {
+                            log.error( "SFTP client error: %s", err);
+                            connectionErrorFunc(err);
+                        });
+                        this.client.on("close", (err) => {
+                            log.error( "SFTP client close", err);
+                            this.disconnect();
+                            connectionErrorFunc("close");
+                        });
+
+                        try {
+                            this.homeDirFile = await this.convertFile( await this.sftpRealPath(".") );
+                            this.currentPath = this.homeDirFile;
+                        } catch( e ) {
+                            log.error( "GET HOME ERROR [%s]", e );
+                        }
+                        resolve();
+                    });
+                } else {
                     resolve();
-                });
+                }
             };
             this.client.once( "ready", onceReady );
             this.client.once( "error", (err) => {

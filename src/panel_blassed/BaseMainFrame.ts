@@ -283,7 +283,7 @@ export class BaseMainFrame implements IHelpService {
             const panel = this.blessedFrames[i];
             if ( panel instanceof BlessedPanel ) {
                 panel.setReader(readerControl("file"));
-                panel.getReader().onWatch( (event, filename) => this.onWatchDirectory(event, filename) );
+                //panel.getReader().onWatch( (event, filename) => this.onWatchDirectory(event, filename) );
                 try {
                     await panel.read( i !== 0 ? (lastPath || ".") : ".", false );
                 } catch ( e ) {
@@ -461,11 +461,11 @@ export class BaseMainFrame implements IHelpService {
         const activePanel = this.activePanel();
         if ( activePanel instanceof BlessedPanel ) {
             const reader = activePanel.getReader();
-            if ( reader instanceof SftpReader ) {
-                reader.disconnect();
+            if ( reader ) {
+                reader.destory();
             }
             const fileReader = new FileReader();
-            fileReader.onWatch( (event, filename) => this.onWatchDirectory(event, filename) );
+            // fileReader.onWatch( (event, filename) => this.onWatchDirectory(event, filename) );
             activePanel.setReader( fileReader );
             await activePanel.read(".");
         }

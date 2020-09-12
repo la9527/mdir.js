@@ -14,6 +14,9 @@ import { ColorConfig } from "../config/ColorConfig";
 import which from "which";
 import { KeyMappingInfo, KeyMapping, IHelpService, Hint, Help, RefreshType } from "../config/KeyMapConfig";
 import { T } from "../common/Translation";
+import { SftpReader } from "../panel/sftp/SftpReader";
+import { IEvent } from "xterm";
+import { EventEmitter } from "./xterm/common/EventEmitter";
 
 const log = Logger("BlassedXTerm");
 
@@ -22,6 +25,108 @@ interface IOSC1337 {
     RemoteHost?: string;
     CurrentDir?: string;
 }
+
+class SshPty implements IPty {
+    private _ssh2Socket;
+    private _stream;
+    private _cols;
+    private _rows;
+
+    constructor( { reader, cols, rows, term, result }: {
+        reader: SftpReader;
+        cols: number;
+        rows: number;
+        term: string;
+        result: ( err?: string ) => void;
+    } ) {
+        log.debug( "shellInit: %j", { cols, rows, term } );
+        this._ssh2Socket = reader.getSSH2Client();
+        this._ssh2Socket.on("close", () => {
+            log.debug( "this._ssh2Socket: close !!!" );
+            this._stream = null;
+            this._onExit.fire( { exitCode: -1, signal: -1 } );
+        });
+        this._ssh2Socket.shell({ term, cols, rows }, (err, stream) => {
+            if ( err ) {
+                log.error( "shellInit: ERROR: %s", err );
+                result( err );
+                return;
+            }
+            this._stream = stream;
+            this.initEvent();
+            result();
+        });
+    }
+
+    protected initEvent() {
+        this._stream.on("data", (data) => {
+            this._onData.fire( data );
+        });
+        this._stream.on("close", () => {
+            this._onExit.fire( { exitCode: -1, signal: -1 } );
+        });
+    }
+
+    protected get socket() {
+        return this._ssh2Socket;
+    }
+
+    protected get stream() {
+        return this._stream;
+    }
+
+    get pid() {
+        return -1;
+    }
+
+    get cols() {
+        return this._cols;
+    }
+
+    get rows() {
+        return this._rows;
+    }
+
+    get process() {
+        return "ssh";
+    }
+
+    handleFlowControl: boolean;
+    
+    private _onData = new EventEmitter<string>();
+    public get onData(): IEvent<string> { return this._onData.event; }
+
+    private _onExit = new EventEmitter<{ exitCode: number; signal?: number }>();
+    public get onExit(): IEvent<{ exitCode: number; signal?: number }> { return this._onExit.event; }
+    
+    on(event: any, listener: any) {
+        if ( event === "data" ) {
+            this._stream?.on( event, listener );
+        } else if ( event === "exit" ) {
+            this._stream?.on( "close", (code, signal) => {
+                log.error( "close %d %d", code, signal );
+                listener( code, signal );
+            });
+        }
+    }
+
+    resize(columns: number, rows: number): void {
+        this.stream?.setWindow( rows, columns );
+    }
+
+    write(data: string): void {
+        this.stream?.write( data );
+    }
+
+    kill(signal: string): void {
+        this.stream?.signal( signal || "KILL" );
+    }
+
+    exit() {
+        // this.stream?.end("exit\n");
+    }
+}
+
 
 @KeyMapping(KeyMappingInfo.XTerm)
 export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
@@ -195,58 +300,73 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         });
 
         log.debug( "SHELL : %s %s", this.shell, this.args );
-        
-        try {
-            this.pty = NodePTY.spawn(this.shell, this.args, {
-                name: this.termName,
+
+        const initPtyEvent = () => {
+            this.on("resize", () => {
+                log.debug( "PANEL - resize !!!" );
+                process.nextTick(() => {
+                    log.debug( "BLESSED TERM RESIZE !!! - TERMINAL");
+                    this.term && this.term.resize((box.width as number) - (box.iwidth as number), (box.height as number) - (box.iheight as number));
+                });
+                process.nextTick(() => {
+                    log.debug( "BLESSED PTY RESIZE !!! - TERMINAL");
+                    try {
+                        this.pty.resize((box.width as number) - (box.iwidth as number), (box.height as number) - (box.iheight as number));
+                    } catch (e) {
+                        log.debug( e );
+                    }
+                });
+            });
+    
+            this.pty.on("data", (data) => {
+                // log.debug( "screen write : [%s] [%d]", data.trim(), data.length );
+                this.parseOSC1337(data); 
+                this.write(data);
+            });
+    
+            this.pty.on("exit", (code) => {
+                log.debug( "on exit !!! - %d", code );
+                this.box.emit( "process_exit", code );
+            });
+        };
+
+        if ( this.getReader() instanceof SftpReader ) {
+            const sftpReader = this.getReader() as SftpReader;
+            const sshPty = new SshPty({
+                reader: this.getReader() as SftpReader,
+                term: this.termName,
                 cols: (box.width as number) - (box.iwidth as number),
                 rows: (box.height as number) - (box.iheight as number),
-                cwd: firstPath ? firstPath.fullname : process.env.HOME,
-                encoding: os.platform() !== "win32" ? "utf-8" : null,
-                env: this.options.env || process.env
-            });
-        } catch( e ) {
-            log.error( e );
-            process.nextTick(() => {
-                this.box.emit( "error", e );
-            });
-            return;
-        }
-
-        this.header.setContent( [ this.shell, ...(this.args || []) ].join(" ") || "" );
-
-        this.on("resize", () => {
-            log.debug( "PANEL - resize !!!" );
-            process.nextTick(() => {
-                log.debug( "BLESSED TERM RESIZE !!! - TERMINAL");
-                this.term && this.term.resize((box.width as number) - (box.iwidth as number), (box.height as number) - (box.iheight as number));
-            });
-            process.nextTick(() => {
-                log.debug( "BLESSED PTY RESIZE !!! - TERMINAL");
-                try {
-                    this.pty.resize((box.width as number) - (box.iwidth as number), (box.height as number) - (box.iheight as number));
-                } catch (e) {
-                    log.debug( e );
+                result: (err) => {
+                    if ( err ) {
+                        this.box.emit( "error", err );
+                    } else {
+                        this.pty = sshPty;
+                        initPtyEvent();
+                    }
                 }
             });
-        });
-
-        this.pty.on("data", (data) => {
-            // log.debug( "screen write : [%s] [%d]", data.trim(), data.length );
-            this.parseOSC1337(data); 
-            this.write(data);
-        });
-
-        this.pty.on("exit", (code) => {
-            log.debug( "on exit !!! - %d", code );
-            this.box.emit( "process_exit", code );
-        });
-
-        this.panel.box.onScreenEvent("keypress", () => {
-            log.error( "onScreenEvent - box keypress !!!" );
-            this.box.render();
-        });
-
+            this.header.setContent( sftpReader.getConnectInfo() );
+        } else {
+            try {
+                this.pty = NodePTY.spawn(this.shell, this.args, {
+                    name: this.termName,
+                    cols: (box.width as number) - (box.iwidth as number),
+                    rows: (box.height as number) - (box.iheight as number),
+                    cwd: firstPath ? firstPath.fullname : process.env.HOME,
+                    encoding: os.platform() !== "win32" ? "utf-8" : null,
+                    env: this.options.env || process.env
+                });
+                initPtyEvent();
+            } catch( e ) {
+                log.error( e );
+                process.nextTick(() => {
+                    this.box.emit( "error", e );
+                });
+                return;
+            }
+            this.header.setContent( [ this.shell, ...(this.args || []) ].join(" ") || "" );
+        }
         (this.screen as any)._listenKeys(this);
     }
 
@@ -511,7 +631,16 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             delete this.term;
             this.term = null;
         }
-        if (this.pty) {
+        if (this.pty instanceof SshPty ) {
+            try {
+                (this.pty as SshPty).kill( "QUIT" );
+                (this.pty as SshPty).exit();
+                delete this.pty;
+            } catch ( e ) {
+                log.error( e );
+            }
+            this.pty = null;
+        } else if ( this.pty ) {
             try {
                 (this.pty as any).emit("exit", 0);
                 log.debug( "PROCESS KILL - %d", this.pty.pid );

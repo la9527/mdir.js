@@ -17,6 +17,10 @@ export class ArchiveReader extends Reader {
     private baseDir: File;
     protected _readerFsType = "archive";
 
+    destory() {
+        // 
+    }
+
     async setArchiveFile( file: File, progressFunc: ProgressFunc ): Promise<boolean> {
         const archiveObjs = [ new ArchiveTarGz(), new ArchiveZip() ];
         this.archiveObj = archiveObjs.find( item => item.setFile( file ) );

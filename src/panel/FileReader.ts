@@ -161,6 +161,13 @@ export class FileReader extends Reader {
         this.systemUserInfo = new SystemUserInfo();
     }
 
+    destory() {
+        if ( this.watcher ) {
+            this.watcher.close();
+            this.watcher = null;
+        }
+    }
+
     async rootDir(): Promise<File> {
         return await this.convertFile( path.parse(fs.realpathSync(".")).root );
     }

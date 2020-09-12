@@ -158,6 +158,9 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
 
             try {
                 if ( await reader.setArchiveFile( file, progressStatus ) ) {
+                    if ( view.getReader() ) {
+                        view.getReader().destory();
+                    }
                     view.setReader( reader );
                     await view.read( await reader.rootDir() );
                     view.setFocus();
@@ -179,7 +182,10 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
             file.fullname === "/" && file.name === ".." ) {
 
             const fileReader = new FileReader();
-            fileReader.onWatch( (event, filename) => this.onWatchDirectory(event, filename) );
+            // fileReader.onWatch( (event, filename) => this.onWatchDirectory(event, filename) );
+            if ( view.getReader() ) {
+                view.getReader().destory();
+            }
             view.setReader( fileReader );
 
             const archiveFile = await fileReader.convertFile( file.root, { checkRealPath: true } );
@@ -651,6 +657,9 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                     });
                     
                     const homeDir = await sftpReader.homeDir();
+                    if ( activePanel.getReader() ) {
+                        activePanel.getReader().destory();
+                    }
                     activePanel.setReader( sftpReader );
                     await activePanel.read( homeDir );
                     activePanel.setFocus();

@@ -26,6 +26,8 @@ export abstract class Reader {
     public isUserCanceled = false;
     protected watchEventFunc: (event?: string, name?: string) => void = null;
 
+    abstract destory();
+
     abstract convertFile( path: string, option?: { fileInfo?: any; useThrow?: boolean; checkRealPath?: boolean; virtualFile?: boolean } ): Promise<File>;
     abstract readdir( dir: File, option?: { isExcludeHiddenFile?: boolean; noChangeDir?: boolean }, filter?: (file: File) => boolean ): Promise<File[]>;
     abstract homeDir(): Promise<File>;
