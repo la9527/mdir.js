@@ -316,8 +316,8 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
     
             this.pty.on("data", (data) => {
                 if ( Buffer.isBuffer(data) ) {
-                    log.debug( "DATA: %s", (data as Buffer).toString("utf8").normalize() );
-                    this.parseOSC1337((data as Buffer).toString("utf8"));
+                    log.debug( "DATA: [%s]", (data as Buffer).toString().normalize() );
+                    this.parseOSC1337((data as Buffer).toString());
                     this.write(data);
                 } else {
                     this.parseOSC1337(data);
