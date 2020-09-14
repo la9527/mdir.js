@@ -48,7 +48,9 @@ export class InputBox extends Widget {
         const defaultColor = ColorConfig.instance().getBaseColor("mcd");
         this.box.style = defaultColor.blessed;
 
+        mainFrame().lockKey("inputBox", this);
         this.on("detach", () => {
+            mainFrame().lockKeyRelease("inputBox");
             log.debug( "detach !!!" );
             this.box.screen.program.hideCursor();
         });

@@ -115,7 +115,7 @@ class SshPty implements IPty {
     }
 
     write(data: string): void {
-        this.stream?.write( data );
+        this.stream?.write( Buffer.from(data) );
     }
 
     kill(signal: string): void {
@@ -144,7 +144,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
 
     osc1337: IOSC1337 = {};
 
-    isCursorDraw: boolean = false;
+    isCursorDraw: boolean = true;
     cursorPos = { y: -1, x: -1 };
 
     constructor( options: any, reader: Reader, firstPath: File ) {
@@ -315,9 +315,14 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             });
     
             this.pty.on("data", (data) => {
-                // log.debug( "screen write : [%s] [%d]", data.trim(), data.length );
-                this.parseOSC1337(data); 
-                this.write(data);
+                if ( Buffer.isBuffer(data) ) {
+                    log.debug( "DATA: %s", (data as Buffer).toString("utf8").normalize() );
+                    this.parseOSC1337((data as Buffer).toString("utf8"));
+                    this.write(data);
+                } else {
+                    this.parseOSC1337(data);
+                    this.write(data);
+                }
             });
     
             this.pty.on("exit", (code) => {
@@ -520,12 +525,6 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
                     }) | (8 << 18);
                 }
                 line[x][1] = bufferLine.getString(x - xi) || " ";
-
-                /*
-                if ( line[x][1] === "." ) {
-                    log.debug( "[%s] %j", line[x][1], sattr );
-                }
-                */
             }
 
             line.dirty = true;

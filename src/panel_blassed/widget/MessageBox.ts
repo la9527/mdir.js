@@ -46,6 +46,11 @@ export class MessageBox extends Widget {
         } else if ( typeof(this.msgOption.msg) !== "string" ) {
             this.msgOption.msg = JSON.stringify(this.msgOption.msg, null, 2);
         }
+
+        mainFrame().lockKey("messageBox", this);
+        this.on("detach", () => {
+            mainFrame().lockKeyRelease("messageBox");
+        });
         this.init();
     }
 

@@ -128,6 +128,11 @@ export class ConnectionManager extends Widget {
         this.on("focus", () => {
             this.setFocus();
         });
+
+        mainFrame().lockKey("connectionManager", this);
+        this.on("detach", () => {
+            mainFrame().lockKeyRelease("connectionManager");
+        });
         
         this.eventElements[0].setFocus();
         this.box.screen.render();

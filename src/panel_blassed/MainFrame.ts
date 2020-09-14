@@ -581,13 +581,11 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                 }
                 await this.refreshPromise();
                 this.execRefreshType(RefreshType.ALL);
-                this.lockKeyRelease("connectionManager");
             });
         };
 
         const jsonEditor = (file: File) => {
             process.nextTick( async () => {
-                this.lockKeyRelease("connectionManager");
                 if ( file ) {
                     await this.editorPromise(file);
                     this.execRefreshType(RefreshType.ALL);
@@ -596,7 +594,6 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
         };
 
         const connectionManager = new ConnectionManager( { parent: this.baseWidget } );
-        this.lockKey("connectionManager", connectionManager);
         connectionManager.on( "widget.connect", refreshNextTick);
         connectionManager.on( "widget.close", refreshNextTick);
         connectionManager.on( "widget.jsoneditor", jsonEditor);
@@ -636,7 +633,7 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                 readyTimeout: Configure.instance().getOpensshOption("readyTimeout"),
                 proxyInfo: proxyInfo,
                 debug: ( ...args: any[] ) => {
-                    log.debug( "SFTP DEBUG: %s", args.join(" ") );
+                    log.debug( "SFTP DBG: %s", args.join(" ") );
                 }
             };
         };

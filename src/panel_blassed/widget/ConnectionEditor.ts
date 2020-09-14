@@ -8,6 +8,7 @@ import { InputWidget } from "./InputWidget";
 import { ButtonWidget } from "./ButtonWidget";
 import { RadioWidget } from "./RadioWidget";
 import { T } from "../../common/Translation";
+import mainFrame from "../MainFrame";
 
 const log = Logger("ConnectionManager");
 
@@ -141,6 +142,11 @@ export class ConnectionEditor extends Widget {
 
         this.on("focus", () => {
             this.eventElements[0].setFocus();
+        });
+
+        mainFrame().lockKey("connectionEditor", this);
+        this.on("detach", () => {
+            mainFrame().lockKeyRelease("connectionEditor");
         });
 
         widgetsEventListener( this.eventElements, (widget: Widget, index: number, eventName: string, args: any[] ) => {

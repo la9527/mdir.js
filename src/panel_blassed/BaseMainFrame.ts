@@ -44,10 +44,12 @@ enum VIEW_TYPE {
 class ScrLockInfo {
     private _name: string;
     private _widget: Widget;
+    private _time: number;
 
     constructor( name: string, widget: Widget = null ) {
         this._name = name;
         this._widget = widget;
+        this._time = Date.now();
     }
 
     get name() {
@@ -56,6 +58,10 @@ class ScrLockInfo {
 
     get widget() {
         return this._widget;
+    }
+
+    isTimeOver() {
+        return (Date.now() - this._time) > 1000;
     }
 
     toString() {
@@ -92,7 +98,18 @@ export class BaseMainFrame implements IHelpService {
     }
 
     public hasLock() {
-        return this.keyLockScreenArr.length > 0;
+        if ( this.keyLockScreenArr.length === 0 ) {
+            return false;
+        } else if ( this.keyLockScreenArr.length === 1 ) {
+            const lockScreenItem = this.keyLockScreenArr[0];
+            if ( lockScreenItem.name === "keyEvent" && lockScreenItem.isTimeOver() ) {
+                log.warn( "LOCK TIME OVER - keyLockRelase !!! - focused: %s", (this.screen.focused as any)?._widget);
+                this.lockKeyRelease("keyEvent");
+                this.blessedFrames[this.activeFrameNum].setFocus();
+                return false;
+            }
+        }
+        return true;
     }
 
     public hasLockAndLastFocus() {
@@ -258,7 +275,7 @@ export class BaseMainFrame implements IHelpService {
         });
 
         this.screen.draw = (start, end) => {
-            log.debug( "draw: %d / %d", start, end );
+            // log.debug( "draw: %d / %d", start, end );
             draw.call( this.screen, start, end );
         };
         this.screen.enableMouse();
@@ -319,9 +336,8 @@ export class BaseMainFrame implements IHelpService {
     eventStart() {
         this.screen.off("keypress");
         this.screen.on("keypress", async (ch, keyInfo) => {
-            log.debug( "keypress !!!" );
             if ( ch === "\u001c" && (global as any).debug ) { // Ctrl + |
-                log.debug( "force quit !!!" );
+                log.error( "force quit !!!" );
                 process.exit(0);
                 return;
             }
@@ -373,13 +389,14 @@ export class BaseMainFrame implements IHelpService {
                                 this.execRefreshType( type );
                             }
                         }
-                        log.info( "KEYPRESS - KEY END [%s] - (%dms)", keyInfo.name, Date.now() - starTime );
                         if ( panel.updateCursor ) {
                             panel.updateCursor();
                         }
                     } catch( e ) {
                         log.error( e );
                         throw e;
+                    } finally {
+                        log.info( "KEYPRESS - KEY END [%s] - (%dms)", keyInfo.name, Date.now() - starTime );
                     }
                     return type;
                 };
@@ -403,25 +420,22 @@ export class BaseMainFrame implements IHelpService {
                 } else {
                     await keyMappingExecute();
                 }
-                log.debug( "eventStart: keyevent - END !!!" );
             } catch ( e ) {
-                log.error( "Exception: - [%s]", e.stack );
+                log.error( "Event Exception: - [%s]", e.stack || e );
                 await messageBox( {
                     parent: this.baseWidget,
                     title: T("Error"), 
-                    msg: e.stack, 
+                    msg: e.stack || e, 
                     textAlign: "left",
                     button: [ T("OK") ] 
                 });
             } finally {
-                log.debug( "eventStart: keyevent - finally" );
                 this.lockKeyRelease("keyEvent");
             }
         });
     }
 
     execRefreshType( type: RefreshType ) {
-        log.info( "REFRESH TYPE : %d", type);
         if ( type === RefreshType.ALL || type === RefreshType.ALL_NOFOCUS ) {
             log.info( "REFRESH - ALL");
             this.screen.realloc();
@@ -558,7 +572,6 @@ export class BaseMainFrame implements IHelpService {
     }
 
     activePanel(): BlessedPanel | BlessedMcd | BlessedXterm | BlessedEditor {
-        log.debug( "activePanel %d", this.activeFrameNum );
         return this.blessedFrames[ this.activeFrameNum ];
     }
 

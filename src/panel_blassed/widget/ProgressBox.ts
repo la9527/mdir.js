@@ -155,6 +155,10 @@ export class ProgressBox extends Widget {
         });
 
         mainFrame().lockKey("progressBar", this);
+        this.on("detach", () => {
+            mainFrame().lockKeyRelease("progressBar");
+        });
+
         this.setFocus();
         this.box.screen.render();
     }
@@ -173,7 +177,6 @@ export class ProgressBox extends Widget {
         if ( this.destroyed ) {
             return;
         }
-        mainFrame().lockKeyRelease("progressBar");
         this.cancelButton.destroy();
         this.titleWidget.destroy();
         this.leftWidget.destroy();
