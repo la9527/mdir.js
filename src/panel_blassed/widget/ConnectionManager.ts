@@ -203,8 +203,8 @@ export class ConnectionManager extends Widget {
                 process.nextTick( async () => {
                     if ( result ) {
                         const filePath = this.connectionListWidget.currentPath();
-                        const fileName = filePath.fullname + path.sep + data.name + ".json";                    
-                        fs.writeFileSync( fileName, JSON.stringify(data, null, 2), { encoding: "utf8" } );
+                        const fileName = filePath.fullname + path.sep + data.name + ".json";
+                        fs.writeFileSync( fileName, JSON.stringify(data, null, 2), { encoding: "utf8", mode: 0o600 } );
                     }
                     await this.refreshPromise();
                     this.eventElements[0].setFocus();
@@ -235,7 +235,7 @@ export class ConnectionManager extends Widget {
             resultFunc: (result: boolean, data ) => {
                 process.nextTick( async () => {
                     if ( result ) {
-                        fs.writeFileSync( file.fullname, JSON.stringify(data, null, 2), { encoding: "utf8" } );
+                        fs.writeFileSync( file.fullname, JSON.stringify(data, null, 2), { encoding: "utf8", mode: 0o600 } );
 
                         const filePath = this.connectionListWidget.currentPath();
                         const changeFileName = filePath.fullname + path.sep + data.name + ".json";

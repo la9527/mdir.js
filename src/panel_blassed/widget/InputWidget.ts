@@ -25,8 +25,7 @@ export class InputWidget extends Widget {
         super( opts );
 
         this.option = option;
-        this.value = option.defaultText || "";
-        this.cursorPos = strWidth(this.value);
+        this.setValue( option.defaultText );
 
         const inputboxColor = ColorConfig.instance().getBaseColor("input");
         this.box.style = this.disable ? inputboxColor.blessedReverse : inputboxColor.blessed;
@@ -62,8 +61,13 @@ export class InputWidget extends Widget {
     }
 
     setValue( value: string ) {
-        if ( value ) {
-            this.value = value;
+        if ( value !== null ) {
+            const passwordType = this.option && this.option.passwordType || false;
+            if ( passwordType ) {
+                this.value = Crypto.decrypt(value) || "";
+            } else {
+                this.value = value;
+            }
             this.cursorPos = strWidth(this.value);
         }
     }
