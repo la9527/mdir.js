@@ -106,7 +106,8 @@
         "Paste": "붙여넣기",
         "Remove": "삭제",
         "TermScrollUp": "스크롤 위로",
-        "TermScrollDown": "스크롤 아래로"
+        "TermScrollDown": "스크롤 아래로",
+        "Fullscreen": "전체 화면"
     },
     "Message": {
         "ANY_KEY_RETURN_M_JS": "아무 키를 누르면 복귀합니다.",
@@ -123,7 +124,8 @@
         "FILE_OPEN_FAILURE": "파일을 여는데 실패하였습니다.",
         "Archive": "압축 파일 보기",
         "SelectProgramToRun" : "실행할 프로그램 선택하세요.",
-        "QuitSftp": "접속을 종료할까요?"
+        "QuitSftp": "접속을 종료할까요?",
+        "FullscreenReturnKey" : "mdir.js로 돌아가려면, Ctrl+U 를 누르세요."
     },
     "EditorMsg": {
         "TITLE_GOTO_NUMBER": "라인 이동",
@@ -174,7 +176,8 @@
         "TermScrollUp": "터미널 스크롤 위로",
         "TermScrollDown": "터미널 스크롤 아래로",
         "TermScrollPageUp": "터미널 스크롤 페이지 위로",
-        "TermScrollPageDown": "터미널 스크롤 페이지 아래로"
+        "TermScrollPageDown": "터미널 스크롤 페이지 아래로",
+        "FullscreenView": "터미녈 전체 화면으로 변경"
     },
     "About": [
         "{center}{bold}Mdir.js{/bold}은 심플한 파일 관리자 입니다.{/center}\n",

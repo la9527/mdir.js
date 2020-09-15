@@ -106,7 +106,8 @@
         "Paste": "Paste",
         "Remove": "Remove",
         "TermScrollUp": "Scroll Up",
-        "TermScrollDown": "Scroll Down"
+        "TermScrollDown": "Scroll Down",
+        "FullScreen": "Full Screen"
     },
     "Message": {
         "VIM_NOT_EXECUTED": "'VIM' is not executed.\nVIM software must be installed on this system to run it.",
@@ -124,7 +125,8 @@
         "FILE_OPEN_FAILURE": "file open failure !!!",
         "Archive": "Compress file",
         "SelectProgramToRun" : "Please select a program to run",
-        "QuitSftp": "Do you want to close the connection?"
+        "QuitSftp": "Do you want to close the connection?",
+        "FullscreenReturnKey" : "If you want to return to mdir.js, press Ctrl+U again."
     },
     "EditorMsg": {
         "TITLE_GOTO_NUMBER": "Go to Line Number",
@@ -176,7 +178,8 @@
         "TermScrollDown": "terminal scroll down",
         "TermScrollPageUp": "terminal scroll page up",
         "TermScrollPageDown": "terminal scroll page down",
-        "PanelSync": "set panels to same directory."
+        "PanelSync": "set panels to same directory.",
+        "FullscreenView": "change full screen teminal"
     },
     "About": [
         "{center}{bold}Mdir.js{/bold} is a visual file manager.{/center}\n",

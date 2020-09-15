@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/member-ordering */
 /* eslint-disable no-control-regex */
+import colors from "colors";
 import { Widget } from "./widget/Widget";
 import { IPty } from "node-pty";
 import * as NodePTY from "node-pty";
@@ -17,6 +18,7 @@ import { T } from "../common/Translation";
 import { SftpReader } from "../panel/sftp/SftpReader";
 import { IEvent } from "xterm";
 import { EventEmitter } from "./xterm/common/EventEmitter";
+import mainFrame from "./MainFrame";
 
 const log = Logger("BlassedXTerm");
 
@@ -146,6 +148,8 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
 
     isCursorDraw: boolean = true;
     cursorPos = { y: -1, x: -1 };
+
+    isFullscreen: boolean = false;
 
     constructor( options: any, reader: Reader, firstPath: File ) {
         super( { ...options, scrollable: false } );
@@ -299,9 +303,9 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
 
         const initPtyEvent = () => {
             this.on("resize", () => {
-                log.debug( "PANEL - resize !!!" );
+                log.debug( "BlessedXterm - resize !!!" );
                 process.nextTick(() => {
-                    log.debug( "BLESSED TERM RESIZE !!! - TERMINAL");
+                    log.debug( "BLESSED TERM RESIZE !!! - TERMINAL");                    
                     this.term && this.term.resize((box.width as number) - (box.iwidth as number), (box.height as number) - (box.iheight as number));
                 });
                 process.nextTick(() => {
@@ -324,8 +328,9 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
                 }
             });
     
-            this.pty.on("exit", (code) => {
+            this.pty.on("exit", async (code) => {
                 log.debug( "on exit !!! - %d", code );
+                await this.fullscreenRecover();
                 this.box.emit( "process_exit", code );
             });
         };
@@ -416,15 +421,22 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         return RefreshType.NONE;
     }
 
+    /*
     _onData(data: string) {
         if (this.screen.focused === this.panel.box && !this._isMouse(data) ) {
             this.pty && this.pty.write(data);
         }
     }
+    */
 
     write(data) {
         // log.debug( "term write [%d]", data.length );
-        return this.term.write(data);
+        if ( this.term ) {
+            this.term.write(data);
+        }
+        if ( this.isFullscreen ) {
+            process.stdout.write( data );
+        }
     }
 
     public clear(): void {
@@ -439,6 +451,10 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
     _render(startRow = -1, endRow = -1) {
         const box = this.panel.box as any;
         const screen = this.screen as any;
+
+        if ( this.isFullscreen ) {
+            return;
+        }
 
         let ret = null;
         try {
@@ -708,5 +724,55 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             this.term.buffer.ydisp = this.term.buffer.ybase;
         }
         this.box.screen.render();
+    }
+
+    private fullscreenKeyPressEvent = null;
+    private fullscreenKeyPressEventPty = null;
+    private isHintshowed = false;
+
+    async fullscreenRecover() {
+        if ( this.isFullscreen ) {
+            this.isFullscreen = false;            
+            if ( this.fullscreenKeyPressEvent ) {
+                this.screen.program.removeListener( "keypress", this.fullscreenKeyPressEvent );
+                process.stdin.removeListener( "data", this.fullscreenKeyPressEventPty );
+                this.fullscreenKeyPressEvent = null;
+            }
+            this.screen.enter();
+            mainFrame().lockKeyRelease("xtermFullScreen");
+            await mainFrame().refreshPromise();
+            mainFrame().execRefreshType( RefreshType.ALL );
+        }
+    }
+
+    @Help( T("Help.FullscreenView") )
+    keyXtermFullScreen() {
+        setTimeout( () => {
+            mainFrame().lockKey("xtermFullScreen", this);
+            this.screen.leave();
+            this.isFullscreen = true;
+            
+            this.fullscreenKeyPressEventPty = ( buf ) => {
+                // log.debug( "stdin: [%s] [%s]", buf.toString("hex"), buf.toString("utf8") );
+                this.pty && this.pty.write( buf.toString("utf8") );
+            };
+            process.stdin.on( "data", this.fullscreenKeyPressEventPty );
+
+            this.fullscreenKeyPressEvent = (ch, keyInfo) => {
+                log.debug( "KEY: [%s]", keyInfo );
+                if ( keyInfo && keyInfo.full === "C-u" ) {
+                    this.fullscreenRecover();
+                }
+            };
+
+            if ( !this.isHintshowed ) {
+                process.stdout.write( "\n\n" );
+                process.stdout.write( " > " + colors.white(T("Message.FullscreenReturnKey")) + "\n" );
+                this.pty.write("\n");
+                this.isHintshowed = true;
+            }
+            this.screen.program.on( "keypress", this.fullscreenKeyPressEvent);
+        }, 300 );
+        return RefreshType.NONE;
     }
 }
