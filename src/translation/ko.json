@@ -122,7 +122,8 @@
         "QuitProgram": "이 프로그램을 종료할까요?",
         "FILE_OPEN_FAILURE": "파일을 여는데 실패하였습니다.",
         "Archive": "압축 파일 보기",
-        "SelectProgramToRun" : "실행할 프로그램 선택하세요."
+        "SelectProgramToRun" : "실행할 프로그램 선택하세요.",
+        "QuitSftp": "접속을 종료할까요?"
     },
     "EditorMsg": {
         "TITLE_GOTO_NUMBER": "라인 이동",

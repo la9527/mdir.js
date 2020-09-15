@@ -120,10 +120,11 @@
         "MakeDirectory": "Make Directory",
         "Rename": "Rename",
         "MountList": "Mount List",
-        "QuitProgram": "Do you want to quit the program?",
+        "QuitProgram": "Do you want to quit  program?",
         "FILE_OPEN_FAILURE": "file open failure !!!",
         "Archive": "Compress file",
-        "SelectProgramToRun" : "Please select a program to run"
+        "SelectProgramToRun" : "Please select a program to run",
+        "QuitSftp": "Do you want to close the connection?"
     },
     "EditorMsg": {
         "TITLE_GOTO_NUMBER": "Go to Line Number",
