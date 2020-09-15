@@ -8,6 +8,7 @@ import { Logger } from "../../common/Logger";
 import { Transform } from "stream";
 import { convertAttrToStatMode } from "../FileReader";
 import { Socket } from "net";
+import { Crypto } from "../../common/Crypto";
 
 const log = Logger("SftpReader");
 
@@ -111,15 +112,26 @@ export class SftpReader extends Reader {
         return `sftp://${username}@${host}:${port}`;
     }
 
+    private decryptConnectionInfo( option: ssh2ConnectionInfo ): ssh2ConnectionInfo {
+        const result = { ...option };
+        result.password = Crypto.decrypt(option.password) || "";
+        if (result.proxyInfo && result.proxyInfo.proxy ) {
+            result.proxyInfo.proxy.password = Crypto.decrypt(option.proxyInfo.proxy.password) || "";
+        }
+        return result;
+    }
+
     public connect( option: ssh2ConnectionInfo, connectionErrorFunc: ( errInfo: any ) => void, connectionOnly: boolean = false ): Promise<void> {
         log.debug( "CONNECTION INFO: %s", JSON.stringify(option, null, 2) );
         // eslint-disable-next-line no-async-promise-executor
         return new Promise( async (resolve, reject) => {
-            if ( option.proxyInfo ) {
+            const decryptOption = this.decryptConnectionInfo(option);
+
+            if ( decryptOption.proxyInfo ) {
                 try {
-                    const { socket } = await SocksClient.createConnection(option.proxyInfo);
+                    const { socket } = await SocksClient.createConnection(decryptOption.proxyInfo);
                     log.info( "PROXY CONNECT OK: [%s][%d]", socket.remoteAddress, socket.remotePort );
-                    option.sock = socket;
+                    decryptOption.sock = socket;
                 } catch( err ) {
                     log.error( "Proxy CONNECTION ERROR - ERORR: %s", err );
                     reject( err );
@@ -174,7 +186,7 @@ export class SftpReader extends Reader {
             // log.debug("connect option : %j", option );
             log.info( "Client connect - [%s:%d] - [%s]", option.host, option.port || 22, option.username );
             this.option = option;
-            this.client.connect( option );
+            this.client.connect( decryptOption );
         });
     }
 

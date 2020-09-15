@@ -4,6 +4,7 @@ import { Widget } from "./Widget";
 import { Logger } from "../../common/Logger";
 import { ColorConfig } from "../../config/ColorConfig";
 import { StringUtils } from "../../common/StringUtils";
+import { Crypto } from "../../common/Crypto";
 
 const log = Logger("InputWidget");
 
@@ -53,12 +54,18 @@ export class InputWidget extends Widget {
     }
 
     getValue() {
+        const passwordType = this.option && this.option.passwordType || false;
+        if ( passwordType ) {
+            return Crypto.encrypt(this.value) || "";
+        }
         return this.value;
     }
 
     setValue( value: string ) {
-        this.value = value;
-        this.cursorPos = strWidth(this.value);
+        if ( value ) {
+            this.value = value;
+            this.cursorPos = strWidth(this.value);
+        }
     }
 
     draw() {
