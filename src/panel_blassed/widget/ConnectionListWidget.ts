@@ -338,6 +338,7 @@ export class ConnectionListWidget extends Panel {
         try {
             await super.read(path);
 
+            log.warn("this._currentDir.fullname: [%s][%s]", this._currentDir.fullname, this.basePath);
             this.dirFiles = this.dirFiles.filter( (item) => {
                 if ( this._currentDir.fullname === this.basePath && item.name === ".." ) {
                     return false;

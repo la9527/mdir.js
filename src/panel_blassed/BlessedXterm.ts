@@ -115,7 +115,7 @@ class SshPty implements IPty {
     }
 
     write(data: string): void {
-        this.stream?.write( Buffer.from(data) );
+        this.stream?.write( Buffer.from(data, "utf8") );
     }
 
     kill(signal: string): void {
@@ -316,7 +316,6 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
     
             this.pty.on("data", (data) => {
                 if ( Buffer.isBuffer(data) ) {
-                    log.debug( "DATA: [%s]", (data as Buffer).toString().normalize() );
                     this.parseOSC1337((data as Buffer).toString());
                     this.write(data);
                 } else {

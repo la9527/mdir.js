@@ -110,7 +110,7 @@ export class ConnectionManager extends Widget {
             this.onEventListener( widget, index, eventName, args );
         });
 
-        const connManagerPath = (await this.fileReader.homeDir()).fullname + "/.m/connection_manager";
+        const connManagerPath = (await this.fileReader.homeDir()).fullname + this.fileReader.sep() + ".m" + this.fileReader.sep() + "connection_manager";
         log.debug( "CONNECTION_MANAGER_PATH: " + connManagerPath );
 
         try {
