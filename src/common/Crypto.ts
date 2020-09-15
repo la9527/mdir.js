@@ -18,14 +18,11 @@ const log = Logger("Crypto");
 export class Crypto {
     private static getKey() {
         const keyInfo = Object.values(os.networkInterfaces()).map( item => item[0].mac.replace(/:/g,"") ).filter( item => item !== "000000000000" ).join("");
-        if ( keyInfo.length > ALGORITHM.KEY_BYTE_LEN ) {
-            return keyInfo.substr(0, ALGORITHM.KEY_BYTE_LEN);
+        const keySha256 = crypto.createHash("sha512").update(keyInfo).digest("hex");
+        if ( keySha256.length > ALGORITHM.KEY_BYTE_LEN ) {
+            return keySha256.substr(0, ALGORITHM.KEY_BYTE_LEN);
         }
-        let result = "";
-        do {
-            result += keyInfo;
-        } while( result.length < ALGORITHM.KEY_BYTE_LEN );
-        return keyInfo.substr(0, ALGORITHM.KEY_BYTE_LEN);
+        return null;
     }
 
     public static encrypt(messagetext: string): string {
