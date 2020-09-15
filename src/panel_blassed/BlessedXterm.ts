@@ -735,8 +735,11 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             this.isFullscreen = false;            
             if ( this.fullscreenKeyPressEvent ) {
                 this.screen.program.removeListener( "keypress", this.fullscreenKeyPressEvent );
-                process.stdin.removeListener( "data", this.fullscreenKeyPressEventPty );
                 this.fullscreenKeyPressEvent = null;
+            }
+            if ( this.fullscreenKeyPressEventPty ) {
+                process.stdin.removeListener( "data", this.fullscreenKeyPressEventPty );
+                this.fullscreenKeyPressEventPty = null;
             }
             this.screen.enter();
             mainFrame().lockKeyRelease("xtermFullScreen");
@@ -746,6 +749,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
     }
 
     @Help( T("Help.FullscreenView") )
+    @Hint({ hint: T("Hint.FullscreenView"), order: 2 })
     keyXtermFullScreen() {
         setTimeout( () => {
             mainFrame().lockKey("xtermFullScreen", this);

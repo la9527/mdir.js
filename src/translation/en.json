@@ -107,7 +107,7 @@
         "Remove": "Remove",
         "TermScrollUp": "Scroll Up",
         "TermScrollDown": "Scroll Down",
-        "FullScreen": "Full Screen"
+        "FullscreenView": "Full Screen"
     },
     "Message": {
         "VIM_NOT_EXECUTED": "'VIM' is not executed.\nVIM software must be installed on this system to run it.",

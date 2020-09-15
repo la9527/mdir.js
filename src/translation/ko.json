@@ -107,7 +107,7 @@
         "Remove": "삭제",
         "TermScrollUp": "스크롤 위로",
         "TermScrollDown": "스크롤 아래로",
-        "Fullscreen": "전체 화면"
+        "FullscreenView": "전체 화면"
     },
     "Message": {
         "ANY_KEY_RETURN_M_JS": "아무 키를 누르면 복귀합니다.",
