@@ -32,7 +32,8 @@
         "Rename": "이름변경",
         "Select": "선택",
         "Find": "찾기",
-        "NextFind": "다음 찾기"
+        "NextFind": "다음 찾기",
+        "ConnectionManager": "접속관리자"
     },
     "Menu": {
         "Mdir": "Mdir.js",

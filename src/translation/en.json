@@ -32,7 +32,8 @@
         "Rename": "Rename",
         "Select": "Select",
         "Find": "Find",
-        "NextFind": "Next Find"
+        "NextFind": "Next Find",
+        "ConnectionManager": "Remote"
     },
     "Menu": {
         "Mdir": "Mdir.js",

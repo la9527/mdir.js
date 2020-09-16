@@ -344,6 +344,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
                 });
                 return;
             }
+            this.header.setContent( [ this.shell, ...(this.args || []) ].join(" ") || "" );
         }
         (this.screen as any)._listenKeys(this);
     }
