@@ -631,10 +631,12 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                 keepaliveInterval: Configure.instance().getOpensshOption("keepaliveInterval"),
                 keepaliveCountMax: Configure.instance().getOpensshOption("keepaliveCountMax"),
                 readyTimeout: Configure.instance().getOpensshOption("readyTimeout"),
-                proxyInfo: proxyInfo,
+                proxyInfo: proxyInfo
+                /*
                 debug: ( ...args: any[] ) => {
                     log.debug( "SFTP DBG: %s", args.join(" ") );
                 }
+                */
             };
         };
 

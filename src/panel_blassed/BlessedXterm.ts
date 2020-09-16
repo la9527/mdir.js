@@ -150,6 +150,8 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
     cursorPos = { y: -1, x: -1 };
 
     isFullscreen: boolean = false;
+    inputBlock: boolean = false;
+    outputBlock: boolean = false;
 
     constructor( options: any, reader: Reader, firstPath: File ) {
         super( { ...options, scrollable: false } );
@@ -247,21 +249,13 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         return null;
     }
 
-    bootstrap(firstPath: File) {
+    async bootstrap(firstPath: File) {
         const box = this.panel.box;
         this.term = new XTerminal({
             cols: (box.width as number) - (box.iwidth as number),
             rows: (box.height as number) - (box.iheight as number),
             cursorBlink: this.cursorBlink
         });
-
-        // Incoming keys and mouse inputs.
-        // NOTE: Cannot pass mouse events - coordinates will be off!
-        /*
-        this.screen.program.input.on('data', (data) => {
-            this._onData(data);
-        });
-        */
 
         this.panel.on("focus", () => {
             this.term.focus();
@@ -301,58 +295,38 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
 
         log.debug( "SHELL : %s %s", this.shell, this.args );
 
-        const initPtyEvent = () => {
-            this.on("resize", () => {
-                log.debug( "BlessedXterm - resize !!!" );
-                process.nextTick(() => {
-                    log.debug( "BLESSED TERM RESIZE !!! - TERMINAL");                    
-                    this.term && this.term.resize((box.width as number) - (box.iwidth as number), (box.height as number) - (box.iheight as number));
-                });
-                process.nextTick(() => {
-                    log.debug( "BLESSED PTY RESIZE !!! - TERMINAL");
-                    try {
-                        this.pty.resize((box.width as number) - (box.iwidth as number), (box.height as number) - (box.iheight as number));
-                    } catch (e) {
-                        log.debug( e );
-                    }
-                });
-            });
-    
-            this.pty.on("data", (data) => {
-                if ( Buffer.isBuffer(data) ) {
-                    this.parseOSC1337((data as Buffer).toString());
-                    this.write(data);
-                } else {
-                    this.parseOSC1337(data);
-                    this.write(data);
+        if ( this.getReader() instanceof SftpReader ) {
+            this.on("widget.changetitle", () => {
+                if ( !this.isFullscreen ) {
+                    this.header.setContent( sftpReader.getConnectInfo() + this.getCurrentPath() || "" );
+                    this.box.screen.render();
                 }
             });
-    
-            this.pty.on("exit", async (code) => {
-                log.debug( "on exit !!! - %d", code );
-                await this.fullscreenRecover();
-                this.box.emit( "process_exit", code );
-            });
-        };
 
-        if ( this.getReader() instanceof SftpReader ) {
             const sftpReader = this.getReader() as SftpReader;
             const sshPty = new SshPty({
                 reader: this.getReader() as SftpReader,
                 term: this.termName,
                 cols: (box.width as number) - (box.iwidth as number),
                 rows: (box.height as number) - (box.iheight as number),
-                result: (err) => {
+                result: async (err) => {
                     if ( err ) {
                         this.box.emit( "error", err );
                     } else {
                         this.pty = sshPty;
-                        initPtyEvent();
+                        await this.initPtyEvent();
                     }
                 }
             });
             this.header.setContent( sftpReader.getConnectInfo() );
         } else {
+            this.on("widget.changetitle", () => {
+                if ( !this.isFullscreen ) {
+                    this.header.setContent( this.getCurrentPath() || "" );
+                    this.box.screen.render();
+                }
+            });
+
             try {
                 this.pty = NodePTY.spawn(this.shell, this.args, {
                     name: this.termName,
@@ -362,7 +336,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
                     encoding: os.platform() !== "win32" ? "utf-8" : null,
                     env: this.options.env || process.env
                 });
-                initPtyEvent();
+                await this.initPtyEvent();
             } catch( e ) {
                 log.error( e );
                 process.nextTick(() => {
@@ -370,9 +344,110 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
                 });
                 return;
             }
-            this.header.setContent( [ this.shell, ...(this.args || []) ].join(" ") || "" );
         }
         (this.screen as any)._listenKeys(this);
+    }
+
+    async initPtyEvent() {
+        const box = this.panel.box;
+
+        this.on("resize", () => {
+            log.debug( "BlessedXterm - resize !!!" );
+            process.nextTick(() => {
+                log.debug( "BLESSED TERM RESIZE !!! - TERMINAL");
+                this.term && this.term.resize((box.width as number) - (box.iwidth as number), (box.height as number) - (box.iheight as number));
+            });
+            process.nextTick(() => {
+                log.debug( "BLESSED PTY RESIZE !!! - TERMINAL");
+                try {
+                    this.pty.resize((box.width as number) - (box.iwidth as number), (box.height as number) - (box.iheight as number));
+                } catch (e) {
+                    log.debug( e );
+                }
+            });
+        });
+
+        this.inputBlock = true;
+        this.outputBlock = false;
+        this.pty.on("data", (data) => {
+            if ( Buffer.isBuffer(data) ) {
+                this.parseOSC1337((data as Buffer).toString());
+                if( !this.outputBlock ) {
+                    this.write(data);
+                }
+            } else {
+                this.parseOSC1337(data);
+                if( !this.outputBlock ) {
+                    this.write(data);   
+                }
+            }
+        });
+
+        this.pty.on("exit", async (code) => {
+            log.debug( "on exit !!! - %d", code );
+            await this.fullscreenRecover();
+            this.box.emit( "process_exit", code );
+        });
+
+        let isPromptUpdate = false;
+        await new Promise( (resolve, reject) => {
+            try {
+                if ( [ "zsh", "bash", "sh" ].indexOf(this.shell) > -1 || this.getReader() instanceof SftpReader ) {
+                    setTimeout( () => {
+                        if ( !this.getCurrentPath() ) {
+                            this.outputBlock = true;
+                            const remoteHost = "\\033]1337;RemoteHost=\\u@\\h\\007";
+                            const currentDir = "\\033]1337;CurrentDir=\\w\\007";
+                            this.pty.write( `PS1="$\{PS1\}${remoteHost}${currentDir}"\n` );
+                            isPromptUpdate = true;
+                            log.debug( "PROMPT UPDATE !!!" );
+                        }
+                        resolve();
+                    }, 500 );
+                } else {
+                    resolve();
+                }
+            } catch( e ) {
+                log.error( e );
+                reject(e);
+            }
+        });
+
+        const changeDirectory = async (resolve) => {
+            const curDir = await this.getReader().currentDir();
+            if ( !curDir || !curDir.fullname ) {
+                return;
+            }
+            this.pty.write( `cd "${curDir.fullname}"\n` );
+            log.debug( `CHANGE DIRECTORY: "${curDir.fullname}"` );
+            setTimeout( resolve, 10 );
+        };
+
+        if ( isPromptUpdate ) {
+            const pathCheckFunc = (resolve) => {
+                setTimeout( () => {
+                    resolve( !!this.getCurrentPath() );
+                }, 10);
+            };
+
+            for ( let i = 0; i < 10; i++ ) {
+                if ( await new Promise( pathCheckFunc ) ) {
+                    log.debug( "PATH Detect !!! - Number:%d", i );
+                    if ( this.getReader() instanceof SftpReader ) {
+                        await new Promise( changeDirectory );
+                    }
+                    break;
+                }
+            }
+        } else {
+            if ( this.getReader() instanceof SftpReader ) {
+                this.outputBlock = true;
+                await new Promise( changeDirectory );
+            }
+        }
+        this.outputBlock = false;
+        this.inputBlock = false;
+        this.emit("widget.changetitle");
     }
 
     /**
@@ -388,18 +463,23 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             }
         };
 
+        let isFind = false;
+        const beforePath = this.getCurrentPath();
         const findOSC1337 = ( text ) => {
             const idx1 = text.indexOf("\x1b]1337;");
             if ( idx1 > -1 ) {
                 const idx2 = text.indexOf("\x07", idx1);
                 if ( idx2 > -1 ) {
                     text.substring(idx1 + 7, idx2).split(";").forEach((item) => convertProps(item));
+                    isFind = true;
                     findOSC1337( text.substr(idx2+1) );
                 }
             }
         };
         findOSC1337(data);
-        // log.debug( this.osc1337 );
+        if ( isFind && this.getCurrentPath() !== beforePath ) {
+            this.emit( "widget.changetitle" );
+        }
     }
 
     hasFocus() {
@@ -411,6 +491,9 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
     }
 
     ptyKeyWrite( keyInfo ): RefreshType {
+        if ( this.inputBlock ) {
+            return RefreshType.NONE;
+        }
         if ( keyInfo && keyInfo.name !== "enter" && keyInfo ) {
             log.debug( "pty write : [%j]", keyInfo );
             this.pty && this.pty.write(keyInfo.sequence || keyInfo.ch);
@@ -420,14 +503,6 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         }
         return RefreshType.NONE;
     }
-
-    /*
-    _onData(data: string) {
-        if (this.screen.focused === this.panel.box && !this._isMouse(data) ) {
-            this.pty && this.pty.write(data);
-        }
-    }
-    */
 
     write(data) {
         // log.debug( "term write [%d]", data.length );
