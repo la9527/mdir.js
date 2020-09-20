@@ -13,6 +13,7 @@
     "testimage": "tsc -p tsconfig.json && node ./build/test/imagetest.js",
     "testeditor": "tsc -p tsconfig.json && node ./build/test/editortest.js",
     "archivetest": "tsc -p tsconfig.json && node ./build/test/archive.js",
+    "colordemo": "tsc -p tsconfig.json && node ./build/test/colordemo.js",
     "prepare": "tsc -p tsconfig.json",
     "postinstall": "node ./scripts/post-install.js",
     "pkg": "pkg --target=node12-macos-x64 --out-path=./binary .",

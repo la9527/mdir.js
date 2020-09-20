@@ -25,6 +25,8 @@ import en from "../translation/en.json";
 import ko from "../translation/ko.json";
 import { button } from "../../@types/blessed";
 import { BlessedEditor } from "../panel_blassed/BlessedEditor";
+import { i18nInit, T, changeLanguage } from "../common/Translation";
+import osLocale from "os-locale";
 import { IConnectionInfo, ConnectionEditor, IConnectionEditorOption } from "../panel_blassed/widget/ConnectionEditor";
 import { ConnectionManager } from "../panel_blassed/widget/ConnectionManager";
 
@@ -104,31 +106,51 @@ screen.key("i", async () => {
 });
 
 screen.key("t", async () => {
-    /*
+    (global as any).LOCALE = await osLocale();
+    await i18nInit( (global as any).LOCALE.match( /^ko/ ) ? "ko" : undefined );
+
     const connectionInfo: IConnectionEditorOption = {
         name: "테스트",
-        host: "127.0.0.1",
-        port: 22, // default 22
-        username: "la9527",
-        password: "test",
-        privateKey: "~/.ssh/id_rsa",
-        proxyInfo: {
-            host: "127.0.0.1",
-            port: 4016,
-            type: 5,
-            username: "la9527",
-            password: "test"
-        },
+        info: [
+            {
+                protocol: "SFTP",
+                host: "127.0.0.1",
+                port: 22, // default 22
+                username: "la9527_sftp",
+                password: "test",
+                privateKey: "~/.ssh/id_rsa",
+                proxyInfo: {
+                    host: "127.0.0.1",
+                    port: 4016,
+                    type: 5,
+                    username: "la9527",
+                    password: "test"
+                },
+            },
+            {
+                protocol: "SSH",
+                host: "127.0.0.1",
+                port: 22, // default 22
+                username: "la9527_ssh",
+                password: "test",
+                privateKey: "~/.ssh/id_rsa",
+                proxyInfo: {
+                    host: "127.0.0.1",
+                    port: 4016,
+                    type: 5,
+                    username: "la9527",
+                    password: "test"
+                },
+            }
+        ],
         resultFunc: (result, message) => {
             screen.destroy();
-            console.log( result, message );
+            console.log( result, JSON.stringify(message, null, 2) );
         }
     };
     new ConnectionEditor(connectionInfo, { parent: screen });
     screen.render();
-    */
-
-    new ConnectionManager({ parent: screen });
+    // new ConnectionManager({ parent: screen });
 });
 
 screen.render();

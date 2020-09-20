@@ -134,7 +134,9 @@ export class InputBox extends Widget {
             this.inputWidget,
             ...this.buttonWidgets
         ], ( widget, index, eventName ) => {
-            if ( widget instanceof ButtonWidget && eventName === "widget.return") {
+            if ( widget instanceof InputWidget && eventName === "widget.return") {
+                this.inputBoxOption.result( this.inputWidget.getValue(), this.buttonWidgets[0].aliasName );
+            } else if ( widget instanceof ButtonWidget && eventName === "widget.return") {
                 this.inputBoxOption.result( this.inputWidget.getValue(), widget.aliasName );
             }
         });

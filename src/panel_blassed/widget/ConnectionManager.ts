@@ -138,7 +138,9 @@ export class ConnectionManager extends Widget {
         this.box.screen.render();
 
         if ( this.connectionListWidget.getViewJsonFiles().length === 0 ) {
-            this.onClickInsert();
+            process.nextTick( () => {
+                this.onClickInsert();
+            });
         }
     }
 

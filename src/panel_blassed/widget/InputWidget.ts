@@ -61,15 +61,17 @@ export class InputWidget extends Widget {
     }
 
     setValue( value: string ) {
-        if ( value !== null ) {
+        if ( value ) {
             const passwordType = this.option && this.option.passwordType || false;
             if ( passwordType ) {
                 this.value = Crypto.decrypt(value) || "";
             } else {
                 this.value = value;
             }
-            this.cursorPos = strWidth(this.value);
+        } else {
+            this.value = "";
         }
+        this.cursorPos = strWidth(this.value);
     }
 
     draw() {
@@ -78,8 +80,8 @@ export class InputWidget extends Widget {
         this.box.style = this.disable ? inputDisableColor.blessed : inputboxColor.blessed;
 
         const width = this.box.width;
-        const w = strWidth( this.value );
-        let viewStr = this.value;
+        const w = strWidth( this.value || "" );
+        let viewStr = this.value || "";
         if ( w > width ) {
             let cutFirstPos = this.cursorPos - 3;
             if ( cutFirstPos < 0) {
@@ -94,6 +96,7 @@ export class InputWidget extends Widget {
         }
 
         const passwordType = this.option && this.option.passwordType || false;
+        // log.debug( "%s - setValue: [%s]", this.aliasName, viewStr );
         this.setContent( passwordType ? viewStr.replace( /./g, "*" ) : viewStr );
     }
 

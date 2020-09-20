@@ -21,7 +21,7 @@ import { ImageViewBox } from "./widget/ImageBox";
 import { File } from "../common/File";
 import { BaseMainFrame } from "./BaseMainFrame";
 import { ConnectionManager } from "./widget/ConnectionManager";
-import { IConnectionInfo } from "./widget/ConnectionEditor";
+import { IConnectionInfo, IConnectionInfoBase } from "./widget/ConnectionEditor";
 import { ArchiveReader } from "../panel/archive/ArchiveReader";
 import { FileReader } from "../panel/FileReader";
 import { ArchiveZip } from "../panel/archive/ArchiveZip";
@@ -577,7 +577,7 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
             process.nextTick( async () => {
                 this.activePanel().setFocus();
                 if ( connectionInfo ) {
-                    await this.sshConnect( connectionInfo );
+                    await this.ssh2connect( connectionInfo );
                 }
                 await this.refreshPromise();
                 this.execRefreshType(RefreshType.ALL);
@@ -599,10 +599,11 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
         connectionManager.on( "widget.jsoneditor", jsonEditor);
     }
 
-    async sshConnect( connectionInfo: IConnectionInfo ) {
+    async ssh2connect( connectionInfo: IConnectionInfo ) {
         log.debug( "SSH Connection: %j", connectionInfo );
 
-        const convertInfo = (info: IConnectionInfo): ssh2ConnectionInfo => {
+        const convertInfo = (connInfo: IConnectionInfo): ssh2ConnectionInfo => {
+            const info: IConnectionInfoBase = connInfo.info.find( item => item.protocol.match(/SFTP/) );
             let proxyInfo: SocksClientOptions = null;
             if ( info.proxyInfo ) {
                 proxyInfo = {
@@ -622,21 +623,19 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                 };
             }
             return {
-                host: connectionInfo.host,
-                port: connectionInfo.port,
-                username: connectionInfo.username,
-                password: connectionInfo.password,
-                privateKey: connectionInfo.privateKey,
+                host: info.host,
+                port: info.port,
+                username: info.username,
+                password: info.password,
+                privateKey: info.privateKey,
                 algorithms: Configure.instance().getOpensshOption("algorithms"),
                 keepaliveInterval: Configure.instance().getOpensshOption("keepaliveInterval"),
                 keepaliveCountMax: Configure.instance().getOpensshOption("keepaliveCountMax"),
                 readyTimeout: Configure.instance().getOpensshOption("readyTimeout"),
-                proxyInfo: proxyInfo
-                /*
+                proxyInfo: proxyInfo,
                 debug: ( ...args: any[] ) => {
                     log.debug( "SFTP DBG: %s", args.join(" ") );
                 }
-                */
             };
         };
 
@@ -663,7 +662,6 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                     await activePanel.read( homeDir );
                     activePanel.setFocus();
                     activePanel.resetPosition();
-
                 } catch( err ) {
                     log.error( err.stack );
                     await messageBox({

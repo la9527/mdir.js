@@ -162,6 +162,7 @@ export class Widget {
     setContent( text ) {
         // convert to NFC normalize from UTF8
         // UTF8 separation
+        //log.debug( "%s - setContent - %s %s", this.aliasName, text, typeof(text) );
         this.box.setContent( text.normalize() );
     }
 

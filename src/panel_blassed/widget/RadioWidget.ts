@@ -119,7 +119,6 @@ export class RadioWidget extends Widget {
     }
 
     keyReturn() {
-        this.isChecked = !this.isChecked;
         this.emit("widget.changeradio", this.isChecked);
     }
 

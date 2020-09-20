@@ -54,7 +54,7 @@ export const widgetsEventListener = ( widgets: Widget[], callback?: (widget: Wid
         };
     };
 
-    [ "widget.tab", "widget.shifttab", "widget.escape", "widget.return", "widget.changeradio" ].forEach( eventName => {
+    [ "widget.tab", "widget.shifttab", "widget.escape", "widget.return", "widget.changeradio", "widget.tabenter" ].forEach( eventName => {
         widgets.forEach( (widget: Widget, idx: number) => {
             widget.on( eventName, result(eventName, idx, widget) );
         });

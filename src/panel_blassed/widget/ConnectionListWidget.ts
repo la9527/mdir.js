@@ -102,15 +102,19 @@ export class FileBox extends Widget {
 
     drawTypeTwo() {
         const { fontColorName, backColorName } = this._file.color;
-        const { name, host, port } = this._file.extendInfo || {};
+        const { name, info } = this._file.extendInfo || {};
         
         let viewText = null;
-        if ( name && host && port ) {
-            const textName = this.convertName(name, 20);
-            const textHost = this.convertName(host, 20);
+        if ( name && info && info.length > 0 ) {
+            const protocols = info.map( item => item.protocol );
+            const { host, port } = info[0];
+
+            const textName = this.convertName(name, 14);
+            const textHost = this.convertName(host, 10);
             const textPort = this.convertName(port + "", 5, true);
+            const textProtocols = this.convertName( protocols.join(","), 10 );
             const select = this._file.select ? "{white-fg}*{/}" : " ";
-            viewText = sprintf("%s%s %10s %5s", select, textName, textHost, textPort);
+            viewText = sprintf("%s%s %10s %5s %10s", select, textName, textHost, textPort, textProtocols);
         } else {
             const textFileName = this.convertFilename(this.width as number - 12);
             const tailview = this.convertFileSize();
@@ -368,7 +372,7 @@ export class ConnectionListWidget extends Panel {
             }
             try {
                 file.extendInfo = JSON.parse(text);
-                if ( file.extendInfo.name && file.extendInfo.host ) {
+                if ( file.extendInfo.name && file.extendInfo.info ) {
                     return true;
                 }
             } catch( e ) {
