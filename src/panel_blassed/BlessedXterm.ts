@@ -295,6 +295,9 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
 
         log.debug( "SHELL : %s %s", this.shell, this.args );
 
+        this.inputBlock = true;
+        this.outputBlock = false;
+
         if ( this.getReader() instanceof SftpReader ) {
             this.on("widget.changetitle", () => {
                 if ( !this.isFullscreen ) {
@@ -356,20 +359,30 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             log.debug( "BlessedXterm - resize !!!" );
             process.nextTick(() => {
                 log.debug( "BLESSED TERM RESIZE !!! - TERMINAL");
-                this.term && this.term.resize((box.width as number) - (box.iwidth as number), (box.height as number) - (box.iheight as number));
+                if ( !this.isFullscreen ) {
+                    this.term && this.term.resize((box.width as number) - (box.iwidth as number), (box.height as number) - (box.iheight as number));
+                } else {
+                    this.term && this.term.resize(this.screen.width as number, this.screen.height as number);
+                }
             });
             process.nextTick(() => {
                 log.debug( "BLESSED PTY RESIZE !!! - TERMINAL");
-                try {
-                    this.pty.resize((box.width as number) - (box.iwidth as number), (box.height as number) - (box.iheight as number));
-                } catch (e) {
-                    log.debug( e );
+                if ( !this.isFullscreen ) {
+                    try {
+                        this.pty.resize((box.width as number) - (box.iwidth as number), (box.height as number) - (box.iheight as number));
+                    } catch (e) {
+                        log.debug( e );
+                    }
+                } else {
+                    try {
+                        this.pty.resize( this.screen.width as number, this.screen.height as number);
+                    } catch (e) {
+                        log.debug( e );
+                    }
                 }
             });
         });
 
-        this.inputBlock = true;
-        this.outputBlock = false;
         this.pty.on("data", (data) => {
             if ( Buffer.isBuffer(data) ) {
                 this.parseOSC1337((data as Buffer).toString());
@@ -393,13 +406,27 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         let isPromptUpdate = false;
         await new Promise( (resolve, reject) => {
             try {
-                if ( [ "zsh", "bash", "sh" ].indexOf(this.shell) > -1 || this.getReader() instanceof SftpReader ) {
+                if ( [ "zsh", "bash", "sh", "cmd.exe", "powershell.exe" ].indexOf(this.shell) > -1 || this.getReader() instanceof SftpReader ) {
                     setTimeout( () => {
                         if ( !this.getCurrentPath() ) {
                             this.outputBlock = true;
-                            const remoteHost = "\\033]1337;RemoteHost=\\u@\\h\\007";
-                            const currentDir = "\\033]1337;CurrentDir=\\w\\007";
-                            this.pty.write( `PS1="$\{PS1\}${remoteHost}${currentDir}"\n` );
+
+                            // function prompt {"PS [$Env:username@$Env:computername]$($PWD.ProviderPath)> "}
+                            if ( this.shell === "powershell.exe" ) {
+                                const remoteHost = "$([char]27)]1337;RemoteHost=$Env:username@$Env:computername$([char]7)";
+                                const currentDir = "$([char]27)]1337;CurrentDir=$($PWD.ProviderPath)$([char]7)";
+                                const msg = `function prompt {"PS $($PWD.ProviderPath)>${remoteHost}${currentDir} "}\r`;
+                                this.pty.write( msg );
+                                this.pty.write( "cls\r" );
+                            } else if ( this.shell === "cmd.exe" ) {
+                                const remoteHost = "$E]1337;RemoteHost=localhost\x07";
+                                const currentDir = "$E]1337;CurrentDir=$P\x07";
+                                this.pty.write( `prompt $P$G${remoteHost}${currentDir}\r` );
+                            } else {
+                                const remoteHost = "\\033]1337;RemoteHost=\\u@\\h\\007";
+                                const currentDir = "\\033]1337;CurrentDir=\\w\\007";
+                                this.pty.write( `PS1="$\{PS1\}${remoteHost}${currentDir}"\n` );
+                            }
                             isPromptUpdate = true;
                             log.debug( "PROMPT UPDATE !!!" );
                         }
@@ -478,6 +505,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             }
         };
         findOSC1337(data);
+        //log.debug( "OSC1337: %j", this.osc1337 );
         if ( isFind && this.getCurrentPath() !== beforePath ) {
             this.emit( "widget.changetitle" );
         }
@@ -831,6 +859,12 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             mainFrame().lockKey("xtermFullScreen", this);
             this.screen.leave();
             this.isFullscreen = true;
+
+            try {
+                this.pty.resize( this.screen.width as number, this.screen.height as number);
+            } catch (e) {
+                log.debug( e );
+            }
             
             this.fullscreenKeyPressEventPty = ( buf ) => {
                 // log.debug( "stdin: [%s] [%s]", buf.toString("hex"), buf.toString("utf8") );
