@@ -16,14 +16,9 @@ import * as os from "os";
     await i18nInit( (global as any).LOCALE.match( /^ko/ ) ? "ko" : undefined );
 
     (global as any).fsTmpDir = fs.mkdtempSync( path.join(os.tmpdir(), "mdir-"), "utf8" );
-    process.stdout.write( "TMPDIR : " + (global as any).fsTmpDir + "\n" );
-
-    /*
     process.addListener("exit", () => {
         fs.rmdirSync((global as any).fsTmpDir, { recursive: true } );
-        process.stdout.write( "EXIT - RMDIR - " + (global as any).fsTmpDir + "\n" );
     });
-    */
     
     let reargv = process.argv;
     if ( [ ".", "source" ].indexOf(reargv[0]) > -1 ) {
