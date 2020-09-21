@@ -159,7 +159,7 @@ export class ConnectionManager extends Widget {
         this.box.screen.render();
     }
 
-    getAliasWidget( name: string ) {
+    getAliasWidget( name: string ): Widget {
         return this.eventElements.find( (item: Widget) => item.aliasName === name );
     }
 
@@ -177,6 +177,10 @@ export class ConnectionManager extends Widget {
                 this["onClick" + firstUpperize(widget.aliasName) ]();
                 return;
             }
+        }
+
+        if ( eventName === "widget.escape" ) {
+            (this.getAliasWidget( "close" ) as ButtonWidget).setFocus();
         }
     }
 

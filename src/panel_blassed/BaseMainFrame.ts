@@ -28,7 +28,7 @@ import { HintBox } from "./HintBox";
 import { BlessedXterm } from "./BlessedXterm";
 import { T } from "../common/Translation";
 import { draw } from "./widget/BlessedDraw";
-import { SftpReader } from "../panel/sftp/SftpReader";
+import { File } from "../common/File";
 import { FileReader } from "../panel/FileReader";
 
 const log = Logger("MainFrame");
@@ -742,6 +742,53 @@ export class BaseMainFrame implements IHelpService {
             }
         }
         return result || RefreshType.OBJECT;
+    }
+
+    async getCurrentFileViewer( file: File ): Promise<{ orgFile: File; tmpFile: File; endFunc: () => void }> {
+        const panel = this.activePanel();
+        if ( !panel ) {
+            return null;
+        }
+        if ( !file && panel instanceof BlessedPanel ) {
+            file = panel.currentFile();
+        }
+        if ( !file ) {
+            return null;
+        }
+        const reader = panel.getReader();
+        if ( reader instanceof FileReader ) {
+            return { orgFile: file, tmpFile: null, endFunc: null };
+        }
+
+        const progressBox = new ProgressBox( { title: T("Message.Remove"), msg: T("Message.Calculating"), cancel: () => {
+            reader.isUserCanceled = true;
+        }}, { parent: this.baseWidget } );
+        this.screen.render();
+        await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
+
+        let copyBytes = 0;
+        const befCopyInfo = { beforeTime: Date.now(), copyBytes };
+        const fullFileSize = 0;
+        const refreshTimeMs = 300;
+
+        const progressStatus: ProgressFunc = ( source, copySize, size, chunkLength ) => {
+            copyBytes += chunkLength;
+            const repeatTime = Date.now() - befCopyInfo.beforeTime;
+            if ( repeatTime > refreshTimeMs ) {
+                // const bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
+                const lastText = (new Color(3, 0)).fontBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
+                                (new Color(3, 0)).fontBlessFormat(StringUtils.sizeConvert(fullFileSize, false, 1).trim());
+                progressBox.updateProgress( source.fullname, lastText, copyBytes, fullFileSize );
+                befCopyInfo.beforeTime = Date.now();
+                befCopyInfo.copyBytes = copyBytes;
+            }
+            return reader.isUserCanceled ? ProgressResult.USER_CANCELED : ProgressResult.SUCCESS;
+        };
+        const result = await reader.viewer( file, progressStatus);
+        progressBox.destroy();
+        this.screen.render();
+        await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
+        return result;
     }
 
     @Hint({ hint: T("Hint.Remove") })

@@ -110,11 +110,11 @@ export class FileBox extends Widget {
             const { host, port } = info[0];
 
             const textName = this.convertName(name, 14);
-            const textHost = this.convertName(host, 10);
+            const textHost = this.convertName(host, 18);
             const textPort = this.convertName(port + "", 5, true);
             const textProtocols = this.convertName( protocols.join(","), 10 );
             const select = this._file.select ? "{white-fg}*{/}" : " ";
-            viewText = sprintf("%s%s %10s %5s %10s", select, textName, textHost, textPort, textProtocols);
+            viewText = sprintf("%s%s %18s %5s %10s", select, textName, textHost, textPort, textProtocols);
         } else {
             const textFileName = this.convertFilename(this.width as number - 12);
             const tailview = this.convertFileSize();

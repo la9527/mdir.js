@@ -304,7 +304,13 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
             this.blessedFrames[this.activeFrameNum] = newView;
 
             try {
-                await newView.load( file || view.currentFile() );
+                const { orgFile, tmpFile, endFunc } = await this.getCurrentFileViewer( file );
+                const viewerFile = tmpFile || orgFile;
+
+                await newView.load( viewerFile );
+                if ( endFunc ) {
+                    (newView as any).endFunc = endFunc;
+                }
             } catch ( e ) {
                 await messageBox({
                     parent: this.baseWidget,
@@ -315,6 +321,8 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                 return await this.editorPromise(file);
             }
         } else if ( view instanceof BlessedEditor ) {
+            (view as any).endFunc && (view as any).endFunc();
+            (view as any).endFunc = null;
             view.destroy();
 
             const newView = new BlessedPanel( { parent: this.baseWidget, viewCount: viewCount++ }, view.getReader() );
@@ -515,15 +523,11 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
     }
 
     async imageViewPromise( file: File ) {
-        const panel = this.activePanel();
-        if ( panel instanceof BlessedPanel ) {
-            file = panel.currentFile();
-        }
-        if ( !file ) {
-            return;
-        }
+        const { orgFile, tmpFile, endFunc }  = await this.getCurrentFileViewer( file );
+        const viewerFile = tmpFile || orgFile;
+
         if (process.env.TERM_PROGRAM === "iTerm.app") {
-            const buffer = await fs.promises.readFile(file.fullname);
+            const buffer = await fs.promises.readFile(viewerFile.fullname);
 
             const iTermImage = (buffer, options: { width?: number | string; height?: number | string; preserveAspectRatio?: boolean } = {}) => {
                 const OSC = "\u001B]";
@@ -553,6 +557,7 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                     resolve();
                 });
             });
+            endFunc && endFunc();
             this.screen.enter();
             await this.refreshPromise();
             this.execRefreshType( RefreshType.ALL );
@@ -561,9 +566,10 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                 const imageViewBox = new ImageViewBox( { parent: this.baseWidget } );
                 this.screen.render();
                 await imageViewBox.setImageOption({
-                    file: file,
+                    file: viewerFile,
                     closeFunc: async () => {
                         log.debug( "CLOSE !!!");
+                        endFunc && endFunc();
                         this.execRefreshType( RefreshType.ALL );
                     }
                 });
@@ -632,10 +638,12 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                 keepaliveInterval: Configure.instance().getOpensshOption("keepaliveInterval"),
                 keepaliveCountMax: Configure.instance().getOpensshOption("keepaliveCountMax"),
                 readyTimeout: Configure.instance().getOpensshOption("readyTimeout"),
-                proxyInfo: proxyInfo,
+                proxyInfo: proxyInfo
+                /*
                 debug: ( ...args: any[] ) => {
                     log.debug( "SFTP DBG: %s", args.join(" ") );
                 }
+                */
             };
         };
 

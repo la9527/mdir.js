@@ -7,6 +7,9 @@ import { ArchiveCommon } from "./ArchiveCommon";
 import { ArchiveTarGz } from "./ArchiveTarGz";
 import { ArchiveZip } from "./ArchiveZip";
 import * as path from "path";
+import { FileReader } from "../FileReader";
+import * as fs from "fs";
+import * as os from "os";
 
 const log = Logger("Archive");
 
@@ -180,6 +183,32 @@ export class ArchiveReader extends Reader {
         return new Promise((resolve, reject) => {
             reject( "Unsupport copy !!!" );
         });
+    }
+
+    async viewer( file: File, progress?: ProgressFunc ): Promise<{ orgFile: File; tmpFile: File; endFunc: () => void }> {
+        if ( file.dir ) {
+            log.debug( "Unable to view the directory in the viewer.");
+            return null;
+        }
+        if ( file.fstype !== "archive" ) {
+            throw new Error("viewer file is not file");
+        }
+        
+        fs.mkdirSync( path.join((global as any).fsTmpDir, "viewer") );
+
+        const tmpDir = await FileReader.convertFile( path.join((global as any).fsTmpDir, "viewer") );
+        await this.archiveObj.uncompress(tmpDir, [ file ], progress);
+
+        const tmpFile = await FileReader.convertFile( path.join(tmpDir.fullname, file.name), { checkRealPath: true } );
+        const endFunc = () => {
+            try {
+                fs.rmdirSync( path.join((global as any).fsTmpDir, "viewer"), { recursive: true } );
+            } catch( e ) {
+                log.error( e );
+            }
+            return;
+        };
+        return { orgFile: file, tmpFile: tmpFile, endFunc };
     }
 
     remove(source: File | File[], progress?: ProgressFunc): Promise<void> {

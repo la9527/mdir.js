@@ -6,7 +6,7 @@ import { Reader, ProgressFunc, IMountList, ProgressResult } from "../../common/R
 import { File } from "../../common/File";
 import { Logger } from "../../common/Logger";
 import { Transform } from "stream";
-import { convertAttrToStatMode } from "../FileReader";
+import { convertAttrToStatMode, FileReader } from "../FileReader";
 import { Socket } from "net";
 import { Crypto } from "../../common/Crypto";
 
@@ -577,5 +577,35 @@ export class SftpReader extends Reader {
                 });
             }
         });
+    }
+
+    async viewer( file: File, progress?: ProgressFunc ): Promise<{ orgFile: File; tmpFile: File; endFunc: () => void }> {
+        if ( !this.sftp ) {
+            throw new Error("disconnected sftp");
+        }
+
+        if ( file.dir ) {
+            log.debug( "Unable to view the directory in the viewer.");
+            return null;
+        }
+
+        if ( file.root !== this.getConnectInfo() ) {
+            throw new Error("viewer file is not SftpReader");
+        }
+
+        fs.mkdirSync( path.join((global as any).fsTmpDir, "viewer") );
+
+        const tmpFile = await FileReader.convertFile( path.join((global as any).fsTmpDir, "viewer", file.name), { virtualFile: true } );
+        await this.copy( file, null, tmpFile, progress );
+
+        const endFunc = () => {
+            try {
+                fs.rmdirSync( path.join((global as any).fsTmpDir, "viewer"), { recursive: true } );
+            } catch( e ) {
+                log.error( e );
+            }
+            return;
+        };
+        return { orgFile: file, tmpFile, endFunc };
     }
 }

@@ -198,7 +198,7 @@ export class FileReader extends Reader {
         return mounts;
     }
 
-    static async convertFile( filePath: string, option?: { fileInfo?: any; useThrow?: boolean; checkRealPath?: boolean } ): Promise<File> {
+    static async convertFile( filePath: string, option?: { fileInfo?: any; useThrow?: boolean; checkRealPath?: boolean; virtualFile?: boolean } ): Promise<File> {
         const fileReader = new FileReader();
         return await fileReader.convertFile( filePath, option );
     }
@@ -520,6 +520,17 @@ export class FileReader extends Reader {
                     }
                 });
             }
+        });
+    }
+
+    static async remove( file: File ) {
+        const fileReader = new FileReader();
+        return await fileReader.remove( file );
+    }
+
+    viewer( file: File, _progress?: ProgressFunc ): Promise<{ orgFile: File; tmpFile: File; endFunc: () => Promise<void> }> {
+        return new Promise((resolve) => {
+            resolve( { orgFile: file, tmpFile: null, endFunc: null } );
         });
     }
 

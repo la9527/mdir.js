@@ -53,4 +53,6 @@ export abstract class Reader {
     abstract rename( source: File, rename: string, progress?: ProgressFunc ): Promise<void>;
     abstract copy(source: File | File[], sourceBaseDir: File, targetDir: File, progress?: ProgressFunc): Promise<void>;
     abstract remove( source: File | File[], progress?: ProgressFunc ): Promise<void>;
+
+    abstract viewer( file: File, progress?: ProgressFunc ): Promise<{ orgFile: File; tmpFile: File; endFunc: () => void }>;
 }
