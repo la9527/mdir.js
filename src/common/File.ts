@@ -95,10 +95,14 @@ export class File {
     }
 
     toString() {
-        if ( this.owner && this.group ) {
-            return sprintf("%s %s %s %s %-10d %s", this.fstype, this.attr, this.owner, this.group, this.size, this.fullname);
-        } else {
-            return sprintf("%s %s %10d %s", this.fstype, this.attr, this.size, this.fullname);
+        try {
+            if ( this.owner && this.group ) {
+                return sprintf("%s %s %s %s %-10d %s", this.fstype, this.attr, this.owner, this.group, this.size || 0, this.fullname);
+            } else {
+                return sprintf("%s %s %10d %s", this.fstype, this.attr, this.size || 0, this.fullname);
+            }
+        } catch( e ) {
+            return this.fullname;
         }
     }
 }

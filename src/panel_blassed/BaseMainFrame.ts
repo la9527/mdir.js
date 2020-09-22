@@ -143,7 +143,16 @@ export class BaseMainFrame implements IHelpService {
         }
     }
 
-    protected commandParsing( cmd: string, isInsideTerminal: boolean = false ) {
+    protected async commandParsing( cmd: string, isInsideTerminal: boolean = false ): Promise<{
+        cmd: string;
+        ask: boolean;
+        prompt: boolean;
+        background?: boolean;
+        wait?: boolean;
+        mterm?: boolean;
+        root?: boolean;
+        tmpDirRemoveFunc?: () => void;
+    }> {
         const result = {
             cmd,
             ask: false,
@@ -151,8 +160,10 @@ export class BaseMainFrame implements IHelpService {
             background: false,
             wait: false,
             mterm: false,
-            root: false
+            root: false,
+            tmpDirRemoveFunc: null
         };
+
         if ( cmd ) {
             const panel = this.activePanel();
             isInsideTerminal = isInsideTerminal || cmd.indexOf("%T") > -1;
@@ -164,6 +175,16 @@ export class BaseMainFrame implements IHelpService {
                     }
                     return isInsideTerminal ? `${text}` : `"${text}"`;
                 };
+
+                let viewerFile = null;
+                try {
+                    const viewerInfo = await this.getCurrentFileViewer( panel.currentFile() );
+                    const { orgFile, tmpFile, endFunc } = viewerInfo || {};
+                    viewerFile = tmpFile || orgFile || panel.currentFile();
+                    result.tmpDirRemoveFunc = endFunc;
+                } catch( e ) {
+                    log.error( e );
+                }
 
                 /**
                     %1,%F	filename.ext (ex. test.txt)
@@ -182,15 +203,15 @@ export class BaseMainFrame implements IHelpService {
                  */
                 result.cmd = result.cmd.replace( /(%[1|F|N|E|S|A|D|Q|P|W|B|T|R])/g, (substr) => {
                     if ( substr.match( /(%1|%F)/ ) ) {
-                        return wrap(panel.currentFile().fullname);
+                        return wrap(viewerFile.fullname);
                     } else if ( substr === "%N" ) {
-                        return wrap(path.parse(panel.currentFile().fullname).name);
+                        return wrap(path.parse(viewerFile.fullname).name);
                     } else if ( substr === "%E" ) {
-                        return wrap(panel.currentFile().extname);
+                        return wrap(viewerFile.extname);
                     } else if ( substr === "%S" ) {
                         return panel.getSelectFiles().map(item => wrap(item.fullname)).join(" ");
                     } else if ( substr === "%A" ) {
-                        return wrap(panel.currentPath().fullname);
+                        return wrap(viewerFile.fullname);
                     } else if ( substr === "%%" ) {
                         return "%";
                     } else if ( substr === "%Q" ) {
@@ -665,17 +686,18 @@ export class BaseMainFrame implements IHelpService {
 
         process.chdir( activePanel.currentPath().fullname );
 
-        return new Promise( (resolve) => {
+        // eslint-disable-next-line no-async-promise-executor
+        return new Promise( async (resolve) => {
             const program = this.screen.program;
             if ( !cmd ) {
                 resolve();
                 return;
             }
 
+            const cmdParse = await this.commandParsing( cmd );
+
             this.lockKey("commandRun", null);
             this.screen.leave();
-
-            const cmdParse = this.commandParsing( cmd );
             
             if ( fileRunMode ) {
                 cmd = cmdParse.cmd;
@@ -702,6 +724,9 @@ export class BaseMainFrame implements IHelpService {
                     stdout && process.stdout.write(stdout);
                 }
                 const returnFunc = async () => {
+                    if ( cmdParse.tmpDirRemoveFunc ) {
+                        cmdParse.tmpDirRemoveFunc();
+                    }
                     this.screen.enter();
                     await this.refreshPromise();
                     this.lockKeyRelease("commandRun");

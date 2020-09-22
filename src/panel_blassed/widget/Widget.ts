@@ -13,6 +13,7 @@ export class Widget {
     _viewCount: number = -1;
     protected _aliasName: string = null;
     protected _disable: boolean = false;
+    public tmpDirRemoveFunc = null;
     private _befClickData = { x: 0, y: 0, now: 0 };
 
     constructor( opts: Widgets.BoxOptions | any ) {
@@ -126,6 +127,10 @@ export class Widget {
     }
 
     destroy() {
+        if ( this.tmpDirRemoveFunc ) {
+            this.tmpDirRemoveFunc();
+            this.tmpDirRemoveFunc = null;
+        }
         this._box.off();
         (this._box as any)._widget = null;
         this._box.destroy();

@@ -593,9 +593,12 @@ export class SftpReader extends Reader {
             throw new Error("viewer file is not SftpReader");
         }
 
-        fs.mkdirSync( path.join((global as any).fsTmpDir, "viewer") );
+        const tmpFileDirName = path.join((global as any).fsTmpDir, "viewer");
+        if ( !fs.existsSync( tmpFileDirName ) ) {
+            fs.mkdirSync( tmpFileDirName );
+        }
 
-        const tmpFile = await FileReader.convertFile( path.join((global as any).fsTmpDir, "viewer", file.name), { virtualFile: true } );
+        const tmpFile = await FileReader.convertFile( path.join(tmpFileDirName, file.name), { virtualFile: true } );
         await this.copy( file, null, tmpFile, progress );
 
         const endFunc = () => {

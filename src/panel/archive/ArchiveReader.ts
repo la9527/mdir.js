@@ -194,9 +194,12 @@ export class ArchiveReader extends Reader {
             throw new Error("viewer file is not file");
         }
         
-        fs.mkdirSync( path.join((global as any).fsTmpDir, "viewer") );
+        const tmpFileDirName = path.join((global as any).fsTmpDir, "viewer");
+        if ( !fs.existsSync( tmpFileDirName ) ) {
+            fs.mkdirSync( tmpFileDirName );
+        }
 
-        const tmpDir = await FileReader.convertFile( path.join((global as any).fsTmpDir, "viewer") );
+        const tmpDir = await FileReader.convertFile( tmpFileDirName );
         await this.archiveObj.uncompress(tmpDir, [ file ], progress);
 
         const tmpFile = await FileReader.convertFile( path.join(tmpDir.fullname, file.name), { checkRealPath: true } );

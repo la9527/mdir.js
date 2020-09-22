@@ -54,7 +54,7 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async terminalPromise(isEscape = false, shellCmd: string = null ) {
         const view = this.blessedFrames[this.activeFrameNum];        
-        const result = this.commandParsing( shellCmd, true );
+        const result = await this.commandParsing( shellCmd, true );
         const shell = result.cmd ? result.cmd.split(" ") : null;
 
         if ( view instanceof BlessedPanel ) {
@@ -71,6 +71,7 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
             }, view.getReader(), view.currentPath() );
             newView.on("process_exit", () => {
                 process.nextTick( () => {
+                    result.tmpDirRemoveFunc && result.tmpDirRemoveFunc();
                     this.terminalPromise( true );
                 });
             });
@@ -82,6 +83,8 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                         msg: err + " - " + shellCmd,
                         button: [ T("OK") ]
                     });
+
+                    result.tmpDirRemoveFunc && result.tmpDirRemoveFunc();                    
                     await this.terminalPromise( true );
                 });
             });
@@ -297,32 +300,36 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
     async editorPromise(file: File = null) {
         const view = this.blessedFrames[this.activeFrameNum];
         if ( view instanceof BlessedPanel ) {
-            view.destroy();
-
-            const newView = new BlessedEditor( { parent: this.baseWidget, viewCount: viewCount++ }, view.getReader() );
-            newView.setFocus();
-            this.blessedFrames[this.activeFrameNum] = newView;
-
             try {
-                const { orgFile, tmpFile, endFunc } = await this.getCurrentFileViewer( file );
-                const viewerFile = tmpFile || orgFile;
+                const result = await this.getCurrentFileViewer( file );
+                const { orgFile, tmpFile, endFunc } = result || {};
+                const viewerFile = tmpFile || orgFile || file;
 
-                await newView.load( viewerFile );
+                log.info( "EDITOR: [%s] [%s]", viewerFile, file );
+
+                view.destroy();
+
+                const newView = new BlessedEditor( { parent: this.baseWidget, viewCount: viewCount++ }, view.getReader() );
+                newView.setFocus();
+                this.blessedFrames[this.activeFrameNum] = newView;
+
                 if ( endFunc ) {
-                    (newView as any).endFunc = endFunc;
+                    (newView as any).tmpDirRemoveFunc = endFunc;
                 }
+                await newView.load( viewerFile );
             } catch ( e ) {
-                await messageBox({
+                log.error( "[%s][%s]", e, e?.stack );
+                await messageBox({                    
                     parent: this.baseWidget,
                     title: T("Error"),
                     msg: T("Message.FILE_OPEN_FAILURE") + "\n" + e.message,
                     button: [ T("OK") ]
                 });
-                return await this.editorPromise(file);
+                return await this.editorPromise();
             }
         } else if ( view instanceof BlessedEditor ) {
-            (view as any).endFunc && (view as any).endFunc();
-            (view as any).endFunc = null;
+            (view as any).tmpDirRemoveFunc && (view as any).tmpDirRemoveFunc();
+            (view as any).tmpDirRemoveFunc = null;
             view.destroy();
 
             const newView = new BlessedPanel( { parent: this.baseWidget, viewCount: viewCount++ }, view.getReader() );
@@ -523,8 +530,9 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
     }
 
     async imageViewPromise( file: File ) {
-        const { orgFile, tmpFile, endFunc }  = await this.getCurrentFileViewer( file );
-        const viewerFile = tmpFile || orgFile;
+        const result  = await this.getCurrentFileViewer( file );
+        const { orgFile, tmpFile, endFunc } = result || {};
+        const viewerFile = tmpFile || orgFile || file;
 
         if (process.env.TERM_PROGRAM === "iTerm.app") {
             const buffer = await fs.promises.readFile(viewerFile.fullname);
