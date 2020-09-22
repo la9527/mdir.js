@@ -760,7 +760,7 @@ export class BaseMainFrame implements IHelpService {
             return { orgFile: file, tmpFile: null, endFunc: null };
         }
 
-        const progressBox = new ProgressBox( { title: T("Message.Remove"), msg: T("Message.Calculating"), cancel: () => {
+        const progressBox = new ProgressBox( { title: T("Message.View"), msg: T("Message.Calculating"), cancel: () => {
             reader.isUserCanceled = true;
         }}, { parent: this.baseWidget } );
         this.screen.render();
@@ -784,7 +784,7 @@ export class BaseMainFrame implements IHelpService {
             }
             return reader.isUserCanceled ? ProgressResult.USER_CANCELED : ProgressResult.SUCCESS;
         };
-        const result = await reader.viewer( file, progressStatus);
+        const result = await reader.viewer(file, progressStatus);
         progressBox.destroy();
         this.screen.render();
         await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
