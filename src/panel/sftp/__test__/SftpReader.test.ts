@@ -16,7 +16,7 @@ describe( "SFTP Proxy Test", () => {
         const sftpReader = new SftpReader();
         log.debug( "CONNECT !!!");
 
-        await sftpReader.connect({
+        await sftpReader.sessionConnect({
             host: "localhost",
             port: 22,
             username: "la9527",

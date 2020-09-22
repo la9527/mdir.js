@@ -11,7 +11,7 @@ import { menuConfig } from "../config/MenuConfig";
 import { BlessedMcd } from "./BlessedMcd";
 import { BlessedEditor } from "./BlessedEditor";
 import colors from "colors";
-import { IMountList, ProgressFunc, ProgressResult, } from "../common/Reader";
+import { IMountList, ProgressFunc, ProgressResult, Reader, } from "../common/Reader";
 import { messageBox, MSG_BUTTON_TYPE } from "./widget/MessageBox";
 import { StringUtils } from "../common/StringUtils";
 import { BlessedXterm } from "./BlessedXterm";
@@ -21,7 +21,6 @@ import { ImageViewBox } from "./widget/ImageBox";
 import { File } from "../common/File";
 import { BaseMainFrame } from "./BaseMainFrame";
 import { ConnectionManager } from "./widget/ConnectionManager";
-import { IConnectionInfo, IConnectionInfoBase } from "./widget/ConnectionEditor";
 import { ArchiveReader } from "../panel/archive/ArchiveReader";
 import { FileReader } from "../panel/FileReader";
 import { ArchiveZip } from "../panel/archive/ArchiveZip";
@@ -30,8 +29,7 @@ import { Color } from "../common/Color";
 import { ProgressBox } from "./widget/ProgressBox";
 import { inputBox } from "./widget/InputBox";
 import { Selection, ClipBoard } from "../panel/Selection";
-import { SftpReader, ssh2ConnectionInfo } from "../panel/sftp/SftpReader";
-import { SocksClientOptions } from "socks/typings";
+import { SftpReader, IConnectionInfo, IConnectionInfoBase } from "../panel/sftp/SftpReader";
 import Configure from "../config/Configure";
 
 const log = Logger("MainFrame");
@@ -52,7 +50,7 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
     @Hint({ hint: T("Hint.Terminal"), order: 4 })
     @Help(T("Help.Terminal"))
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async terminalPromise(isEscape = false, shellCmd: string = null ) {
+    async terminalPromise(isEscape = false, shellCmd: string = null, sftpReader: Reader = null ) {
         const view = this.blessedFrames[this.activeFrameNum];        
         const result = await this.commandParsing( shellCmd, true );
         const shell = result.cmd ? result.cmd.split(" ") : null;
@@ -68,7 +66,7 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                 shell: shell ? shell[0] : null,
                 args: shell ? shell.splice(1) : null,
                 viewCount: viewCount++ 
-            }, view.getReader(), view.currentPath() );
+            }, sftpReader || view.getReader(), sftpReader ? null : view.currentPath() );
             newView.on("process_exit", () => {
                 process.nextTick( () => {
                     result.tmpDirRemoveFunc && result.tmpDirRemoveFunc();
@@ -112,8 +110,16 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
         } else if ( view instanceof BlessedXterm ) {
             view.destroy();
 
-            const newView = new BlessedPanel( { parent: this.baseWidget, viewCount: viewCount++ }, view.getReader() );
-            await newView.read( view.getCurrentPath() || await view.getReader().currentDir() || "." );
+            let reader = view.getReader();
+            let readPath: any = ".";
+            if ( reader instanceof SftpReader && !reader.isSFTPSession() ) {
+                reader = new FileReader();
+            } else {
+                readPath = view.getCurrentPath() || await reader.currentDir() || ".";
+            }
+            log.warn( "READ PATH : %s", readPath );
+            const newView = new BlessedPanel( { parent: this.baseWidget, viewCount: viewCount++ }, reader );
+            await newView.read( readPath );
             newView.setFocus();
             this.blessedFrames[this.activeFrameNum] = newView;
         }
@@ -616,52 +622,13 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
     async ssh2connect( connectionInfo: IConnectionInfo ) {
         log.debug( "SSH Connection: %j", connectionInfo );
 
-        const convertInfo = (connInfo: IConnectionInfo): ssh2ConnectionInfo => {
-            const info: IConnectionInfoBase = connInfo.info.find( item => item.protocol.match(/SFTP/) );
-            let proxyInfo: SocksClientOptions = null;
-            if ( info.proxyInfo ) {
-                proxyInfo = {
-                    command: "connect",
-                    destination: {
-                        host: info.host,
-                        port: info.port
-                    },
-                    proxy: {
-                        host: info.proxyInfo.host,
-                        port: info.proxyInfo.port,
-                        type: info.proxyInfo.type,
-                        userId: info.proxyInfo.username,
-                        password: info.proxyInfo.password
-                    },
-                    timeout: Configure.instance().getOpensshOption("proxyDefaultTimeout"),
-                };
-            }
-            return {
-                host: info.host,
-                port: info.port,
-                username: info.username,
-                password: info.password,
-                privateKey: info.privateKey,
-                algorithms: Configure.instance().getOpensshOption("algorithms"),
-                keepaliveInterval: Configure.instance().getOpensshOption("keepaliveInterval"),
-                keepaliveCountMax: Configure.instance().getOpensshOption("keepaliveCountMax"),
-                readyTimeout: Configure.instance().getOpensshOption("readyTimeout"),
-                proxyInfo: proxyInfo
-                /*
-                debug: ( ...args: any[] ) => {
-                    log.debug( "SFTP DBG: %s", args.join(" ") );
-                }
-                */
-            };
-        };
-
         const activePanel = this.activePanel();
         if ( activePanel instanceof BlessedPanel ) {
             const reader = activePanel.getReader();
             if ( reader instanceof FileReader ) {
                 try {
                     const sftpReader = new SftpReader();
-                    await sftpReader.connect(convertInfo(connectionInfo), (err) => {
+                    const result = await sftpReader.connect(connectionInfo, (err) => {
                         if ( err === "close" ) {
                             process.nextTick( async () => {
                                 log.info( "SSH CLOSE EVENT !!!" );
@@ -669,15 +636,18 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                             });
                         }
                     });
-                    
-                    const homeDir = await sftpReader.homeDir();
-                    if ( activePanel.getReader() ) {
-                        activePanel.getReader().destory();
+                    if ( result === "SFTP" ) {
+                        if ( activePanel.getReader() ) {
+                            activePanel.getReader().destory();
+                        }
+                        activePanel.setReader( sftpReader );
+                        const homeDir = await sftpReader.homeDir();
+                        await activePanel.read( homeDir );
+                        activePanel.setFocus();
+                        activePanel.resetPosition();
+                    } else if ( result === "SESSION_CLIENT" ) {
+                        await this.terminalPromise(false, null, sftpReader);
                     }
-                    activePanel.setReader( sftpReader );
-                    await activePanel.read( homeDir );
-                    activePanel.setFocus();
-                    activePanel.resetPosition();
                 } catch( err ) {
                     log.error( err.stack );
                     await messageBox({

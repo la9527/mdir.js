@@ -34,15 +34,36 @@ class SshPty implements IPty {
     private _cols;
     private _rows;
 
-    constructor( { reader, cols, rows, term, result }: {
+    async init({ reader, cols, rows, term, result }: {
         reader: SftpReader;
         cols: number;
         rows: number;
         term: string;
         result: ( err?: string ) => void;
-    } ) {
+    }) {
         log.debug( "shellInit: %j", { cols, rows, term } );
-        this._ssh2Socket = reader.getSSH2Client();
+
+        if ( reader.isEachConnect() ) {
+            const sshConnReader = new SftpReader();
+            const connInfo = sshConnReader.convertConnectionInfo( reader.getConnInfoConfig(), /^SSH$/ );
+
+            log.debug( "RECONNECT INFO : %s", connInfo );
+
+            await sshConnReader.sessionConnect( connInfo, (err) => {
+                if ( err === "close" ) {
+                    process.nextTick( async () => {
+                        log.info( "SSH CLOSE EVENT !!!" );
+                        this._onExit.fire( { exitCode: -1, signal: -1 } );
+                    });
+                }
+            });
+            log.debug( "RECONNECT : %s", sshConnReader );
+            this._ssh2Socket = sshConnReader.getSSH2Client();
+        } else {
+            log.debug( "getSSH2Client : %s", reader.getConnectInfo() );
+            this._ssh2Socket = reader.getSSH2Client();
+        }
+
         this._ssh2Socket.on("close", () => {
             log.debug( "this._ssh2Socket: close !!!" );
             this._stream = null;
@@ -62,6 +83,7 @@ class SshPty implements IPty {
 
     protected initEvent() {
         this._stream.on("data", (data) => {
+            log.debug( data );
             this._onData.fire( data );
         });
         this._stream.on("close", () => {
@@ -293,36 +315,45 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             this.kill();
         });
 
-        log.debug( "SHELL : %s %s", this.shell, this.args );
-
         this.inputBlock = true;
         this.outputBlock = false;
 
         if ( this.getReader() instanceof SftpReader ) {
-            this.on("widget.changetitle", () => {
-                if ( !this.isFullscreen ) {
-                    this.header.setContent( sftpReader.getConnectInfo() + this.getCurrentPath() || "" );
-                    this.box.screen.render();
-                }
-            });
+            log.debug( "SFTP SHELL : %s", (this.getReader() as SftpReader).getConnectInfo() );
 
-            const sftpReader = this.getReader() as SftpReader;
-            const sshPty = new SshPty({
-                reader: this.getReader() as SftpReader,
-                term: this.termName,
-                cols: (box.width as number) - (box.iwidth as number),
-                rows: (box.height as number) - (box.iheight as number),
-                result: async (err) => {
-                    if ( err ) {
-                        this.box.emit( "error", err );
-                    } else {
-                        this.pty = sshPty;
-                        await this.initPtyEvent();
+            try {
+                const sftpReader = this.getReader() as SftpReader;
+                this.on("widget.changetitle", () => {
+                    if ( !this.isFullscreen ) {
+                        this.header.setContent( sftpReader.getConnectInfo() + (this.getCurrentPath() || "") );
+                        this.box.screen.render();
                     }
-                }
-            });
-            this.header.setContent( sftpReader.getConnectInfo() );
+                });
+
+                const sshPty = new SshPty();
+                await sshPty.init({
+                    reader: sftpReader,
+                    term: this.termName,
+                    cols: (box.width as number) - (box.iwidth as number),
+                    rows: (box.height as number) - (box.iheight as number),
+                    result: async (err) => {
+                        if ( err ) {
+                            this.box.emit( "error", err );
+                        } else {
+                            this.pty = sshPty;
+                            await this.initPtyEvent();
+                        }
+                    }
+                });
+                this.header.setContent( sftpReader.getConnectInfo() );
+            } catch( e ) {
+                process.nextTick(() => {
+                    this.box.emit( "error", e );
+                });
+            }
         } else {
+            log.debug( "SHELL : %s %s", this.shell, this.args );
+
             this.on("widget.changetitle", () => {
                 if ( !this.isFullscreen ) {
                     this.header.setContent( this.getCurrentPath() || "" );
@@ -404,28 +435,31 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         });
 
         let isPromptUpdate = false;
+        this.outputBlock = true;
+
         await new Promise( (resolve, reject) => {
             try {
-                if ( [ "zsh", "bash", "sh", "cmd.exe", "powershell.exe" ].indexOf(this.shell) > -1 || this.getReader() instanceof SftpReader ) {
+                const isSftp = this.getReader() instanceof SftpReader;
+                if ( [ "zsh", "bash", "sh", "cmd.exe", "powershell.exe" ].indexOf(this.shell) > -1 || isSftp ) {
                     setTimeout( () => {
                         if ( !this.getCurrentPath() ) {
-                            this.outputBlock = true;
-
                             // function prompt {"PS [$Env:username@$Env:computername]$($PWD.ProviderPath)> "}
-                            if ( this.shell === "powershell.exe" ) {
+                            if ( !isSftp && this.shell === "powershell.exe" ) {
                                 const remoteHost = "$([char]27)]1337;RemoteHost=$Env:username@$Env:computername$([char]7)";
                                 const currentDir = "$([char]27)]1337;CurrentDir=$($PWD.ProviderPath)$([char]7)";
                                 const msg = `function prompt {"PS $($PWD.ProviderPath)>${remoteHost}${currentDir} "}\r`;
                                 this.pty.write( msg );
                                 this.pty.write( "cls\r" );
-                            } else if ( this.shell === "cmd.exe" ) {
+                            } else if ( !isSftp && this.shell === "cmd.exe" ) {
                                 const remoteHost = "$E]1337;RemoteHost=localhost\x07";
                                 const currentDir = "$E]1337;CurrentDir=$P\x07";
                                 this.pty.write( `prompt $P$G${remoteHost}${currentDir}\r` );
+                                this.pty.write( "cls\r" );
                             } else {
                                 const remoteHost = "\\033]1337;RemoteHost=\\u@\\h\\007";
                                 const currentDir = "\\033]1337;CurrentDir=\\w\\007";
-                                this.pty.write( `PS1="$\{PS1\}${remoteHost}${currentDir}"\n` );
+                                this.pty.write( `PS1="$\{PS1\}${remoteHost}${currentDir}"\n\n` );
+                                this.pty.write( "clear\r" );
                             }
                             isPromptUpdate = true;
                             log.debug( "PROMPT UPDATE !!!" );
@@ -444,6 +478,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         const changeDirectory = async (resolve) => {
             const curDir = await this.getReader().currentDir();
             if ( !curDir || !curDir.fullname ) {
+                log.debug( "NO CHANGE DIRECTORY !!!" );
                 return;
             }
             this.pty.write( `cd "${curDir.fullname}"\n` );
@@ -452,14 +487,18 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         };
 
         if ( isPromptUpdate ) {
-            const pathCheckFunc = (resolve) => {
-                setTimeout( () => {
-                    resolve( !!this.getCurrentPath() );
-                }, 10);
+            const pathCheckFunc = () => {
+                return new Promise( (resolve) => {
+                    setTimeout( () => {
+                        const isDetectPath = !!this.getCurrentPath();
+                        log.debug( "PATH Detect !!! - [%s] [%s]", isDetectPath, this.getCurrentPath() );
+                        resolve( isDetectPath );
+                    }, 200);
+                });
             };
 
             for ( let i = 0; i < 10; i++ ) {
-                if ( await new Promise( pathCheckFunc ) ) {
+                if ( await pathCheckFunc() ) {
                     log.debug( "PATH Detect !!! - Number:%d", i );
                     if ( this.getReader() instanceof SftpReader ) {
                         await new Promise( changeDirectory );
@@ -469,10 +508,12 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             }
         } else {
             if ( this.getReader() instanceof SftpReader ) {
-                this.outputBlock = true;
                 await new Promise( changeDirectory );
             }
         }
+
+        this.clear();
+        this.pty.write( "\r" );
         this.outputBlock = false;
         this.inputBlock = false;
         this.emit("widget.changetitle");
@@ -867,17 +908,13 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             }
             
             this.fullscreenKeyPressEventPty = ( buf ) => {
+                if ( buf.toString("hex") === "15" ) { // Ctrl-U
+                    return;
+                }
                 // log.debug( "stdin: [%s] [%s]", buf.toString("hex"), buf.toString("utf8") );
                 this.pty && this.pty.write( buf.toString("utf8") );
             };
             process.stdin.on( "data", this.fullscreenKeyPressEventPty );
-
-            this.fullscreenKeyPressEvent = (ch, keyInfo) => {
-                log.debug( "KEY: [%s]", keyInfo );
-                if ( keyInfo && keyInfo.full === "C-u" ) {
-                    this.fullscreenRecover();
-                }
-            };
 
             if ( !this.isHintshowed ) {
                 process.stdout.write( "\n\n" );
@@ -885,8 +922,15 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
                 this.pty.write("\n");
                 this.isHintshowed = true;
             }
+
+            this.fullscreenKeyPressEvent = (ch, keyInfo) => {
+                log.debug( "KEY: [%s]", keyInfo );
+                if ( keyInfo && keyInfo.full === "C-u" ) {
+                    this.fullscreenRecover();
+                }
+            };            
             this.screen.program.on( "keypress", this.fullscreenKeyPressEvent);
         }, 300 );
-        return RefreshType.NONE;
+        return RefreshType.NO_KEYEXEC;
     }
 }

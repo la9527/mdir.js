@@ -10,6 +10,9 @@ import mainFrame from "./MainFrame";
 import { ColorConfig } from "../config/ColorConfig";
 import { BlessedPanel } from "./BlessedPanel";
 import { RefreshType } from "../config/KeyMapConfig";
+import { FileReader } from "../panel/FileReader";
+import { SftpReader } from "../panel/sftp/SftpReader";
+import { ArchiveReader } from "../panel/archive/ArchiveReader";
 
 const log = Logger("CommandBox");
 
@@ -129,11 +132,22 @@ export class CommandBox extends Widget {
                 path = "..." + path.substr(MAX_PATH_SIZE-3);
             }
 
-            let prompt = os.userInfo().username + "@" + os.hostname().split(".")[0] + ":" + pathStr;
-            if ( os.platform() !== "win32" ) {
-                prompt += os.userInfo().username === "root" ? "# " : "$ ";
-            } else {
-                prompt += ">";
+            const reader = this.panelView && this.panelView.getReader();
+            let prompt = ">";
+            log.debug( "COMMANDBOX READER: %s", reader);
+            if ( reader ) {
+                if ( reader instanceof FileReader ) {
+                    prompt = os.userInfo().username + "@" + os.hostname().split(".")[0] + ":" + pathStr;
+                    if ( os.platform() !== "win32" ) {
+                        prompt += os.userInfo().username === "root" ? "# " : "$ ";
+                    } else {
+                        prompt += ">";
+                    }
+                } else if ( reader instanceof SftpReader ) {
+                    prompt = reader.getConnectInfo() + ":" + pathStr + ">";
+                } else if ( reader instanceof ArchiveReader ) {
+                    prompt = reader.getBaseArchiveFile().fullname + ":" + pathStr + ">";
+                }
             }
             return prompt;
         } catch ( e ) {
@@ -150,7 +164,8 @@ export class CommandBox extends Widget {
             }
 
             const pathInfo = path.parse(pathStr);
-            const isDirCheck = pathStr[ pathStr.length - 1 ] === path.sep;
+            const isDirCheck = pathStr[ pathStr.length - 1 ] === reader.sep();
+
             const pathFile = await reader.convertFile( isDirCheck ? pathStr : pathInfo.dir, { checkRealPath: true } );
             if ( !pathFile ) {
                 return null;
@@ -254,6 +269,8 @@ export class CommandBox extends Widget {
 
     async keyTabPromise() {
         try {
+            const reader = this.panelView && this.panelView.getReader();
+            const sep = reader ? reader.sep() : path.sep;
             const cmd = this.commandValue;
             const lastIndex = cmd.lastIndexOf(" ");
             const firstText = cmd.substr(0, lastIndex > -1 ? (lastIndex + 1) : cmd.length );
@@ -266,7 +283,7 @@ export class CommandBox extends Widget {
                     this.tabFileInfo.index = 0;
                 }
             } else if ( currentPath ) {
-                const { path: curpath, files } = await this.pathComplatePromise( currentPath.fullname + (lastPath ? (path.sep + lastPath) : "") );
+                const { path: curpath, files } = await this.pathComplatePromise( currentPath.fullname + (lastPath ? (sep + lastPath) : "") );
                 if ( files && files.length > 0 ) {
                     this.tabFileInfo = { path: curpath, files, index: 0 };
                 } else {
@@ -277,7 +294,7 @@ export class CommandBox extends Widget {
             if ( this.tabFileInfo ) {
                 const pathInfo = path.parse(lastPath);
                 const tabFile = this.tabFileInfo.files[this.tabFileInfo.index];
-                this.commandValue = firstText + (pathInfo.dir ? (pathInfo.dir + path.sep) : "") + tabFile.name + (tabFile.dir ? path.sep : "");
+                this.commandValue = firstText + (pathInfo.dir ? (pathInfo.dir + sep) : "") + tabFile.name + (tabFile.dir ? sep : "");
                 this.cursorPos = unicode.strWidth(this.commandValue);
             }
         } catch( e ) {

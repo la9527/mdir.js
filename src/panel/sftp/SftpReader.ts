@@ -9,6 +9,7 @@ import { Transform } from "stream";
 import { convertAttrToStatMode, FileReader } from "../FileReader";
 import { Socket } from "net";
 import { Crypto } from "../../common/Crypto";
+import Configure from "../../config/Configure";
 
 const log = Logger("SftpReader");
 
@@ -32,6 +33,27 @@ const convertAttr = ( stats: fs.Stats ): string => {
     fileMode[9] = stats.mode & 1 ? "x" : "-";
     return fileMode.join("");
 };
+
+export interface IConnectionInfoBase {
+    protocol?: "SFTP" | "SSH" | "SFTP_SSH";
+    host?: string;
+    port?: number; // default 22
+    username?: string;
+    password?: string;
+    privateKey?: string; // key file path
+    proxyInfo?: {
+        host?: string;
+        port?: number;
+        type?: 4 | 5;
+        username?: string;
+        password?: string;
+    };
+}
+
+export interface IConnectionInfo {
+    name?: string;
+    info?: IConnectionInfoBase[];
+}
 
 // https://github.com/mscdex/ssh2#client-events
 export interface ssh2ConnectionInfo {
@@ -71,13 +93,15 @@ export interface ssh2ConnectionInfo {
 
 export class SftpReader extends Reader {
     private client = null;
-    private session = null;
     private sftp = null;
 
     protected _readerFsType = "sftp";
     private homeDirFile: File = null;
     private currentPath: File = null;
     private option: ssh2ConnectionInfo = null;
+    private connSessionInfo: IConnectionInfoBase = null;
+    private connInfo: IConnectionInfo = null;
+    private _isEachConnect: boolean = false;
 
     constructor() {
         super();
@@ -107,9 +131,25 @@ export class SftpReader extends Reader {
         return this.client;
     }
 
+    public isSFTPSession() {
+        return !!this.sftp;
+    }
+
     public getConnectInfo(): string {
         const { host, username, port } = this.option || {};
         return `sftp://${username}@${host}:${port}`;
+    }
+
+    public getConnSessionInfo(): IConnectionInfoBase {
+        return this.connSessionInfo;
+    }
+
+    public getConnInfoConfig(): IConnectionInfo {
+        return this.connInfo;
+    }
+
+    public isEachConnect() {
+        return this._isEachConnect;
     }
 
     private decryptConnectionInfo( option: ssh2ConnectionInfo ): ssh2ConnectionInfo {
@@ -121,10 +161,75 @@ export class SftpReader extends Reader {
         return result;
     }
 
-    public connect( option: ssh2ConnectionInfo, connectionErrorFunc: ( errInfo: any ) => void, connectionOnly: boolean = false ): Promise<void> {
+    public convertConnectionInfo(connInfo: IConnectionInfo, protocol: RegExp ): ssh2ConnectionInfo {
+        const info: IConnectionInfoBase = connInfo.info.find( item => item.protocol.match( protocol ) );
+        if ( info === null ) {
+            return null;
+        }
+        let proxyInfo: SocksClientOptions = null;
+        if ( info.proxyInfo ) {
+            proxyInfo = {
+                command: "connect",
+                destination: {
+                    host: info.host,
+                    port: info.port
+                },
+                proxy: {
+                    host: info.proxyInfo.host,
+                    port: info.proxyInfo.port,
+                    type: info.proxyInfo.type,
+                    userId: info.proxyInfo.username,
+                    password: info.proxyInfo.password
+                },
+                timeout: Configure.instance().getOpensshOption("proxyDefaultTimeout"),
+            };
+        }
+        return {
+            host: info.host,
+            port: info.port,
+            username: info.username,
+            password: info.password,
+            privateKey: info.privateKey,
+            algorithms: Configure.instance().getOpensshOption("algorithms"),
+            keepaliveInterval: Configure.instance().getOpensshOption("keepaliveInterval"),
+            keepaliveCountMax: Configure.instance().getOpensshOption("keepaliveCountMax"),
+            readyTimeout: Configure.instance().getOpensshOption("readyTimeout"),
+            proxyInfo: proxyInfo
+            /*
+            debug: ( ...args: any[] ) => {
+                log.debug( "SFTP DBG: %s", args.join(" ") );
+            }
+            */
+        };
+    }
+
+    public async connect(connInfo: IConnectionInfo, connectionErrorFunc: ( errInfo: any ) => void ): Promise<string> {
+        let option = this.convertConnectionInfo(connInfo, /SFTP/ );
+        const sshOption = this.convertConnectionInfo(connInfo, /SSH/ );
+
+        let connectionOnly = false;
+        if ( !option && sshOption ) {
+            connectionOnly = true;
+            option = sshOption;
+        }
+
+        const result = await this.sessionConnect( option, connectionErrorFunc, connectionOnly );
+        this.connInfo = connInfo;
+        this._isEachConnect = !connInfo.info.find( item => item.protocol === "SFTP_SSH" );
+        return result;
+    }
+
+    public sessionConnect( option: ssh2ConnectionInfo, connectionErrorFunc: ( errInfo: any ) => void, connectionOnly: boolean = false ): Promise<string> {
         log.debug( "CONNECTION INFO: %s", JSON.stringify(option, null, 2) );
+
         // eslint-disable-next-line no-async-promise-executor
         return new Promise( async (resolve, reject) => {
+
+            if ( !option ) {
+                reject( "Connection INFO is null" );
+                return;
+            }
+            
             const decryptOption = this.decryptConnectionInfo(option);
 
             if ( decryptOption.proxyInfo ) {
@@ -171,10 +276,10 @@ export class SftpReader extends Reader {
                         } catch( e ) {
                             log.error( "GET HOME ERROR [%s]", e );
                         }
-                        resolve();
+                        resolve("SFTP");
                     });
                 } else {
-                    resolve();
+                    resolve("SESSION_CLIENT");
                 }
             };
             this.client.once( "ready", onceReady );
@@ -237,13 +342,17 @@ export class SftpReader extends Reader {
             throw new Error("disconnected sftp");
         }
 
-        if ( pathStr === "." ) {
+        if ( pathStr === "~" ) {
+            return await this.homeDir();
+        } else if ( pathStr === "." ) {
             return this.currentPath.clone();
-        }
-        if ( pathStr === ".." ) {
+        } else if ( pathStr === ".." ) {
             pathStr = this.currentPath.dirname;
+        } else if ( pathStr[0] === "~" ) {
+            pathStr = pathStr.replace("~", (await this.homeDir()).fullname);
+        } else if ( pathStr[0] !== "/" ) {
+            pathStr = this.currentPath.fullname + this.sep() + pathStr;
         }
-
         const file = new File();
         file.root = this.getConnectInfo();
         file.fstype = this._readerFsType;

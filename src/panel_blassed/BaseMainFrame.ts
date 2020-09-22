@@ -78,7 +78,7 @@ class ScrLockInfo {
     }
 }
 
-export class BaseMainFrame implements IHelpService {
+export abstract class BaseMainFrame implements IHelpService {
     protected screen: Widgets.Screen = null;
     protected viewType: VIEW_TYPE = VIEW_TYPE.NORMAL;
     protected baseWidget = null;
@@ -518,6 +518,8 @@ export class BaseMainFrame implements IHelpService {
         return RefreshType.ALL;
     }
 
+    protected abstract archivePromise( file: File ): Promise<void>;
+    
     @Hint({ hint: T("Hint.Quit"), order: 1 })
     @Help(T("Help.Quit"))
     async quitPromise() {
@@ -532,6 +534,23 @@ export class BaseMainFrame implements IHelpService {
             });
             if ( result === T("OK") ) {    
                 await this.sshDisconnect();
+            }
+            return RefreshType.ALL;
+        }
+
+        if (this.activePanel() && 
+            this.activePanel().getReader() && 
+            this.activePanel().getReader().readerName === "archive") {
+            const result = await messageBox( { 
+                parent: this.baseWidget, 
+                title: T("Question"), 
+                msg: T("Message.QuitArchive"), 
+                button: [ T("OK"), T("Cancel") ] 
+            });
+            if ( result === T("OK") ) {    
+                const file = await this.activePanel().getReader().rootDir();
+                file.name = "..";
+                await this.archivePromise(file);
             }
             return RefreshType.ALL;
         }
@@ -609,9 +628,11 @@ export class BaseMainFrame implements IHelpService {
             return RefreshType.NONE;
         }
 
+        /*
         if ( !(activePanel.getReader() instanceof FileReader) ) {
             return RefreshType.NONE;
         }
+        */
 
         if ( this.bottomFilesBox ) {
             this.bottomFilesBox.destroy();

@@ -535,7 +535,7 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
 
     getCurrentView() {
         return {
-            currentPath: this.currentPath().fullname,
+            currentPath: this.currentPath()?.fullname || "",
             column: this.column,
             row: this.row,
             page: this.page,

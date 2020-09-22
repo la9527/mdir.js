@@ -27,7 +27,7 @@ import { button } from "../../@types/blessed";
 import { BlessedEditor } from "../panel_blassed/BlessedEditor";
 import { i18nInit, T, changeLanguage } from "../common/Translation";
 import osLocale from "os-locale";
-import { IConnectionInfo, ConnectionEditor, IConnectionEditorOption } from "../panel_blassed/widget/ConnectionEditor";
+import { ConnectionEditor, IConnectionEditorOption } from "../panel_blassed/widget/ConnectionEditor";
 import { ConnectionManager } from "../panel_blassed/widget/ConnectionManager";
 
 const log = Logger("TEST_MAIN");

@@ -27,7 +27,8 @@ export enum RefreshType {
     ALL_NOFOCUS = 2,
     OBJECT = 3,
     OBJECT_NOFOCUS = 4,
-    NONE = 5
+    NO_KEYEXEC = 5,
+    NONE = 6
 }
 
 export interface IKeyMapping {

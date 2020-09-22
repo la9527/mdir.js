@@ -24,6 +24,10 @@ export class ArchiveReader extends Reader {
         // 
     }
 
+    getBaseArchiveFile() {
+        return this.baseArchiveFile;
+    }
+
     async setArchiveFile( file: File, progressFunc: ProgressFunc ): Promise<boolean> {
         const archiveObjs = [ new ArchiveTarGz(), new ArchiveZip() ];
         this.archiveObj = archiveObjs.find( item => item.setFile( file ) );
@@ -54,9 +58,10 @@ export class ArchiveReader extends Reader {
         } else if ( path === this.sep() ) {
             return await this.rootDir();
         }
-        return this.archiveFiles.find( (item) => {
+        const result = this.archiveFiles.find( (item) => {
             return item.fullname === path;
-        }).clone();
+        });
+        return result ? result.clone() : null;
     }
 
     readdir(dir: File, _option?: { isExcludeHiddenFile?: boolean; noChangeDir?: boolean }): Promise<File[]> {

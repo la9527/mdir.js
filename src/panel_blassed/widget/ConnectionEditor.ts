@@ -10,29 +10,9 @@ import { RadioWidget } from "./RadioWidget";
 import { T } from "../../common/Translation";
 import mainFrame from "../MainFrame";
 import { TabWidget } from "./TabWidget";
+import { IConnectionInfo, IConnectionInfoBase } from "../../panel/sftp/SftpReader";
 
 const log = Logger("ConnectionManager");
-
-export interface IConnectionInfoBase {
-    protocol?: "SFTP" | "SSH" | "SFTP_SSH";
-    host?: string;
-    port?: number; // default 22
-    username?: string;
-    password?: string;
-    privateKey?: string; // key file path
-    proxyInfo?: {
-        host?: string;
-        port?: number;
-        type?: 4 | 5;
-        username?: string;
-        password?: string;
-    };
-}
-
-export interface IConnectionInfo {
-    name?: string;
-    info?: IConnectionInfoBase[];
-}
 
 export interface IConnectionEditorOption extends IConnectionInfo {    
     resultFunc: ( result: boolean, data: IConnectionInfo | any ) => void;
