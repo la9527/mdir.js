@@ -50,7 +50,7 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
     @Hint({ hint: T("Hint.Terminal"), order: 4 })
     @Help(T("Help.Terminal"))
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async terminalPromise(isEscape = false, shellCmd: string = null, sftpReader: Reader = null ) {
+    async terminalPromise(isEscape = false, shellCmd: string = null, sftpReader: Reader = null ): Promise<RefreshType> {
         const view = this.blessedFrames[this.activeFrameNum];        
         const result = await this.commandParsing( shellCmd, true );
         const shell = result.cmd ? result.cmd.split(" ") : null;

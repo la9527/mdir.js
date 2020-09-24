@@ -18,7 +18,7 @@ import { CommandBox } from "./CommandBox";
 import { exec } from "child_process";
 import colors from "colors";
 import selection, { Selection, ClipBoard } from "../panel/Selection";
-import { ProgressFunc, ProgressResult } from "../common/Reader";
+import { ProgressFunc, ProgressResult, Reader } from "../common/Reader";
 import { messageBox } from "./widget/MessageBox";
 import { ProgressBox } from "./widget/ProgressBox";
 import { StringUtils } from "../common/StringUtils";
@@ -519,13 +519,17 @@ export abstract class BaseMainFrame implements IHelpService {
     }
 
     protected abstract archivePromise( file: File ): Promise<void>;
+
+    protected abstract terminalPromise(isEscape: boolean, shellCmd?: string, sftpReader?: Reader ): Promise<RefreshType>;
     
     @Hint({ hint: T("Hint.Quit"), order: 1 })
     @Help(T("Help.Quit"))
     async quitPromise() {
-        if (this.activePanel() && 
-            this.activePanel().getReader() && 
-            this.activePanel().getReader().readerName === "sftp") {
+        const panel = this.activePanel();
+        const reader = panel?.getReader();
+        const readerName = reader?.readerName;
+
+        if ( readerName === "sftp") {
             const result = await messageBox( { 
                 parent: this.baseWidget, 
                 title: T("Question"), 
@@ -533,14 +537,16 @@ export abstract class BaseMainFrame implements IHelpService {
                 button: [ T("OK"), T("Cancel") ] 
             });
             if ( result === T("OK") ) {    
-                await this.sshDisconnect();
+                if ( panel instanceof BlessedXterm ) {
+                    await this.terminalPromise( true );
+                } else {
+                    await this.sshDisconnect();
+                }
             }
             return RefreshType.ALL;
         }
 
-        if (this.activePanel() && 
-            this.activePanel().getReader() && 
-            this.activePanel().getReader().readerName === "archive") {
+        if (readerName === "archive") {
             const result = await messageBox( { 
                 parent: this.baseWidget, 
                 title: T("Question"), 
@@ -548,7 +554,7 @@ export abstract class BaseMainFrame implements IHelpService {
                 button: [ T("OK"), T("Cancel") ] 
             });
             if ( result === T("OK") ) {    
-                const file = await this.activePanel().getReader().rootDir();
+                const file = await reader.rootDir();
                 file.name = "..";
                 await this.archivePromise(file);
             }
@@ -566,21 +572,26 @@ export abstract class BaseMainFrame implements IHelpService {
             return RefreshType.NONE;
         }
 
-        if (this.activePanel() && 
-            this.activePanel().getReader() && 
-            this.activePanel().getReader().currentDir() && 
-            this.activePanel().getReader().readerName === "file" ) {
-            const lastPath = (await this.activePanel().getReader().currentDir()).fullname;
-            log.debug( "CHDIR : %s", lastPath );
-            process.chdir( lastPath );
-            try {
-                fs.mkdirSync( os.homedir() + path.sep + ".m", { recursive: true, mode: 0o755 });
-                fs.writeFileSync( os.homedir() + path.sep + ".m" + path.sep + "path", lastPath, { mode: 0o644 } );
-            } catch( e ) {
-                log.error( e );
+        if (reader && reader.readerName === "file" ) {
+            let lastPath = null;
+            if ( panel instanceof BlessedXterm ) {
+                lastPath = panel.getCurrentPath();
+            } else {
+                lastPath = (await reader.currentDir()).fullname;
+            }
+            if ( lastPath && fs.existsSync(lastPath) ) {
+                log.debug( "CHDIR : %s", lastPath );
+                process.chdir( lastPath );
+                try {
+                    fs.mkdirSync( os.homedir() + path.sep + ".m", { recursive: true, mode: 0o755 });
+                    fs.writeFileSync( os.homedir() + path.sep + ".m" + path.sep + "path", lastPath, { mode: 0o644 } );
+                } catch( e ) {
+                    log.error( e );
+                }
             }
         }
         process.exit(0);
+        return RefreshType.NONE;
     }
 
     @Hint({ hint: T("Hint.NextWindow"), order: 2 })

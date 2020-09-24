@@ -41,8 +41,9 @@ $ mdir
 
 ### Version History
 
-- v0.8.5
-    - [improve] auto detect when the directory change.
+- v1.0.0
+    - [add] When directory change on the subshell(ssh, sh), it is automatically detected.
+    - [add] Support for the SFTP and the SSH Connection.
 - v0.8.4
     - [bugfix] bugfix for execute a file name with blank characters.(win32)
     - [improve] js, ts files apply a ESLint.
