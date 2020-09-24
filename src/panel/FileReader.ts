@@ -11,6 +11,7 @@ import { Transform } from "stream";
 import * as FileType from "file-type";
 
 import fswin from "fswin";
+import { ENGINE_METHOD_DIGESTS } from "constants";
 
 const log = Logger("FileReader");
 
@@ -155,10 +156,17 @@ export class FileReader extends Reader {
     protected _readerFsType = "file";
     protected systemUserInfo = null;
     protected watcher = null;
-
+    protected _isNotChangeDir = false;
+    protected _curDir: File = null;
+    
     constructor() {
         super();
         this.systemUserInfo = new SystemUserInfo();
+    }
+
+    async init(option: { isNotChangeDir?: boolean; defaultHomePath?: string } = null) {
+        this._isNotChangeDir = option?.isNotChangeDir || false;
+        this._curDir = await this.convertFile( option?.defaultHomePath || os.homedir(), { checkRealPath: true });
     }
 
     destory() {
@@ -214,7 +222,11 @@ export class FileReader extends Reader {
                 if ( filePath === "~" || filePath[0] === "~" ) {
                     file.fullname = os.homedir() + filePath.substr(1);
                 } else if ( filePath === ".." || filePath === "." ) {
-                    file.fullname = fs.realpathSync( filePath );
+                    if ( checkRealPath || !this._isNotChangeDir ) {
+                        file.fullname = fs.realpathSync( filePath );
+                    } else {
+                        file.fullname = fs.realpathSync(path.join((await this.currentDir()).fullname, filePath));
+                    }
                 } else {
                     file.fullname = checkRealPath ? fs.realpathSync(filePath) : filePath;
                 }
@@ -315,6 +327,9 @@ export class FileReader extends Reader {
     }
 
     async currentDir(): Promise<File> {
+        if ( this._isNotChangeDir && this._curDir ) {
+            return this._curDir;
+        }
         return await this.convertFile(process.cwd());
     }
 
@@ -325,7 +340,7 @@ export class FileReader extends Reader {
 
         const fileItem: File[] = [];
         try {
-            if ( !(option && option.noChangeDir) ) {
+            if ( !(option && option.noChangeDir) && !this._isNotChangeDir ) {
                 process.chdir(dirFile.fullname);
             }
 
@@ -351,6 +366,10 @@ export class FileReader extends Reader {
                         fileItem.push( item );
                     }
                 }
+            }
+
+            if ( this._isNotChangeDir ) {
+                this._curDir = dirFile;
             }
 
             if ( this.watcher ) {

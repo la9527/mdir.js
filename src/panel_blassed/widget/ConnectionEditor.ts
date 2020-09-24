@@ -212,29 +212,29 @@ export class ConnectionEditor extends Widget {
             }
         }
 
-        const isProxy = (this.getAliasWidget("proxy") as RadioWidget).getValue();
-        const proxyWidgets = this.eventElements.filter( (item: Widget) => item.aliasName.match( /^proxy\./ ) );
-        proxyWidgets.forEach( item => {
-            item.disable = !isProxy;
-            // log.debug( "ALIAS: %s - isProxy: %s DISABLE : %s", item.aliasName, isProxy, item.disable );
-        });
-
-        const type4 = (this.getAliasWidget("proxy.type4") as RadioWidget);
-        const type5 = (this.getAliasWidget("proxy.type5") as RadioWidget);
-        if ( type4.getValue() === true ) {
-            type4.setValue( true );
-            type5.setValue( false );
-        } else if ( type5.getValue() === true ) {
-            type4.setValue( false );
-            type5.setValue( true );
-        }
-
         if ( !isProtocolDual && tabSftpWidget.disable && tabSSHWidget.disable ) {
             this.disableConnectionInfo(true);
         } else if ( !isProtocolDual && !tabSftpWidget.hasSelect() && !tabSSHWidget.hasSelect() ) {
             this.disableConnectionInfo(true);
         } else {
             this.disableConnectionInfo(false);
+
+            const isProxy = (this.getAliasWidget("proxy") as RadioWidget).getValue();
+            const proxyWidgets = this.eventElements.filter( (item: Widget) => item.aliasName.match( /^proxy\./ ) );
+            proxyWidgets.forEach( item => {
+                item.disable = !isProxy;
+                log.debug( "ALIAS: %s - isProxy: %s DISABLE : %s", item.aliasName, isProxy, item.disable );
+            });
+
+            const type4 = (this.getAliasWidget("proxy.type4") as RadioWidget);
+            const type5 = (this.getAliasWidget("proxy.type5") as RadioWidget);
+            if ( type4.getValue() === true ) {
+                type4.setValue( true );
+                type5.setValue( false );
+            } else if ( type5.getValue() === true ) {
+                type4.setValue( false );
+                type5.setValue( true );
+            }
         }
     }
 

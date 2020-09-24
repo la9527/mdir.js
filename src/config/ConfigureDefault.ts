@@ -32,7 +32,7 @@ export const ConfigureDefault: IConfigure = {
                 "ecdsa-sha2-nistp384",
                 "ecdsa-sha2-nistp521",
                 "ssh-rsa",
-                // "ssh-dss" 
+                "ssh-dss" 
             ],
             cipher: [ 
                 "aes128-ctr",

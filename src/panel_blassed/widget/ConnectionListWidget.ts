@@ -10,6 +10,7 @@ import { StringUtils } from "../../common/StringUtils";
 import { Logger } from "../../common/Logger";
 import { messageBox } from "./MessageBox";
 import { T } from "../../common/Translation";
+import { Color } from "../../common/Color";
 import { ColorConfig } from "../../config/ColorConfig";
 import { RefreshType } from "../../config/KeyMapConfig";
 import * as fs from "fs";
@@ -119,7 +120,7 @@ export class FileBox extends Widget {
             const textFileName = this.convertFilename(this.width as number - 12);
             const tailview = this.convertFileSize();
             const select = this._file.select ? "{white-fg}*{/}" : " ";
-            viewText = sprintf("%s%s %10s", select, textFileName, tailview);
+            viewText = sprintf("%s%s %10s", select, textFileName, new Color(5).fontBlessFormat(tailview));
         }
         log.debug( viewText );
         this.box.setContent(viewText);

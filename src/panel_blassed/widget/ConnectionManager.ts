@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
+import * as os from "os";
 
 import { Widgets, line, text } from "neo-blessed";
 
@@ -92,6 +93,8 @@ export class ConnectionManager extends Widget {
             { top: 24, left: 53, type: "button", name: "close", label: T("ConnectionManager.Close") }
         ];
 
+        await this.fileReader.init( { isNotChangeDir: true } );
+
         this.eventElements = [];
         this.elementsInfo.map( item => {
             if ( item.type === "button" ) {
@@ -110,9 +113,8 @@ export class ConnectionManager extends Widget {
             this.onEventListener( widget, index, eventName, args );
         });
 
-        const connManagerPath = (await this.fileReader.homeDir()).fullname + this.fileReader.sep() + ".m" + this.fileReader.sep() + "connection_manager";
+        const connManagerPath = path.join(os.homedir(), ".m", "connection_manager");
         log.debug( "CONNECTION_MANAGER_PATH: " + connManagerPath );
-
         try {
             if ( !await this.fileReader.exist(connManagerPath) ) {
                 log.debug( "CONNECTION_MANAGER_PATH: DIRECTORY CREATE - " + connManagerPath );

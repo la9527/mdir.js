@@ -302,7 +302,8 @@ export function messageBox( msgOpt: IMessageOption, opts: Widgets.BoxOptions = {
             messgaeBox = new MessageBox({
                 parent: screen,
                 title: msgOpt.title, 
-                msg: msgOpt.msg, button: msgOpt.button,
+                msg: msgOpt.msg || "NULL MESSAGE !!!",
+                button: msgOpt.button,
                 buttonType: msgOpt.buttonType,
                 textAlign: msgOpt.textAlign,
                 buttonTextAlign: msgOpt.buttonTextAlign,

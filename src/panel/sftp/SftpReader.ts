@@ -137,7 +137,10 @@ export class SftpReader extends Reader {
 
     public getConnectInfo(): string {
         const { host, username, port } = this.option || {};
-        return `sftp://${username}@${host}:${port}`;
+        if ( this.isSFTPSession() ) {
+            return `sftp://${username}@${host}:${port}`;
+        }
+        return `ssh://${username}@${host}:${port}`;
     }
 
     public getConnSessionInfo(): IConnectionInfoBase {
@@ -163,9 +166,12 @@ export class SftpReader extends Reader {
 
     public convertConnectionInfo(connInfo: IConnectionInfo, protocol: RegExp ): ssh2ConnectionInfo {
         const info: IConnectionInfoBase = connInfo.info.find( item => item.protocol.match( protocol ) );
-        if ( info === null ) {
+        if ( !info ) {
             return null;
         }
+
+        log.debug( "convertConnectionInfo: ", info );
+
         let proxyInfo: SocksClientOptions = null;
         if ( info.proxyInfo ) {
             proxyInfo = {
@@ -226,7 +232,7 @@ export class SftpReader extends Reader {
         return new Promise( async (resolve, reject) => {
 
             if ( !option ) {
-                reject( "Connection INFO is null" );
+                reject( "Empty Connection Configuration !!!" );
                 return;
             }
             

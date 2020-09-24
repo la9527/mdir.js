@@ -56,7 +56,7 @@ class SshPty implements IPty {
                         this._onExit.fire( { exitCode: -1, signal: -1 } );
                     });
                 }
-            });
+            }, true);
             log.debug( "RECONNECT : %s", sshConnReader );
             this._ssh2Socket = sshConnReader.getSSH2Client();
         } else {
@@ -83,7 +83,6 @@ class SshPty implements IPty {
 
     protected initEvent() {
         this._stream.on("data", (data) => {
-            log.debug( data );
             this._onData.fire( data );
         });
         this._stream.on("close", () => {
@@ -139,6 +138,7 @@ class SshPty implements IPty {
     }
 
     write(data: string): void {
+        log.debug( "WRITE: [%s]", data );
         this.stream?.write( Buffer.from(data, "utf8") );
     }
 
@@ -435,7 +435,8 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         });
 
         let isPromptUpdate = false;
-        this.outputBlock = true;
+        //this.outputBlock = true;
+        this.outputBlock = false;
 
         await new Promise( (resolve, reject) => {
             try {
@@ -458,8 +459,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
                             } else {
                                 const remoteHost = "\\033]1337;RemoteHost=\\u@\\h\\007";
                                 const currentDir = "\\033]1337;CurrentDir=\\w\\007";
-                                this.pty.write( `PS1="$\{PS1\}${remoteHost}${currentDir}"\n\n` );
-                                this.pty.write( "clear\r" );
+                                this.pty.write( `PS1="$\{PS1\}${remoteHost}${currentDir}"\r` );
                             }
                             isPromptUpdate = true;
                             log.debug( "PROMPT UPDATE !!!" );
@@ -476,14 +476,19 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         });
 
         const changeDirectory = async (resolve) => {
-            const curDir = await this.getReader().currentDir();
-            if ( !curDir || !curDir.fullname ) {
-                log.debug( "NO CHANGE DIRECTORY !!!" );
-                return;
+            try {
+                const curDir = await this.getReader().currentDir();
+                if ( !curDir || !curDir.fullname ) {
+                    log.debug( "NO CHANGE DIRECTORY !!!" );
+                    return;
+                }
+                this.pty.write( `cd "${curDir.fullname}"\r` );
+                log.debug( `CHANGE DIRECTORY: "${curDir.fullname}"` );
+                setTimeout( resolve, 200 );
+            } catch( e ) {
+                log.warn( e );
+                resolve();
             }
-            this.pty.write( `cd "${curDir.fullname}"\n` );
-            log.debug( `CHANGE DIRECTORY: "${curDir.fullname}"` );
-            setTimeout( resolve, 10 );
         };
 
         if ( isPromptUpdate ) {
@@ -497,23 +502,22 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
                 });
             };
 
-            for ( let i = 0; i < 10; i++ ) {
+            for ( let i = 0; i < 20; i++ ) {
                 if ( await pathCheckFunc() ) {
                     log.debug( "PATH Detect !!! - Number:%d", i );
-                    if ( this.getReader() instanceof SftpReader ) {
-                        await new Promise( changeDirectory );
-                    }
                     break;
                 }
             }
-        } else {
-            if ( this.getReader() instanceof SftpReader ) {
-                await new Promise( changeDirectory );
-            }
+        }
+        if ( this.getReader() instanceof SftpReader && (this.getReader() as SftpReader).isSFTPSession() ) {
+            await new Promise( changeDirectory );
         }
 
-        this.clear();
-        this.pty.write( "\r" );
+        if ( !(this.getReader() instanceof SftpReader) && (this.shell === "powershell.exe" || this.shell === "cmd.exe") ) {
+            this.pty.write( "cls\r" );
+        } else if ( isPromptUpdate ) {
+            this.pty.write( "clear\r" );
+        }
         this.outputBlock = false;
         this.inputBlock = false;
         this.emit("widget.changetitle");
@@ -904,7 +908,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             try {
                 this.pty.resize( this.screen.width as number, this.screen.height as number);
             } catch (e) {
-                log.debug( e );
+                log.error( e );
             }
             
             this.fullscreenKeyPressEventPty = ( buf ) => {

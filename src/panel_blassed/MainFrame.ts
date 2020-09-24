@@ -108,9 +108,22 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
             newView.setFocus();
             this.blessedFrames[this.activeFrameNum] = newView;
         } else if ( view instanceof BlessedXterm ) {
+            let reader = view.getReader();
+            if ( reader instanceof SftpReader && !reader.isSFTPSession() && !isEscape ) {
+                const result = await messageBox( { 
+                    parent: this.baseWidget, 
+                    title: T("Question"), 
+                    msg: T("Message.QuitSftp"), 
+                    button: [ T("OK"), T("Cancel") ] 
+                });
+                if ( result === T("OK") ) {    
+                    await this.sshDisconnect();
+                    return RefreshType.ALL;
+                }
+                return RefreshType.OBJECT;
+            }
             view.destroy();
 
-            let reader = view.getReader();
             let readPath: any = ".";
             if ( reader instanceof SftpReader && !reader.isSFTPSession() ) {
                 reader = new FileReader();
@@ -649,11 +662,11 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                         await this.terminalPromise(false, null, sftpReader);
                     }
                 } catch( err ) {
-                    log.error( err.stack );
+                    log.error( err );
                     await messageBox({
                         parent: this.baseWidget,
                         title: T("Error"),
-                        msg: err.message,
+                        msg: err,
                         button: [ T("OK") ]
                     });
                     await this.sshDisconnect();
