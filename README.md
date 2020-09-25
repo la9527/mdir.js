@@ -8,7 +8,7 @@ It's a feature rich full-screen text mode application that allows you to copy, m
 
 It's a clone of Mdir, the famous file manager from the MS-DOS age. Mdir.js inherits the keyboard shortcuts and the screen layout from Mdir to maximize user-friendliness.
 
-Mdir.js is best features are its ability to connect SFTP, SSH and view tar and zip files and it's convenient to operate the terminal shell inside the sub-window.
+The best feature of Mdir.js are its ability to connect SFTP, SSH and view tar and zip files and it's convenient to operate the terminal shell inside the sub-window.
 
 Also, you can connect directly to the same client through SSH after SFTP remote access and it's convenient to go directly from the SFTP directory to the SSH directory.
 
