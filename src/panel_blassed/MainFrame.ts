@@ -150,7 +150,29 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
             return;
         }
 
+        const resetArchiveInfo = async () => {
+            if ( view instanceof BlessedPanel ) {
+                (view as any).tmpDirRemoveFunc && (view as any).tmpDirRemoveFunc();
+                (view as any).tmpDirRemoveFunc = null;
+
+                const fileReader = new FileReader();
+                // fileReader.onWatch( (event, filename) => this.onWatchDirectory(event, filename) );
+                if ( view.getReader() ) {
+                    view.getReader().destory();
+                }
+                view.setReader( fileReader );
+
+                const archiveFile = await fileReader.convertFile( file.root, { checkRealPath: true } );
+                await view.read( await fileReader.convertFile( archiveFile.dirname ) );
+                view.focusFile( archiveFile );
+            }
+        };
+
         if ( view instanceof BlessedPanel && file.fstype === "file" ) {
+            const result = await this.getCurrentFileViewer( file );
+            const { orgFile, tmpFile, endFunc } = result || {};
+            const viewerFile = tmpFile || orgFile || file;
+
             const reader = new ArchiveReader();
             const progressBox = new ProgressBox( { title: T("Message.Archive"), msg: T("Message.Calculating"), cancel: () => {
                 reader.isUserCanceled = true;
@@ -179,7 +201,11 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
             };
 
             try {
-                if ( await reader.setArchiveFile( file, progressStatus ) ) {
+                if ( endFunc ) {
+                    (view as any).tmpDirRemoveFunc = endFunc;
+                }
+
+                if ( await reader.setArchiveFile( viewerFile, progressStatus ) ) {
                     if ( view.getReader() ) {
                         view.getReader().destory();
                     }
@@ -188,31 +214,22 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                     view.setFocus();
                     view.resetPosition();
                 }
+                progressBox.destroy();
             } catch( err ) {
+                progressBox.destroy();
                 await messageBox({
                     parent: this.baseWidget,
                     title: T("Error"),
                     msg: err.message,
                     button: [ T("OK") ]
                 });
-            } finally {
-                progressBox.destroy();
+                await resetArchiveInfo();
             }
         } else if ( view instanceof BlessedPanel && 
             file.fstype === "archive" && 
             (await view.getReader().currentDir()).fullname === "/" &&
             file.fullname === "/" && file.name === ".." ) {
-
-            const fileReader = new FileReader();
-            // fileReader.onWatch( (event, filename) => this.onWatchDirectory(event, filename) );
-            if ( view.getReader() ) {
-                view.getReader().destory();
-            }
-            view.setReader( fileReader );
-
-            const archiveFile = await fileReader.convertFile( file.root, { checkRealPath: true } );
-            await view.read( await fileReader.convertFile( archiveFile.dirname ) );
-            view.focusFile( archiveFile );
+            await resetArchiveInfo();
         }
     }
 

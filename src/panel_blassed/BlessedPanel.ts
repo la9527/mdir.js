@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/member-ordering */
 import * as blessed from "neo-blessed";
+import * as path from "path";
 import { Widgets } from "neo-blessed";
 
 import { Panel } from "../panel/Panel";
@@ -195,12 +196,11 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
             this.beforeRender();
             log.debug("BlessedPanel prerender !!! - End %d - [%dms]", this.baseWidget._viewCount, Date.now() - startTime);
         });
-        this.header.on("prerender", async () => {
+        this.header.on("prerender", () => {
             // log.debug( "header prerender !!! - Start %d", this.baseWidget._viewCount );
             if (this._currentDir) {
                 if ( this._currentDir.fstype === "archive" ) {
-                    const file = await FileReader.convertFile(this._currentDir.root);
-                    this.header.setContent( file?.name + ":" + this._currentDir.fullname);
+                    this.header.setContent( path.basename(this._currentDir.root) + ":" + this._currentDir.fullname);
                 } else if ( this._currentDir.fstype === "sftp" ) {
                     this.header.setContent( this._currentDir.root + this._currentDir.fullname);
                 } else {
@@ -300,10 +300,6 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
 
         const result = await super.keyEnterPromise();
         if (!result) {
-            if ( currentFile.fstype === "archive" ) {
-                log.debug( currentFile );
-                return RefreshType.NONE;
-            }
             try {
                 const result = Configure.instance().getMatchProgramInfo( currentFile );
                 if ( result && result.length > 0 && result[0].command ) {
@@ -340,7 +336,6 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
                     button: [ T("OK") ]
                 });
                 log.error(e.stack);
-                return;
             }
         }
         return RefreshType.ALL;
@@ -551,6 +546,7 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
     }
 
     render() {
+        this.header.render();
         if (this.isViewChange()) {
             this.baseWidget.render();
         } else {
