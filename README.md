@@ -8,11 +8,17 @@ It's a feature rich full-screen text mode application that allows you to copy, m
 
 It's a clone of Mdir, the famous file manager from the MS-DOS age. Mdir.js inherits the keyboard shortcuts and the screen layout from Mdir to maximize user-friendliness.
 
-For bug reports, comments and questions, please email to la9527@daum.net
+Mdir.js is best features are its ability to connect SFTP, SSH and view tar and zip files and it's convenient to operate the terminal shell inside the sub-window.
+
+Also, you can connect directly to the same client through SSH after SFTP remote access and it's convenient to go directly from the SFTP directory to the SSH directory.
+
+For bug reports, comments and questions, please send to [GitHub Issues Site](https://github.com/la9527/mdir.js/issues) or email to la9527@daum.net.
+
+ - [한국어](https://github.com/la9527/mdir.js/README_KO.md)
 
 # Requirements
 
- - Node.js >= 10.x
+ - [Node.js](https://node.js) >= 10.x 
 
 # Tested OS
 
@@ -39,11 +45,15 @@ $ npm install mdir.js -g
 $ mdir
 ```
 
+ - If it does not run, close the terminal and try again.
+
 ### Version History
 
 - v1.0.0
-    - [add] When directory change on the subshell(ssh, sh), it is automatically detected.
-    - [add] Support for the SFTP and the SSH Connection.
+    - [ADD] Supports the SFTP and the SSH Connection. (F6)
+    - [ADD] The terminal(sub-shell) supports the full screen. (Ctrl+U)
+    - [ADD] When directory change on the terminal(sub-shell) then it is auto detect, 
+            and when quit the terminal, move to a last stayed directory.
 - v0.8.4
     - [bugfix] bugfix for execute a file name with blank characters.(win32)
     - [improve] js, ts files apply a ESLint.
@@ -87,3 +97,6 @@ $ mdir
 
 ### 5. Simple Terminal Image Viewer
 ![Mdir.js XTerm](https://github.com/la9527/mdir.js/blob/master/images/mdir_v0.8.1_picture_viewer.png?raw=true)
+
+### 6. SSH, SFTP Support
+![Mdir.js SSH,SFTP](https://github.com/la9527/mdir.js/blob/master/images/mdir_v1.0.0_connection_manager.png?raw=true)

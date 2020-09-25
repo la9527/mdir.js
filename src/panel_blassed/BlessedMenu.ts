@@ -183,7 +183,12 @@ export class BlessedMenu implements IHelpService {
         const menuInfo = this.menuBox.getFocusMenu();
         this.close();
         
-        await mainFrame().methodRun( menuInfo.method, menuInfo.funcParam );
+        setTimeout( async () => { // timeout for focus
+            const type = await mainFrame().methodRun( menuInfo.method, menuInfo.funcParam );
+            if ( type !== RefreshType.NONE ) {
+                mainFrame().execRefreshType( type );
+            }
+        }, 100);
         return RefreshType.ALL;
     }
 

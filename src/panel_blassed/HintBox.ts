@@ -48,10 +48,14 @@ export class HintBox extends Widget {
         let colorHintText = hintText;
         this.hintInfo().map( (item: IHintInfo) => {
             if ( item.key ) {
-                const keyHint = `${item.key}-${item.hint}`;
+                let hint = item.hint;
+                if ( item.func ) {
+                    hint = item.func();
+                }
+                const keyHint = `${item.key}-${hint}`;
                 if ( strWidth(hintText + " " + keyHint) < width ) {
                     hintText += keyHint;
-                    colorHintText += `{cyan-fg}${item.key}{/}-${item.hint} `;
+                    colorHintText += `{cyan-fg}${item.key}{/}-${hint} `;
                 }
             }
         });

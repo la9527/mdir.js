@@ -21,7 +21,7 @@ export const menuConfig: IFrameMenuConfig = {
             { name: T("Menu.About"), method: "Common.aboutPromise" },
             { name: T("Menu.Help"), method: "Common.helpPromise" },
             "-",
-            { name: T("Menu.Settings") },
+            { name: T("Menu.Settings"), method: "Common.settingPromise" },
             "-",
             { name: T("Menu.Quit"), method: "Common.quitPromise" }
         ],
@@ -75,8 +75,8 @@ export const menuConfig: IFrameMenuConfig = {
             { name: T("Menu.Split"), method: "Common.split" },
             { name: T("Menu.Next Window"), method: "Common.nextWindow" }
         ],
-        Terminal: [
-            { name: T("Menu.ConnectionManager"), method: "Common.connectionManager" },
+        Utility: [
+            { name: T("Menu.ConnectionManager"), method: "Common.connectionManagerPromise" },
             "-",
             { name: T("Menu.Terminal"), method: "Common.terminalPromise" },
             "-",

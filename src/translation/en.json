@@ -91,13 +91,16 @@
         "GotoLast": "Go to last line",
         "PanelSync": "Panels to same directory",
         "Archive": "Archive",
-        "ConnectionManager": "Connection Manager"
+        "ConnectionManager": "Connection Manager",
+        "Utility": "Utility"
     },
     "Hint": {
         "Help": "Help",
         "Split": "Split",
         "Quit": "Quit",
         "Terminal": "Terminal",
+        "TerminalExit": "Terminal Exit",
+        "Disconnect": "Disconnect",
         "Menu": "Menu",
         "Shell": "Shell",
         "ConsoleView": "Console View",
@@ -127,7 +130,9 @@
         "Archive": "Compress file",
         "SelectProgramToRun" : "Please select a program to run",
         "QuitSftp": "Do you want to close the connection?",
-        "FullscreenReturnKey" : "If you want to return to mdir.js, press Ctrl+U again."
+        "FullscreenReturnKey" : "If you want to return to mdir.js, press Ctrl+U again.",
+        "PasswordEmpty": "Password is blank. Please make sure the settings are correct.",
+        "AuthenticationFailed": "Authentication failed, please make sure connection settings are correct."
     },
     "EditorMsg": {
         "TITLE_GOTO_NUMBER": "Go to Line Number",
@@ -189,6 +194,13 @@
         "you to copy, move and delete files and whole directory trees,",
         "search for files and run commands in the sub-shell.",
         "",
+        "Mdir.js is best features are its ability to connect SFTP, SSH and",
+        " view tar and zip files and it's convenient to operate the terminal ",
+        "shell inside the sub-window.",
+        "",
+        "Also, you can connect directly to the same client through SSH after SFTP remote access.",
+        "It's convenient to go directly from the SFTP directory to the SSH directory.",
+        "",
         "For bug reports, comments and questions, please visit the homepage. ",
         "",
         " * Homepage : {bold}https://github.com/la9527/mdir.js{/bold}"
@@ -219,6 +231,7 @@
         "JSONEditor": "Raw Editor",
         "Close": "Close",
         "Name": "Name",
+        "Protocol": "Protocol",
         "Host": "Host",
         "Port": "Port",
         "Username": "Username",

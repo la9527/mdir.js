@@ -29,8 +29,7 @@ import { Color } from "../common/Color";
 import { ProgressBox } from "./widget/ProgressBox";
 import { inputBox } from "./widget/InputBox";
 import { Selection, ClipBoard } from "../panel/Selection";
-import { SftpReader, IConnectionInfo, IConnectionInfoBase } from "../panel/sftp/SftpReader";
-import Configure from "../config/Configure";
+import { SftpReader, IConnectionInfo } from "../panel/sftp/SftpReader";
 
 const log = Logger("MainFrame");
 
@@ -47,7 +46,9 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
         menuKeyMapping( KeyMappingInfo, menuConfig );
     }
 
-    @Hint({ hint: T("Hint.Terminal"), order: 4 })
+    @Hint({ hint: T("Hint.Terminal"), order: 4, func: () => {
+        return (mainFrame().activePanel() instanceof BlessedXterm) ? T("Hint.TerminalExit") : T("Hint.Terminal");
+    }})
     @Help(T("Help.Terminal"))
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async terminalPromise(isEscape = false, shellCmd: string = null, sftpReader: Reader = null ): Promise<RefreshType> {
@@ -117,8 +118,7 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                     button: [ T("OK"), T("Cancel") ] 
                 });
                 if ( result === T("OK") ) {    
-                    await this.sshDisconnect();
-                    return RefreshType.ALL;
+                    return await this.terminalPromise(true);
                 }
                 return RefreshType.OBJECT;
             }
@@ -605,7 +605,24 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
         }
     }
 
-    connectionManager() {
+    async connectionManagerPromise() {
+        const reader = this.activePanel()?.getReader();
+        if ( reader && reader instanceof SftpReader ) {
+            const result = await messageBox( { 
+                parent: this.baseWidget, 
+                title: T("Question"), 
+                msg: T("Message.QuitSftp"), 
+                button: [ T("OK"), T("Cancel") ] 
+            });
+            if ( result === T("OK") ) {    
+                if ( this.activePanel() instanceof BlessedXterm ) {
+                    return await this.terminalPromise( true );
+                }
+                return await this.sshDisconnect();
+            }
+            return RefreshType.NONE;
+        }
+
         const refreshNextTick = (connectionInfo: IConnectionInfo = null) => {
             process.nextTick( async () => {
                 this.activePanel().setFocus();
@@ -630,6 +647,7 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
         connectionManager.on( "widget.connect", refreshNextTick);
         connectionManager.on( "widget.close", refreshNextTick);
         connectionManager.on( "widget.jsoneditor", jsonEditor);
+        return RefreshType.OBJECT;
     }
 
     async ssh2connect( connectionInfo: IConnectionInfo ) {
@@ -675,6 +693,11 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                 await this.sshDisconnect();
             }
         }
+    }
+
+    async settingPromise() {
+        const file = await FileReader.convertFile( "~/.m/configure.json" );
+        return await this.editorPromise(file);
     }
 
     static instance() {

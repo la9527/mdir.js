@@ -91,13 +91,16 @@
         "GotoLast": "마지막으로",
         "PanelSync": "같은 디렉토리로 동기화",
         "Archive": "압축",
-        "ConnectionManager": "접속 관리자"
+        "ConnectionManager": "접속 관리자",
+        "Utility": "유틸리티"
     },
     "Hint": {
         "Help": "도움말",
         "Split": "창분할",
         "Quit": "종료",
         "Terminal": "터미널",
+        "TerminalExit": "터미널 나가기",
+        "Disconnect": "접속 종료",
         "Menu": "메뉴",
         "Shell": "쉘",
         "ConsoleView": "콘솔 보기",
@@ -126,7 +129,9 @@
         "Archive": "압축 파일 보기",
         "SelectProgramToRun" : "실행할 프로그램 선택하세요.",
         "QuitSftp": "접속을 종료할까요?",
-        "FullscreenReturnKey" : "mdir.js로 돌아가려면, Ctrl+U 를 누르세요."
+        "FullscreenReturnKey" : "mdir.js로 돌아가려면, Ctrl+U 를 누르세요.",
+        "PasswordEmpty": "비밀번호가 비어있습니다. 설정 정보를 다시 확인해 보세요.",
+        "AuthenticationFailed": "인증에 실패하였습니다. 연결 설정이 올바른지 확인해 주세요."
     },
     "EditorMsg": {
         "TITLE_GOTO_NUMBER": "라인 이동",
@@ -187,6 +192,10 @@
         "디렉토리 트리 구조로 보여주고, 디렉토리를 쉽게 이동 및 검색할 수 있으며,",
         "화면에서 다중 쉘 커맨드를 지원합니다.",
         "",
+        "또한, SFTP와 SSH를 연결 및 TAR, ZIP 파일을 볼 수 있으며,",
+        "SFTP 원격 접속 후 동일 클라이언트에 SSH로 바로 접속이 가능하며,",
+        "SFTP 디렉토리에서 SSH 디렉토리 경로로 바로 이동하는 것이 편리합니다.",
+        "",
         "버그 리포팅 및 오류 사항에 대해서는 홈페이지를 방문해 주세요.",
         "",
         " * 홈페이지 : {bold}https://github.com/la9527/mdir.js{/bold}"
@@ -217,6 +226,7 @@
         "JSONEditor": "RAW 편집",
         "Close": "닫기",
         "Name": "이름",
+        "Protocol": "프로토콜",
         "Host": "호스트",
         "Port": "포트",
         "Username": "사용자ID",

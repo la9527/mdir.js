@@ -10,6 +10,7 @@ import { convertAttrToStatMode, FileReader } from "../FileReader";
 import { Socket } from "net";
 import { Crypto } from "../../common/Crypto";
 import Configure from "../../config/Configure";
+import { T } from "../../common/Translation";
 
 const log = Logger("SftpReader");
 
@@ -238,6 +239,11 @@ export class SftpReader extends Reader {
             
             const decryptOption = this.decryptConnectionInfo(option);
 
+            if ( !decryptOption.password || (decryptOption.proxyInfo && !decryptOption.proxyInfo.proxy.password) ) {
+                reject( T("Message.PasswordEmpty") );
+                return;
+            }
+
             if ( decryptOption.proxyInfo ) {
                 try {
                     const { socket } = await SocksClient.createConnection(decryptOption.proxyInfo);
@@ -290,7 +296,11 @@ export class SftpReader extends Reader {
             };
             this.client.once( "ready", onceReady );
             this.client.once( "error", (err) => {
-                log.error( "Client ERORR: %s", err );
+                if ( err && err.level === "client-authentication" ) {
+                    reject( T("Message.AuthenticationFailed" ) );
+                    return;
+                }
+                log.error( "Client ERORR: %s %j", err.level, err );
                 this.client.removeListener("ready", onceReady);
                 reject( err );
             } );

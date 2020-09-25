@@ -94,7 +94,7 @@ export class ConnectionEditor extends Widget {
             { top: 2, type: "input", name: "name", label: T("ConnectionManager.Name") },
             { top: 3, left: 0, width: "100%-2", type: "line", orientation: "horizontal" },
 
-            { top: 4, left: 3, width: 20, type: "label", content: "Protocol" },
+            { top: 4, left: 3, width: 20, type: "label", content: T("ConnectionManager.Protocol") },
             { top: 4, left: 25, width: 14, type: "checkbox", name: "Protocol.DUAL", label: T("SFTP & SSH") },
             { top: 4, left: 43, width: 10, type: "checkbox", name: "Protocol.SFTP", label: T("SFTP") },
             { top: 4, left: 53, width: 10, type: "checkbox", name: "Protocol.SSH", label: T("SSH") },

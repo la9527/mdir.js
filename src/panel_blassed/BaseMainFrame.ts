@@ -30,6 +30,7 @@ import { T } from "../common/Translation";
 import { draw } from "./widget/BlessedDraw";
 import { File } from "../common/File";
 import { FileReader } from "../panel/FileReader";
+import mainFrame from "./MainFrame";
 
 const log = Logger("MainFrame");
 
@@ -522,7 +523,10 @@ export abstract class BaseMainFrame implements IHelpService {
 
     protected abstract terminalPromise(isEscape: boolean, shellCmd?: string, sftpReader?: Reader ): Promise<RefreshType>;
     
-    @Hint({ hint: T("Hint.Quit"), order: 1 })
+    @Hint({ hint: T("Hint.Quit"), order: 1, func: () => {
+        const readerName = mainFrame().activePanel()?.getReader()?.readerName;
+        return readerName === "sftp" ? "Hint.Disconnect" : T("Hint.Quit");
+    }})
     @Help(T("Help.Quit"))
     async quitPromise() {
         const panel = this.activePanel();

@@ -273,12 +273,13 @@ export interface IHintInfo {
     hint?: string;
     order?: number;
     key?: string;
+    func?: () => string;
 }
 
-export function Hint( { hint, order }: IHintInfo ) {
+export function Hint( { hint, order, func }: IHintInfo ) {
     return function(target: any, propName: string, _description: PropertyDescriptor) {
         target.hintInfo = target.hintInfo || {};
-        target.hintInfo[ propName ] = { hint, order: order || 10 };
+        target.hintInfo[ propName ] = { hint, order: order || 10, func };
     };
 }
 
