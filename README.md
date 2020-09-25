@@ -1,6 +1,6 @@
 ![Mdir.js](https://github.com/la9527/mdir.js/blob/master/images/mdir_v0.8.1.gif?raw=true)
 
-# Instruction
+# Instruction 
 
 Mdir.js is a visual file manager.
 
@@ -14,7 +14,7 @@ Also, you can connect directly to the same client through SSH after SFTP remote 
 
 For bug reports, comments and questions, please send to [GitHub Issues Site](https://github.com/la9527/mdir.js/issues) or email to la9527@daum.net.
 
- - [한국어](https://github.com/la9527/mdir.js/README_KO.md)
+ - [한국어 설명 링크](https://github.com/la9527/mdir.js/blob/master/README_KO.md)
 
 # Requirements
 
@@ -99,4 +99,4 @@ $ mdir
 ![Mdir.js XTerm](https://github.com/la9527/mdir.js/blob/master/images/mdir_v0.8.1_picture_viewer.png?raw=true)
 
 ### 6. SSH, SFTP Support
-![Mdir.js SSH,SFTP](https://github.com/la9527/mdir.js/blob/master/images/mdir_v1.0.0_connection_manager.png?raw=true)
+![Mdir.js SSH,SFTP](https://github.com/la9527/mdir.js/blob/master/images/mdir_1.0.0_connection_manager.png?raw=true)

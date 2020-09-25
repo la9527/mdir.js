@@ -97,4 +97,4 @@ $ mdir
 ![Mdir.js XTerm](https://github.com/la9527/mdir.js/blob/master/images/mdir_v0.8.1_picture_viewer.png?raw=true)
 
 ### 6. SSH, SFTP 접속 지원
-![Mdir.js SSH,SFTP](https://github.com/la9527/mdir.js/blob/master/images/mdir_v1.0.0_connection_manager.png?raw=true)
+![Mdir.js SSH,SFTP](https://github.com/la9527/mdir.js/blob/master/images/mdir_1.0.0_connection_manager.png?raw=true)
