@@ -213,7 +213,7 @@ export class FileReader extends Reader {
 
     convertFile( filePath: string, option?: { fileInfo?: any; useThrow?: boolean; checkRealPath?: boolean; virtualFile?: boolean } ): Promise<File> {
         // eslint-disable-next-line no-async-promise-executor
-        return new Promise( async (resolve) => {
+        return new Promise( async (resolve, reject) => {
             const { fileInfo, useThrow, checkRealPath } = option || {};
             const file = new File();
             file.fstype = this._readerFsType;
@@ -236,7 +236,8 @@ export class FileReader extends Reader {
             } catch( e ) {
                 log.error( "convertfile - FAIL : [%s] %j", filePath, e);
                 if ( useThrow ) {
-                    throw e;
+                    reject( e );
+                    return;
                 }
                 resolve(null);
                 return;
@@ -288,7 +289,8 @@ export class FileReader extends Reader {
                     file.atime = new Date(0);
                 } else {
                     if ( useThrow ) {
-                        throw e;
+                        reject(e);
+                        return null;
                     }
                     resolve(null);
                     return null;

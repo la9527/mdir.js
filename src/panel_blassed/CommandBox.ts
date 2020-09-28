@@ -238,7 +238,11 @@ export class CommandBox extends Widget {
 
     async keyReturnPromise() {
         gCmdHistory.push( this.commandValue );
-        await mainFrame().commandRun( this.commandValue );
+        try {
+            await mainFrame().commandRun( this.commandValue );
+        } catch( e ) {
+            log.error( e );
+        }
         this.cursorPos = 0;
         this.commandValue = "";
         mainFrame().execRefreshType(RefreshType.ALL_NOFOCUS);
