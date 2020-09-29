@@ -222,11 +222,14 @@ export class FileReader extends Reader {
                 if ( filePath === "~" || filePath[0] === "~" ) {
                     file.fullname = os.homedir() + filePath.substr(1);
                 } else if ( filePath === ".." || filePath === "." ) {
+                    /*
                     if ( checkRealPath || !this._isNotChangeDir ) {
                         file.fullname = fs.realpathSync( filePath );
                     } else {
                         file.fullname = fs.realpathSync(path.join((await this.currentDir()).fullname, filePath));
                     }
+                    */
+                    file.fullname = fs.realpathSync(path.join((await this.currentDir()).fullname, filePath));
                 } else {
                     file.fullname = checkRealPath ? fs.realpathSync(filePath) : filePath;
                 }

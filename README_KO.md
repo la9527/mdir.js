@@ -35,8 +35,19 @@ LinM의 기능 대부분 재구현하였고, 현재는 더 발전되었습니다
  - https://nodejs.org/ 에서 node.js 10.x 이상 버전을 시스템에 설치합니다.
  - 터미널 화면에서 아래 명령을 실행하면 설치가 완료됩니다.
 
+##### Windows 10)
+
 ```bash
-$ npm install mdir.js -g
+$ npm install -g node-gyp
+$ npm install -g --production windows-build-tools
+$ npm install -g mdir.js
+```
+
+##### Mac OSX, 리눅스)
+
+```
+$ npm install -g node-gyp
+$ npm install -g mdir.js
 ```
 
 ### 2) 실행

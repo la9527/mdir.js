@@ -54,6 +54,10 @@ import * as os from "os";
     ██║ ╚═╝ ██║██████╔╝██║██║  ██║██╗╚█████╔╝███████║
     ╚═╝     ╚═╝╚═════╝ ╚═╝╚═╝  ╚═╝╚═╝ ╚════╝ ╚══════╝\n\n`));
 
+    if ( !fs.existsSync( path.join(os.homedir(), ".m") ) ) {
+        fs.mkdirSync( path.join(os.homedir(), ".m") );
+    }
+
     const colorConfig = ColorConfig.instance();
     const configure = Configure.instance();
 

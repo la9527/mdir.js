@@ -525,7 +525,7 @@ export abstract class BaseMainFrame implements IHelpService {
     
     @Hint({ hint: T("Hint.Quit"), order: 1, func: () => {
         const readerName = mainFrame().activePanel()?.getReader()?.readerName;
-        return readerName === "sftp" ? "Hint.Disconnect" : T("Hint.Quit");
+        return readerName === "sftp" ? T("Hint.Disconnect") : T("Hint.Quit");
     }})
     @Help(T("Help.Quit"))
     async quitPromise() {

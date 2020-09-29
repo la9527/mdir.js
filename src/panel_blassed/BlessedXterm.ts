@@ -900,8 +900,8 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
     @Help( T("Help.FullscreenView") )
     @Hint({ hint: T("Hint.FullscreenView"), order: 2 })
     keyXtermFullScreen() {
+        mainFrame().lockKey("xtermFullScreen", this);
         setTimeout( () => {
-            mainFrame().lockKey("xtermFullScreen", this);
             this.screen.leave();
             this.isFullscreen = true;
 

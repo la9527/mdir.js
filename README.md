@@ -19,7 +19,7 @@ For bug reports, comments and questions, please send to [GitHub Issues Site](htt
 # Requirements
 
  - [Node.js](https://node.js) >= 10.x 
-
+  
 # Tested OS
 
  - Windows 10
@@ -35,8 +35,16 @@ For bug reports, comments and questions, please send to [GitHub Issues Site](htt
 
 ### 1. Install
 
+ - Windows 10
 ```bash
-$ npm install mdir.js -g
+$ npm install -g node-gyp
+$ npm install -g --production windows-build-tools
+$ npm install -g mdir.js
+```
+ - Mac OSX, Linux OS
+```
+$ npm install -g node-gyp
+$ npm install -g mdir.js
 ```
 
 ### 2. Run 
