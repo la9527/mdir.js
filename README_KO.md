@@ -32,23 +32,33 @@ LinM의 기능 대부분 재구현하였고, 현재는 더 발전되었습니다
 
 ### 1) 설치 방법
 
- - https://nodejs.org/ 에서 node.js 10.x 이상 버전을 시스템에 설치합니다.
+ - 공통적으로 https://nodejs.org/ 에서 node.js 10.x 이상 버전을 시스템에 설치합니다.
  - 터미널 화면에서 아래 명령을 실행하면 설치가 완료됩니다.
+ 
+ - Windows
 
-##### Windows 10)
+    npm install 로 실행하려면 시스템에 파이선과 C++ 컴파일러가 설치되어 있어야 합니다. 
+    커맨드에서 관리자 실행으로 아래 명령을 실행해 주시면 됩니다. 자세한 실행 방법은 여기(https://github.com/felixrieseberg/windows-build-tools)를 참고하세요.
 
-```bash
-$ npm install -g node-gyp
-$ npm install -g --production windows-build-tools
+    ```bash
+    $ npm install -g --production windows-build-tools
+    ```
+
+ - Mac OS
+
+    Xcode is needed to compile the sources, this can be installed from the App Store.
+
+ - Linux/Ubuntu 
+
+    ```bash
+    sudo apt install -y make python build-essential
+    ```
+
+### 2) Install 
+```
 $ npm install -g mdir.js
 ```
 
-##### Mac OSX, 리눅스)
-
-```
-$ npm install -g node-gyp
-$ npm install -g mdir.js
-```
 
 ### 2) 실행
 

@@ -16,10 +16,7 @@ For bug reports, comments and questions, please send to [GitHub Issues Site](htt
 
  - [한국어 설명 링크](https://github.com/la9527/mdir.js/blob/master/README_KO.md)
 
-# Requirements
-
- - [Node.js](https://node.js) >= 10.x 
-  
+ 
 # Tested OS
 
  - Windows 10
@@ -33,21 +30,34 @@ For bug reports, comments and questions, please send to [GitHub Issues Site](htt
 
 # Installation
 
-### 1. Install
+### 1) Install Dependencies
+ - Common
+    - [Node.js](https://node.js) >= 10.x 
 
- - Windows 10
-```bash
-$ npm install -g node-gyp
-$ npm install -g --production windows-build-tools
+ - Windows
+
+    `npm install` requires some tools to be present in the system like Python and C++ compiler. Windows users can easily install them by running the following command in PowerShell as administrator. For more information see https://github.com/felixrieseberg/windows-build-tools:
+
+    ```bash
+    $ npm install -g --production windows-build-tools
+    ```
+
+ - Mac OS
+
+    Xcode is needed to compile the sources, this can be installed from the App Store.
+
+ - Linux/Ubuntu 
+
+    ```bash
+    sudo apt install -y make python build-essential
+    ```
+
+### 2) Install 
+```
 $ npm install -g mdir.js
 ```
- - Mac OSX, Linux OS
-```
-$ npm install -g node-gyp
-$ npm install -g mdir.js
-```
 
-### 2. Run 
+### 3) Run 
 
 ```bash
 $ mdir
@@ -55,7 +65,7 @@ $ mdir
 
  - If it does not run, close the terminal and try again.
 
-### Version History
+## Version History
 
 - v1.0.0
     - [ADD] Supports the SFTP and the SSH Connection. (F6)
