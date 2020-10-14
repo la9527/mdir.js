@@ -62,7 +62,7 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         editorPromise: { name: T("Func.Editor"), key: "f3" },
         panelSyncPromise: "C-s",
         createArchiveFilePromise: "C-p",
-        connectionManager: { name: T("Func.ConnectionManager"), key: "f6" }
+        connectionManagerPromise: { name: T("Func.ConnectionManager"), key: "f6" }
     },
     Menu: {
         keyUp: "up",

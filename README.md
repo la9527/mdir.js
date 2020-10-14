@@ -30,7 +30,7 @@ For bug reports, comments and questions, please send to [GitHub Issues Site](htt
 
 # Installation
 
-### 1) Install Dependencies
+### 1) Dependencies
  - Common
     - [Node.js](https://node.js) >= 10.x 
 

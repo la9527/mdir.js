@@ -33,8 +33,7 @@ LinM의 기능 대부분 재구현하였고, 현재는 더 발전되었습니다
 ### 1) 설치 방법
 
  - 공통적으로 https://nodejs.org/ 에서 node.js 10.x 이상 버전을 시스템에 설치합니다.
- - 터미널 화면에서 아래 명령을 실행하면 설치가 완료됩니다.
- 
+  
  - Windows
 
     npm install 로 실행하려면 시스템에 파이선과 C++ 컴파일러가 설치되어 있어야 합니다. 
@@ -46,9 +45,11 @@ LinM의 기능 대부분 재구현하였고, 현재는 더 발전되었습니다
 
  - Mac OS
 
-    Xcode is needed to compile the sources, this can be installed from the App Store.
+    소스 컴파일을 위해서는 앱스토어를 통해 Xcode를 설치하시기 바랍니다.
 
- - Linux/Ubuntu 
+ - Linux/Ubuntu
+    
+    리눅스 우분투 OS의 경우는 아래 패키지가 설치되면 정상적으로 실행 가능합니다.
 
     ```bash
     sudo apt install -y make python build-essential
