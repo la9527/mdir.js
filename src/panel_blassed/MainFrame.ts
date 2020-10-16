@@ -67,7 +67,7 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                 shell: shell ? shell[0] : null,
                 args: shell ? shell.splice(1) : null,
                 viewCount: viewCount++ 
-            }, sftpReader || view.getReader(), sftpReader ? null : view.currentPath() );
+            }, sftpReader || view.getReader() );
             newView.on("process_exit", () => {
                 process.nextTick( () => {
                     result.tmpDirRemoveFunc && result.tmpDirRemoveFunc();
@@ -87,6 +87,7 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                     await this.terminalPromise( true );
                 });
             });
+            newView.bootstrap(sftpReader ? null : view.currentPath());
             newView.setFocus();
             this.blessedFrames[this.activeFrameNum] = newView;
         } else if ( view instanceof BlessedMcd ) {
@@ -100,7 +101,7 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                 screenKeys: false,
                 shell: shell ? shell[0] : null,
                 args: shell ? shell.splice(1) : null,
-            }, view.getReader(), view.currentPathFile() );
+            }, view.getReader() );
             newView.on("process_exit", () => {
                 process.nextTick( () => {
                     this.terminalPromise( true );
@@ -117,6 +118,7 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                     this.terminalPromise( true );
                 });
             });
+            newView.bootstrap(view.currentPathFile());
             newView.setFocus();
             this.blessedFrames[this.activeFrameNum] = newView;
         } else if ( view instanceof BlessedXterm ) {

@@ -175,7 +175,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
     inputBlock: boolean = false;
     outputBlock: boolean = false;
 
-    constructor( options: any, reader: Reader, firstPath: File ) {
+    constructor( options: any, reader: Reader ) {
         super( { ...options, scrollable: false } );
 
         const statColor = ColorConfig.instance().getBaseColor("stat");
@@ -244,7 +244,6 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         (this.panel.box as any).render = () => {
             this._render();
         };
-        this.bootstrap(firstPath);
     }
 
     viewName() {
@@ -373,9 +372,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
                 await this.initPtyEvent();
             } catch( e ) {
                 log.error( e );
-                process.nextTick(() => {
-                    this.box.emit( "error", e );
-                });
+                this.box.emit( "error", e );
                 return;
             }
             this.header.setContent( [ this.shell, ...(this.args || []) ].join(" ") || "" );
@@ -524,7 +521,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         }
         this.outputBlock = false;
         this.inputBlock = false;
-        this.emit("widget.changetitle", "");
+        this.emit("widget.changetitle");
     }
 
     /**
