@@ -369,10 +369,19 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
                     encoding: os.platform() !== "win32" ? "utf-8" : null,
                     env: this.options.env || process.env
                 });
+                this.pty.on("exit", async (code, signal) => {
+                    log.debug( "on exit !!! - %d", code, signal );
+                    await this.fullscreenRecover();
+                    this.pty = null;
+                    this.box.emit( "process_exit", code, signal );
+                });
+                await new Promise((resolve) => setTimeout(resolve, 500));
                 await this.initPtyEvent();
             } catch( e ) {
-                log.error( e );
-                this.box.emit( "error", e );
+                log.error( "Exception - ", e );
+                try {
+                    this.box.emit( "error", e );
+                } catch( e ) {}
                 return;
             }
             this.header.setContent( [ this.shell, ...(this.args || []) ].join(" ") || "" );
@@ -425,12 +434,6 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             }
         });
 
-        this.pty.on("exit", async (code) => {
-            log.debug( "on exit !!! - %d", code );
-            await this.fullscreenRecover();
-            this.box.emit( "process_exit", code );
-        });
-
         let isPromptUpdate = false;
         //this.outputBlock = true;
         this.outputBlock = false;
@@ -441,7 +444,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
                 if ( [ "zsh", "bash", "sh", "cmd.exe", "powershell.exe" ].indexOf(this.shell) > -1 || isSftp ) {
                     setTimeout( () => {
                         try {
-                            if ( !this.getCurrentPath() ) {
+                            if ( !this.getCurrentPath() && this.pty ) {
                                 // function prompt {"PS [$Env:username@$Env:computername]$($PWD.ProviderPath)> "}
                                 if ( !isSftp && this.shell === "powershell.exe" ) {
                                     const remoteHost = "$([char]27)]1337;RemoteHost=$Env:username@$Env:computername$([char]7)";
@@ -478,13 +481,16 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
 
         const changeDirectory = async (resolve) => {
             try {
-                const curDir = await this.getReader().currentDir();
-                if ( !curDir || !curDir.fullname ) {
-                    log.debug( "NO CHANGE DIRECTORY !!!" );
-                    return;
+                if ( this.pty ) {
+                    const curDir = await this.getReader().currentDir();
+                    if ( !curDir || !curDir.fullname ) {
+                        log.debug( "NO CHANGE DIRECTORY !!!" );
+                        resolve();
+                        return;
+                    }
+                    this.pty.write( `cd "${curDir.fullname}"\r` );
+                    log.debug( `CHANGE DIRECTORY: "${curDir.fullname}"` );
                 }
-                this.pty.write( `cd "${curDir.fullname}"\r` );
-                log.debug( `CHANGE DIRECTORY: "${curDir.fullname}"` );
                 setTimeout( resolve, 200 );
             } catch( e ) {
                 log.warn( e );
