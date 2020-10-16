@@ -443,26 +443,30 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
                 const isSftp = this.getReader() instanceof SftpReader;
                 if ( [ "zsh", "bash", "sh", "cmd.exe", "powershell.exe" ].indexOf(this.shell) > -1 || isSftp ) {
                     setTimeout( () => {
-                        if ( !this.getCurrentPath() ) {
-                            // function prompt {"PS [$Env:username@$Env:computername]$($PWD.ProviderPath)> "}
-                            if ( !isSftp && this.shell === "powershell.exe" ) {
-                                const remoteHost = "$([char]27)]1337;RemoteHost=$Env:username@$Env:computername$([char]7)";
-                                const currentDir = "$([char]27)]1337;CurrentDir=$($PWD.ProviderPath)$([char]7)";
-                                const msg = `function prompt {"PS $($PWD.ProviderPath)>${remoteHost}${currentDir} "}\r`;
-                                this.pty.write( msg );
-                                this.pty.write( "cls\r" );
-                            } else if ( !isSftp && this.shell === "cmd.exe" ) {
-                                const remoteHost = "$E]1337;RemoteHost=localhost\x07";
-                                const currentDir = "$E]1337;CurrentDir=$P\x07";
-                                this.pty.write( `prompt $P$G${remoteHost}${currentDir}\r` );
-                                this.pty.write( "cls\r" );
-                            } else {
-                                const remoteHost = "\\033]1337;RemoteHost=\\u@\\h\\007";
-                                const currentDir = "\\033]1337;CurrentDir=\\w\\007";
-                                this.pty.write( `PS1="$\{PS1\}${remoteHost}${currentDir}"\r` );
+                        try {
+                            if ( !this.getCurrentPath() ) {
+                                // function prompt {"PS [$Env:username@$Env:computername]$($PWD.ProviderPath)> "}
+                                if ( !isSftp && this.shell === "powershell.exe" ) {
+                                    const remoteHost = "$([char]27)]1337;RemoteHost=$Env:username@$Env:computername$([char]7)";
+                                    const currentDir = "$([char]27)]1337;CurrentDir=$($PWD.ProviderPath)$([char]7)";
+                                    const msg = `function prompt {"PS $($PWD.ProviderPath)>${remoteHost}${currentDir} "}\r`;
+                                    this.pty.write( msg );
+                                    this.pty.write( "cls\r" );
+                                } else if ( !isSftp && this.shell === "cmd.exe" ) {
+                                    const remoteHost = "$E]1337;RemoteHost=localhost\x07";
+                                    const currentDir = "$E]1337;CurrentDir=$P\x07";
+                                    this.pty.write( `prompt $P$G${remoteHost}${currentDir}\r` );
+                                    this.pty.write( "cls\r" );
+                                } else {
+                                    const remoteHost = "\\033]1337;RemoteHost=\\u@\\h\\007";
+                                    const currentDir = "\\033]1337;CurrentDir=\\w\\007";
+                                    this.pty.write( `PS1="$\{PS1\}${remoteHost}${currentDir}"\r` );
+                                }
+                                isPromptUpdate = true;
+                                log.debug( "PROMPT UPDATE !!!" );
                             }
-                            isPromptUpdate = true;
-                            log.debug( "PROMPT UPDATE !!!" );
+                        } catch( e ) {
+                            log.error( e );
                         }
                         resolve();
                     }, 500 );
