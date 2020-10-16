@@ -114,7 +114,7 @@ export class Widget {
     }
 
     emit( event: string, opt?: any ) {
-        this._box.emit( event, opt );
+        this._box.emit( event, opt || "" );
     }
 
     setFocus() {

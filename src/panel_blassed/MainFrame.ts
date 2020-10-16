@@ -106,6 +106,17 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                     this.terminalPromise( true );
                 });
             });
+            newView.on("error", (e) => {
+                process.nextTick( async () => {
+                    await messageBox( { 
+                        parent: this.baseWidget, 
+                        title: T("Error"), 
+                        msg: e, 
+                        button: [ T("OK") ] 
+                    });
+                    this.terminalPromise( true );
+                });
+            });
             newView.setFocus();
             this.blessedFrames[this.activeFrameNum] = newView;
         } else if ( view instanceof BlessedXterm ) {

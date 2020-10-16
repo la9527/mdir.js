@@ -524,7 +524,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         }
         this.outputBlock = false;
         this.inputBlock = false;
-        this.emit("widget.changetitle");
+        this.emit("widget.changetitle", "");
     }
 
     /**
