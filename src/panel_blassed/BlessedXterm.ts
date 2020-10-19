@@ -2,8 +2,8 @@
 /* eslint-disable no-control-regex */
 import colors from "colors";
 import { Widget } from "./widget/Widget";
-import { IPty } from "node-pty";
-import * as NodePTY from "node-pty";
+import { IPty } from "node-pty-prebuilt-multiarch";
+import * as NodePTY from "node-pty-prebuilt-multiarch";
 import * as os from "os";
 import { Logger } from "../common/Logger";
 import { IBlessedView } from "./IBlessedView";
@@ -369,13 +369,6 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
                     encoding: os.platform() !== "win32" ? "utf-8" : null,
                     env: this.options.env || process.env
                 });
-                this.pty.on("exit", async (code, signal) => {
-                    log.debug( "on exit !!! - %d", code, signal );
-                    await this.fullscreenRecover();
-                    this.pty = null;
-                    this.box.emit( "process_exit", code, signal );
-                });
-                await new Promise((resolve) => setTimeout(resolve, 500));
                 await this.initPtyEvent();
             } catch( e ) {
                 log.error( "Exception - ", e );
@@ -433,6 +426,14 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
                 }
             }
         });
+
+        this.pty.on("exit", async (code, signal) => {
+            log.debug( "on exit !!! - %d", code, signal );
+            await this.fullscreenRecover();
+            this.pty = null;
+            this.box.emit( "process_exit", code, signal );
+        });
+        await new Promise((resolve) => setTimeout(resolve, 500));
 
         let isPromptUpdate = false;
         //this.outputBlock = true;
