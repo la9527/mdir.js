@@ -473,7 +473,22 @@ export class FileReader extends Reader {
                 return;
             }
 
-            const srcFile =  source.link ? source.link.file : source;
+            const srcFile = source;
+            if ( source.link ) {
+                try {
+                    if ( source.link.file ) {
+                        fs.symlinkSync( source.link.file.fullname, targetDir.fullname );
+                    } else {
+                        fs.symlinkSync( source.link.name, targetDir.fullname );
+                    }
+                } catch( e ) {
+                    log.error( e );
+                    reject( e );
+                }
+                resolve();
+                return;
+            }
+
             if ( srcFile.dir || targetDir.dir ) {
                 reject("Unable to copy from a source directory.");
                 return;
