@@ -92,6 +92,8 @@ export const KeyMappingInfo: IAllKeyMappingInfo = {
         gotoHomePromise: "~",
         gotoParentPromise: "backspace",
         gotoRootPromise: "\\",
+        gotoBackPromise: "M-q",
+        gotoForwardPromise: "M-w",
         mkdirPromise: { name: T("Func.Mkdir"), key: "f7" },
         renamePromise: { name: T("Func.Rename"), key: "f2" },
         selectAllFiles: "C-a",

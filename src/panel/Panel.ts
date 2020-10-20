@@ -8,10 +8,64 @@ import { T } from "../common/Translation";
 
 const log = Logger("main");
 
+export class DirHistory {
+    private pos = -1;
+    private dirHistory: File[] = [];
+
+    public get() {
+        if ( this.pos < -1 || this.pos >= this.dirHistory.length ) {
+            return null;
+        }
+        return this.dirHistory[this.pos];
+    }
+
+    public add( file: File ) {
+        if ( !file ) {
+            return;
+        }
+        if ( this.pos > -1 ) {
+            if ( this.get().fstype != file.fstype ) {
+                this.clear();
+            }
+        }
+        this.dirHistory.splice( this.pos, null, file.clone() );
+        this.pos++;
+
+        log.warn( "HISTORY ADD - %d [%s]", this.pos, this.dirHistory.map( (i) => i.fullname ) );
+    }
+
+    public prev(): File {
+        if ( this.pos <= -1 ) {
+            return null;
+        }
+        const result = this.get();
+        if ( this.pos > 0 ) {
+            this.pos--;
+        }
+        log.warn( "HISTORY PREV - %d [%s]", this.pos, result?.fullname );
+        return result;
+    }
+
+    public next(): File {
+        const result = this.get();
+        if ( this.pos + 1 < this.dirHistory.length ) {
+            this.pos++;
+        }
+        log.warn( "HISTORY NEXT - %d [%s]", this.pos, result?.fullname );
+        return result;
+    }
+
+    public clear() {
+        this.dirHistory = [];
+        this.pos = -1;
+    }
+}
+
 export abstract class Panel extends AbstractPanel implements IHelpService {
     protected reader: Reader = null;
     protected _excludeHiddenFile = false;
-
+    protected dirHistory: DirHistory = new DirHistory();
+    
     constructor( reader: Reader = null ) {
         super();
         this.setReader( reader );
@@ -29,7 +83,7 @@ export abstract class Panel extends AbstractPanel implements IHelpService {
         return this.reader;
     }
 
-    async read( path: string | File ): Promise<void> {
+    async read( path: string | File, option: { isNoSaveHistory?: boolean; allowThrow?: boolean } = {} ): Promise<void> {
         const previousDir: File = this._currentDir;
 
         const file = (path instanceof File) ? path : await this.reader.convertFile( path, { useThrow: true, checkRealPath: true } );
@@ -71,6 +125,10 @@ export abstract class Panel extends AbstractPanel implements IHelpService {
                 this.currentPos = befPos;
             }
             this._previousDir = previousDir;
+        }
+        if ( !option || option.isNoSaveHistory !== true ) {
+            log.warn( "DIR HISTORY ADD !!!", this._currentDir.fullname );
+            this.dirHistory.add( this._currentDir );
         }
     }
 
@@ -188,6 +246,24 @@ export abstract class Panel extends AbstractPanel implements IHelpService {
     @Help(T("Help.GotoParent"))
     async gotoParentPromise() {
         await this.read( ".." );
+    }
+
+    @Help(T("Help.GotoBack"))
+    async gotoBackPromise() {
+        const prev = this.dirHistory.prev();
+        if ( prev ) {
+            log.warn( "HISTORY PREV [%s]", prev?.fullname );
+            await this.read( prev, { isNoSaveHistory: true } );
+        }
+    }
+
+    @Help(T("Help.GotoForward"))
+    async gotoForwardPromise() {
+        const next = this.dirHistory.next();
+        if ( next ) {
+            log.warn( "HISTORY NEXT [%s]", next?.fullname );
+            await this.read( next, { isNoSaveHistory: true } );
+        }
     }
 
     toggleExcludeHiddenFile() {

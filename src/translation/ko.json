@@ -89,6 +89,8 @@
         "GotoLine": "라인 이동",
         "GotoTop": "맨위로",
         "GotoLast": "마지막으로",
+        "GotoBack": "이전 디렉토리로",
+        "GotoForward": "다음 디렉토리로",
         "PanelSync": "같은 디렉토리로 동기화",
         "Archive": "압축",
         "ConnectionManager": "접속 관리자",

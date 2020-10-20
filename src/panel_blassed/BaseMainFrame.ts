@@ -324,7 +324,7 @@ export abstract class BaseMainFrame implements IHelpService {
                 panel.setReader(readerControl("file"));
                 //panel.getReader().onWatch( (event, filename) => this.onWatchDirectory(event, filename) );
                 try {
-                    await panel.read( i !== 0 ? (lastPath || ".") : ".", false );
+                    await panel.read( i !== 0 ? (lastPath || ".") : ".", { allowThrow: true } );
                 } catch ( e ) {
                     log.error( e );
                     await panel.read( "~" );

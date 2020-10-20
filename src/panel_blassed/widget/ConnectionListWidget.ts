@@ -339,9 +339,9 @@ export class ConnectionListWidget extends Panel {
         return this.dirFiles.filter(item => item.extname === ".json" );
     }
 
-    async read(path: string | File, throwMsgBoxShow: boolean = true): Promise<void> {
+    async read(path: string | File, option: { isNoSaveHistory?: boolean; allowThrow?: boolean } = {}): Promise<void> {
         try {
-            await super.read(path);
+            await super.read(path, option);
 
             log.warn("this._currentDir.fullname: [%s][%s]", this._currentDir.fullname, this.basePath);
             this.dirFiles = this.dirFiles.filter( (item) => {
@@ -352,10 +352,10 @@ export class ConnectionListWidget extends Panel {
             });
         } catch (e) {
             log.error("READ FAIL - [%s] [%s]", path, e.stack);
-            if ( throwMsgBoxShow ) {
-                await messageBox({ parent: this.baseWidget, title: T("Error"), msg: e.toString(), button: [ T("OK") ] });
-            } else {
+            if ( option && option.allowThrow ) {
                 throw e;
+            } else {
+                await messageBox({ parent: this.baseWidget, title: T("Error"), msg: e.toString(), button: [ T("OK") ] });
             }
         }
     }

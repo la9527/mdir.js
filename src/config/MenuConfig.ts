@@ -53,8 +53,8 @@ export const menuConfig: IFrameMenuConfig = {
             { name: T("Menu.To root") , method: "Panel.gotoRootPromise" },
             { name: T("Menu.To home"), method: "Panel.gotoHomePromise" },
             "-",
-            { name: T("Menu.Back") },
-            { name: T("Menu.Forward") }
+            { name: T("Menu.Back"), method: "Panel.gotoBackPromise" },
+            { name: T("Menu.Forward"), method: "Panel.gotoForwardPromise" },
         ],
         View: [
             { name: T("Menu.Refresh"), method: "Common.refreshPromise" },

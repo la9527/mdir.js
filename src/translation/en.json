@@ -89,6 +89,8 @@
         "GotoLine": "Go to line",
         "GotoTop": "Go to top line",
         "GotoLast": "Go to last line",
+        "GotoBack": "Go to previous directory",
+        "GotoForward": "Go to forward directory",
         "PanelSync": "Panels to same directory",
         "Archive": "Archive",
         "ConnectionManager": "Connection Manager",
