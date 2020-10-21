@@ -16,8 +16,7 @@ import which from "which";
 import { KeyMappingInfo, KeyMapping, IHelpService, Hint, Help, RefreshType } from "../config/KeyMapConfig";
 import { T } from "../common/Translation";
 import { SftpReader } from "../panel/sftp/SftpReader";
-import { IEvent } from "xterm";
-import { EventEmitter } from "./xterm/common/EventEmitter";
+import { IEvent, EventEmitter } from "./xterm/common/EventEmitter";
 import mainFrame from "./MainFrame";
 
 const log = Logger("BlassedXTerm");
