@@ -28,7 +28,13 @@ For bug reports, comments and questions, please send to [GitHub Issues Site](htt
  Mdir.js is distributed under the BSD 3-Clause License.
  See ['LICENSE'] for the detail.
 
-# Installation
+# Binary Download
+
+ - Windows 10
+
+ - Mac OSX
+
+# Build & Installation
 
 ### 1) Dependencies
  - Common

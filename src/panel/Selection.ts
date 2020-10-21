@@ -67,8 +67,12 @@ export class Selection {
     }
 
     async expandDir(): Promise<boolean> {
-        if ( this.isExpandDir || !this.reader ) {
+        if ( !this.reader ) {
             return false;
+        }
+
+        if ( this.isExpandDir ) {
+            return true;
         }
 
         interface IDir {
@@ -107,7 +111,7 @@ export class Selection {
             this.arrFiles = this.arrFiles.concat( files );
         }
 
-        this.reader.readdir(beforeDir);
+        await this.reader.readdir(beforeDir);
         this.isExpandDir = true;
         return true;
     }

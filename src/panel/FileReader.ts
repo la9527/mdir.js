@@ -476,14 +476,18 @@ export class FileReader extends Reader {
             const srcFile = source;
             if ( source.link ) {
                 try {
+                    if ( fs.existsSync(targetDir.fullname) ) {
+                        fs.unlinkSync(targetDir.fullname);
+                    }
                     if ( source.link.file ) {
-                        fs.symlinkSync( source.link.file.fullname, targetDir.fullname );
+                        fs.symlinkSync( source.link.file.fullname, targetDir.fullname, source.link.file.dir ? "dir" : "file" );
                     } else {
                         fs.symlinkSync( source.link.name, targetDir.fullname );
                     }
                 } catch( e ) {
                     log.error( e );
                     reject( e );
+                    return;
                 }
                 resolve();
                 return;

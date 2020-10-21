@@ -999,8 +999,9 @@ export abstract class BaseMainFrame implements IHelpService {
         await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
         
         if ( await clipSelected.expandDir() === false ) {
+            log.error( "Expend DIR : FALSE !!!");
             progressBox.destroy();
-            return RefreshType.NONE;
+            return RefreshType.ALL;
         }
         
         files = clipSelected.getFiles();
@@ -1039,7 +1040,7 @@ export abstract class BaseMainFrame implements IHelpService {
                     msg: T("Message.SAME_SOURCE_AND_TARGET"), 
                     button: [ T("OK") ] 
                 });
-                return RefreshType.NONE;
+                return RefreshType.ALL;
             }
             
             const originalReader = clipSelected.getReader();
@@ -1074,16 +1075,21 @@ export abstract class BaseMainFrame implements IHelpService {
                     }
 
                     const targetBasePath = activePanel.currentPath().fullname;
-
                     const target = src.clone();
 
                     let targetName = target.fullname.substr(sourceBasePath.length);
-                    if ( originalReader.sep() === "\\" ) {
-                        targetName = targetName.replace( /\\/g, targetReader.sep() );
-                    } else if ( originalReader.sep() === "/" ) {
-                        targetName = targetName.replace( /\//g, targetReader.sep() );
+                    if ( originalReader.sep() !== targetReader.sep() ) {
+                        if ( originalReader.sep() === "\\" ) {
+                            targetName = targetName.replace( /\\/g, targetReader.sep() );
+                        } else if ( originalReader.sep() === "/" ) {
+                            targetName = targetName.replace( /\//g, targetReader.sep() );
+                        }
                     }
-                    target.fullname = targetBasePath + targetName;
+                    if ( targetBasePath.substr(targetBasePath.length - 1, targetReader.sep().length) !== targetReader.sep() ) {
+                        target.fullname = targetBasePath + targetReader.sep() + targetName;
+                    } else {
+                        target.fullname = targetBasePath + targetName;
+                    }
                     target.fstype = targetReader.readerName;
                     
                     if ( !overwriteAll && await targetReader.exist( target.fullname ) ) {
