@@ -138,25 +138,13 @@ export abstract class AbstractPanel {
         };
 
         this.dirFiles.sort( (a,b): number => {
-            if ( a.dir && a.name === ".." ) {
+            if ( (a.dir && a.name === "..") ) {
                 return -1;
             } else if ( a.dir && !b.dir ) {
                 return -1;
             } else if ( !a.dir && b.dir ) {
                 return 1;
             }
-            return 0;
-        });
-
-        this.dirFiles.sort( (a,b): number => {
-            if ( (a.dir && a.name === "..") || (b.dir && b.name === "..") ) {
-                return 0;
-            } else if ( a.dir && !b.dir ) {
-                return 0;
-            } else if ( !a.dir && b.dir ) {
-                return 0;
-            }
-
             for ( const order of this.sortOrder ) {
                 const sortNum = this._sortReverse ? fileSort(order, b, a) : fileSort(order, a, b);
                 if ( sortNum !== 0 ) {

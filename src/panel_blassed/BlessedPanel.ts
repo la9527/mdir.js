@@ -20,7 +20,6 @@ import { messageBox, MSG_BUTTON_TYPE } from "./widget/MessageBox";
 import { T } from "../common/Translation";
 import * as FileType from "file-type";
 import * as mime from "mime-types";
-import { FileReader } from "../panel/FileReader";
 import Configure from "../config/Configure";
 
 const log = Logger("blessedpanel");
