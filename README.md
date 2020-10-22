@@ -59,8 +59,11 @@ For bug reports, comments and questions, please send to [GitHub Issues Site](htt
     ```
 
 ### 2) Install 
+
 ```
-$ npm install -g mdir.js
+$ mkdir mdir
+$ cd mdir
+$ npm install mdir.js
 ```
 
 ### 3) Run 

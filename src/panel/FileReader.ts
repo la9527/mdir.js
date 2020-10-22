@@ -11,7 +11,6 @@ import { Transform } from "stream";
 import * as FileType from "file-type";
 
 import fswin from "fswin";
-import { ENGINE_METHOD_DIGESTS } from "constants";
 
 const log = Logger("FileReader");
 

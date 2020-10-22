@@ -25,3 +25,5 @@ images
 @types
 build/**/*.map
 build/test
+docker-compose.yml
+Dockerfile

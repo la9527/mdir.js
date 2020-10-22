@@ -56,10 +56,12 @@ LinM의 기능 대부분 재구현하였고, 현재는 더 발전되었습니다
     ```
 
 ### 2) Install 
-```
-$ npm install -g mdir.js
-```
 
+```
+$ mkdir mdir
+$ cd mdir
+$ npm install mdir.js
+```
 
 ### 2) 실행
 
