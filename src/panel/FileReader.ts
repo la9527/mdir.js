@@ -1,7 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
-import * as drivelist from "drivelist";
 
 import { File, FileLink } from "../common/File";
 import { Logger } from "../common/Logger";
@@ -185,23 +184,28 @@ export class FileReader extends Reader {
 
     async mountList(): Promise<IMountList[]> {
         const mounts: IMountList[] = [];
-        const drives = await drivelist.list();
-        drives.forEach( item => {
-            log.debug( "MOUNT INFO : %j", item );
-            item.mountpoints.forEach( async (i) => {
-                const mountFile = await this.convertFile( i.path );
-                mounts.push( {
-                    device: item.device,
-                    description: item.description,
-                    mountPath: mountFile,
-                    size: item.size,
-                    isCard: item.isCard,
-                    isUSB: item.isUSB,
-                    isRemovable: item.isRemovable,
-                    isSystem: item.isSystem
+
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const drivelist = require("drivelist");
+        if ( drivelist ) {
+            const drives = await drivelist.list();
+            drives.forEach( item => {
+                log.debug( "MOUNT INFO : %j", item );
+                item.mountpoints.forEach( async (i) => {
+                    const mountFile = await this.convertFile( i.path );
+                    mounts.push( {
+                        device: item.device,
+                        description: item.description,
+                        mountPath: mountFile,
+                        size: item.size,
+                        isCard: item.isCard,
+                        isUSB: item.isUSB,
+                        isRemovable: item.isRemovable,
+                        isSystem: item.isSystem
+                    });
                 });
             });
-        });
+        }
         return mounts;
     }
 
