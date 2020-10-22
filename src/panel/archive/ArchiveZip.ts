@@ -15,7 +15,7 @@ const log = Logger("archivetar");
 
 export class ArchiveZip extends ArchiveCommon {
     isSupportType( file: File ): string {
-        return file.name.match(/(\.zip$)/) ? "zip" : null;
+        return file.name.match(/\.(zip|jar)$/) ? "zip" : null;
     }
 
     async getArchivedFiles(progress?: ProgressFunc): Promise<File[]> {

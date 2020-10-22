@@ -90,7 +90,7 @@ export const ConfigureDefault: IConfigure = {
             ],
             movie: [ "avi;mpg;mov;asf;mpeg;wmv;mp4;mkv;div;rm;amv;" ],
             audio: [ "mp2;mp3;wav;ogg;wma;flac;" ],
-            internalArchive: "tar;bz2;tbz;tgz;gz;zip;jar;",
+            internalArchive: "tar;bz2;tbz;tgz;gz;zip;jar;txz;xz;",
             archive: "z;rpm;deb;alz;iso;rar;lzh;cab;",
             certification: "der;pem;",
             package: "apk"

@@ -76,7 +76,7 @@ export const ColorDefault = {
             ],
             2: "bmp;tga;pcx;gif;jpg;jpeg;png;pbm;pgm;ppm;xbm;xpm;",
             13: [
-                "tar;bz2;tbz;tgz;gz;zip;z;rpm;deb;alz;jar;iso;rar;lzh;cab;arj;",
+                "tar;bz2;tbz;tgz;gz;zip;z;rpm;deb;alz;jar;iso;rar;lzh;cab;arj;xz;txz;",
                 "develop"
             ],
             3: [

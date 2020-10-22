@@ -28,13 +28,17 @@ export class ArchiveTarGz extends ArchiveCommon {
             supportType = "gz";
         } else if ( name.match( /.bz$/ )) {
             supportType = "bz2";
+        } else if ( name.match( /(\.tar\.xz$|\.txz$)/ )) {
+            supportType = "txz";
+        } else if ( name.match( /.xz$/ )) {
+            supportType = "xz";
         }
         return supportType;
     }
 
     getArchivedFiles(progress?: ProgressFunc): Promise<File[]> {
         return new Promise( (resolve, reject) => {
-            if ( this.supportType === "gz" ) {
+            if ( this.supportType === "gz" || this.supportType === "xz" ) {
                 const file = this.originalFile.clone();
                 file.fstype = "archive";
                 file.name = file.name.substr(file.name.length - 3);
@@ -76,6 +80,15 @@ export class ArchiveTarGz extends ArchiveCommon {
                 outstream = stream.pipe(zlib.createGunzip());
             } else if ( this.supportType === "tbz2" ) {
                 outstream = stream.pipe(bunzip2());
+            } else if ( this.supportType === "txz" ) {
+                try {
+                    // eslint-disable-next-line @typescript-eslint/no-var-requires
+                    const lzma = require("lzma-native");
+                    outstream = stream.pipe(lzma.createDecompressor());
+                } catch( e ) {
+                    reject( "unsupport xz file" );
+                    return;
+                }
             }
             outstream = outstream.pipe( extract );
             outstream.on("error", (error) => {
@@ -143,6 +156,17 @@ export class ArchiveTarGz extends ArchiveCommon {
                     outstream = tarStream.pipe(gunzip);
                 } else if ( this.supportType === "tbz2" ) {
                     outstream = tarStream.pipe(bunzip2());
+                } else if ( this.supportType === "txz" ) {
+                    try {
+                        // eslint-disable-next-line @typescript-eslint/no-var-requires
+                        const lzma = require("lzma-native");
+                        outstream = tarStream.pipe(lzma.createDecompressor());
+                    } catch( e ) {
+                        log.error( "ERROR [%s]", e );
+                        extract.destroy();
+                        reject( e );
+                        return;
+                    }
                 }
                 outstream = outstream.pipe( extract );
                 outstream.on("error", (error) => {
@@ -185,6 +209,23 @@ export class ArchiveTarGz extends ArchiveCommon {
                         reject(error);
                     });
                     outstream = pack.pipe(gzip).pipe(writeTarStream);
+                } else if ( this.supportType === "txz" ) {
+                    try {
+                        // eslint-disable-next-line @typescript-eslint/no-var-requires
+                        const lzma = require("lzma-native");
+                        const xz = lzma.createCompressor();
+                        xz.on("error", (error) => {
+                            log.error( "ERROR [%s]", error );
+                            pack.destroy(error);
+                            writeTarStream.close();
+                            reject(error);
+                        });
+                        outstream = pack.pipe(xz).pipe(writeTarStream);
+                    } catch( e ) {
+                        log.error( "ERROR [%s]", e );
+                        reject( e );
+                        return;
+                    }
                 } else {
                     outstream = pack.pipe(writeTarStream);
                 }
@@ -252,6 +293,17 @@ export class ArchiveTarGz extends ArchiveCommon {
                 outstream = tarStream.pipe(zlib.createGunzip());
             } else if ( this.supportType === "tbz2" ) {
                 outstream = tarStream.pipe(bunzip2());
+            } else if ( this.supportType === "txz" ) {
+                try {
+                    // eslint-disable-next-line @typescript-eslint/no-var-requires
+                    const lzma = require("lzma-native");
+                    outstream = tarStream.pipe(lzma.createDecompressor());
+                } catch( e ) {
+                    log.error( "ERROR [%s]", e );
+                    extract.destroy();
+                    reject( e );
+                    return;
+                }
             }
             outstream = outstream.pipe( extract );
             outstream.on("error", (error) => {

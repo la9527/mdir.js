@@ -269,7 +269,7 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
             parent: this.baseWidget,
             title: T("Archive"),
             msg: T("What archive one would you choose?"),
-            button: [ "ZIP", "TAR.GZ" ]
+            button: [ "ZIP", "TAR.GZ", "TAR.XZ" ]
         });
         if ( !archiveType ) {
             return RefreshType.NONE;
@@ -280,6 +280,8 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
             name += ".zip";
         } else if ( archiveType === "TAR.GZ" ) {
             name += ".tar.gz";
+        } else if ( archiveType === "TAR.XZ" ) {
+            name += ".tar.xz";
         }
         const result = await inputBox( { 
             parent: this.baseWidget,
@@ -322,7 +324,7 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                     await new ArchiveZip().compress( files, activePanel.currentPath(), targetFile, progressStatus );
                     await activePanel.refreshPromise();
                     return RefreshType.ALL;
-                } else if ( archiveType === "TAR.GZ" ) {
+                } else if ( archiveType === "TAR.GZ" || archiveType === "TAR.XZ" ) {
                     await new ArchiveTarGz().compress( files, activePanel.currentPath(), targetFile, progressStatus );
                     await activePanel.refreshPromise();
                     return RefreshType.ALL;

@@ -76,6 +76,8 @@ $ mdir
 
 ## Version History
 
+- v1.1.0
+    - [ADD] Support the xz compress/uncomress file.
 - v1.0.0
     - [ADD] Supports the SFTP and the SSH Connection. (F6)
     - [ADD] The terminal(sub-shell) supports the full screen. (Ctrl+U)
