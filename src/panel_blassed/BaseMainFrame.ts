@@ -1127,7 +1127,9 @@ export abstract class BaseMainFrame implements IHelpService {
                     try {
                         if ( src.dir && !src.link ) {
                             log.debug( "COPY DIR - [%s] => [%s]", src.fullname, target.fullname );
-                            await targetReader.mkdir( target );
+                            if ( await targetReader.exist(target.fullname) === false ) {
+                                await targetReader.mkdir( target );
+                            }
                         } else {
                             log.debug( "COPY - [%s] => [%s]", src.fullname, target.fullname );
                             if ( anotherReader ) {

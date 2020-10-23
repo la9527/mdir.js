@@ -53,10 +53,14 @@ export class ProgressBox extends Widget {
     }
 
     updateProgress( leftText: string, rightText: string, currentPos: number, endPos: number ) {
-        this.leftMessage = StringUtils.ellipsis( leftText, this.width as number - 36 );
-        this.rightMessage = rightText;
-        this.progress = Math.round((currentPos * 100) / endPos);
-        this.screen.render();
+        try {
+            this.leftMessage = StringUtils.ellipsis( leftText, this.width as number - 36 );
+            this.rightMessage = rightText;
+            this.progress = Math.round((currentPos * 100) / endPos);
+            this.screen.render();
+        } catch( e ) {
+            log.error( e );
+        }
     }
 
     init() {
