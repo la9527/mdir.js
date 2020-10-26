@@ -412,7 +412,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             });
         });
 
-        this.pty.on("data", (data) => {
+        this.pty.on( "data", (data) => {
             if ( Buffer.isBuffer(data) ) {
                 this.parseOSC1337((data as Buffer).toString());
                 if( !this.outputBlock ) {
@@ -421,109 +421,92 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             } else {
                 this.parseOSC1337(data);
                 if( !this.outputBlock ) {
-                    this.write(data);   
+                    this.write(data);
                 }
             }
         });
 
-        this.pty.on("exit", async (code, signal) => {
-            log.debug( "on exit !!! - %d", code, signal );
+        this.pty.on( "exit", async (exit, signal) => {
+            log.debug( "on exit !!! - %d", exit, signal );
             await this.fullscreenRecover();
             this.pty = null;
-            this.box.emit( "process_exit", code, signal );
+            this.box.emit( "process_exit", exit, signal );
         });
-        await new Promise((resolve) => setTimeout(resolve, 500));
 
-        let isPromptUpdate = false;
-        //this.outputBlock = true;
+        await new Promise((resolve) => {
+            let tm = null;
+            this.box.once("OSC1337.CurrentDir", () => {
+                if ( tm ) {
+                    log.debug( "DETECT : OSC1337.CurrentDir 2" );
+                    clearTimeout( tm );
+                    resolve();
+                }
+            });
+            tm = setTimeout(resolve, 500);
+        });
+
         this.outputBlock = false;
 
-        await new Promise( (resolve, reject) => {
-            try {
-                const isSftp = this.getReader() instanceof SftpReader;
-                if ( [ "zsh", "bash", "sh", "cmd.exe", "powershell.exe" ].indexOf(this.shell) > -1 || isSftp ) {
-                    setTimeout( () => {
-                        try {
-                            if ( !this.getCurrentPath() && this.pty ) {
-                                // function prompt {"PS [$Env:username@$Env:computername]$($PWD.ProviderPath)> "}
-                                if ( !isSftp && this.shell === "powershell.exe" ) {
-                                    const remoteHost = "$([char]27)]1337;RemoteHost=$Env:username@$Env:computername$([char]7)";
-                                    const currentDir = "$([char]27)]1337;CurrentDir=$($PWD.ProviderPath)$([char]7)";
-                                    const msg = `function prompt {"PS $($PWD.ProviderPath)>${remoteHost}${currentDir} "}\r`;
-                                    this.pty.write( msg );
-                                    this.pty.write( "cls\r" );
-                                } else if ( !isSftp && this.shell === "cmd.exe" ) {
-                                    const remoteHost = "$E]1337;RemoteHost=localhost\x07";
-                                    const currentDir = "$E]1337;CurrentDir=$P\x07";
-                                    this.pty.write( `prompt $P$G${remoteHost}${currentDir}\r` );
-                                    this.pty.write( "cls\r" );
-                                } else {
-                                    const remoteHost = "\\033]1337;RemoteHost=\\u@\\h\\007";
-                                    const currentDir = "\\033]1337;CurrentDir=\\w\\007";
-                                    this.pty.write( `PS1="$\{PS1\}${remoteHost}${currentDir}"\r` );
-                                }
-                                isPromptUpdate = true;
-                                log.debug( "PROMPT UPDATE !!!" );
-                            }
-                        } catch( e ) {
-                            log.error( e );
-                        }
+        const listenDetectCheck = ( writeText: string, detectText: string | RegExp, timeout: number ) => {
+            return new Promise( (resolve) => {
+                let tm = null;
+                const detectShell = (d) => {
+                    const data: string = Buffer.isBuffer(d) ? (d as Buffer).toString() : d;
+                    if ( data.match( detectText ) ) {
+                        (this.pty as any).removeListener( "data", detectShell );
+                        clearTimeout(tm);
                         resolve();
-                    }, 500 );
-                } else {
+                    }
+                };
+                this.pty.on("data", detectShell);
+                this.pty.write( writeText );
+                tm = setTimeout(() => {
+                    (this.pty as any).removeListener( "data", detectShell );
                     resolve();
+                }, timeout);
+            });
+        };
+        
+        const isSftp = this.getReader() instanceof SftpReader;
+        if ( [ "zsh", "bash", "sh", "cmd.exe", "powershell.exe" ].indexOf(this.shell) > -1 || isSftp ) {
+            try {
+                if ( !this.getCurrentPath() && this.pty ) {
+                    // function prompt {"PS [$Env:username@$Env:computername]$($PWD.ProviderPath)> "}
+                    if ( !isSftp && this.shell === "powershell.exe" ) {
+                        await listenDetectCheck( "cls\r", "cls\r", 1000 );
+                        const remoteHost = "$([char]27)]1337;RemoteHost=$Env:username@$Env:computername$([char]7)";
+                        const currentDir = "$([char]27)]1337;CurrentDir=$($PWD.ProviderPath)$([char]7)";
+                        const msg = `function prompt {"PS $($PWD.ProviderPath)>${remoteHost}${currentDir} "}\r`;
+                        this.pty.write( msg );
+                        await listenDetectCheck( "cls\r", "cls\r", 1000 );
+                    } else if ( !isSftp && this.shell === "cmd.exe" ) {
+                        await listenDetectCheck( "cls\r", "cls\r", 1000 );
+                        const remoteHost = "$E]1337;RemoteHost=localhost\x07";
+                        const currentDir = "$E]1337;CurrentDir=$P\x07";
+                        this.pty.write( `prompt $P$G${remoteHost}${currentDir}\r` );
+                        await listenDetectCheck( "cls\r", "cls\r", 1000 );
+                    } else {
+                        await listenDetectCheck( "pwd\r", "pwd\r", 1000 );
+                        const remoteHost = "\\033]1337;RemoteHost=\\u@\\h\\007";
+                        const currentDir = "\\033]1337;CurrentDir=\\w\\007";
+                        const writeText = `PS1="$\{PS1\}${remoteHost}${currentDir}"\r`;
+                        await listenDetectCheck( writeText, "1337;CurrentDir=", 1000 );
+                        await listenDetectCheck( "clear\r", "clear\r", 1000 );
+                    }
+                    log.debug( "PROMPT UPDATE !!!" );
                 }
             } catch( e ) {
                 log.error( e );
-                reject(e);
-            }
-        });
-
-        const changeDirectory = async (resolve) => {
-            try {
-                if ( this.pty ) {
-                    const curDir = await this.getReader().currentDir();
-                    if ( !curDir || !curDir.fullname ) {
-                        log.debug( "NO CHANGE DIRECTORY !!!" );
-                        resolve();
-                        return;
-                    }
-                    this.pty.write( `cd "${curDir.fullname}"\r` );
-                    log.debug( `CHANGE DIRECTORY: "${curDir.fullname}"` );
-                }
-                setTimeout( resolve, 200 );
-            } catch( e ) {
-                log.warn( e );
-                resolve();
-            }
-        };
-
-        if ( isPromptUpdate ) {
-            const pathCheckFunc = () => {
-                return new Promise( (resolve) => {
-                    setTimeout( () => {
-                        const isDetectPath = !!this.getCurrentPath();
-                        log.debug( "PATH Detect !!! - [%s] [%s]", isDetectPath, this.getCurrentPath() );
-                        resolve( isDetectPath );
-                    }, 200);
-                });
-            };
-
-            for ( let i = 0; i < 20; i++ ) {
-                if ( await pathCheckFunc() ) {
-                    log.debug( "PATH Detect !!! - Number:%d", i );
-                    break;
-                }
             }
         }
+
         if ( this.getReader() instanceof SftpReader && (this.getReader() as SftpReader).isSFTPSession() ) {
-            await new Promise( changeDirectory );
-        }
-
-        if ( !(this.getReader() instanceof SftpReader) && (this.shell === "powershell.exe" || this.shell === "cmd.exe") ) {
-            this.pty.write( "cls\r" );
-        } else if ( isPromptUpdate ) {
-            this.pty.write( "clear\r" );
+            const curDir = await this.getReader().currentDir();
+            if ( curDir && curDir.fullname ) {
+                const changeDirCmd = `cd "${curDir.fullname}"\r`;
+                await listenDetectCheck( changeDirCmd, changeDirCmd, 1000 );
+                log.debug( `CHANGE DIRECTORY: "${curDir.fullname}"` );
+            }
         }
         this.outputBlock = false;
         this.inputBlock = false;
@@ -539,7 +522,12 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         const convertProps = ( text ) => {
             const j = text.split("=");
             if (j.length > 1) {
-                this.osc1337[ j[0] ] = j.slice(1).join("=");
+                const oldValue = this.osc1337[ j[0] ];
+                const value = j.slice(1).join("=");
+                this.osc1337[ j[0] ] = value;
+                if ( oldValue !== value ) {
+                    this.emit( "OSC1337." + j[0], value );
+                }
             }
         };
 
