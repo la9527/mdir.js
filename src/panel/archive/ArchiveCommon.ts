@@ -38,9 +38,8 @@ export abstract class ArchiveCommon {
             let tmpWriteFileName = null;
             if ( targetDirOrNewFile.fstype === "file" ) {
                 tmpWriteFileName = targetDirOrNewFile.fullname;
-
             } else if ( this.originalFile ) {
-                this.originalFile.fullname + ".bak";
+                tmpWriteFileName = this.originalFile.fullname + ".bak";
             }
             
             if ( !this.originalFile ) {
