@@ -920,7 +920,6 @@ export abstract class BaseMainFrame implements IHelpService {
             for ( let i = 0; i < files.length; i++ ) {
                 const src = files[i];
                 try {
-                    log.debug( "REMOVE : [%s]", src.fullname);
                     if ( Date.now() - beforeTime > refreshTimeMs ) {
                         progressBox.updateProgress( src.fullname, `${i+1} / ${files.length}`, i+1, files.length );
                         await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
@@ -930,6 +929,7 @@ export abstract class BaseMainFrame implements IHelpService {
                         break;
                     }
                     await reader.remove( src );
+                    log.debug( "REMOVE : [%s]", src.fullname);
                 } catch ( err ) {
                     const result2 = await messageBox( {
                         parent: this.baseWidget,
@@ -1165,7 +1165,7 @@ export abstract class BaseMainFrame implements IHelpService {
         if ( clipSelected.getClipboard() === ClipBoard.CLIP_CUT && clipSelected.getReader().readerName === activePanel.getReader().readerName ) {
             try {
                 await filesCopyFunc(true);
-
+                log.debug( "FILE CUT - END");
                 progressBox.destroy();
                 await this.refreshPromise();
                 return RefreshType.ALL;
@@ -1182,7 +1182,9 @@ export abstract class BaseMainFrame implements IHelpService {
 
         try {
             await filesCopyFunc();
+            log.debug( "FILE COPY - END");
         } catch( err ) {
+            log.error( "FILE COPY FUNC ERROR - %s", err );
             progressBox.destroy();
             if ( err.message !== "USER_CANCEL" ) {
                 await messageBox( {
@@ -1198,7 +1200,8 @@ export abstract class BaseMainFrame implements IHelpService {
 
         progressBox.destroy();
         if ( clipSelected.getClipboard() === ClipBoard.CLIP_CUT ) {
-            await this.removeSelectFiles( clipSelected, targetReader );
+            log.debug( "FILE CUT(REMOVE) START");
+            await this.removeSelectFiles( clipSelected, clipSelected.getReader() );
         } else {
             await this.refreshPromise();
         }
