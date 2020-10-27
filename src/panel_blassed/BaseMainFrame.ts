@@ -876,10 +876,6 @@ export abstract class BaseMainFrame implements IHelpService {
             return RefreshType.NONE;
         }
 
-        return await this.removeSelectFiles();
-    }
-
-    async removeSelectFiles() {
         const activePanel = this.activePanel();
         if ( !(activePanel instanceof BlessedPanel) ) {
             return RefreshType.NONE;
@@ -889,6 +885,11 @@ export abstract class BaseMainFrame implements IHelpService {
         select.set( activePanel.getSelectFiles(), activePanel.currentPath(), ClipBoard.CLIP_NONE, activePanel.getReader() );
 
         const reader = activePanel.getReader();
+
+        return await this.removeSelectFiles(select, reader);
+    }
+
+    async removeSelectFiles( select: Selection, reader: Reader ) {
         reader.isUserCanceled = false;
 
         const progressBox = new ProgressBox( { title: T("Message.Remove"), msg: T("Message.Calculating"), cancel: () => {
@@ -915,7 +916,7 @@ export abstract class BaseMainFrame implements IHelpService {
         let beforeTime = Date.now();
         const refreshTimeMs = 300;
 
-        if ( [ "file", "sftp" ].indexOf(activePanel.getReader().readerName) > -1 ) {
+        if ( [ "file", "sftp" ].indexOf(reader.readerName) > -1 ) {
             for ( let i = 0; i < files.length; i++ ) {
                 const src = files[i];
                 try {
@@ -1164,7 +1165,7 @@ export abstract class BaseMainFrame implements IHelpService {
         if ( clipSelected.getClipboard() === ClipBoard.CLIP_CUT && clipSelected.getReader().readerName === activePanel.getReader().readerName ) {
             try {
                 await filesCopyFunc(true);
-                
+
                 progressBox.destroy();
                 await this.refreshPromise();
                 return RefreshType.ALL;
@@ -1197,7 +1198,7 @@ export abstract class BaseMainFrame implements IHelpService {
 
         progressBox.destroy();
         if ( clipSelected.getClipboard() === ClipBoard.CLIP_CUT ) {
-            await this.removeSelectFiles();
+            await this.removeSelectFiles( clipSelected, targetReader );
         } else {
             await this.refreshPromise();
         }
