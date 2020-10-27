@@ -355,7 +355,7 @@ export class FileReader extends Reader {
                 }
 
                 const item = await this.convertFile(dirPath + file.name, { fileInfo: file } );
-                log.info( "dirInfo [%s][%s][%s]", dirPath, file.name, item.fullname );
+                // log.info( "dirInfo [%s][%s][%s]", dirPath, file.name, item.fullname );
                 if ( option && option.isExcludeHiddenFile ) {
                     if ( process.platform !== "win32" && item.name !== ".." && item.name[0] === "." ) {
                         continue;
@@ -416,11 +416,16 @@ export class FileReader extends Reader {
 
     exist( source: File | string ): Promise<boolean> {
         return new Promise( resolve => {
-            if ( source instanceof File ) {
-                resolve(fs.existsSync( source.fullname ));
-                return;
+            try {
+                if ( source instanceof File ) {
+                    resolve(!!fs.lstatSync( source.fullname )); 
+                    return;
+                }
+                resolve(!!fs.lstatSync( source )); 
+            } catch( e ) {
+                log.error( e );
+                resolve( false );
             }
-            resolve(fs.existsSync( source ));
             return;
         });
     }

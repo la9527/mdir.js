@@ -12,6 +12,7 @@ let gSelection: Selection = null;
 
 export class Selection {
     private arrFiles: File[] = [];
+    private orgFiles: File[] = [];
     private selectedBaseDir: File = null;
     private isExpandDir = false;
     private stateClipboard: ClipBoard = ClipBoard.CLIP_NONE;
@@ -27,6 +28,7 @@ export class Selection {
 
     set( files: File[], selectedBaseDir: File, stateClipboard: ClipBoard, reader: Reader ) {
         this.arrFiles = files;
+        this.orgFiles = files;
         this.stateClipboard = stateClipboard;
         this.selectedBaseDir = selectedBaseDir;
         this.isExpandDir = false;
@@ -48,6 +50,10 @@ export class Selection {
 
     get length() {
         return this.arrFiles;
+    }
+
+    getOrgFiles() {
+        return this.orgFiles;
     }
 
     getFiles() {

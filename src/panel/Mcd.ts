@@ -8,7 +8,9 @@ import { Logger } from "../common/Logger";
 import { Help, IHelpService } from "../config/KeyMapConfig";
 import { T } from "../common/Translation";
 
-const log = Logger("blessed-mcd");
+const log = Logger("mcd");
+
+const MCD_SAVE_VER = "MCD1.0";
 
 export class Mcd implements IHelpService {
     protected sortType: SortType = SortType.COLOR;
@@ -28,6 +30,53 @@ export class Mcd implements IHelpService {
 
     constructor( reader: Reader = null ) {
         this.setReader( reader );
+    }
+
+    loadJSON( json: string ) {
+        try {
+            const jsonObj = JSON.parse( json );
+            if ( !jsonObj || jsonObj.ver !== MCD_SAVE_VER || jsonObj.ver !== MCD_SAVE_VER || !jsonObj.mcd ) {
+                log.error( "JSON parsing error !!!" );
+                return false;
+            }
+            const jsonArrObj = jsonObj.mcd;
+            const dirs: Dir[] = jsonArrObj.map( item => {
+                const dir = new Dir( File.fromJson(item.file), null, item.check );
+                dir.depth = item.depth;
+                dir.check = item.check;
+                dir.index = item.index;
+                dir.row = item.row;
+                return dir;
+            });
+
+            for ( let i = 0; i < dirs.length; i++ ) {
+                if ( jsonArrObj[ i ].parentIndex > -1 ) {
+                    dirs[i].parentDir = dirs[ jsonArrObj[ i ].parentIndex ];
+                } else {
+                    dirs[i].parentDir = null;
+                }
+                const subDir: Dir[] = [];
+                for ( let j = i + 1; j < dirs.length; j++ ) {
+                    if ( dirs[j].depth === dirs[i].depth + 1 ) {
+                        subDir.push( dirs[j] );
+                    }
+                    if ( dirs[j].depth === dirs[i].depth ) {
+                        break;
+                    }
+                }
+                dirs[i].subDir = subDir;
+            }
+            this.arrOrder = dirs;
+            this.rootDir = this.arrOrder[0];
+        } catch( e ) {
+            log.error( e );
+            return false;
+        }
+        return true;
+    }
+
+    convertJson() {
+        return JSON.stringify( { ver: MCD_SAVE_VER, mcd: this.arrOrder } );
     }
 
     viewName() {
@@ -82,15 +131,19 @@ export class Mcd implements IHelpService {
                 log.error( e );
                 dirInfo = [];
             }
-            pTree.subDir = [];
+            const subDir = [];
             dirInfo.map( item => {
                 if ( item.dir && !item.link ) {
-                    if ( pTree.subDir.findIndex( s => s.file.equal(item) ) == -1 ) {
-                        pTree.subDir.push( new Dir( item, pTree, false ) );
+                    const idx = pTree.subDir.findIndex( s => s.file.equal(item) );
+                    if ( idx === -1 ) {
+                        subDir.push( new Dir( item, pTree, false ) );
+                    } else {
+                        pTree.subDir[idx].file = item;
+                        subDir.push( pTree.subDir[idx] );
                     }
                 }
             });
-
+            pTree.subDir = subDir;
             pTree.check = true;
             pTree.subDir = pTree.subDir.sort( (a: Dir, b: Dir) => {
                 if ( a.file.name > b.file.name ) return 1;
@@ -225,15 +278,14 @@ export class Mcd implements IHelpService {
 
     async addDirectory( dirPath: string ): Promise<boolean> {
         if ( this.rootDir == null ) {
-            await this.rescan( 1 );
+            await this.rescan( 2 );
         }
-        log.debug( "addDirectory : %s", dirPath );
         let dir: Dir = null;
         let n = 0;
         do {
             dir = this.searchDir( dirPath, true );
             log.debug( "addDirectory: searchDir: [%s]", dir.file.fullname );
-            await this.scan( dir, 1 );
+            await this.scan( dir, dir.depth !== 0 ? 1 : 2 );
         } while( dir.file.fullname !== dirPath && n++ < 10 );
         return true;
     }
@@ -257,7 +309,7 @@ export class Mcd implements IHelpService {
     }
 
     keyUp() {
-        if ( this.currentDir().parentDir ) {
+        if ( this.currentDir() && this.currentDir().parentDir ) {
             if ( this.curDirInx - 1 > -1 && this.currentDir().depth !== this.currentDir(-1).depth ) {
                 let i = 0;
                 for ( i = this.curDirInx - 1; i > 0; --i ) {
@@ -266,7 +318,7 @@ export class Mcd implements IHelpService {
                     }
                 }
                 i === 0 ? this.keyLeft() : this.curDirInx = i;
-            } else {
+            } else if ( this.curDirInx > 0 ) {
                 this.curDirInx--;
             }
         } else {
@@ -275,7 +327,7 @@ export class Mcd implements IHelpService {
     }
 
     keyLeft() {
-        if ( this.currentDir().parentDir ) {
+        if ( this.currentDir() && this.currentDir().parentDir ) {
             this.curDirInx = this.currentDir().parentDir.index;
         }
     }

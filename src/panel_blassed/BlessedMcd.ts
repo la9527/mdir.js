@@ -1,3 +1,6 @@
+import * as os from "os";
+import * as path from "path";
+import * as fs from "fs";
 import * as blessed from "neo-blessed";
 import { Widgets } from "neo-blessed";
 import { sprintf } from "sprintf-js";
@@ -10,12 +13,63 @@ import { Dir } from "../common/Dir";
 import { Color } from "../common/Color";
 import { ColorConfig } from "../config/ColorConfig";
 import { Logger } from "../common/Logger";
-import { KeyMapping, IHelpService, RefreshType } from "../config/KeyMapConfig";
+import { KeyMapping, IHelpService, SearchDisallowKeys, RefreshType } from "../config/KeyMapConfig";
+
 import { KeyMappingInfo } from "../config/KeyMapConfig";
 import { IBlessedView } from "./IBlessedView";
 import mainFrame from "./MainFrame";
+import { SearchFileBox } from "./SearchFileBox";
 
 const log = Logger("blessed-mcd");
+
+class SearchDirInfo {
+    private _index = -1;
+    private _dirs: Dir[] = [];
+
+    constructor(dirs: Dir[]) {
+        this.dirs = dirs || [];
+    }
+
+    next() {
+        this.index = this.index + 1;
+        return this.get();
+    }
+
+    get index() {
+        return this._index;
+    }
+
+    set index(index) {
+        if (index >= this._dirs.length) {
+            this._index = 0;
+        } else if (index < 0) {
+            this._index = 0;
+        } else {
+            this._index = index;
+        }
+    }
+
+    get dirs() {
+        return this._dirs || [];
+    }
+
+    set dirs(dirs: Dir[]) {
+        if (dirs && dirs.length) {
+            this._dirs = dirs || [];
+            this._index = 0;
+        } else {
+            this._dirs = [];
+            this._index = -1;
+        }
+    }
+
+    get() {
+        if (this._dirs.length === 0) {
+            return null;
+        }
+        return this._dirs[this.index];
+    }
+}
 
 class McdDirButton extends Widget {
     node: Dir;
@@ -98,6 +152,9 @@ export class BlessedMcd extends Mcd implements IBlessedView, IHelpService {
 
     firstScanPath: File = null;
 
+    public searchFileBox: SearchFileBox = null;
+    _searchDirs: SearchDirInfo = null;
+
     constructor(  opts: Widgets.BoxOptions | any, reader: Reader = null, firstScanPath = null ) {
         super( reader );
 
@@ -127,6 +184,39 @@ export class BlessedMcd extends Mcd implements IBlessedView, IHelpService {
             }
         });
         this.initRender();
+        this.load();
+    }
+
+    public getConfigPath() {
+        return os.homedir() + path.sep + ".m" + path.sep + "mcd.json";
+    }
+
+    public load() {
+        if ( !fs.existsSync(this.getConfigPath()) ) {
+            return;
+        }
+        if ( this.getReader().readerName !== "file" ) {
+            return;
+        }
+        try {
+            const text = fs.readFileSync( this.getConfigPath(), { encoding: "utf8" } );
+            if ( text ) {
+                this.loadJSON( text );
+            }
+        } catch( e ) {
+            log.error( e );
+        }
+    }
+
+    public save() {
+        if ( this.getReader().readerName !== "file" ) {
+            return;
+        }
+        try {
+            fs.writeFileSync( this.getConfigPath(), this.convertJson(), { encoding: "utf8" } );
+        } catch( e ) {
+            log.error( e );
+        }
     }
 
     viewName() {
@@ -151,6 +241,7 @@ export class BlessedMcd extends Mcd implements IBlessedView, IHelpService {
 
     destroy() {
         log.debug( "MCD - destroy()" );
+        this.save();
         this.baseWidget.destroy();
     }
 
@@ -248,12 +339,6 @@ export class BlessedMcd extends Mcd implements IBlessedView, IHelpService {
             }
         }
 
-        // if (!_sStrSearch.empty())
-        // {
-        //    setcol(_tMCDColor, pWin);
-        //    mvwprintw(pWin, 0, width-25, "Search : [%-10s]", _sStrSearch.c_str());
-        // }
-
         for ( const node of this.arrOrder ) {
             if ( nODep < node.depth ) {
                 arrayLineCh.push( "│" );
@@ -346,6 +431,62 @@ export class BlessedMcd extends Mcd implements IBlessedView, IHelpService {
             this.curDirInx = button.node.index;
             mainFrame().execRefreshType( RefreshType.OBJECT );
         }
+    }
+
+    searchDirTabKey() {
+        if (this.searchFileBox.value) {
+            const dir = this._searchDirs.next();
+            if ( dir ) {
+                this.setCurrentDir(dir.file.fullname);
+            }
+        }
+    }
+
+    searchDirAndFocus() {
+        if ( !this.searchFileBox || !this.searchFileBox.value) {
+            return;
+        }
+        const searchExp = new RegExp(this.searchFileBox.value, "i");
+
+        this._searchDirs = new SearchDirInfo(this.arrOrder.filter(item => searchExp.test(item.file.name)));
+
+        log.debug("SEARCH FILES : length [%d] [%j]", this._searchDirs.dirs?.length, this._searchDirs.get()?.file);
+
+        if (!this._searchDirs.get()) {
+            this.searchFileBox.updateLastChar();
+        } else {
+            this.setCurrentDir( this._searchDirs.get().file.fullname );
+        }
+    }
+
+    async keyInputSearchFile(ch, keyInfo): Promise<number> {
+        if (!this.searchFileBox || !this.searchFileBox.value) {
+            const keyName = keyInfo.full || keyInfo.name;
+            if (SearchDisallowKeys.indexOf(keyName) > -1) {
+                log.debug("ignore key - [%s]", keyName);
+                return -1;
+            }
+        }
+
+        if (!this.searchFileBox) {
+            this.searchFileBox = new SearchFileBox({ parent: this.baseWidget });
+            this.searchFileBox.on("TAB_KEY", () => {
+                this.searchDirTabKey();
+            });
+        }
+        const result = await this.searchFileBox.executePromise(ch, keyInfo);
+        if (result && keyInfo && keyInfo.name !== "tab") {
+            this.searchDirAndFocus();
+        }
+        if (result) {
+            this.baseWidget.render();
+            return 1;
+        }
+        if ( this.searchFileBox.value ) {
+            this.searchFileBox.clear();
+            return -2;
+        }
+        return 0;
     }
 
     afterRender() {

@@ -105,4 +105,13 @@ export class File {
             return this.fullname;
         }
     }
+
+    static fromJson(json: any) {
+        try {
+            return Object.assign( new File, json );
+        } catch( e ) {
+            console.error( e );
+            return null;
+        }
+    }
 }

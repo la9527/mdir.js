@@ -76,6 +76,8 @@ $ mdir
 
 ## Version History
 
+- v1.2.0
+    - [improve] Supports search and directory caching on the MCD.
 - v1.1.0
     - [ADD] Support the xz compress file.
 - v1.0.0
@@ -108,7 +110,7 @@ $ mdir
     - Add the hint on the bottom side.
     - Add the command line at the bottom side (press slash('/') key)
 - v0.1.x
-    - Support the mcd(directory changer of tree design) in the window box.
+    - Support the MCD(directory changer of tree design) in the window box.
 
 # Gallery
 

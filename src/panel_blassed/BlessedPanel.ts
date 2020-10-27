@@ -225,12 +225,12 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
         });
     }
 
-    async keyInputSearchFile(ch, keyInfo) {
+    async keyInputSearchFile(ch, keyInfo): Promise<number> {
         if (!this.searchFileBox || !this.searchFileBox.value) {
             const keyName = keyInfo.full || keyInfo.name;
             if (SearchDisallowKeys.indexOf(keyName) > -1) {
                 log.debug("ignore key - [%s]", keyName);
-                return false;
+                return -1;
             }
         }
 
@@ -246,8 +246,13 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
         }
         if (result) {
             this.baseWidget.render();
+            return 1;
         }
-        return result;
+        if ( this.searchFileBox.value ) {
+            this.searchFileBox.clear();
+            return -2;
+        }
+        return 0;
     }
 
     async keyEnterSelectPromise(): Promise<any> {

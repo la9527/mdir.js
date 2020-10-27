@@ -388,10 +388,14 @@ export abstract class BaseMainFrame implements IHelpService {
             this.lockKey("keyEvent", panel);
 
             try {
-                if ( panel instanceof BlessedPanel ) {
-                    if ( await this.activeFocusObj().keyInputSearchFile(ch, keyInfo) ) {
+                let searchBoxRefresh: RefreshType = RefreshType.NONE;
+                if ( panel instanceof BlessedPanel || panel instanceof BlessedMcd ) {
+                    const result = await this.activeFocusObj().keyInputSearchFile(ch, keyInfo);
+                    if ( result === 1 ) {
                         this.execRefreshType( RefreshType.OBJECT );
                         return;
+                    } else if ( result === -2 ) {
+                        searchBoxRefresh = RefreshType.ALL;
                     }
                 }
 
@@ -403,11 +407,17 @@ export abstract class BaseMainFrame implements IHelpService {
                         if ( type === RefreshType.NONE ) {
                             type = await keyMappingExec( this, keyInfo );
                         }
+                        if ( searchBoxRefresh === RefreshType.ALL ) {
+                            type = RefreshType.ALL;
+                        }
                         if ( type !== RefreshType.NONE ) {
                             this.execRefreshType( type );
                         } else {
                             if ( func ) {
                                 type = func();
+                                if ( searchBoxRefresh === RefreshType.ALL ) {
+                                    type = RefreshType.ALL;
+                                }
                                 this.execRefreshType( type );
                             }
                         }
@@ -855,11 +865,6 @@ export abstract class BaseMainFrame implements IHelpService {
     @Hint({ hint: T("Hint.Remove") })
     @Help( T("Help.Remove") )
     async removePromise() {
-        const activePanel = this.activePanel();
-        if ( !(activePanel instanceof BlessedPanel) ) {
-            return RefreshType.NONE;
-        }
-
         const result = await messageBox( { 
             parent: this.baseWidget, 
             title: T("Question"), 
@@ -868,6 +873,15 @@ export abstract class BaseMainFrame implements IHelpService {
         });
 
         if ( result !== T("OK") ) {
+            return RefreshType.NONE;
+        }
+
+        return await this.removeSelectFiles();
+    }
+
+    async removeSelectFiles() {
+        const activePanel = this.activePanel();
+        if ( !(activePanel instanceof BlessedPanel) ) {
             return RefreshType.NONE;
         }
 
@@ -992,186 +1006,201 @@ export abstract class BaseMainFrame implements IHelpService {
         const targetReader = activePanel.getReader();
         targetReader.isUserCanceled = false;
 
-        const progressBox = new ProgressBox( { title: T("Message.Copy"), msg: T("Message.Calculating"), cancel: () => {
-            targetReader.isUserCanceled = true;
-        }}, { parent: this.baseWidget } );
+        const progressBox = new ProgressBox( { 
+            title: clipSelected.getClipboard() === ClipBoard.CLIP_CUT ? T("Message.Cut") : T("Message.Copy"), 
+            msg: T("Message.Calculating"), 
+            cancel: () => {
+                targetReader.isUserCanceled = true;
+            }
+        }, { parent: this.baseWidget } );
+        
         this.screen.render();
         await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
-        
+
+        const filesCopyFunc = async (isMove: boolean = false) => {
+            files = clipSelected.getFiles();
+
+            // Sort in filename length ascending order.
+            files.sort( (a, b) => a.fullname.length - b.fullname.length);
+
+            const fullFileSize = files.reduce( (sum, item) => sum + item.size, 0 );
+            const sourceBasePath = clipSelected.getSelecteBaseDir().fullname;
+
+            let copyBytes = 0;
+            const befCopyInfo = { beforeTime: Date.now(), copyBytes };
+            
+            const refreshTimeMs = 300;
+            const progressStatus: ProgressFunc = ( source, copySize, size, chunkLength ) => {
+                copyBytes += chunkLength;
+                const repeatTime = Date.now() - befCopyInfo.beforeTime;
+                if ( repeatTime > refreshTimeMs ) {
+                    // const bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
+                    const lastText = (new Color(3, 0)).fontBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
+                                    (new Color(3, 0)).fontBlessFormat(StringUtils.sizeConvert(fullFileSize, false, 1).trim());
+                    progressBox.updateProgress( source.fullname, lastText, copyBytes, fullFileSize );
+                    befCopyInfo.beforeTime = Date.now();
+                    befCopyInfo.copyBytes = copyBytes;
+                }
+                return targetReader.isUserCanceled ? ProgressResult.USER_CANCELED : ProgressResult.SUCCESS;
+            };
+
+            if ( activePanel instanceof BlessedPanel ) {
+                if ( files[0].dirname === activePanel.currentPath().fullname ) {
+                    log.error( "source file and target file are the same." );
+                    throw new Error(T("Message.SAME_SOURCE_AND_TARGET"));
+                }
+
+                const originalReader = clipSelected.getReader();
+                let anotherReader = activePanel.getReader();
+                if ( originalReader.readerName !== "file" ) {
+                    anotherReader = originalReader;
+                } else if ( targetReader.readerName !== "file" ) {
+                    anotherReader = targetReader;
+                }
+                
+                log.debug( "READER : [%s] => [%s]", originalReader.readerName, targetReader.readerName );
+                if ( [ "file", "sftp" ].indexOf(originalReader.readerName) > -1 && 
+                    [ "file", "sftp" ].indexOf(targetReader.readerName) > -1 && 
+                    files[0].fstype === clipSelected.getReader().readerName ) {
+                    let overwriteAll = false;
+                    
+                    for ( const src of files ) {
+                        if ( progressBox.getCanceled() ) {
+                            break;
+                        }
+                        if ( await originalReader.exist(src.fullname) === false ) {
+                            const result = await messageBox( {
+                                parent: this.baseWidget,
+                                title: T("Error"),
+                                msg: T("{{filename}}_FILE_NOT_EXISTS", { filename: src.name }),
+                                button: [ T("Skip"), T("Cancel") ]
+                            });
+                            if ( result === T("Cancel") ) {
+                                break;
+                            }
+                            continue;
+                        }
+
+                        const targetBasePath = activePanel.currentPath().fullname;
+                        const target = src.clone();
+
+                        let targetName = target.fullname.substr(sourceBasePath.length);
+                        if ( originalReader.sep() !== targetReader.sep() ) {
+                            if ( originalReader.sep() === "\\" ) {
+                                targetName = targetName.replace( /\\/g, targetReader.sep() );
+                            } else if ( originalReader.sep() === "/" ) {
+                                targetName = targetName.replace( /\//g, targetReader.sep() );
+                            }
+                        }
+                        if ( targetBasePath.substr(targetBasePath.length - 1, targetReader.sep().length) !== targetReader.sep() ) {
+                            target.fullname = targetBasePath + targetReader.sep() + targetName;
+                        } else {
+                            target.fullname = targetBasePath + targetName;
+                        }
+                        target.fstype = targetReader.readerName;
+                        
+                        if ( !overwriteAll && await targetReader.exist( target.fullname ) ) {
+                            const result = await messageBox( {
+                                parent: this.baseWidget,
+                                title: T("Copy"),
+                                msg: T("Message.{{filename}}_FILE_NOT_EXISTS", { filename: src.name }),
+                                button: [ T("Overwrite"), T("Skip"), T("Rename"), T("Overwrite All"), T("Skip All") ]
+                            });
+                            
+                            if ( result === T("Skip") ) {
+                                continue;
+                            }
+                            if ( result === T("Overwrite All") ) {
+                                overwriteAll = true;
+                            }
+                            if ( result === T("Skip All") ) {
+                                break;
+                            }
+                            if ( result === T("Rename") ) {
+                                const result = await inputBox( { 
+                                    parent: this.baseWidget,
+                                    title: T("Rename"),
+                                    defaultText: src.name,
+                                    button: [ T("OK"), T("Cancel") ]
+                                });
+                                if ( result && result[1] === T("OK") && result[0] ) {
+                                    target.fullname = targetBasePath + targetReader.sep() + result[0];
+                                } else {
+                                    continue;   
+                                }
+                            }
+                        }
+
+                        try {
+                            if ( isMove && clipSelected.getClipboard() === ClipBoard.CLIP_CUT ) {
+                                await anotherReader.rename( src, target.fullname, progressStatus );
+                            } else {
+                                if ( src.dir && !src.link ) {
+                                    log.debug( "COPY DIR - [%s] => [%s]", src.fullname, target.fullname );
+                                    if ( await targetReader.exist(target.fullname) === false ) {
+                                        await targetReader.mkdir( target );
+                                    }
+                                } else {
+                                    log.debug( "COPY - [%s] => [%s]", src.fullname, target.fullname );
+                                    if ( anotherReader ) {
+                                        await anotherReader.copy( src, null, target, progressStatus );
+                                    }
+                                }
+                            }
+                        } catch( err ) {
+                            if ( err === "USER_CANCEL" ) {
+                                break;
+                            } else {
+                                throw new Error(`${T("Error")}: ${src.name} - ${err}`);
+                            }
+                        }
+                    }
+                } else if ( files[0].fstype === clipSelected.getReader().readerName ) {
+                    await anotherReader.copy( files, clipSelected.getSelecteBaseDir(), activePanel.currentPath(), progressStatus );
+                }
+            }
+        };
+
+        if ( clipSelected.getClipboard() === ClipBoard.CLIP_CUT && clipSelected.getReader().readerName === activePanel.getReader().readerName ) {
+            try {
+                await filesCopyFunc(true);
+                
+                progressBox.destroy();
+                await this.refreshPromise();
+                return RefreshType.ALL;
+            } catch( err ) {
+                log.error( err );
+            }
+        }
+
         if ( await clipSelected.expandDir() === false ) {
             log.error( "Expend DIR : FALSE !!!");
             progressBox.destroy();
             return RefreshType.ALL;
         }
-        
-        files = clipSelected.getFiles();
 
-        // Sort in filename length ascending order.
-        files.sort( (a, b) => a.fullname.length - b.fullname.length);
-
-        const fullFileSize = files.reduce( (sum, item) => sum + item.size, 0 );
-        const sourceBasePath = clipSelected.getSelecteBaseDir().fullname;
-
-        let copyBytes = 0;
-        const befCopyInfo = { beforeTime: Date.now(), copyBytes };
-        
-        const refreshTimeMs = 300;
-        const progressStatus: ProgressFunc = ( source, copySize, size, chunkLength ) => {
-            copyBytes += chunkLength;
-            const repeatTime = Date.now() - befCopyInfo.beforeTime;
-            if ( repeatTime > refreshTimeMs ) {
-                // const bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
-                const lastText = (new Color(3, 0)).fontBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
-                                (new Color(3, 0)).fontBlessFormat(StringUtils.sizeConvert(fullFileSize, false, 1).trim());
-                progressBox.updateProgress( source.fullname, lastText, copyBytes, fullFileSize );
-                befCopyInfo.beforeTime = Date.now();
-                befCopyInfo.copyBytes = copyBytes;
-            }
-            return targetReader.isUserCanceled ? ProgressResult.USER_CANCELED : ProgressResult.SUCCESS;
-        };
-
-        if ( activePanel instanceof BlessedPanel ) {
-            if ( files[0].dirname === activePanel.currentPath().fullname ) {
-                log.error( "source file and target file are the same." );
-                progressBox.destroy();
+        try {
+            await filesCopyFunc();
+        } catch( err ) {
+            progressBox.destroy();
+            if ( err.message !== "USER_CANCEL" ) {
                 await messageBox( {
                     parent: this.baseWidget,
-                    title: T("Error"), 
-                    msg: T("Message.SAME_SOURCE_AND_TARGET"), 
-                    button: [ T("OK") ] 
+                    title: T("Error"),
+                    msg: err.message,
+                    button: [ T("OK") ]
                 });
-                return RefreshType.ALL;
             }
-            
-            const originalReader = clipSelected.getReader();
-
-            let anotherReader = activePanel.getReader();
-            if ( originalReader.readerName !== "file" ) {
-                anotherReader = originalReader;
-            } else if ( targetReader.readerName !== "file" ) {
-                anotherReader = targetReader;
-            }
-
-            log.debug( "READER : [%s] => [%s]", originalReader.readerName, targetReader.readerName );
-            if ( [ "file", "sftp" ].indexOf(originalReader.readerName) > -1 && 
-                 [ "file", "sftp" ].indexOf(targetReader.readerName) > -1 && 
-                 files[0].fstype === clipSelected.getReader().readerName ) {
-                let overwriteAll = false;
-                for ( const src of files ) {
-                    if ( progressBox.getCanceled() ) {
-                        break;
-                    }
-                    if ( await originalReader.exist(src.fullname) === false ) {
-                        const result = await messageBox( {
-                            parent: this.baseWidget,
-                            title: T("Error"),
-                            msg: T("{{filename}}_FILE_NOT_EXISTS", { filename: src.name }),
-                            button: [ T("Skip"), T("Cancel") ]
-                        });
-                        if ( result === T("Cancel") ) {
-                            break;
-                        }
-                        continue;
-                    }
-
-                    const targetBasePath = activePanel.currentPath().fullname;
-                    const target = src.clone();
-
-                    let targetName = target.fullname.substr(sourceBasePath.length);
-                    if ( originalReader.sep() !== targetReader.sep() ) {
-                        if ( originalReader.sep() === "\\" ) {
-                            targetName = targetName.replace( /\\/g, targetReader.sep() );
-                        } else if ( originalReader.sep() === "/" ) {
-                            targetName = targetName.replace( /\//g, targetReader.sep() );
-                        }
-                    }
-                    if ( targetBasePath.substr(targetBasePath.length - 1, targetReader.sep().length) !== targetReader.sep() ) {
-                        target.fullname = targetBasePath + targetReader.sep() + targetName;
-                    } else {
-                        target.fullname = targetBasePath + targetName;
-                    }
-                    target.fstype = targetReader.readerName;
-                    
-                    if ( !overwriteAll && await targetReader.exist( target.fullname ) ) {
-                        const result = await messageBox( {
-                            parent: this.baseWidget,
-                            title: T("Copy"),
-                            msg: T("Message.{{filename}}_FILE_NOT_EXISTS", { filename: src.name }),
-                            button: [ T("Overwrite"), T("Skip"), T("Rename"), T("Overwrite All"), T("Skip All") ]
-                        });
-                        
-                        if ( result === T("Skip") ) {
-                            continue;
-                        }
-                        if ( result === T("Overwrite All") ) {
-                            overwriteAll = true;
-                        }
-                        if ( result === T("Skip All") ) {
-                            break;
-                        }
-                        if ( result === T("Rename") ) {
-                            const result = await inputBox( { 
-                                parent: this.baseWidget,
-                                title: T("Rename"),
-                                defaultText: src.name,
-                                button: [ T("OK"), T("Cancel") ]
-                            });
-                            if ( result && result[1] === T("OK") && result[0] ) {
-                                target.fullname = targetBasePath + targetReader.sep() + result[0];
-                            } else {
-                                continue;   
-                            }
-                        }
-                    }
-
-                    try {
-                        if ( src.dir && !src.link ) {
-                            log.debug( "COPY DIR - [%s] => [%s]", src.fullname, target.fullname );
-                            if ( await targetReader.exist(target.fullname) === false ) {
-                                await targetReader.mkdir( target );
-                            }
-                        } else {
-                            log.debug( "COPY - [%s] => [%s]", src.fullname, target.fullname );
-                            if ( anotherReader ) {
-                                await anotherReader.copy( src, null, target, progressStatus );
-                            }
-                        }
-                    } catch( err ) {
-                        progressBox.destroy();
-                        if ( err === "USER_CANCEL" ) {
-                            break;
-                        } else {
-                            await messageBox( {
-                                parent: this.baseWidget,
-                                title: T("Copy"),
-                                msg: `${T("Error")}: ${src.name} - ${err}`,
-                                button: [ T("OK") ]
-                            });
-                            await this.refreshPromise();
-                            return RefreshType.ALL;
-                        }
-                    }
-                }
-            } else if ( files[0].fstype === clipSelected.getReader().readerName ) {
-                try {
-                    await anotherReader.copy( files, clipSelected.getSelecteBaseDir(), activePanel.currentPath(), progressStatus );
-                } catch( err ) {
-                    log.error( err );
-                    progressBox.destroy();
-                    await messageBox( {
-                        parent: this.baseWidget,
-                        title: T("Error"),
-                        msg: err,
-                        button: [ T("OK") ]
-                    });
-                    await this.refreshPromise();
-                    return RefreshType.ALL;
-                }
-            }
+            await this.refreshPromise();
+            return RefreshType.ALL;
         }
 
         progressBox.destroy();
-        await this.refreshPromise();
+        if ( clipSelected.getClipboard() === ClipBoard.CLIP_CUT ) {
+            await this.removeSelectFiles();
+        } else {
+            await this.refreshPromise();
+        }
         return RefreshType.ALL;
     }
 
