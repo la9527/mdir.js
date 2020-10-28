@@ -1,6 +1,5 @@
 import * as os from "os";
 import * as path from "path";
-import * as fs from "fs";
 import * as blessed from "neo-blessed";
 import { Widgets } from "neo-blessed";
 import { sprintf } from "sprintf-js";
@@ -189,34 +188,6 @@ export class BlessedMcd extends Mcd implements IBlessedView, IHelpService {
 
     public getConfigPath() {
         return os.homedir() + path.sep + ".m" + path.sep + "mcd.json";
-    }
-
-    public load() {
-        if ( !fs.existsSync(this.getConfigPath()) ) {
-            return;
-        }
-        if ( this.getReader().readerName !== "file" ) {
-            return;
-        }
-        try {
-            const text = fs.readFileSync( this.getConfigPath(), { encoding: "utf8" } );
-            if ( text ) {
-                this.loadJSON( text );
-            }
-        } catch( e ) {
-            log.error( e );
-        }
-    }
-
-    public save() {
-        if ( this.getReader().readerName !== "file" ) {
-            return;
-        }
-        try {
-            fs.writeFileSync( this.getConfigPath(), this.convertJson(), { encoding: "utf8" } );
-        } catch( e ) {
-            log.error( e );
-        }
     }
 
     viewName() {

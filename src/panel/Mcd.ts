@@ -1,4 +1,6 @@
 import * as path from "path";
+import * as fs from "fs";
+import * as os from "os";
 
 import { SortType } from "../common/Sort";
 import { Dir } from "../common/Dir";
@@ -32,13 +34,20 @@ export class Mcd implements IHelpService {
         this.setReader( reader );
     }
 
-    loadJSON( json: string ) {
+    async loadJSON( json: string ) {
         try {
             const jsonObj = JSON.parse( json );
             if ( !jsonObj || jsonObj.ver !== MCD_SAVE_VER || jsonObj.ver !== MCD_SAVE_VER || !jsonObj.mcd ) {
                 log.error( "JSON parsing error !!!" );
                 return false;
             }
+
+            const rootDir = await this.reader.rootDir();
+            if ( rootDir.root !== jsonObj.rootpath ) {
+                log.error( "ROOT path error !!!" );
+                return false;
+            }
+            
             const jsonArrObj = jsonObj.mcd;
             const dirs: Dir[] = jsonArrObj.map( item => {
                 const dir = new Dir( File.fromJson(item.file), null, item.check );
@@ -76,7 +85,39 @@ export class Mcd implements IHelpService {
     }
 
     convertJson() {
-        return JSON.stringify( { ver: MCD_SAVE_VER, mcd: this.arrOrder } );
+        return JSON.stringify( { ver: MCD_SAVE_VER, rootpath: this.rootDir.file.root, mcd: this.arrOrder } );
+    }
+
+    public getConfigPath() {
+        return os.homedir() + path.sep + ".m" + path.sep + "mcd.json";
+    }
+
+    public load() {
+        if ( !fs.existsSync(this.getConfigPath()) ) {
+            return;
+        }
+        if ( this.getReader().readerName !== "file" ) {
+            return;
+        }
+        try {
+            const text = fs.readFileSync( this.getConfigPath(), { encoding: "utf8" } );
+            if ( text ) {
+                this.loadJSON( text );
+            }
+        } catch( e ) {
+            log.error( e );
+        }
+    }
+
+    public save() {
+        if ( this.getReader().readerName !== "file" ) {
+            return;
+        }
+        try {
+            fs.writeFileSync( this.getConfigPath(), this.convertJson(), { encoding: "utf8" } );
+        } catch( e ) {
+            log.error( e );
+        }
     }
 
     viewName() {
