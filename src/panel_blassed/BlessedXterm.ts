@@ -306,7 +306,11 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         });
         
         this.panel.box.once("render", () => {
-            this.term && this.term.resize((box.width as number) - (box.iwidth as number), (box.height as number) - (box.iheight as number));
+            try {
+                this.term && this.term.resize((box.width as number) - (box.iwidth as number), (box.height as number) - (box.iheight as number));
+            } catch( e ) {
+                log.error( "TERM RESIZE ERROR: %s", e );
+            }
         });
         
         this.panel.on("destroy", () => {
@@ -353,9 +357,13 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             log.debug( "SHELL : %s %s", this.shell, this.args );
 
             this.on("widget.changetitle", () => {
-                if ( !this.isFullscreen ) {
-                    this.header.setContent( this.getCurrentPath() || "" );
-                    this.box.screen.render();
+                try {
+                    if ( !this.isFullscreen ) {
+                        this.header.setContent( this.getCurrentPath() || "" );
+                        this.box.screen.render();
+                    }
+                } catch( e ) {
+                    log.error( "wigdet.changetitle - render: %s", e );
                 }
             });
 
@@ -388,10 +396,14 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             log.debug( "BlessedXterm - resize !!!" );
             process.nextTick(() => {
                 log.debug( "BLESSED TERM RESIZE !!! - TERMINAL");
-                if ( !this.isFullscreen ) {
-                    this.term && this.term.resize((box.width as number) - (box.iwidth as number), (box.height as number) - (box.iheight as number));
-                } else {
-                    this.term && this.term.resize(this.screen.width as number, this.screen.height as number);
+                try {
+                    if ( !this.isFullscreen ) {
+                        this.term && this.term.resize((box.width as number) - (box.iwidth as number), (box.height as number) - (box.iheight as number));
+                    } else {
+                        this.term && this.term.resize(this.screen.width as number, this.screen.height as number);
+                    }
+                } catch( e ) {
+                    log.debug( "TERM RESIZE ERROR: %s", e );
                 }
             });
             process.nextTick(() => {
@@ -427,9 +439,8 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         });
 
         this.pty.on( "exit", async (exit, signal) => {
-            log.debug( "on exit !!! - %d", exit, signal );
+            log.error( "on exit !!! - [%d] [%s]", exit, signal );
             await this.fullscreenRecover();
-            this.pty = null;
             this.box.emit( "process_exit", exit, signal );
         });
 
@@ -453,15 +464,15 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
                 const detectShell = (d) => {
                     const data: string = Buffer.isBuffer(d) ? (d as Buffer).toString() : d;
                     if ( data.match( detectText ) ) {
-                        (this.pty as any).removeListener( "data", detectShell );
+                        (this.pty as any)?.removeListener( "data", detectShell );
                         clearTimeout(tm);
                         resolve();
                     }
                 };
-                this.pty.on("data", detectShell);
-                this.pty.write( writeText );
+                this.pty?.on("data", detectShell);
+                this.pty?.write( writeText );
                 tm = setTimeout(() => {
-                    (this.pty as any).removeListener( "data", detectShell );
+                    (this.pty as any)?.removeListener( "data", detectShell );
                     resolve();
                 }, timeout);
             });
@@ -477,13 +488,13 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
                         const remoteHost = "$([char]27)]1337;RemoteHost=$Env:username@$Env:computername$([char]7)";
                         const currentDir = "$([char]27)]1337;CurrentDir=$($PWD.ProviderPath)$([char]7)";
                         const msg = `function prompt {"PS $($PWD.ProviderPath)>${remoteHost}${currentDir} "}\r`;
-                        this.pty.write( msg );
+                        this.pty?.write( msg );
                         await listenDetectCheck( "cls\r", "cls\r", 1000 );
                     } else if ( !isSftp && this.shell === "cmd.exe" ) {
                         await listenDetectCheck( "cls\r", "cls\r", 1000 );
                         const remoteHost = "$E]1337;RemoteHost=localhost\x07";
                         const currentDir = "$E]1337;CurrentDir=$P\x07";
-                        this.pty.write( `prompt $P$G${remoteHost}${currentDir}\r` );
+                        this.pty?.write( `prompt $P$G${remoteHost}${currentDir}\r` );
                         await listenDetectCheck( "cls\r", "cls\r", 1000 );
                     } else {
                         await listenDetectCheck( "pwd\r", "pwd\r", 1000 );
@@ -500,7 +511,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             }
         }
 
-        if ( this.getReader() instanceof SftpReader && (this.getReader() as SftpReader).isSFTPSession() ) {
+        if ( this.pty && this.getReader() instanceof SftpReader && (this.getReader() as SftpReader).isSFTPSession() ) {
             const curDir = await this.getReader().currentDir();
             if ( curDir && curDir.fullname ) {
                 const changeDirCmd = `cd "${curDir.fullname}"\r`;
