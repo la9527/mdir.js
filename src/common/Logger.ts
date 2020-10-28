@@ -52,7 +52,7 @@ function initLogger() {
     const format = combine(
         label({ label: "common" }),
         winston.format.splat(),
-        winston.format.timestamp( { format: "hh:mm:ss.SSS" }),
+        winston.format.timestamp( { format: "HH:mm:ss.SSS" }),
         winston.format.simple(),
         winston.format.printf( (info) => {
             const level = {

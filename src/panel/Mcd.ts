@@ -37,7 +37,7 @@ export class Mcd implements IHelpService {
     async loadJSON( json: string ) {
         try {
             const jsonObj = JSON.parse( json );
-            if ( !jsonObj || jsonObj.ver !== MCD_SAVE_VER || jsonObj.ver !== MCD_SAVE_VER || !jsonObj.mcd ) {
+            if ( !jsonObj || jsonObj.ver !== MCD_SAVE_VER || !jsonObj.mcd ) {
                 log.error( "JSON parsing error !!!" );
                 return false;
             }
@@ -78,7 +78,7 @@ export class Mcd implements IHelpService {
             this.arrOrder = dirs;
             this.rootDir = this.arrOrder[0];
         } catch( e ) {
-            log.error( e );
+            log.error( "loadJSON: %s", e );
             return false;
         }
         return true;
@@ -92,7 +92,7 @@ export class Mcd implements IHelpService {
         return os.homedir() + path.sep + ".m" + path.sep + "mcd.json";
     }
 
-    public load() {
+    public async load() {
         if ( !fs.existsSync(this.getConfigPath()) ) {
             return;
         }
@@ -102,7 +102,7 @@ export class Mcd implements IHelpService {
         try {
             const text = fs.readFileSync( this.getConfigPath(), { encoding: "utf8" } );
             if ( text ) {
-                this.loadJSON( text );
+                await this.loadJSON( text );
             }
         } catch( e ) {
             log.error( e );

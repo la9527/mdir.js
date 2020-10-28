@@ -404,6 +404,7 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
             view.destroy();
 
             const newView = new BlessedMcd( { parent: this.baseWidget, viewCount: viewCount++ }, view.getReader(), view.currentPath() );
+            await newView.load();
             await newView.scanDir( view.currentPath() );
             newView.setFocus();
             this.blessedFrames[this.activeFrameNum] = newView;

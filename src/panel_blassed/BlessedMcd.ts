@@ -154,7 +154,7 @@ export class BlessedMcd extends Mcd implements IBlessedView, IHelpService {
     public searchFileBox: SearchFileBox = null;
     _searchDirs: SearchDirInfo = null;
 
-    constructor(  opts: Widgets.BoxOptions | any, reader: Reader = null, firstScanPath = null ) {
+    constructor( opts: Widgets.BoxOptions | any, reader: Reader = null, firstScanPath = null ) {
         super( reader );
 
         this.firstScanPath = firstScanPath;
@@ -183,7 +183,6 @@ export class BlessedMcd extends Mcd implements IBlessedView, IHelpService {
             }
         });
         this.initRender();
-        this.load();
     }
 
     public getConfigPath() {

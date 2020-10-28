@@ -468,7 +468,7 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
     }
 
     beforeRender() {
-        // log.info("BlessedPanel beforeRender() - COL: %d, ROW: %d", this.column, this.row);
+        log.info("BlessedPanel beforeRender() - COL: %d, ROW: %d", this.column, this.row);
 
         if (this.isViewChange()) {
             let curPos = (this.column * this.row) * this.page;
@@ -552,8 +552,10 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
     render() {
         this.header.render();
         if (this.isViewChange()) {
+            log.debug("IS_VIEW_CHANGE: TRUE");
             this.baseWidget.render();
         } else {
+            log.debug("IS_VIEW_CHANGE: FALSE");
             this.resize();
             this.beforeRender();
         }

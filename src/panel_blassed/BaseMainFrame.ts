@@ -469,7 +469,7 @@ export abstract class BaseMainFrame implements IHelpService {
 
     execRefreshType( type: RefreshType ) {
         if ( type === RefreshType.ALL || type === RefreshType.ALL_NOFOCUS ) {
-            log.info( "REFRESH - ALL");
+            log.info( "REFRESH - ALL - START");
             this.screen.realloc();
             this.blessedFrames.forEach( item => {
                 if ( item instanceof BlessedPanel ) {
@@ -478,12 +478,14 @@ export abstract class BaseMainFrame implements IHelpService {
             });
             this.baseWidget.render();
             this.screen.render();
+            log.info( "REFRESH - ALL - END");
         } else if ( type === RefreshType.OBJECT || type === RefreshType.OBJECT_NOFOCUS ) {
-            log.info( "REFRESH - OBJECT");
+            log.info( "REFRESH - OBJECT - START");
             this.activeFocusObj().render();
             if ( this.bottomFilesBox ) {
                 this.bottomFilesBox.render();
             }
+            log.info( "REFRESH - OBJECT - END");
         }
         if ( type === RefreshType.ALL || type === RefreshType.OBJECT ) {
             if ( this.commandBox && !this.commandBox.hasFocus() ) {
