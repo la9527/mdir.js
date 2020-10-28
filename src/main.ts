@@ -37,6 +37,11 @@ import * as os from "os";
                 alias: "d",
                 describe: T("Args.LogFile"),
                 type: "string"
+            },
+            "logsync": {
+                alias: "s",
+                describe: "Synchronize when saving the log file. \n(have must be '--logfile' option)",
+                type: "string"
             }
         })
         .help()
@@ -69,8 +74,9 @@ import * as os from "os";
 
     if ( typeof(argv.logfile) !== "undefined" ) {
         (global as any).debug = true;
-        updateDebugFile( argv.logfile );
-        consoleMessage( " * Debug mode", (global as any).DEBUG_FILE );
+        updateDebugFile( argv.logfile, typeof(argv.logsync) !== "undefined" );
+        consoleMessage( " * Debug mode", (global as any).DEBUG_INFO.file );
+        consoleMessage( " * Debug sync", (global as any).DEBUG_INFO.sync );
     }
     consoleMessage( T("Start.SystemLocale"), (global as any).LOCALE );
     stdout.write( "\n" + T("Start.LoadConfigureFiles") + "\n" );

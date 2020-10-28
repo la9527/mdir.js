@@ -1,4 +1,4 @@
-(global as any).DEBUG_STDOUT = true;
+(global as any).DEBUG_INFO = { stdout: true };
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import "jest";

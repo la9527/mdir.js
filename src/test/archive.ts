@@ -1,4 +1,4 @@
-(global as any).DEBUG_STDOUT = true;
+(global as any).DEBUG_INFO = { stdout: true };
 
 import { ArchiveReader } from "../panel/archive/ArchiveReader";
 import { FileReader } from "../panel/FileReader";

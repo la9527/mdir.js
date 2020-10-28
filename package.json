@@ -1,6 +1,6 @@
 {
   "name": "mdir.js",
-  "version": "1.2.0-beta+051",
+  "version": "1.2.1-beta+052",
   "description": "Mdir.js is visual file manager. (text mode application)",
   "main": "./build/main.js",
   "scripts": {
@@ -76,7 +76,7 @@
     "unbzip2-stream": "^1.4.3",
     "unzip-stream": "^0.3.0",
     "which": "^2.0.2",
-    "winston": "3.2.1",
+    "winston": "^3.3.3",
     "winston-daily-rotate-file": "~3.8.0",
     "xterm": "4.7.0",
     "yargs": "^15.3.1",
