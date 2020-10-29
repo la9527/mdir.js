@@ -287,7 +287,7 @@ export class FileReader extends Reader {
                             const mountFile = await this.convertFile( result[2] );
                             mounts.push({
                                 device: result[1],
-                                description: result[1] + "(" + result[3] + ")",
+                                description: result[3] + "(" + result[4] + ")",
                                 mountPath: mountFile,
                                 freesize: 0,
                                 size: 0,
@@ -301,35 +301,6 @@ export class FileReader extends Reader {
                 }
             }
         }
-        
-        /*
-        try {
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
-            const drivelist = require("drivelist");
-            if ( drivelist ) {
-                const drives = await drivelist.list();
-                for ( const item of drives ) {
-                    log.debug( "MOUNT INFO : %j", item );
-                    for ( const i of item.mountpoints ) {
-                        const mountFile = await this.convertFile( i.path );
-                        mounts.push( {
-                            device: item.device,
-                            description: item.description,
-                            mountPath: mountFile,
-                            freesize: item.size,
-                            size: item.size,
-                            isCard: item.isCard,
-                            isUSB: item.isUSB,
-                            isRemovable: item.isRemovable,
-                            isSystem: item.isSystem
-                        });
-                    };
-                }
-            }
-        } catch( e ) {
-
-        }
-        */
         return mounts;
     }
 

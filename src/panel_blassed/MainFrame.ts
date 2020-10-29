@@ -510,28 +510,45 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
         if ( panel instanceof BlessedPanel || panel instanceof BlessedMcd ) {
             const mountList: IMountList[] = await panel.getReader().mountList();
             if ( mountList ) {
-                const maxLength = [ 0, 0 ];
+                const maxLength = [ 0, 0, 0 ];
                 mountList.sort( (a, b) => {
-                    maxLength[0] = Math.max( maxLength[0], a.mountPath.fullname.length );
-                    maxLength[1] = Math.max( maxLength[1], a.description.length );
+                    maxLength[0] = Math.max( maxLength[0], StringUtils.strWidth(a.mountPath.fullname) );
+                    maxLength[1] = Math.max( maxLength[1], StringUtils.strWidth(a.device) );
+                    maxLength[2] = Math.max( maxLength[2], StringUtils.strWidth(a.description) );
 
                     if ( a.mountPath.fullname > b.mountPath.fullname ) return 1;
                     if ( b.mountPath.fullname > a.mountPath.fullname ) return -1;
                     return 0;
                 });
 
+                const fillText = ( text, fillSize ) => {
+                    const textSize = StringUtils.strWidth(text);
+                    if ( textSize < fillSize ) {
+                        return text + Array(fillSize - textSize).fill(" ").join("");
+                    }
+                    return text;
+                };
+
                 const viewMountInfo = mountList.map( (item) => {
                     if ( item.size ) {
-                        return sprintf(`%-${maxLength[0] + 2}s | %-${maxLength[1] + 2}s | %s`, item.mountPath.fullname, item.description, StringUtils.sizeConvert(item.size, true));
+                        return sprintf("%s | %s | %s | %s", fillText(item.mountPath.fullname, maxLength[0]), fillText(item.device, maxLength[1]), fillText(item.description, maxLength[2]), StringUtils.sizeConvert(item.size, true));
                     } else {
-                        return sprintf(`%-${maxLength[0] + 2}s | %-${maxLength[1] + 2}s`, item.mountPath.fullname, item.description);
+                        return sprintf("%s | %s | %s", fillText(item.mountPath.fullname, maxLength[0]), fillText(item.device, maxLength[1]), fillText(item.description, maxLength[2]),);
                     }
                 });
 
                 log.debug( viewMountInfo );
 
                 try {
-                    const result = await messageBox( { parent: this.baseWidget, title: T("Message.MountList"), msg: "", button: viewMountInfo, buttonType: MSG_BUTTON_TYPE.VERTICAL } );
+                    const result = await messageBox({
+                        parent: this.baseWidget, 
+                        title: os.platform() === "win32" ? T("Message.DriveList") : T("Message.MountList"), 
+                        msg: "", 
+                        textAlign: "left",
+                        button: viewMountInfo, 
+                        buttonType: MSG_BUTTON_TYPE.VERTICAL,
+                        buttonTextAlign: "left"
+                    });
                     if ( result && viewMountInfo.indexOf(result) > -1 ) {
                         if ( panel instanceof BlessedPanel ) {
                             await panel.read( mountList[ viewMountInfo.indexOf(result) ].mountPath );
