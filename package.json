@@ -18,9 +18,15 @@
     "postinstall": "node ./scripts/post-install.js",
     "pkg-linux": "pkg --target=node12-linux-x64 --out-path=./binary .",
     "pkg-osx": "pkg --target=node12-macos-x64 --out-path=./binary .",
-    "pkg-win": "pkg --target=node12-win-x64 --out-path=./binary ."
+    "pkg-win": "pkg --target=node12-win-x64 --out-path=./binary .",
+    "predocker": "npm pack",
+    "docker": "docker-compose build"
   },
   "author": "La Byoungyoung <la9527@daum.net>",
+  "bugs": {
+    "url": "https://github.com/la9527/mdir.js/issues",
+    "email": "la9527@daum.net"
+  },
   "contributors": [
     {
       "name": "La Byoungyoung",
@@ -85,7 +91,6 @@
     "zip-stream": "^4.0.2"
   },
   "optionalDependencies": {
-    "drivelist": "9.1.0",
     "lzma-native": "6.0.1"
   },
   "devDependencies": {
@@ -93,7 +98,6 @@
     "@babel/node": "^7.10.5",
     "@babel/preset-env": "^7.11.0",
     "@babel/preset-typescript": "^7.10.4",
-    "@types/drivelist": "^6.4.1",
     "@types/jest": "^26.0.10",
     "@types/node": "^12.12.54",
     "@types/sprintf-js": "^1.1.2",
@@ -119,12 +123,6 @@
   "pkg": {
     "scripts": [
       "build/**/*.js"
-    ],
-    "assets": [
-      "node_modules/neo-blessed/**",
-      "node_modules/node-pty/**",
-      "node_modules/drivelist/**",
-      "node_modules/fswin/**"
     ],
     "tagets": [
       "node12"

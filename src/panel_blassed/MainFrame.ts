@@ -521,7 +521,11 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                 });
 
                 const viewMountInfo = mountList.map( (item) => {
-                    return sprintf(`%-${maxLength[0] + 2}s | %-${maxLength[1] + 2}s | %s`, item.mountPath.fullname, item.description, StringUtils.sizeConvert(item.size, true));
+                    if ( item.size ) {
+                        return sprintf(`%-${maxLength[0] + 2}s | %-${maxLength[1] + 2}s | %s`, item.mountPath.fullname, item.description, StringUtils.sizeConvert(item.size, true));
+                    } else {
+                        return sprintf(`%-${maxLength[0] + 2}s | %-${maxLength[1] + 2}s`, item.mountPath.fullname, item.description);
+                    }
                 });
 
                 log.debug( viewMountInfo );

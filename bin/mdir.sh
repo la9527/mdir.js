@@ -1,11 +1,21 @@
-#!/bin/sh
+#!/bin/bash
 
-SHELL=`ps -p $$ -ocomm=`
-SOURCE=$0
-if [[ "$SHELL" =~ "bash" ]]; then
-  SOURCE=$BASH_SOURCE
-elif [[ "$SHELL" =~ "zsh" ]]; then
-  SOURCE=${(%):-%N}
+PS=$(which ps)
+if [ "$PS" != "" ]; then
+  SHELL=`ps -p $$ -ocomm=`
+  SOURCE=$0
+  if [[ "$SHELL" =~ "bash" ]]; then
+    SOURCE=$BASH_SOURCE
+  elif [[ "$SHELL" =~ "zsh" ]]; then
+    SOURCE=${(%):-%N}
+  fi
+else 
+  SOURCE=$0
+  if [[ "$SOURCE" =~ "bash" ]]; then
+    SOURCE=$BASH_SOURCE
+  elif [[ "$SOURCE" =~ "zsh" ]]; then
+    SOURCE=${(%):-%N}
+  fi
 fi
 
 realpath() {

@@ -4,6 +4,7 @@ export interface IMountList {
     device: string;
     description: string;
     mountPath: File;
+    freesize: number;
     size: number;
     isCard: boolean;
     isUSB: boolean;

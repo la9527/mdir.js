@@ -33,17 +33,25 @@ function scriptUpdate() {
     basePath = fs.realpathSync( basePath + "/..");
     if ( !fs.existsSync(`${basePath}/.git`) ) {
         try {
-            console.log( `Update: ${basePath}/bin/mdir -> ${basePath}/bin/mdir.js` );
-            fs.copyFileSync( basePath + "/bin/mdir", basePath + "/bin/mdir.js" );
-            
-            console.log( `Update: ${basePath}/bin/mdir.sh -> ${basePath}/bin/mdir` );
-            fs.copyFileSync( basePath + "/bin/mdir.sh", basePath + "/bin/mdir" );
+            if ( fs.existsSync("/bin/bash") ) {
+                console.log( `Update: ${basePath}/bin/mdir -> ${basePath}/bin/mdir.js` );
+                fs.copyFileSync( basePath + "/bin/mdir", basePath + "/bin/mdir.js" );
 
-            [ os.homedir() + "/.bashrc", os.homedir() + "/.zshrc" ].forEach( item => {
-                if ( fileAppendText( `alias mdir=". ${basePath}/bin/mdir"`, item, /^alias mdir/ ) ) {
-                    console.log( `Update: alias mdir >> ${item}` );
-                }
-            });
+                console.log( `Update: ${basePath}/bin/mdir.sh -> ${basePath}/bin/mdir` );
+                fs.copyFileSync( basePath + "/bin/mdir.sh", basePath + "/bin/mdir" );
+
+                [ os.homedir() + "/.bashrc", os.homedir() + "/.zshrc" ].forEach( item => {
+                    if ( fileAppendText( `alias mdir=". ${basePath}/bin/mdir"`, item, /^alias mdir/ ) ) {
+                        console.log( `Update: alias mdir >> ${item}` );
+                    }
+                });
+            } else {
+                [ os.homedir() + "/.profile" ].forEach( item => {
+                    if ( fileAppendText( `alias mdir="${basePath}/bin/mdir"`, item, /^alias mdir/ ) ) {
+                        console.log( `Update: alias mdir >> ${item}` );
+                    }
+                });
+            }
         } catch( e ) {
             console.error( e );
         }

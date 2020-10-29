@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
+import { execSync } from "child_process";
 
 import { File, FileLink } from "../common/File";
 import { Logger } from "../common/Logger";
@@ -185,27 +186,114 @@ export class FileReader extends Reader {
     async mountList(): Promise<IMountList[]> {
         const mounts: IMountList[] = [];
 
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const drivelist = require("drivelist");
-        if ( drivelist ) {
-            const drives = await drivelist.list();
-            drives.forEach( item => {
-                log.debug( "MOUNT INFO : %j", item );
-                item.mountpoints.forEach( async (i) => {
-                    const mountFile = await this.convertFile( i.path );
+        if ( os.platform() === "win32" && parseInt(os.release()) >= 10 ) {
+            const result = execSync("wmic logicaldisk get deviceid, volumename, description, drivetype, freespace, size /VALUE", { encoding: "utf8" });
+            if ( result ) {
+                const texts = result.split("\r\r\n");
+                const mountInfo = [];
+                let device = null;
+                for ( const item of texts ) {
+                    if ( !item && device ) {
+                        mountInfo.push( device );
+                        device = null;
+                    } else {
+                        const text: string[] = item.split("=");
+                        device = device || {};
+                        device[ text[0] ] = text.slice(1).join("=");
+                    }
+                }
+                for ( const item of mountInfo ) {
+                    const mountFile = await this.convertFile( item.DeviceId );
                     mounts.push( {
-                        device: item.device,
-                        description: item.description,
+                        device: item.VolumeName,
+                        description: item.Description,
                         mountPath: mountFile,
-                        size: item.size,
-                        isCard: item.isCard,
-                        isUSB: item.isUSB,
-                        isRemovable: item.isRemovable,
-                        isSystem: item.isSystem
+                        freesize: parseInt(item.FreeSpace || 0),
+                        size: parseInt(item.Size || 0),
+                        isCard: item.DriveType === "5",
+                        isUSB: item.DriveType === "2",
+                        isRemovable: item.DriveType === "2",
+                        isSystem: item.DriveType === "3"
                     });
-                });
-            });
+                }
+            }
+        } else {
+            const result = execSync("mount", { encoding: "utf8" });
+            if ( result ) {
+                const items = result.split("\n");
+                for ( let item of items ) {
+                    if ( os.platform() === "darwin" ) {
+                        let result = item.match( /(.*) on (.*) \((.*)\)/i );
+                        if ( result && result.length === 4 ) {
+                            if ( result[3].match( "nobrowse" ) ) {
+                                continue;
+                            }
+
+                            const mountFile = await this.convertFile( result[2] );
+                            mounts.push({
+                                device: result[1],
+                                description: result[1] + "(" + result[3] + ")",
+                                mountPath: mountFile,
+                                freesize: 0,
+                                size: 0,
+                                isCard: false,
+                                isUSB: false,
+                                isRemovable: false,
+                                isSystem: false
+                            });
+                        }
+                    } else {
+                        const result = item.match( /(.*) on (.*) type (.*) \((.*)\)/i );
+                        if ( result && result.length === 5 ) {
+                            if ( result[1] === result[3] ) {
+                                continue;
+                            }
+                            const mountFile = await this.convertFile( result[2] );
+                            mounts.push({
+                                device: result[1],
+                                description: result[1] + "(" + result[3] + ")",
+                                mountPath: mountFile,
+                                freesize: 0,
+                                size: 0,
+                                isCard: false,
+                                isUSB: false,
+                                isRemovable: false,
+                                isSystem: false
+                            });
+                        }
+                    }
+                }
+            }
         }
+        
+        /*
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            const drivelist = require("drivelist");
+            if ( drivelist ) {
+                const drives = await drivelist.list();
+                for ( const item of drives ) {
+                    log.debug( "MOUNT INFO : %j", item );
+                    for ( const i of item.mountpoints ) {
+                        const mountFile = await this.convertFile( i.path );
+                        mounts.push( {
+                            device: item.device,
+                            description: item.description,
+                            mountPath: mountFile,
+                            freesize: item.size,
+                            size: item.size,
+                            isCard: item.isCard,
+                            isUSB: item.isUSB,
+                            isRemovable: item.isRemovable,
+                            isSystem: item.isSystem
+                        });
+                    };
+                }
+            }
+        } catch( e ) {
+
+        }
+        */
         return mounts;
     }
 
