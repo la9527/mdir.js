@@ -9,6 +9,8 @@ import { Reader, IMountList, ProgressFunc, ProgressResult } from "../common/Read
 
 import { Transform } from "stream";
 import * as FileType from "file-type";
+import * as jschardet from "jschardet";
+import * as iconv from "iconv-lite";
 
 import fswin from "fswin";
 
@@ -187,23 +189,57 @@ export class FileReader extends Reader {
         const mounts: IMountList[] = [];
 
         if ( os.platform() === "win32" && parseInt(os.release()) >= 10 ) {
-            const result = execSync("wmic logicaldisk get deviceid, volumename, description, drivetype, freespace, size /VALUE", { encoding: "utf8" });
-            if ( result ) {
-                const texts = result.split("\r\r\n");
-                const mountInfo = [];
-                let device = null;
-                for ( const item of texts ) {
-                    if ( !item && device ) {
-                        mountInfo.push( device );
-                        device = null;
-                    } else {
-                        const text: string[] = item.split("=");
+            const convertBufferCode = ( bufferData: Buffer ): string => {
+                let result = null;
+                try {
+                    result = jschardet.detect( bufferData );
+                } catch ( e ) {
+                    log.error( e );
+                }
+                log.info( "jschardet: %j", result );
+                try {
+                    let data = null;
+                    if ( result && result.encoding ) {
+                        if ( [ "utf8", "ascii" ].indexOf(result.encoding) > -1 ) {
+                            data = bufferData.toString("utf8");
+                        } else {
+                            data = iconv.decode(bufferData, result.encoding);
+                        }
+                    }
+                    return data;
+                } catch( e ) {
+                    log.error( e );
+                }
+                return null;
+            };
+            const result: Buffer = execSync("wmic logicaldisk get deviceid, volumename, description, drivetype, freespace, size /VALUE");
+            if ( !result ) {
+                return mounts;
+            }
+            const convertInfo = convertBufferCode(result);
+            if ( !convertInfo ) {
+                return mounts;
+            }
+            const texts = convertInfo.split("\r\r\n");
+            const mountInfo = [];
+            let device = null;
+            for ( const item of texts ) {
+                if ( !item && device ) {
+                    mountInfo.push( device );
+                    device = null;
+                } else {
+                    const text: string[] = item.split("=");
+                    if ( text[0] ) {
                         device = device || {};
                         device[ text[0] ] = text.slice(1).join("=");
                     }
                 }
-                for ( const item of mountInfo ) {
-                    const mountFile = await this.convertFile( item.DeviceId );
+            }
+
+            for ( const item of mountInfo ) {
+                log.debug( "%s", item );
+                const mountFile = await this.convertFile( item.DeviceID + path.sep, { useThrow: false, checkRealPath: true } );
+                if ( mountFile ) {
                     mounts.push( {
                         device: item.VolumeName,
                         description: item.Description,
@@ -221,9 +257,9 @@ export class FileReader extends Reader {
             const result = execSync("mount", { encoding: "utf8" });
             if ( result ) {
                 const items = result.split("\n");
-                for ( let item of items ) {
+                for ( const item of items ) {
                     if ( os.platform() === "darwin" ) {
-                        let result = item.match( /(.*) on (.*) \((.*)\)/i );
+                        const result = item.match( /(.*) on (.*) \((.*)\)/i );
                         if ( result && result.length === 4 ) {
                             if ( result[3].match( "nobrowse" ) ) {
                                 continue;
