@@ -138,8 +138,10 @@ export abstract class AbstractPanel {
         };
 
         this.dirFiles.sort( (a,b): number => {
-            if ( (a.dir && a.name === "..") ) {
+            if (a.dir && a.name === "..") {
                 return -1;
+            } else if (b.dir && b.name === "..") {
+                return 1;
             } else if ( a.dir && !b.dir ) {
                 return -1;
             } else if ( !a.dir && b.dir ) {

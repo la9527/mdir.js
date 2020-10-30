@@ -2,7 +2,7 @@ import { IConfigure } from "./Configure";
 
 export const ConfigureDefault: IConfigure = {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    Version: "1.0",
+    Version: require("../../package.json").version,
     Option: {
             
     },
@@ -80,7 +80,7 @@ export const ConfigureDefault: IConfigure = {
             hwp: "hwp",
             pdf: "pdf",
             supportImage: "gif;jpg;jpeg;png;",
-            image: [ "bmp;tga;pcx;pbm;pgm;ppm;xbm;xpm;ico;" ],
+            image: [ "bmp;tga;pcx;pbm;pgm;ppm;xbm;xpm;ico;svg;" ],
             editor: [ 
                 "txt;me;ini;cfg;log;am;in;conf;m4;po;spec;",
                 "html;htm;xml;",

@@ -53,7 +53,7 @@ export const ColorDefault = {
             3: "package.json"
         },
         ext: {
-            5: "a;so;la;so.1;so.0;",
+            5: "a;so;la;so.1;so.0;exe;",
             6: [
                 "txt;md;me;ini;cfg;log;am;in;conf;m4;po;spec;",
                 "html;htm;xml;css;js;jsp;php;php3;asp;",
@@ -74,7 +74,7 @@ export const ColorDefault = {
                 "doc;dot;rtf;sdw;vor;pdb;odt;psw;sdw;pwd;jtd;jtt;",
                 "wps;dif;dbf;odt;ott;sxw;odg;odp;ppt;"
             ],
-            2: "bmp;tga;pcx;gif;jpg;jpeg;png;pbm;pgm;ppm;xbm;xpm;",
+            2: "bmp;tga;pcx;gif;jpg;jpeg;png;pbm;pgm;ppm;xbm;xpm;ico;svg;",
             13: [
                 "tar;bz2;tbz;tgz;gz;zip;z;rpm;deb;alz;jar;iso;rar;lzh;cab;arj;xz;txz;",
                 "develop"

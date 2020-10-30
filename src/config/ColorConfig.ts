@@ -74,7 +74,7 @@ export class ColorConfig {
         const extColor = {};
         Object.keys(config.file.ext).map( (bgColor) => {
             const item = config.file.ext[bgColor];
-            (Array.isArray(item) ? item.join("") : item).split(";").map( (ext) => extColor[ext] = [ Number(bgColor), Number(colorDefault[1]) ] );
+            (Array.isArray(item) ? item.join("") : item).split(";").map( (ext) => extColor[ext.toLowerCase()] = [ Number(bgColor), Number(colorDefault[1]) ] );
         });
 
         this._colorConfig.file.ext = extColor;
@@ -89,7 +89,7 @@ export class ColorConfig {
     }
 
     getFileColor( file: File ): Color {
-        const extname = file.extname.substr(1); // .ext => ext
+        const extname = file.extname.substr(1).toLowerCase(); // .ext => ext
         let color = this._colorConfig.base.default;
         if ( file.dir ) {
             color = this._colorConfig.base.dir;

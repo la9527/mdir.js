@@ -707,13 +707,17 @@ export abstract class BaseMainFrame implements IHelpService {
         });
     }
 
-    commandRun(cmd, fileRunMode = false ): Promise<void | RefreshType> {
+    commandRun(cmd: string, fileRunMode = false ): Promise<void | RefreshType> {
         const activePanel = this.activePanel();
         if ( !(activePanel instanceof BlessedPanel) ) {
             return new Promise( resolve => resolve() );
         }
 
         if ( !fileRunMode ) {
+            if ( os.platform() === "win32" && cmd.match( /^[a-zA-Z]\:$/ ) ) {
+                return activePanel.read(cmd.toUpperCase());
+            }
+
             const cmds = cmd.split(" ");
             if ( cmds[0] === "cd" && cmds[1] ) {
                 const chdirPath = cmds[1] === "-" ? activePanel.previousDir : cmds[1];

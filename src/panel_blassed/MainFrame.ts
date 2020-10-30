@@ -533,7 +533,7 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                     if ( item.size ) {
                         return sprintf("%s | %s | %s | %s", fillText(item.mountPath.fullname, maxLength[0]), fillText(item.device, maxLength[1]), fillText(item.description, maxLength[2]), StringUtils.sizeConvert(item.size, true));
                     } else {
-                        return sprintf("%s | %s | %s", fillText(item.mountPath.fullname, maxLength[0]), fillText(item.device, maxLength[1]), fillText(item.description, maxLength[2]),);
+                        return sprintf("%s | %s | %s", fillText(item.mountPath.fullname, maxLength[0]), fillText(item.device, maxLength[1]), fillText(item.description, maxLength[2]) );
                     }
                 });
 
