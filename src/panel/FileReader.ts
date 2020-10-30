@@ -281,7 +281,7 @@ export class FileReader extends Reader {
                     } else {
                         const result = item.match( /(.*) on (.*) type (.*) \((.*)\)/i );
                         if ( result && result.length === 5 ) {
-                            if ( result[1] === result[3] ) {
+                            if ( result[3].match( /(proc|tmpfs)/ ) ) {
                                 continue;
                             }
                             const mountFile = await this.convertFile( result[2] );
