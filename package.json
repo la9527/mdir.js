@@ -124,6 +124,9 @@
     "scripts": [
       "build/**/*.js"
     ],
+    "assets": [
+      "node_modules/neo-blessed/**"
+    ],
     "tagets": [
       "node12"
     ]
