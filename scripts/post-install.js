@@ -3,24 +3,25 @@ const fs = require("fs");
 
 function fileAppendText( insertText, fileName, matchText ) {
     try {
-        if ( fs.existsSync(fileName) ) {
-            let data = fs.readFileSync( fileName, "utf8" );
-            let lines = data.split("\n");
-            let find = false;
-            lines = lines.map( (item) => {
-                if ( item.match( matchText ) ) {
-                    find = true;
-                    return insertText;
-                }
-                return item;
-            });
-            if ( !find ) {
-                lines.push( insertText );
-                lines.push( "" );
-            }
-            fs.writeFileSync( fileName, lines.join("\n") );
-            return true;
+        if ( !fs.existsSync(fileName) ) {
+            fs.writeFileSync( fileName, "" );
         }
+        let data = fs.readFileSync( fileName, "utf8" );
+        let lines = data.split("\n");
+        let find = false;
+        lines = lines.map( (item) => {
+            if ( item.match( matchText ) ) {
+                find = true;
+                return insertText;
+            }
+            return item;
+        });
+        if ( !find ) {
+            lines.push( insertText );
+            lines.push( "" );
+        }
+        fs.writeFileSync( fileName, lines.join("\n") );
+        return true;
     } catch( e ) {
         console.error( e );
     }
