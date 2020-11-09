@@ -30,6 +30,7 @@ import { ProgressBox } from "./widget/ProgressBox";
 import { inputBox } from "./widget/InputBox";
 import { Selection, ClipBoard } from "../panel/Selection";
 import { SftpReader, IConnectionInfo } from "../panel/sftp/SftpReader";
+import { ERRORS } from "src/panel/sftp/socks/common/constants";
 
 const log = Logger("MainFrame");
 
@@ -175,9 +176,16 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                 }
                 view.setReader( fileReader );
 
-                const archiveFile = await fileReader.convertFile( file.root, { checkRealPath: true } );
-                await view.read( await fileReader.convertFile( archiveFile.dirname ) );
-                view.focusFile( archiveFile );
+                if ( file.fstype === "file" ) {
+                    const filePath = await fileReader.convertFile( file.dirname );
+                    await view.read( filePath );
+                    view.focusFile( file );
+                } else if ( file.fstype === "archive" ) {
+                    const archiveFile = await fileReader.convertFile( file.root, { checkRealPath: true } );
+                    const archivePath = await fileReader.convertFile( archiveFile.dirname );
+                    await view.read( archivePath );
+                    view.focusFile( archiveFile );
+                }
             }
         };
 

@@ -89,6 +89,8 @@ export class ArchiveTarGz extends ArchiveCommon {
                     reject( "unsupport xz file" );
                     return;
                 }
+            } else {
+                outstream = stream;
             }
             outstream = outstream.pipe( extract );
             outstream.on("error", (error) => {
@@ -167,6 +169,8 @@ export class ArchiveTarGz extends ArchiveCommon {
                         reject( e );
                         return;
                     }
+                } else {
+                    outstream = tarStream;
                 }
                 outstream = outstream.pipe( extract );
                 outstream.on("error", (error) => {
@@ -304,6 +308,8 @@ export class ArchiveTarGz extends ArchiveCommon {
                     reject( e );
                     return;
                 }
+            } else {
+                outstream = tarStream;
             }
             outstream = outstream.pipe( extract );
             outstream.on("error", (error) => {
