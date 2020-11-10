@@ -4,7 +4,7 @@ export const ConfigureDefault: IConfigure = {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     Version: require("../../package.json").version,
     Option: {
-            
+        supportBgColorTransparent: false
     },
     OpensshOption: {
         // https://github.com/mscdex/ssh2

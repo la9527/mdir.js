@@ -2,6 +2,7 @@ import * as path from "path";
 import * as os from "os";
 import * as fs from "fs";
 
+import Configure from "./Configure";
 import { ColorDefault } from "./ColorDefault";
 import { Color } from "../common/Color";
 import { File } from "../common/File";
@@ -53,6 +54,7 @@ export class ColorConfig {
     }
 
     parsingColorConfig( config: any = ColorDefault): void {
+        const supportTransparent = Configure.instance().getOption("supportBgColorTransparent") || false;
         const colorDefault = config.base.default.split(",");
 
         Object.keys(config.base).map( (name) => {
@@ -60,13 +62,23 @@ export class ColorConfig {
             if ( item.length === 1 ) {
                 item.push( colorDefault[1] );
             }
-            this._colorConfig.base[name] = [ Number(item[0]), Number(item[1]) ];
+            if ( !supportTransparent && Number(item[1]) === -1 ) {
+                this._colorConfig.base[name] = [ Number(item[0]), 0 ];
+            } else {
+                this._colorConfig.base[name] = [ Number(item[0]), Number(item[1]) ];
+            }
         });
 
         const nameColor = {};
         Object.keys(config.file.name).map( (bgColor) => {
             const item = config.file.name[bgColor];
-            (Array.isArray(item) ? item.join("") : item).split(";").map( (name) => nameColor[name] = [ Number(bgColor), Number(colorDefault[1]) ] );
+            (Array.isArray(item) ? item.join("") : item).split(";").map( (name) => {
+                if ( !supportTransparent && Number(colorDefault[1]) === -1 ) {
+                    nameColor[name] = [ Number(bgColor), 0 ];
+                } else {
+                    nameColor[name] = [ Number(bgColor), Number(colorDefault[1]) ] 
+                }
+            });
         });
 
         this._colorConfig.file.name = nameColor;
@@ -74,7 +86,14 @@ export class ColorConfig {
         const extColor = {};
         Object.keys(config.file.ext).map( (bgColor) => {
             const item = config.file.ext[bgColor];
-            (Array.isArray(item) ? item.join("") : item).split(";").map( (ext) => extColor[ext.toLowerCase()] = [ Number(bgColor), Number(colorDefault[1]) ] );
+            (Array.isArray(item) ? item.join("") : item).split(";").map( (ext) => {
+                if ( !supportTransparent && Number(colorDefault[1]) === -1 ) {
+                    extColor[ext.toLowerCase()] = [ Number(bgColor), 0 ] 
+                } else {
+                    extColor[ext.toLowerCase()] = [ Number(bgColor), Number(colorDefault[1]) ] 
+                }
+                
+            });
         });
 
         this._colorConfig.file.ext = extColor;

@@ -31,6 +31,8 @@ import { draw } from "./widget/BlessedDraw";
 import { File } from "../common/File";
 import { FileReader } from "../panel/FileReader";
 import mainFrame from "./MainFrame";
+import Configure from "../config/Configure";
+import { ColorConfig } from "../config/ColorConfig";
 
 const log = Logger("MainFrame");
 
@@ -309,6 +311,10 @@ export abstract class BaseMainFrame implements IHelpService {
         this.blessedMenu = new BlessedMenu({ parent: this.baseWidget });
         this.funcKeyBox = new FuncKeyBox( { parent: this.baseWidget } );
         this.bottomFilesBox = new BottomFilesBox( { parent: this.baseWidget } );
+
+        if ( Configure.instance().getOption("supportBgColorTransparent") === false ) {
+            this.baseWidget.setColor(ColorConfig.instance().getBaseColor("default"));
+        }
 
         this.blessedFrames = [
             new BlessedPanel( { parent: this.baseWidget, viewCount: viewCount++ } ),
