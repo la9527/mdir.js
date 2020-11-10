@@ -128,7 +128,7 @@
         "Rename": "Rename",
         "MountList": "Mount",
         "DriveList": "Drive",
-        "QuitProgram": "Do you want to quit  program?",
+        "QuitProgram": "Do you want to quit program?",
         "FILE_OPEN_FAILURE": "file open failure !!!",
         "Archive": "Compress file",
         "SelectProgramToRun" : "Please select a program to run",

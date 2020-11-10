@@ -298,7 +298,7 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
         const currentFile: File = this.dirFiles[this.currentPos];
         if ( currentFile.fstype === "archive" && (await this.reader.currentDir()).fullname === "/" &&
             currentFile.fullname === "/" && currentFile.name === ".." ) {
-            await mainFrame().archivePromise(currentFile);
+            await mainFrame().archivePromise(currentFile, true);
             return RefreshType.ALL;
         }
 

@@ -155,7 +155,7 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
         return RefreshType.ALL;
     }
 
-    async archivePromise(file: File = null) {
+    async archivePromise(file: File = null, isQuit: Boolean = false) {
         const view = this.blessedFrames[this.activeFrameNum];
         if ( !file && view instanceof BlessedPanel ) {
             file = view.currentFile();
@@ -183,7 +183,9 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                 } else if ( file.fstype === "archive" ) {
                     const archiveFile = await fileReader.convertFile( file.root, { checkRealPath: true } );
                     const archivePath = await fileReader.convertFile( archiveFile.dirname );
+                    log.debug( "ARCHIVE PATH: [%s]", archivePath );
                     await view.read( archivePath );
+                    log.debug( "ARCHIVE PATH: [%s]", archivePath );
                     view.focusFile( archiveFile );
                 }
             }
@@ -246,10 +248,13 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                 });
                 await resetArchiveInfo();
             }
-        } else if ( view instanceof BlessedPanel && 
+        } else if ( 
+            view instanceof BlessedPanel && 
             file.fstype === "archive" && 
             (await view.getReader().currentDir()).fullname === "/" &&
             file.fullname === "/" && file.name === ".." ) {
+            await resetArchiveInfo();
+        } else if ( isQuit ) {
             await resetArchiveInfo();
         }
     }

@@ -531,7 +531,7 @@ export abstract class BaseMainFrame implements IHelpService {
         return RefreshType.ALL;
     }
 
-    protected abstract archivePromise( file: File ): Promise<void>;
+    protected abstract archivePromise( file: File, isQuit?: boolean ): Promise<void>;
 
     protected abstract terminalPromise(isEscape: boolean, shellCmd?: string, sftpReader?: Reader ): Promise<RefreshType>;
     
@@ -563,17 +563,9 @@ export abstract class BaseMainFrame implements IHelpService {
         }
 
         if (readerName === "archive") {
-            const result = await messageBox( { 
-                parent: this.baseWidget, 
-                title: T("Question"), 
-                msg: T("Message.QuitArchive"), 
-                button: [ T("OK"), T("Cancel") ] 
-            });
-            if ( result === T("OK") ) {    
-                const file = await reader.rootDir();
-                file.name = "..";
-                await this.archivePromise(file);
-            }
+            const file = await reader.rootDir();
+            file.name = "..";
+            await this.archivePromise(file, true);
             return RefreshType.ALL;
         }
 
