@@ -482,8 +482,8 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         if ( [ "zsh", "bash", "sh", "cmd.exe", "powershell.exe" ].indexOf(this.shell) > -1 || isSftp ) {
             try {
                 if ( !this.getCurrentPath() && this.pty ) {
-                    // function prompt {"PS [$Env:username@$Env:computername]$($PWD.ProviderPath)> "}
                     if ( !isSftp && this.shell === "powershell.exe" ) {
+                        // function prompt {"PS [$Env:username@$Env:computername]$($PWD.ProviderPath)> "}
                         await listenDetectCheck( "cls\r", "cls\r", 1000 );
                         const remoteHost = "$([char]27)]1337;RemoteHost=$Env:username@$Env:computername$([char]7)";
                         const currentDir = "$([char]27)]1337;CurrentDir=$($PWD.ProviderPath)$([char]7)";
@@ -497,10 +497,16 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
                         this.pty?.write( `prompt $P$G${remoteHost}${currentDir}\r` );
                         await listenDetectCheck( "cls\r", "cls\r", 1000 );
                     } else {
-                        await listenDetectCheck( "pwd\r", "pwd\r", 1000 );
-                        const remoteHost = "\\033]1337;RemoteHost=\\u@\\h\\007";
-                        const currentDir = "\\033]1337;CurrentDir=\\w\\007";
-                        const writeText = `PS1="$\{PS1\}${remoteHost}${currentDir}"\r`;
+                        let writeText = 
+`function setOSC1337() {
+    SHELL=\`ps -p $$ -ocomm=\`
+    if [[ $SHELL =~ "zsh$" ]]; then
+        echo -e "\\x1b]1337;CurrentDir=%d\\x07\\x1b]1337;RemoteHost=%n@%m\\x07"
+    else
+        echo -e "\\x1b]1337;CurrentDir=\\w\\x07\\x1b]1337;RemoteHost=\\u@\\h\\x07"
+    fi
+}\r`;
+                        writeText += `PS1="$PS1\$(setOSC1337)"\r`;
                         await listenDetectCheck( writeText, "1337;CurrentDir=", 1000 );
                         await listenDetectCheck( "clear\r", "clear\r", 1000 );
                     }

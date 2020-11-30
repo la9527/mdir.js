@@ -76,6 +76,8 @@ $ mdir
 
 ## Version History
 
+- v1.2.4
+    - [bugfix] bugfix for the zsh prompt in the subshell.
 - v1.2.0
     - [improve] Supports search and directory caching on the MCD.
 - v1.1.0
