@@ -444,7 +444,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             this.box.emit( "process_exit", exit, signal );
         });
 
-        await new Promise((resolve) => {
+        await new Promise<void>((resolve) => {
             let tm = null;
             this.box.once("OSC1337.CurrentDir", () => {
                 if ( tm ) {
@@ -459,7 +459,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         this.outputBlock = false;
 
         const listenDetectCheck = ( writeText: string, detectText: string | RegExp, timeout: number ) => {
-            return new Promise( (resolve) => {
+            return new Promise<void>( (resolve) => {
                 let tm = null;
                 const detectShell = (d) => {
                     const data: string = Buffer.isBuffer(d) ? (d as Buffer).toString() : d;

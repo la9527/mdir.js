@@ -76,6 +76,8 @@ $ mdir
 
 ## Version History
 
+- v1.2.5
+    - [improve] Fixed mouse selection function in terminal to work in editor and terminal without split screen.
 - v1.2.4
     - [bugfix] bugfix for the zsh prompt in the subshell.
 - v1.2.0

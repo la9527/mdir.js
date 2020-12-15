@@ -201,7 +201,7 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                 reader.isUserCanceled = true;
             }}, { parent: this.baseWidget } );
             this.screen.render();
-            await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
+            await new Promise<void>( (resolve) => setTimeout( () => resolve(), 1 ));
             
             let copyBytes = 0;
             const befCopyInfo = { beforeTime: Date.now(), copyBytes };
@@ -308,7 +308,7 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                 reader.isUserCanceled = true;
             }}, { parent: this.baseWidget } );
             this.screen.render();
-            await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
+            await new Promise<void>( (resolve) => setTimeout( () => resolve(), 1 ));
             
             let copyBytes = 0;
             const befCopyInfo = { beforeTime: Date.now(), copyBytes };
@@ -642,7 +642,7 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
                 return ret + ":" + buffer.toString("base64") + BEL;
             };
 
-            await new Promise( (resolve) => {
+            await new Promise<void>( (resolve) => {
                 const program = this.screen.program;
                 this.screen.leave();
                 process.stdout.write( iTermImage(buffer, { height: "95%" }) );
@@ -653,6 +653,7 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
             });
             endFunc && endFunc();
             this.screen.enter();
+            this.screen.enableMouse();
             await this.refreshPromise();
             this.execRefreshType( RefreshType.ALL );
         } else {

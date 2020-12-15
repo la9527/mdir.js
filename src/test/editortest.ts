@@ -10,6 +10,7 @@ import { BlessedEditor } from "../panel_blassed/BlessedEditor";
 //import { StringUtils, StringLineToken, StringLineToken2 } from "../common/StringUtils";
 import { StringUtils, StringLineToken } from "../common/StringUtils";
 
+/*
 let text = "";
 for ( let i = 0; i < 50000; i++ ) {
     text += String.fromCharCode(65 + Math.floor(Math.random() * 1020));
@@ -30,7 +31,7 @@ console.log( "StringLineToken1");
 tokenCheck( new StringLineToken() );
 console.log( "StringLineToken2");
 //tokenCheck( new StringLineToken2() );
-
+*/
 /*
 console.log( StringUtils.scrSubstr("2", 0, 0) );
 console.log( StringUtils.scrStrReplace("1", 0, 1) );
@@ -41,7 +42,6 @@ console.log( StringUtils.scrSubstr("21", 2, 0) );
 console.log( "[" + StringUtils.scrSubstr("한글을 입력합니다.", 4, 1) + "]" );
 */
 
-/*
 (async () => {
     const screen = blessed.screen({
         smartCSR: true,
@@ -58,8 +58,16 @@ console.log( "[" + StringUtils.scrSubstr("한글을 입력합니다.", 4, 1) + "
         process.exit(0);
     });
 
+    screen.key("d", () => {
+        screen.program.disableMouse();
+    });
+
+    screen.key("e", () => {
+        screen.program.enableMouse();
+    });
+
     let fileReader = new FileReader();
-    let file = fileReader.convertFile( "README.md" );
+    let file = await fileReader.convertFile( "README.md" );
 
     const newView = new BlessedEditor( { parent: screen, top: 1, left: 0, width: "100%", height: "100%-2" }, 
                         fileReader );
@@ -68,4 +76,3 @@ console.log( "[" + StringUtils.scrSubstr("한글을 입력합니다.", 4, 1) + "
     newView.setFocus();
     screen.render();
 })();
-*/

@@ -274,6 +274,14 @@ export abstract class BaseMainFrame implements IHelpService {
             updateWidget( this.blessedFrames[1].getWidget(), { top: "50%", left: 0, width: "100%", height: "50%-1" } );
         }
         this.blessedFrames[this.activeFrameNum].setFocus();
+
+        if ( this.viewType === VIEW_TYPE.NORMAL && (this.screen.program as any).mouseEnabled ) {
+            if (this.activeFocusObj() instanceof BlessedEditor || this.activeFocusObj() instanceof BlessedXterm) {
+                this.screen.program.disableMouse();
+            }
+        } else if ( !(this.screen.program as any).mouseEnabled ) {
+            this.screen.program.enableMouse();
+        }
     }
 
     getLastPath() {
@@ -698,6 +706,7 @@ export abstract class BaseMainFrame implements IHelpService {
             this.screen.leave();
             program.once( "keypress", async () => {
                 this.screen.enter();
+                this.screen.enableMouse();
                 await this.refreshPromise();
                 this.lockKeyRelease("consoleView");
                 resolve(RefreshType.ALL);
@@ -778,6 +787,7 @@ export abstract class BaseMainFrame implements IHelpService {
                         cmdParse.tmpDirRemoveFunc();
                     }
                     this.screen.enter();
+                    this.screen.enableMouse();
                     await this.refreshPromise();
                     this.lockKeyRelease("commandRun");
                     resolve(RefreshType.ALL);
@@ -839,7 +849,7 @@ export abstract class BaseMainFrame implements IHelpService {
             reader.isUserCanceled = true;
         }}, { parent: this.baseWidget } );
         this.screen.render();
-        await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
+        await new Promise<void>( (resolve) => setTimeout( () => resolve(), 1 ));
 
         let copyBytes = 0;
         const befCopyInfo = { beforeTime: Date.now(), copyBytes };
@@ -862,7 +872,7 @@ export abstract class BaseMainFrame implements IHelpService {
         const result = await reader.viewer(file, progressStatus);
         progressBox.destroy();
         this.screen.render();
-        await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
+        await new Promise<void>( (resolve) => setTimeout( () => resolve(), 1 ));
         return result;
     }
 
@@ -900,7 +910,7 @@ export abstract class BaseMainFrame implements IHelpService {
             reader.isUserCanceled = true;
         }}, { parent: this.baseWidget } );
         this.screen.render();
-        await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
+        await new Promise<void>( (resolve) => setTimeout( () => resolve(), 1 ));
         
         if ( await select.expandDir() === false ) {
             progressBox.destroy();
@@ -926,7 +936,7 @@ export abstract class BaseMainFrame implements IHelpService {
                 try {
                     if ( Date.now() - beforeTime > refreshTimeMs ) {
                         progressBox.updateProgress( src.fullname, `${i+1} / ${files.length}`, i+1, files.length );
-                        await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
+                        await new Promise<void>( (resolve) => setTimeout( () => resolve(), 1 ));
                         beforeTime = Date.now();
                     }
                     if ( progressBox.getCanceled() ) {
@@ -1020,7 +1030,7 @@ export abstract class BaseMainFrame implements IHelpService {
         }, { parent: this.baseWidget } );
         
         this.screen.render();
-        await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
+        await new Promise<void>( (resolve) => setTimeout( () => resolve(), 1 ));
 
         const filesCopyFunc = async (isMove: boolean = false) => {
             files = clipSelected.getFiles();
@@ -1234,7 +1244,7 @@ export abstract class BaseMainFrame implements IHelpService {
                         reader.isUserCanceled = false;
 
                         this.screen.render();
-                        await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
+                        await new Promise<void>( (resolve) => setTimeout( () => resolve(), 1 ));
 
                         let copyBytes = 0;
                         const befCopyInfo = { beforeTime: Date.now(), copyBytes };
@@ -1303,7 +1313,7 @@ export abstract class BaseMainFrame implements IHelpService {
                         const refreshTimeMs = 300;
 
                         this.screen.render();
-                        await new Promise( (resolve) => setTimeout( () => resolve(), 1 ));
+                        await new Promise<void>( (resolve) => setTimeout( () => resolve(), 1 ));
 
                         const progressStatus: ProgressFunc = ( source, copySize, size, chunkLength ) => {
                             copyBytes += chunkLength;
