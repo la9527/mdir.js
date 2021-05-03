@@ -1222,6 +1222,70 @@ export abstract class BaseMainFrame implements IHelpService {
         return RefreshType.ALL;
     }
 
+    @Help(T("Help.NewFile"))
+    async newFilePromise() {
+        const panel = this.activePanel();
+        if ( panel instanceof BlessedPanel ) {
+            const reader = panel.getReader();
+            const result = await inputBox( {
+                parent: this.baseWidget,
+                title: T("Message.CreateEmptyFile"),
+                button: [ T("OK"), T("Cancel") ]
+            }, {  });
+            if ( result && result[1] === T("OK") && result[0] ) {
+                
+                if ( panel.getReader().readerName !== "file" ) {
+                    const progressBox = new ProgressBox( { title: T("Message.CreateEmptyFile"), msg: T("Message.Calculating"), cancel: () => {
+                        reader.isUserCanceled = true;
+                    }}, { parent: this.baseWidget } );
+
+                    try {
+                        const reader = panel.getReader();
+                        reader.isUserCanceled = false;
+
+                        this.screen.render();
+                        await new Promise<void>( (resolve) => setTimeout( () => resolve(), 1 ));
+
+                        let copyBytes = 0;
+                        const befCopyInfo = { beforeTime: Date.now(), copyBytes };
+                        const fullFileSize = 0;
+                        const refreshTimeMs = 100;
+
+                        const progressStatus: ProgressFunc = ( source, copySize, size, chunkLength ) => {
+                            copyBytes += chunkLength;
+                            const repeatTime = Date.now() - befCopyInfo.beforeTime;
+                            if ( repeatTime > refreshTimeMs ) {
+                                // const bytePerSec = Math.round((copyBytes - befCopyInfo.copyBytes) / repeatTime) * 1000;
+                                const lastText = (new Color(3, 0)).fontBlessFormat(StringUtils.sizeConvert(copyBytes, false, 1).trim()) + " / " + 
+                                                (new Color(3, 0)).fontBlessFormat(StringUtils.sizeConvert(fullFileSize, false, 1).trim());
+                                // + `(${StringUtils.sizeConvert(bytePerSec, false, 1).trim()}s)`;
+                                progressBox.updateProgress( source.fullname, lastText, copyBytes, fullFileSize );
+                                befCopyInfo.beforeTime = Date.now();
+                                befCopyInfo.copyBytes = copyBytes;
+                            }
+                            return reader.isUserCanceled ? ProgressResult.USER_CANCELED : ProgressResult.SUCCESS;
+                        };
+                        await reader.newFile( panel.currentPath().fullname + reader.sep() + result[0], progressStatus );
+                    } catch( e ) {
+                        log.error( e );
+                        await messageBox( { parent: this.baseWidget, title: T("Error"), msg: e, button: [ T("OK") ] } );
+                    } finally {
+                        progressBox.destroy();
+                    }
+                } else {
+                    try {
+                        reader.newFile( panel.currentPath().fullname + reader.sep() + result[0], null);
+                    } catch( e ) {
+                        log.error( e );
+                        await messageBox( { parent: this.baseWidget, title: T("Error"), msg: e, button: [ T("OK") ] } );
+                    }
+                }
+            }
+        }
+        await this.refreshPromise();
+        return RefreshType.ALL;
+    }
+
     @Help(T("Help.Mkdir"))
     async mkdirPromise() {
         const panel = this.activePanel();

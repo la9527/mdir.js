@@ -503,6 +503,28 @@ export class SftpReader extends Reader {
         }
     }
 
+    async newFile( file: string | File, progress?: ProgressFunc ): Promise<void> {
+        if ( !this.sftp ) {
+            throw new Error("disconnected sftp");
+        }
+        const name = path instanceof File ? path.fullname : path;
+        return new Promise( (resolve, reject) => {
+            const result: fs.WriteStream = this.sftp.createWriteStream(name, { mode: 0o644, encoding: null, flags: "w", autoClose: true });
+            result.write( "", (err) => {
+                if ( result ) {
+                    result.close();
+                }
+                if ( err ) {
+                    log.error("NEWFILE ERROR: %s", err);
+                    reject( err );
+                } else {
+                    log.debug("NEWFILE: %s", name);
+                    resolve();
+                }
+            });
+        });
+    }
+
     async mkdir(path: string | File, _progress?: ProgressFunc): Promise<void> {
         if ( !this.sftp ) {
             throw new Error("disconnected sftp");

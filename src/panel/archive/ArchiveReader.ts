@@ -138,6 +138,12 @@ export class ArchiveReader extends Reader {
         });
     }
 
+    async newFile(pathStr: string | File, progress?: ProgressFunc): Promise<void> {
+        return new Promise((resolve, reject) => {
+            reject( "Unsupport new file !!!" );
+        });
+    }
+
     async mkdir(pathStr: string | File, progress?: ProgressFunc): Promise<void> {
         let file: File = null;
         if ( typeof(pathStr) === "string" ) {

@@ -32,7 +32,7 @@ export const menuConfig: IFrameMenuConfig = {
             { name: T("Menu.View Console"), method: "Common.consoleViewPromise" }
         ],
         File: [
-            { name : T("Menu.New") },
+            { name: T("Menu.New"), method: "Panel.newFilePromise" },
             "-",
             { name: T("Menu.Copy"), method: "Common.clipboardCopy" },
             { name: T("Menu.Cut"), method: "Common.clipboardCut" },

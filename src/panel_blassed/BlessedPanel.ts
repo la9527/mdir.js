@@ -567,6 +567,11 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
         return mainFrame().commandBoxShow();
     }
 
+    public async newFilePromise() {
+        log.error("newFilePromise !!!!");
+        return await mainFrame().newFilePromise();
+    }
+
     public async mkdirPromise() {
         return await mainFrame().mkdirPromise();
     }

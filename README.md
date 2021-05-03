@@ -76,6 +76,8 @@ $ mdir
 
 ## Version History
 
+- v1.2.6
+    - [improve] implement new file function.
 - v1.2.5
     - [improve] Fixed mouse selection function in terminal to work in editor and terminal without split screen.
 - v1.2.4

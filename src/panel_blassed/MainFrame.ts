@@ -30,7 +30,6 @@ import { ProgressBox } from "./widget/ProgressBox";
 import { inputBox } from "./widget/InputBox";
 import { Selection, ClipBoard } from "../panel/Selection";
 import { SftpReader, IConnectionInfo } from "../panel/sftp/SftpReader";
-import { ERRORS } from "src/panel/sftp/socks/common/constants";
 
 const log = Logger("MainFrame");
 
@@ -155,7 +154,7 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
         return RefreshType.ALL;
     }
 
-    async archivePromise(file: File = null, isQuit: Boolean = false) {
+    async archivePromise(file: File = null, isQuit: boolean = false) {
         const view = this.blessedFrames[this.activeFrameNum];
         if ( !file && view instanceof BlessedPanel ) {
             file = view.currentFile();

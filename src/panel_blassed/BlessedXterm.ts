@@ -506,6 +506,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
         echo -e "\\x1b]1337;CurrentDir=\\w\\x07\\x1b]1337;RemoteHost=\\u@\\h\\x07"
     fi
 }\r`;
+                        // eslint-disable-next-line @typescript-eslint/quotes
                         writeText += `PS1="$PS1\$(setOSC1337)"\r`;
                         await listenDetectCheck( writeText, "1337;CurrentDir=", 1000 );
                         await listenDetectCheck( "clear\r", "clear\r", 1000 );

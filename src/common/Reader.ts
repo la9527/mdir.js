@@ -50,6 +50,7 @@ export abstract class Reader {
     
     abstract sep(): string;
     abstract exist( source: File | string ): Promise<boolean>;
+    abstract newFile( file: string | File, progress?: ProgressFunc ): Promise<void>;
     abstract mkdir( path: string | File, progress?: ProgressFunc ): Promise<void>;
     abstract rename( source: File, rename: string, progress?: ProgressFunc ): Promise<void>;
     abstract copy(source: File | File[], sourceBaseDir: File, targetDir: File, progress?: ProgressFunc): Promise<void>;
