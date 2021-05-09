@@ -185,123 +185,161 @@ export class FileReader extends Reader {
         return await this.convertFile( os.homedir() );
     }
 
-    async mountList(): Promise<IMountList[]> {
+    async mountListWin10(): Promise<IMountList[]> {
         const mounts: IMountList[] = [];
-
-        if ( os.platform() === "win32" && parseInt(os.release()) >= 10 ) {
-            const convertBufferCode = ( bufferData: Buffer ): string => {
-                let result = null;
-                try {
-                    result = jschardet.detect( bufferData );
-                } catch ( e ) {
-                    log.error( e );
-                }
-                log.info( "jschardet: %j", result );
-                try {
-                    let data = null;
-                    if ( result && result.encoding ) {
-                        if ( [ "utf8", "ascii" ].indexOf(result.encoding) > -1 ) {
-                            data = bufferData.toString("utf8");
-                        } else {
-                            data = iconv.decode(bufferData, result.encoding);
-                        }
-                    }
-                    return data;
-                } catch( e ) {
-                    log.error( e );
-                }
-                return null;
-            };
-            const result: Buffer = execSync("wmic logicaldisk get deviceid, volumename, description, drivetype, freespace, size /VALUE");
-            if ( !result ) {
-                return mounts;
+        const convertBufferCode = ( bufferData: Buffer ): string => {
+            let result = null;
+            try {
+                result = jschardet.detect( bufferData );
+            } catch ( e ) {
+                log.error( e );
             }
-            const convertInfo = convertBufferCode(result);
-            if ( !convertInfo ) {
-                return mounts;
-            }
-            const texts = convertInfo.split("\r\r\n");
-            const mountInfo = [];
-            let device = null;
-            for ( const item of texts ) {
-                if ( !item && device ) {
-                    mountInfo.push( device );
-                    device = null;
-                } else {
-                    const text: string[] = item.split("=");
-                    if ( text[0] ) {
-                        device = device || {};
-                        device[ text[0] ] = text.slice(1).join("=");
-                    }
-                }
-            }
-
-            for ( const item of mountInfo ) {
-                log.debug( "%s", item );
-                const mountFile = await this.convertFile( item.DeviceID + path.sep, { useThrow: false, checkRealPath: true } );
-                if ( mountFile ) {
-                    mounts.push( {
-                        device: item.VolumeName,
-                        description: item.Description,
-                        mountPath: mountFile,
-                        freesize: parseInt(item.FreeSpace || 0),
-                        size: parseInt(item.Size || 0),
-                        isCard: item.DriveType === "5",
-                        isUSB: item.DriveType === "2",
-                        isRemovable: item.DriveType === "2",
-                        isSystem: item.DriveType === "3"
-                    });
-                }
-            }
-        } else {
-            const result = execSync("mount", { encoding: "utf8" });
-            if ( result ) {
-                const items = result.split("\n");
-                for ( const item of items ) {
-                    if ( os.platform() === "darwin" ) {
-                        const result = item.match( /(.*) on (.*) \((.*)\)/i );
-                        if ( result && result.length === 4 ) {
-                            if ( result[3].match( "nobrowse" ) ) {
-                                continue;
-                            }
-
-                            const mountFile = await this.convertFile( result[2] );
-                            mounts.push({
-                                device: result[1],
-                                description: result[1] + "(" + result[3] + ")",
-                                mountPath: mountFile,
-                                freesize: 0,
-                                size: 0,
-                                isCard: false,
-                                isUSB: false,
-                                isRemovable: false,
-                                isSystem: false
-                            });
-                        }
+            log.info( "jschardet: %j", result );
+            try {
+                let data = null;
+                if ( result && result.encoding ) {
+                    if ( [ "utf8", "ascii" ].indexOf(result.encoding) > -1 ) {
+                        data = bufferData.toString("utf8");
                     } else {
-                        const result = item.match( /(.*) on (.*) type (.*) \((.*)\)/i );
-                        if ( result && result.length === 5 ) {
-                            if ( result[3].match( /(proc|tmpfs)/ ) ) {
-                                continue;
-                            }
-                            const mountFile = await this.convertFile( result[2] );
-                            mounts.push({
-                                device: result[1],
-                                description: result[3] + "(" + result[4] + ")",
-                                mountPath: mountFile,
-                                freesize: 0,
-                                size: 0,
-                                isCard: false,
-                                isUSB: false,
-                                isRemovable: false,
-                                isSystem: false
-                            });
-                        }
+                        data = iconv.decode(bufferData, result.encoding);
                     }
+                }
+                return data;
+            } catch( e ) {
+                log.error( e );
+            }
+            return null;
+        };
+        const result: Buffer = execSync("wmic logicaldisk get deviceid, volumename, description, drivetype, freespace, size /VALUE");
+        if ( !result ) {
+            return mounts;
+        }
+        const convertInfo = convertBufferCode(result);
+        if ( !convertInfo ) {
+            return mounts;
+        }
+        const texts = convertInfo.split("\r\r\n");
+        const mountInfo = [];
+        let device = null;
+        for ( const item of texts ) {
+            if ( !item && device ) {
+                mountInfo.push( device );
+                device = null;
+            } else {
+                const text: string[] = item.split("=");
+                if ( text[0] ) {
+                    device = device || {};
+                    device[ text[0] ] = text.slice(1).join("=");
                 }
             }
         }
+
+        for ( const item of mountInfo ) {
+            log.debug( "%s", item );
+            const mountFile = await this.convertFile( item.DeviceID + path.sep, { useThrow: false, checkRealPath: true } );
+            if ( mountFile ) {
+                mounts.push( {
+                    device: item.VolumeName,
+                    description: item.Description,
+                    mountPath: mountFile,
+                    freesize: parseInt(item.FreeSpace || 0),
+                    size: parseInt(item.Size || 0),
+                    isCard: item.DriveType === "5",
+                    isUSB: item.DriveType === "2",
+                    isRemovable: item.DriveType === "2",
+                    isSystem: item.DriveType === "3"
+                });
+            }
+        }
         return mounts;
+    }
+
+    async mountListMac(): Promise<IMountList[]> {
+        const mounts: IMountList[] = [];
+        const result = execSync("mount", { encoding: "utf8" });
+        if ( !result ) {
+            return mounts;
+        }
+
+        const items = result.split("\n");
+        for ( const item of items ) {
+            const result = item.match( /(.*) on (.*) \((.*)\)/i );
+            if ( !result || result.length !== 4 ) {
+                continue;
+            }
+            if ( result[3].match( "nobrowse" ) ) {
+                continue;
+            }
+
+            const mountFile = await this.convertFile( result[2] );
+            mounts.push({
+                device: result[1],
+                description: result[1] + "(" + result[3] + ")",
+                mountPath: mountFile,
+                freesize: 0,
+                size: 0,
+                isCard: false,
+                isUSB: false,
+                isRemovable: false,
+                isSystem: false
+            });
+        }
+        return mounts;
+    }
+
+    async mountListLinux(): Promise<IMountList[]> {
+        const mounts: IMountList[] = [];
+        // -e7 filters out squashfs, which is used by Ubuntu's Snap packages
+        const result = execSync("lsblk -e7 -Jbo PATH,TYPE,LABEL,PARTLABEL,UUID,PARTUUID,MOUNTPOINT,FSAVAIL,FSSIZE,SIZE,RM,HOTPLUG").toString();
+        if ( !result ) {
+            return mounts;
+        }
+
+        const resultObj = JSON.parse(result);
+        let items = resultObj.blockdevices.slice();
+        let item = null;
+
+        while ( (item = items.pop()) ) {
+            if ( item.children ) {
+                items = items.concat( item.children );
+                continue;
+            }
+            if ( !item.mountpoint || item.mountpoint ===  "[SWAP]" ) {
+                continue;
+            }
+
+            const mountFile = await this.convertFile( item.mountpoint );
+            if ( !mountFile ) {
+                continue;
+            }
+
+            let uuidStr = "";
+            if ( item.uuid || item.partuuid) {
+                uuidStr = " (" + ( item.uuid || item.partuuid ) + ")";
+            }
+            mounts.push({
+                device: item.path,
+                description: (item.label || item.partlabel || item.type) + uuidStr,
+                mountPath: mountFile,
+                freesize: item.fsavail || 0,
+                size: item.fssize || item.size,
+                isCard: item.hotplug,
+                isUSB: item.rm && item.hotplug,
+                isRemovable: item.rm,
+                isSystem: !item.rm
+            });
+        }
+        return mounts;
+    }
+
+    async mountList(): Promise<IMountList[]> {
+        if ( os.platform() === "win32" && parseInt(os.release()) >= 10 ) {
+            return this.mountListWin10();
+        } else if ( os.platform() === "darwin" ) {
+            return this.mountListMac();
+        } else {
+            return this.mountListLinux();
+        }
     }
 
     static async convertFile( filePath: string, option?: { fileInfo?: any; useThrow?: boolean; checkRealPath?: boolean; virtualFile?: boolean } ): Promise<File> {
