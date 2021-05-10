@@ -522,15 +522,17 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
         if ( panel instanceof BlessedPanel || panel instanceof BlessedMcd ) {
             const mountList: IMountList[] = await panel.getReader().mountList();
             if ( mountList ) {
-                const maxLength = [ 0, 0, 0 ];
                 mountList.sort( (a, b) => {
-                    maxLength[0] = Math.max( maxLength[0], StringUtils.strWidth(a.mountPath.fullname) );
-                    maxLength[1] = Math.max( maxLength[1], StringUtils.strWidth(a.device) );
-                    maxLength[2] = Math.max( maxLength[2], StringUtils.strWidth(a.description) );
-
                     if ( a.mountPath.fullname > b.mountPath.fullname ) return 1;
                     if ( b.mountPath.fullname > a.mountPath.fullname ) return -1;
                     return 0;
+                });
+
+                const maxLength = [ 0, 0, 0 ];
+                mountList.forEach( (a) => {
+                    maxLength[0] = Math.max( maxLength[0], StringUtils.strWidth(a.mountPath.fullname) );
+                    maxLength[1] = Math.max( maxLength[1], StringUtils.strWidth(a.device) );
+                    maxLength[2] = Math.max( maxLength[2], StringUtils.strWidth(a.description) );
                 });
 
                 const fillText = ( text, fillSize ) => {
@@ -543,9 +545,9 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
 
                 const viewMountInfo = mountList.map( (item) => {
                     if ( item.size ) {
-                        return sprintf("%s | %s | %s | %s", fillText(item.mountPath.fullname, maxLength[0]), fillText(item.device, maxLength[1]), fillText(item.description, maxLength[2]), StringUtils.sizeConvert(item.size, true));
+                        return sprintf("%s {gray-fg}|{/gray-fg} %s {gray-fg}|{/gray-fg} %s {gray-fg}|{/gray-fg} %s", fillText(item.mountPath.fullname, maxLength[0]), fillText(item.device, maxLength[1]), fillText(item.description, maxLength[2]), StringUtils.sizeConvert(item.size, true));
                     } else {
-                        return sprintf("%s | %s | %s", fillText(item.mountPath.fullname, maxLength[0]), fillText(item.device, maxLength[1]), fillText(item.description, maxLength[2]) );
+                        return sprintf("%s {gray-fg}|{/gray-fg} %s {gray-fg}|{/gray-fg} %s", fillText(item.mountPath.fullname, maxLength[0]), fillText(item.device, maxLength[1]), fillText(item.description, maxLength[2]) );
                     }
                 });
 

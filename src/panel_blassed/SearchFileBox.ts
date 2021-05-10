@@ -91,7 +91,7 @@ export class SearchFileBox extends Widget {
             return false;
         }
         // eslint-disable-next-line no-control-regex
-        if ( ch && !/^[\x00-\x08\x0b-\x0c\x0e-\x1f\x7f]$/.test(ch)) {
+        if ( ch && !/^[\x00-\x08\x0b-\x0c\x0e-\x1f\x7f|\\]$/.test(ch)) {
             this.viewText += ch;
             result = true;
         }

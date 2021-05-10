@@ -76,6 +76,10 @@ $ mdir
 
 ## Version History
 
+- v1.2.7
+    - [improve] implement new file function.
+    - [improve] mount menu for linux (thank you for rsyh93)
+    - [bugfix] bugfix for typing a backslash while searching. (thank you for rsyh93)
 - v1.2.6
     - [improve] implement new file function.
 - v1.2.5

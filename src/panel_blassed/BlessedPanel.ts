@@ -362,6 +362,7 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
         if ( !this.searchFileBox || !this.searchFileBox.value) {
             return;
         }
+
         const searchExp = new RegExp(this.searchFileBox.value, "i");
         this._searchFiles = new SearchFileInfo(this.dirFiles.filter(item => searchExp.test(item.name)));
         log.debug("SEARCH FILES : [%j]", this._searchFiles.files.map(item => item.name));
