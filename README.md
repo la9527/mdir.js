@@ -76,6 +76,8 @@ $ mdir
 
 ## Version History
 
+- v1.2.8
+    - [security] ssh2 version upgrade (v1.5.0) 
 - v1.2.7
     - [improve] implement new file function.
     - [improve] mount menu for linux (thank you for rsyh93)
