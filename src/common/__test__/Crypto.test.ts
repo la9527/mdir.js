@@ -1,4 +1,4 @@
-import { Crypto } from "../Crypto";
+import { Crypto } from "../Crypto.mjs";
 
 describe( "Crypto", () => {
     it("Crypto ENCRYPT TEST !!!", () => {        

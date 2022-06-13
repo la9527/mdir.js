@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import "jest";
-import Configure from "../Configure";
-import * as fs from "fs";
-import * as path from "path";
-import * as os from "os";
-import { FileReader } from "../../panel/FileReader";
-import { ConfigureDefault } from "../ConfigureDefault";
+import Configure from "../Configure.mjs";
+import fs from "fs";
+import path from "path";
+import os from "os";
+import { FileReader } from "../../panel/FileReader.mjs";
+import { ConfigureDefault } from "../ConfigureDefault.mjs";
 
 afterAll(() => {
     fs.unlinkSync( os.homedir() + path.sep + ".m" + path.sep + "configure.json" );

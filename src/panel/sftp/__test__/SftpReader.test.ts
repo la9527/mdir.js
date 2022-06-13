@@ -5,13 +5,13 @@ import "jest";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
-import { Logger } from "../../../common/Logger";
+import { Logger } from "../../../common/Logger.mjs";
 
 const log = Logger("SFTP TEST");
 
 describe( "SFTP Proxy Test", () => {
     const getSftpReaderConnection = async () => {
-        const SftpReader = (await import("../SftpReader")).SftpReader;
+        const SftpReader = (await import("../SftpReader.mjs")).SftpReader;
 
         const sftpReader = new SftpReader();
         log.debug( "CONNECT !!!");

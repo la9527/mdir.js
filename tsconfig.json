@@ -1,11 +1,11 @@
 {
     "compilerOptions": {
         "target": "ES2017",
-        "module": "commonjs",
+        "module": "es2020",
         "sourceMap": true,
         "allowJs": true,
         "moduleResolution": "node",
-        // "rootDir": "./src",
+        "rootDir": "./src",
         "forceConsistentCasingInFileNames": true,
         "noImplicitReturns": true,
         "noImplicitThis": true,

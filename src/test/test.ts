@@ -1,34 +1,35 @@
 process.env.NODE_ENV = "test";
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import * as blessed from "neo-blessed";
-import { BlessedProgram, Widgets, box, text, colors, program } from "neo-blessed";
-import { Logger } from "../common/Logger";
-import { messageBox, MSG_BUTTON_TYPE } from "../panel_blassed/widget/MessageBox";
-import mainFrame from "../panel_blassed/MainFrame";
-import { ProgressBox } from "../panel_blassed/widget/ProgressBox";
-import { StringUtils } from "../common/StringUtils";
-import { Color } from "../common/Color";
-import { inputBox } from "../panel_blassed/widget/InputBox";
-import { Hint, KeyMappingInfo, menuKeyMapping, keyMappingExec, getHelpInfo } from "../config/KeyMapConfig";
-import { BlessedXterm } from "../panel_blassed/BlessedXterm";
-import { menuConfig } from "../config/MenuConfig";
-import { BlessedMenu } from "../panel_blassed/BlessedMenu";
-import { BlessedMcd } from "../panel_blassed/BlessedMcd";
-import { readerControl } from "../panel/readerControl";
-import { Mcd } from "../panel/Mcd";
-import { FileReader } from "../panel/FileReader";
+import blessed from "neo-blessed";
+const { BlessedProgram, box, text, colors, program } = blessed;
+import { Widgets } from "../../@types/blessed";
+import { Logger } from "../common/Logger.mjs";
+import { messageBox, MSG_BUTTON_TYPE } from "../panel_blassed/widget/MessageBox.mjs";
+import mainFrame from "../panel_blassed/MainFrame.mjs";
+import { ProgressBox } from "../panel_blassed/widget/ProgressBox.mjs";
+import { StringUtils } from "../common/StringUtils.mjs";
+import { Color } from "../common/Color.mjs";
+import { inputBox } from "../panel_blassed/widget/InputBox.mjs";
+import { Hint, KeyMappingInfo, menuKeyMapping, keyMappingExec, getHelpInfo } from "../config/KeyMapConfig.mjs";
+import { BlessedXterm } from "../panel_blassed/BlessedXterm.mjs";
+import { menuConfig } from "../config/MenuConfig.mjs";
+import { BlessedMenu } from "../panel_blassed/BlessedMenu.mjs";
+import { BlessedMcd } from "../panel_blassed/BlessedMcd.mjs";
+import { readerControl } from "../panel/readerControl.mjs";
+import { Mcd } from "../panel/Mcd.mjs";
+import { FileReader } from "../panel/FileReader.mjs";
 import { sprintf } from "sprintf-js";
 import i18n from "i18next";
 import I18nextCLILanguageDetector from "i18next-cli-language-detector";
 import en from "../translation/en.json";
 import ko from "../translation/ko.json";
 import { button } from "../../@types/blessed";
-import { BlessedEditor } from "../panel_blassed/BlessedEditor";
-import { i18nInit, T, changeLanguage } from "../common/Translation";
-import osLocale from "os-locale";
-import { ConnectionEditor, IConnectionEditorOption } from "../panel_blassed/widget/ConnectionEditor";
-import { ConnectionManager } from "../panel_blassed/widget/ConnectionManager";
+import { BlessedEditor } from "../panel_blassed/BlessedEditor.mjs";
+import { i18nInit, T, changeLanguage } from "../common/Translation.mjs";
+import { osLocale } from "os-locale";
+import { ConnectionEditor, IConnectionEditorOption } from "../panel_blassed/widget/ConnectionEditor.mjs";
+import { ConnectionManager } from "../panel_blassed/widget/ConnectionManager.mjs";
 
 const log = Logger("TEST_MAIN");
 

@@ -1,5 +1,10 @@
-const os = require("os");
-const fs = require("fs");
+import os from "os";
+import fs from "fs";
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 function fileAppendText( insertText, fileName, matchText ) {
     try {

@@ -76,6 +76,9 @@ $ mdir
 
 ## Version History
 
+- v1.3.0
+    - [improve] Change ECMAScript modules from CommonJS modules.
+    - [improve] library version update and dependency change by node.js >= 16.0.
 - v1.2.8
     - [security] ssh2 version upgrade (v1.5.0) 
 - v1.2.7

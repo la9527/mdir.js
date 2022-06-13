@@ -1,15 +1,15 @@
-import { updateDebugFile } from "./common/Logger";
-import { i18nInit, T, changeLanguage } from "./common/Translation";
-import osLocale from "os-locale";
+import { updateDebugFile } from "./common/Logger.mjs";
+import { i18nInit, T, changeLanguage } from "./common/Translation.mjs";
 import yargs from "yargs";
 import { stdout } from "process";
-import Configure from "./config/Configure";
-import { ColorConfig } from "./config/ColorConfig";
+import Configure from "./config/Configure.mjs";
+import { ColorConfig } from "./config/ColorConfig.mjs";
 import colors from "colors";
-import { StringUtils } from "./common/StringUtils";
-import * as fs from "fs";
-import * as path from "path";
-import * as os from "os";
+import { StringUtils } from "./common/StringUtils.mjs";
+import fs from "fs";
+import path from "path";
+import os from "os";
+import { osLocale } from "os-locale";
 
 (async () => {
     (global as any).LOCALE = await osLocale();
@@ -83,6 +83,6 @@ import * as os from "os";
     consoleMessage( T("Start.LoadConfigure"), configure.getConfigPath() );
     consoleMessage( T("Start.LoadConfigureColor"), colorConfig.getConfigPath() );
     
-    const mainFrame = (await import("./panel_blassed/MainFrame")).default();
+    const mainFrame = (await import("./panel_blassed/MainFrame.mjs")).default();
     await mainFrame.start();
 })();
