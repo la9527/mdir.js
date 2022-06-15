@@ -40,9 +40,6 @@ function scriptUpdate() {
     if ( !fs.existsSync(`${basePath}/.git`) ) {
         try {
             if ( fs.existsSync("/bin/bash") ) {
-                console.log( `Update: ${basePath}/bin/mdir -> ${basePath}/bin/mdir.js` );
-                fs.copyFileSync( basePath + "/bin/mdir", basePath + "/bin/mdir.js" );
-
                 console.log( `Update: ${basePath}/bin/mdir.sh -> ${basePath}/bin/mdir` );
                 fs.copyFileSync( basePath + "/bin/mdir.sh", basePath + "/bin/mdir" );
 
