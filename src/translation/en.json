@@ -142,7 +142,7 @@
         "TITLE_GOTO_NUMBER": "Go to Line Number",
         "GOTO_NUMBER": "Enter the line number to move.",
         "GOTO_NUMBER_INVALID": "Invalid input number",
-        "READ_ONLY_CURRENT_FILE": "current file is read-only file.",
+        "READ_ONLY_CURRENT_FILE": "This is a read-only file.",
         "NEW_FILE": "New file",
         "QUESTION_SAVE_FILE": "Do you want save this file?",
         "INPUT_FILENAME": "Please input a file name",

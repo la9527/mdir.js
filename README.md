@@ -78,6 +78,7 @@ $ mdir
 
 - v1.4.0
     - [improve] support node.js >= 20
+    - [bugfix] Fix a bug where the '/' shortcut sometimes does not respond in the console.
 - v1.3.0
     - [improve] Change ECMAScript modules from CommonJS modules.
     - [improve] library version update and dependency change by node.js >= 16.0.

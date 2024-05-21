@@ -2,6 +2,7 @@
 import * as os from "os";
 import * as fs from "fs";
 import * as path from "path";
+import which from "which";
 import blessed from "neo-blessed";
 import { Widgets } from "neo-blessed";
 import { Logger } from "../common/Logger.mjs";
@@ -16,7 +17,7 @@ import { BlessedMenu } from "./BlessedMenu.mjs";
 import { BlessedMcd } from "./BlessedMcd.mjs";
 import { BlessedEditor } from "./BlessedEditor.mjs";
 import { CommandBox } from "./CommandBox.mjs";
-import { exec } from "child_process";
+import { exec, spawn } from "child_process";
 import colors from "colors";
 import selection, { Selection, ClipBoard } from "../panel/Selection.mjs";
 import { ProgressFunc, ProgressResult, Reader } from "../common/Reader.mjs";
@@ -113,7 +114,7 @@ export abstract class BaseMainFrame implements IHelpService {
         } else if ( this.keyLockScreenArr.length === 1 ) {
             const lockScreenItem = this.keyLockScreenArr[0];
             if ( lockScreenItem.name === "keyEvent" && lockScreenItem.isTimeOver() ) {
-                log.warn( "LOCK TIME OVER - keyLockRelase !!! - focused: %s", (this.screen.focused as any)?._widget);
+                log.warn( "LOCK TIME OVER - lockKeyRelease !!! - focused: %s", (this.screen.focused as any)?._widget);
                 this.lockKeyRelease("keyEvent");
                 this.blessedFrames[this.activeFrameNum].setFocus();
                 return false;
@@ -301,7 +302,6 @@ export abstract class BaseMainFrame implements IHelpService {
     }
 
     async start() {
-        console.log( blessed );
         this.screen = blessed.screen({
             smartCSR: true,
             fullUnicode: true,
@@ -779,11 +779,46 @@ export abstract class BaseMainFrame implements IHelpService {
             } else {
                 if ( process.platform === "win32" ) {
                     cmd = "@chcp 65001 >nul & cmd /d/s/c " + cmdParse.cmd;
+                } else {
+                    cmd = cmdParse.cmd;
                 }
             }
 
             process.stdout.write( colors.white("mdir.js $ ") + cmd + "\n");
-            exec(cmd, { encoding: "utf-8" }, (error, stdout, stderr) => {
+
+            const cancelKey = [ "q", "C-c", "escape" ];
+
+            const keyboardCheckFunc = (ch, keyInfo) => {
+                const keyName = keyInfo.full || keyInfo.name || ch;
+                log.debug( "childprocess - keypress: [%s] [%s]", keyName, ch );
+                if ( cancelKey.includes(keyName) ) {
+                    execProcess.kill();
+                } else {
+                    execProcess.stdin.write(ch);
+                }
+            };
+
+            const osShell = {
+                "win32": [ "powershell.exe", "cmd.exe" ],
+                "darwin": [ "zsh", "bash", "sh" ],
+                "linux": [ "zsh", "bash", "sh" ]
+            };
+
+            const shellCheck = ( cmd: string[] ) => {
+                for ( const item of cmd ) {
+                    try {
+                        if ( which.sync(item) ) {
+                            return item;
+                        }
+                    // eslint-disable-next-line no-empty
+                    } catch ( e ) {}
+                }
+                return null;
+            };
+            
+            const shell = shellCheck(osShell[os.platform()]) || process.env.SHELL || "sh";
+
+            const execProcess = exec(cmd, { encoding: "utf-8", shell }, (error, stdout, stderr) => {
                 if (error) {
                     console.error(error.message);
                 } else {
@@ -791,6 +826,8 @@ export abstract class BaseMainFrame implements IHelpService {
                     stdout && process.stdout.write(stdout);
                 }
                 const returnFunc = async () => {
+                    this.screen.off( "keypress", keyboardCheckFunc );
+
                     if ( cmdParse.tmpDirRemoveFunc ) {
                         cmdParse.tmpDirRemoveFunc();
                     }
@@ -807,6 +844,8 @@ export abstract class BaseMainFrame implements IHelpService {
                     returnFunc();
                 }
             });
+
+            this.screen.on( "keypress", keyboardCheckFunc );
         });
     }
 

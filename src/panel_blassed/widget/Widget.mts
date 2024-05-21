@@ -134,9 +134,9 @@ export class Widget {
             this.tmpDirRemoveFunc();
             this.tmpDirRemoveFunc = null;
         }
-        this._box.removeAllListeners();
         (this._box as any)._widget = null;
         this._box.destroy();
+        this._box.removeAllListeners();
         this.destroyed = true;
     }
 
