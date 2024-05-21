@@ -1,11 +1,12 @@
 import { Widget } from "./Widget.mjs";
 import blessed from "neo-blessed";
-const { progressbar } = blessed;
-import { Widgets } from "../../../@types/blessed";
+import { Widgets } from "neo-blessed";
 import { ColorConfig } from "../../config/ColorConfig.mjs";
 import { Logger } from "../../common/Logger.mjs";
 import mainFrame from "../MainFrame.mjs";
 import { StringUtils } from "../../common/StringUtils.mjs";
+
+const { progressbar } = blessed;
 
 const log = Logger("MessageBox");
 
@@ -49,7 +50,7 @@ export class ProgressBox extends Widget {
 
     resize() {
         const MIN_WIDTH = 50;
-        if ( this.box.screen.width < MIN_WIDTH ) {
+        if ( this.box.screen.width as number < MIN_WIDTH ) {
             this.box.width = MIN_WIDTH;
         }
     }
@@ -135,7 +136,7 @@ export class ProgressBox extends Widget {
 
         this.resize();
 
-        this.box.off("keypress");
+        this.box.off("keypress", null);
         this.box.on("element click", () => {
             this.destroy();
             this.box.emit("cancel");

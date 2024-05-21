@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Widgets } from "../../@types/blessed";
+import { Widgets } from "neo-blessed";
 import { strWidth } from "neo-blessed/lib/unicode.js";
 import { Widget } from "./widget/Widget.mjs";
 import { File } from "../common/File.mjs";
@@ -168,9 +168,9 @@ export class PanelFileBox extends Widget {
 
         switch ( this.fileViewType ) {
             case 0: {
-                if ( this.width > 50 ) {
+                if ( this.width as number > 50 ) {
                     this.drawTypeOne();
-                } else if ( this.width > 30 ) {
+                } else if ( this.width as number > 30 ) {
                     this.drawTypeTwo();
                 } else {
                     this.drawTypeThree();

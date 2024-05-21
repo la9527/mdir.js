@@ -1,5 +1,5 @@
 import { strWidth } from "neo-blessed/lib/unicode.js";
-import { Widgets } from "../../../@types/blessed";
+import { Widgets } from "neo-blessed";
 import { Widget } from "./Widget.mjs";
 import { Logger } from "../../common/Logger.mjs";
 import { ColorConfig } from "../../config/ColorConfig.mjs";
@@ -79,8 +79,8 @@ export class InputWidget extends Widget {
         const inputDisableColor = ColorConfig.instance().getBaseColor("input_disable");
         this.box.style = this.disable ? inputDisableColor.blessed : inputboxColor.blessed;
 
-        const width = this.box.width;
-        const w = strWidth( this.value || "" );
+        const width: number = this.box.width as number;
+        const w: number = strWidth( this.value || "" );
         let viewStr = this.value || "";
         if ( w > width ) {
             let cutFirstPos = this.cursorPos - 3;

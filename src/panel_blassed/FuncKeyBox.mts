@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Widgets } from "../../@types/blessed";
+import { Widgets } from "neo-blessed";
 import { Widget } from "./widget/Widget.mjs";
 import { ColorConfig } from "../config/ColorConfig.mjs";
 import { sprintf } from "sprintf-js";

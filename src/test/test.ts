@@ -2,8 +2,10 @@ process.env.NODE_ENV = "test";
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import blessed from "neo-blessed";
-const { BlessedProgram, box, text, colors, program } = blessed;
-import { Widgets } from "../../@types/blessed";
+import { BlessedProgram } from "neo-blessed";
+
+const { box, text, colors, program } = blessed;
+
 import { Logger } from "../common/Logger.mjs";
 import { messageBox, MSG_BUTTON_TYPE } from "../panel_blassed/widget/MessageBox.mjs";
 import mainFrame from "../panel_blassed/MainFrame.mjs";
@@ -24,7 +26,7 @@ import i18n from "i18next";
 import I18nextCLILanguageDetector from "i18next-cli-language-detector";
 import en from "../translation/en.json";
 import ko from "../translation/ko.json";
-import { button } from "../../@types/blessed";
+import { button } from "neo-blessed";
 import { BlessedEditor } from "../panel_blassed/BlessedEditor.mjs";
 import { i18nInit, T, changeLanguage } from "../common/Translation.mjs";
 import { osLocale } from "os-locale";

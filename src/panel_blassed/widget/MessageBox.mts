@@ -1,4 +1,4 @@
-import { Widgets } from "../../../@types/blessed";
+import { Widgets } from "neo-blessed";
 import { Widget } from "./Widget.mjs";
 import { ColorConfig } from "../../config/ColorConfig.mjs";
 import { Logger } from "../../common/Logger.mjs";
@@ -60,17 +60,17 @@ export class MessageBox extends Widget {
 
         const MIN_BUTTON_WIDTH = 12;
         this.buttonWidth = this.msgOption.button.reduce( (pre: number, item) => {
-            const strWidth = this.box.strWidth(item);
+            const strWidth = this.box.strWidth(item) as number;
             return pre < strWidth ? strWidth : pre;
         }, MIN_BUTTON_WIDTH);
 
         const buttonAllWidth = this.msgOption.button.length * (this.buttonWidth + 2);
         
-        const widthTitle = Math.min( this.box.strWidth(this.msgOption.title), MAX_WIDTH );
+        const widthTitle = Math.min( this.box.strWidth(this.msgOption.title) as number, MAX_WIDTH );
         const msgLines = this.msgOption.msg ? this.msgOption.msg.split("\n") : [];
         const widthMsg = msgLines.reduce( (pre: number, cur: string ) => {
             log.debug( "MessageBox: [%s]", cur );
-            return Math.min( Math.max(pre, this.box.strWidth(cur) + 4), MAX_WIDTH );
+            return Math.min( Math.max(pre, this.box.strWidth(cur) as number + 4), MAX_WIDTH );
         }, MIN_WIDTH );
 
         log.debug( "widthMsg : %s MIN %d MAX %d ", widthMsg, MIN_WIDTH, MAX_WIDTH );
@@ -215,7 +215,7 @@ export class MessageBox extends Widget {
 
         this.resize();
 
-        this.box.off("keypress");
+        this.box.off("keypress", null);
         this.box.on("element click", (el) => {
             const number = this.buttonWidgets.findIndex( i => el === i.box );
             if ( number > -1 ) {

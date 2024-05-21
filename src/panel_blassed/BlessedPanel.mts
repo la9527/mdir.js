@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/member-ordering */
 import blessed from "neo-blessed";
 import path from "path";
-import { Widgets } from "../../@types/blessed";
+import { Widgets } from "neo-blessed";
 
 import { Panel } from "../panel/Panel.mjs";
 import { Widget } from "./widget/Widget.mjs";
@@ -17,7 +17,7 @@ import { SearchFileBox } from "./SearchFileBox.mjs";
 import { File } from "../common/File.mjs";
 import { messageBox, MSG_BUTTON_TYPE } from "./widget/MessageBox.mjs";
 import { T } from "../common/Translation.mjs";
-import FileType from "file-type";
+import { fileTypeFromFile } from "file-type";
 import mime from "mime-types";
 import Configure from "../config/Configure.mjs";
 
@@ -313,7 +313,7 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
                     let mimeLookup = mime.lookup(currentFile.fullname);
                     log.debug( "mimeLookup %s", mimeLookup );
                     if ( !mimeLookup ) {
-                        const item = await FileType.fromFile( currentFile.fullname );
+                        const item = await fileTypeFromFile( currentFile.fullname );
                         log.debug( "fileType: [%j]", item );
                         mimeLookup = item.mime;
                     }
@@ -388,7 +388,7 @@ export class BlessedPanel extends Panel implements IBlessedView, IHelpService {
         const dirLength = this.dirFiles.length;
         const viewHeight = this.baseWidget.height as number - 2;
         if (this.viewColumn === 0 || this.viewColumn > 6) {
-            if (dirLength <= this.baseWidget.height) {
+            if (dirLength <= (this.baseWidget.height as number)) {
                 this.column = 1;
             } else if (dirLength <= (viewHeight * 2)) {
                 this.column = 2;

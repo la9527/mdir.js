@@ -9,7 +9,7 @@ const en = require( "../translation/en.json" );
 const ko = require( "../translation/ko.json" );
 
 export async function i18nInit( defaultLang: string = null ) {
-    await i18n.use(I18nextCLILanguageDetector).init({
+    await i18n.use(I18nextCLILanguageDetector as any).init({
         fallbackLng: "en",
         resources: { 
             en: { translation: en }, 

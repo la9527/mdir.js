@@ -38,7 +38,7 @@ For bug reports, comments and questions, please send to [GitHub Issues Site](htt
 
 ### 1) Dependencies
  - Common
-    - [Node.js](https://node.js) >= 10.x 
+    - [Node.js](https://node.js) >= 16.x 
 
  - Windows
 
@@ -76,6 +76,8 @@ $ mdir
 
 ## Version History
 
+- v1.4.0
+    - [improve] support node.js >= 20
 - v1.3.0
     - [improve] Change ECMAScript modules from CommonJS modules.
     - [improve] library version update and dependency change by node.js >= 16.0.

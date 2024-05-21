@@ -3,6 +3,7 @@ import * as os from "os";
 import * as fs from "fs";
 import * as path from "path";
 import blessed from "neo-blessed";
+import { Widgets } from "neo-blessed";
 import { Logger } from "../common/Logger.mjs";
 import { BlessedPanel } from "./BlessedPanel.mjs";
 import { FuncKeyBox } from "./FuncKeyBox.mjs";
@@ -88,7 +89,7 @@ class ScrLockInfo {
 }
 
 export abstract class BaseMainFrame implements IHelpService {
-    protected screen: blessed.Widgets.Screen = null;
+    protected screen: Widgets.Screen = null;
     protected viewType: VIEW_TYPE = VIEW_TYPE.NORMAL;
     protected baseWidget = null;
     protected blessedFrames: (BlessedMcd | BlessedPanel | BlessedXterm | BlessedEditor)[] = [];
@@ -300,6 +301,7 @@ export abstract class BaseMainFrame implements IHelpService {
     }
 
     async start() {
+        console.log( blessed );
         this.screen = blessed.screen({
             smartCSR: true,
             fullUnicode: true,
@@ -376,7 +378,7 @@ export abstract class BaseMainFrame implements IHelpService {
     }
 
     eventStart() {
-        this.screen.off("keypress");
+        this.screen.off("keypress", null);
         this.screen.on("keypress", async (ch, keyInfo) => {
             if ( ch === "\u001c" && (global as any).debug ) { // Ctrl + |
                 log.error( "force quit !!!" );

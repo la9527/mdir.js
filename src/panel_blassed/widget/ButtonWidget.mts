@@ -1,4 +1,4 @@
-import { Widgets } from "../../../@types/blessed";
+import { Widgets } from "neo-blessed";
 import { Widget } from "./Widget.mjs";
 import { Logger } from "../../common/Logger.mjs";
 import { ColorConfig } from "../../config/ColorConfig.mjs";

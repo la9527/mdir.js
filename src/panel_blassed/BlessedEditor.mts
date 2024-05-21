@@ -1,4 +1,4 @@
-import { Widgets } from "../../@types/blessed";
+import { Widgets } from "neo-blessed";
 import { strWidth, charWidth } from "neo-blessed/lib/unicode.js";
 import unicode from "neo-blessed/lib/unicode.js";
 import { Widget } from "./widget/Widget.mjs";

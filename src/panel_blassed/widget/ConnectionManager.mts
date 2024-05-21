@@ -2,10 +2,8 @@ import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 
+import { Widgets } from "neo-blessed";
 import blessed from "neo-blessed";
-const { line, text } = blessed;
-import { Widgets } from "../../../@types/blessed";
-
 import { T } from "../../common/Translation.mjs";
 import { Widget } from "./Widget.mjs";
 
@@ -25,6 +23,8 @@ import { inputBox } from "./InputBox.mjs";
 import { messageBox } from "./MessageBox.mjs";
 import { ProgressBox } from "./ProgressBox.mjs";
 import { Selection, ClipBoard } from "../../panel/Selection.mjs";
+
+const { text, line } = blessed;
 
 const log = Logger( "ConnectionWidget" );
 

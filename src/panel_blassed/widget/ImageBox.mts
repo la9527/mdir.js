@@ -1,6 +1,6 @@
 /* eslint-disable prefer-const */
 import { Widget } from "./Widget.mjs";
-import { Widgets } from "../../../@types/blessed";
+import { Widgets } from "neo-blessed";
 import { File } from "../../common/File.mjs";
 import { Logger } from "../../common/Logger.mjs";
 import fs from "fs";
@@ -199,7 +199,7 @@ export class ImageViewBox extends Widget {
 
         this.resize();
 
-        this.box.off("keypress");
+        this.box.off("keypress", null);
         this.box.on("element click", () => {
             this.destroy();
             this.option && this.option.closeFunc();

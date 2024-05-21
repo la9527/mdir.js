@@ -8,7 +8,7 @@ import { Logger } from "../common/Logger.mjs";
 import { Reader, IMountList, ProgressFunc, ProgressResult } from "../common/Reader.mjs";
 
 import { Transform } from "stream";
-import FileType from "file-type";
+import { fileTypeFromFile } from "file-type";
 import jschardet from "jschardet";
 import iconv from "iconv-lite";
 
@@ -532,7 +532,7 @@ export class FileReader extends Reader {
         for ( const item of fileItem ) {
             if ( !item.dir && !item.link ) {
                 try {
-                    const fileType = await FileType.fromFile( item.fullname );
+                    const fileType = await fileTypeFromFile( item.fullname );
                     if ( fileType ) {
                         item.mimetype = fileType.mime;
                     }

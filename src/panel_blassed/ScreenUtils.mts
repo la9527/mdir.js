@@ -1,4 +1,4 @@
-import blessed from "neo-blessed";
+import * as blessed from "neo-blessed";
 import { charWidth } from "neo-blessed/lib/unicode.js";
 import { sprintf } from "sprintf-js";
 

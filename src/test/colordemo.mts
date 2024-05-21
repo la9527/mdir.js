@@ -2,8 +2,7 @@ process.env.NODE_ENV = "test";
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import blessed from "neo-blessed";
-const { text, line } = blessed;
-import { Widgets } from "../../@types/blessed";
+import { Widgets } from "neo-blessed";
 import { Widget } from "../panel_blassed/widget/Widget.mjs";
 import { widgetsEventListener } from "../panel_blassed/widget/WidgetsEventListener.mjs";
 import { Logger } from "../common/Logger.mjs";
@@ -14,6 +13,8 @@ import { ButtonWidget } from "../panel_blassed/widget/ButtonWidget.mjs";
 import { RadioWidget } from "../panel_blassed/widget/RadioWidget.mjs";
 import { TabWidget } from "../panel_blassed/widget/TabWidget.mjs";
 import { sprintf } from "sprintf-js";
+
+const { text, line } = blessed;
 
 const log = Logger("ConnectionManager");
 

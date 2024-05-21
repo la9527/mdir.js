@@ -1,8 +1,8 @@
 /* eslint-disable prefer-const */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import blessed from "neo-blessed";
-const { BlessedProgram, box, colors } = blessed;
-import { Widgets } from "../../@types/blessed";
+const { box, colors } = blessed;
+import { Widgets, BlessedProgram } from "neo-blessed";
 import { Logger, updateDebugFile } from "../common/Logger.mjs";
 import { ImageWidget } from "../panel_blassed/widget/ImageBox.mjs";
 import { draw } from "../panel_blassed/widget/BlessedDraw.mjs";

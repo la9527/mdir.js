@@ -1,7 +1,7 @@
 import os from "os";
 import path from "path";
 import blessed from "neo-blessed";
-import { Widgets } from "../../@types/blessed";
+import { Widgets } from "neo-blessed";
 import { sprintf } from "sprintf-js";
 import { File } from "../common/File.mjs";
 import { Reader } from "../common/Reader.mjs";

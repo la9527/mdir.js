@@ -1,17 +1,17 @@
 /* eslint-disable prefer-const */
 /* eslint-disable @typescript-eslint/member-ordering */
 import blessed from "neo-blessed";
+import { Widgets } from "neo-blessed";
 import { Logger } from "../../common/Logger.mjs";
 import { Color } from "../../common/Color.mjs";
 import { sprintf } from "sprintf-js";
 
-const Widgets = blessed.Widgets;
 const box = blessed.box;
 
 const log = Logger("Widget");
 
 export class Widget {
-    private _box: blessed.Widgets.BoxElement;
+    private _box: Widgets.BoxElement;
     protected destroyed = false;
     _viewCount: number = -1;
     protected _aliasName: string = null;
@@ -19,7 +19,7 @@ export class Widget {
     public tmpDirRemoveFunc = null;
     private _befClickData = { x: 0, y: 0, now: 0 };
 
-    constructor( opts: blessed.Widgets.BoxOptions | any ) {
+    constructor( opts: Widgets.BoxOptions | any ) {
         if ( opts.parent && opts.parent instanceof Widget ) {
             this._box = box( { ...opts, parent: (opts.parent as any).box, tags: true } );
         } else {
@@ -134,7 +134,7 @@ export class Widget {
             this.tmpDirRemoveFunc();
             this.tmpDirRemoveFunc = null;
         }
-        this._box.off();
+        this._box.removeAllListeners();
         (this._box as any)._widget = null;
         this._box.destroy();
         this.destroyed = true;
@@ -145,7 +145,7 @@ export class Widget {
         // log.debug( "WIDGET RENDER START [%s]", this.constructor.name );
         const result = this._box.render();
         if ( result ) {
-            const item: any = (this._box.screen as blessed.Widgets.Screen);
+            const item: any = (this._box.screen as Widgets.Screen);
             const start = Math.max( 0, Math.min(result.yi, result.yl) );
             const end = Math.min( Math.max(result.yi, result.yl), item.lines.length - 1 );
 
@@ -179,7 +179,7 @@ export class Widget {
     }
 
     getCursor() {
-        const screen: blessed.Widgets.Screen = this.box.screen;
+        const screen: Widgets.Screen = this.box.screen;
         const box: any = this.box;
         const program = screen.program;
         const lpos = box.lpos;
@@ -192,7 +192,7 @@ export class Widget {
     }
 
     moveCursor( x, y ) {
-        const screen: blessed.Widgets.Screen = this.box.screen;
+        const screen: Widgets.Screen = this.box.screen;
         const box: any = this.box;
         const lpos = box.lpos;
         if (!lpos) {
@@ -272,7 +272,7 @@ export class Widget {
     get parent() {
         return this._box.parent;
     }
-    get box(): blessed.Widgets.BoxElement {
+    get box(): Widgets.BoxElement {
         return this._box;
     }
 }
