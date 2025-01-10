@@ -1,6 +1,7 @@
+import { Widgets } from "types/neo-blessed";
+
 import { Widget } from "./Widget.mjs";
 import { Panel } from "../../panel/Panel.mjs";
-import { Widgets } from "neo-blessed";
 import { Reader } from "../../common/Reader.mjs";
 import { File } from "../../common/File.mjs";
 import { strWidth } from "neo-blessed/lib/unicode.js";

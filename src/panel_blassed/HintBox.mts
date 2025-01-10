@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Widget } from "./widget/Widget.mjs";
-import { Widgets } from "neo-blessed";
+import { Widgets } from "types/neo-blessed";
 import mainFrame from "./MainFrame.mjs";
 import { IHintInfo, methodToKeyname, TerminalAllowKeys } from "../config/KeyMapConfig.mjs";
 import { strWidth } from "neo-blessed/lib/unicode.js";

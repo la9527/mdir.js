@@ -1,6 +1,8 @@
-import blessed from "neo-blessed";
 import { ImageWidget } from "../panel_blassed/widget/ImageBox.mjs";
 import { draw } from "../panel_blassed/widget/BlessedDraw.mjs";
+import { CJSRequire } from "../common/CommonJSRequire.mjs";
+
+const blessed = CJSRequire("neo-blessed");
 
 const screen = blessed.screen({
     smartCSR: true,

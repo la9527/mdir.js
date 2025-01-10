@@ -1,7 +1,7 @@
 import os from "os";
 import path from "path";
-import blessed from "neo-blessed";
-import { Widgets } from "neo-blessed";
+
+import { Widgets } from "types/neo-blessed";
 import { sprintf } from "sprintf-js";
 import { File } from "../common/File.mjs";
 import { Reader } from "../common/Reader.mjs";
@@ -15,7 +15,9 @@ import { KeyMapping, KeyMappingInfo, IHelpService, SearchDisallowKeys, RefreshTy
 import { IBlessedView } from "./IBlessedView.mjs";
 import mainFrame from "./MainFrame.mjs";
 import { SearchFileBox } from "./SearchFileBox.mjs";
+import { CJSRequire } from "../common/CommonJSRequire.mjs";
 
+const blessed = CJSRequire("neo-blessed");
 const log = Logger("blessed-mcd");
 
 class SearchDirInfo {

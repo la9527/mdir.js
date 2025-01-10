@@ -11,8 +11,9 @@ import { Transform } from "stream";
 import { fileTypeFromFile } from "file-type";
 import jschardet from "jschardet";
 import iconv from "iconv-lite";
+import { CJSRequire } from "../common/CommonJSRequire.mjs";
 
-import fswin from "fswin";
+const fswin = CJSRequire("fswin");
 
 const log = Logger("FileReader");
 

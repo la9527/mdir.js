@@ -1,6 +1,5 @@
 import * as fs from "fs";
 import * as path from "path";
-import { Client } from "ssh2";
 import { SocksClient, SocksClientOptions } from "./socks/client/socksclient.mjs";
 import { Reader, ProgressFunc, IMountList, ProgressResult } from "../../common/Reader.mjs";
 import { File } from "../../common/File.mjs";
@@ -11,6 +10,9 @@ import { Socket } from "net";
 import { Crypto } from "../../common/Crypto.mjs";
 import Configure from "../../config/Configure.mjs";
 import { T } from "../../common/Translation.mjs";
+import { CJSRequire } from "../../common/CommonJSRequire.mjs";
+
+const { Client } = CJSRequire("ssh2");
 
 const log = Logger("SftpReader");
 

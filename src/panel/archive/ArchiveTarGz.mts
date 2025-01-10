@@ -3,7 +3,8 @@ import * as tar from "tar-stream";
 import * as path from "path";
 import * as fs from "fs";
 import * as zlib from "zlib";
-import * as bunzip2 from "unbzip2-stream";
+
+const bunzip2 = CJSRequire("unbzip2-stream");
 
 import { ArchiveCommon } from "./ArchiveCommon.mjs";
 import { File, FileLink } from "../../common/File.mjs";
@@ -11,6 +12,7 @@ import { ProgressFunc, ProgressResult } from "../../common/Reader.mjs";
 import { Logger } from "../../common/Logger.mjs";
 import { Transform, Readable } from "stream";
 import { convertAttrToStatMode } from "../FileReader.mjs";
+import { CJSRequire } from "../../common/CommonJSRequire.mjs";
 
 const log = Logger("archivetar");
 

@@ -1,5 +1,5 @@
 import { sprintf } from "sprintf-js";
-import { Widgets } from "neo-blessed";
+import { Widgets } from "types/neo-blessed";
 import { strWidth } from "neo-blessed/lib/unicode.js";
 import { Widget } from "./widget/Widget.mjs";
 import mainFrame from "./MainFrame.mjs";

@@ -3,8 +3,7 @@ import * as os from "os";
 import * as fs from "fs";
 import * as path from "path";
 import which from "which";
-import blessed from "neo-blessed";
-import { Widgets } from "neo-blessed";
+
 import { Logger } from "../common/Logger.mjs";
 import { BlessedPanel } from "./BlessedPanel.mjs";
 import { FuncKeyBox } from "./FuncKeyBox.mjs";
@@ -35,12 +34,11 @@ import { FileReader } from "../panel/FileReader.mjs";
 import mainFrame from "./MainFrame.mjs";
 import Configure from "../config/Configure.mjs";
 import { ColorConfig } from "../config/ColorConfig.mjs";
+import { CJSRequire } from "../common/CommonJSRequire.mjs";
+import { Widgets } from "types/neo-blessed";
 
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-
-const pkgjson = require( "../../package.json" );
-
+const blessed = CJSRequire("neo-blessed");
+const pkgjson = CJSRequire( "../../package.json" );
 
 const log = Logger("MainFrame");
 

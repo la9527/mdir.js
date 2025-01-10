@@ -1,10 +1,14 @@
+
+import { Widgets } from "types/neo-blessed";
+
 import { Widget } from "./Widget.mjs";
-import blessed from "neo-blessed";
-import { Widgets } from "neo-blessed";
 import { ColorConfig } from "../../config/ColorConfig.mjs";
 import { Logger } from "../../common/Logger.mjs";
 import mainFrame from "../MainFrame.mjs";
 import { StringUtils } from "../../common/StringUtils.mjs";
+import { CJSRequire } from "../../common/CommonJSRequire.mjs";
+
+const blessed = CJSRequire("neo-blessed");
 
 const { progressbar } = blessed;
 

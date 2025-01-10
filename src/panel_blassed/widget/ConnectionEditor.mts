@@ -1,6 +1,4 @@
 /* eslint-disable prefer-const */
-import blessed from "neo-blessed";
-import { Widgets } from "neo-blessed";
 import { Widget } from "./Widget.mjs";
 import { widgetsEventListener } from "./WidgetsEventListener.mjs";
 import { Logger } from "../../common/Logger.mjs";
@@ -12,6 +10,10 @@ import { T } from "../../common/Translation.mjs";
 import mainFrame from "../MainFrame.mjs";
 import { TabWidget } from "./TabWidget.mjs";
 import { IConnectionInfo, IConnectionInfoBase } from "../../panel/sftp/SftpReader.mjs";
+import { Widgets } from "types/neo-blessed";
+import { CJSRequire } from "../../common/CommonJSRequire.mjs";
+
+const blessed = CJSRequire("neo-blessed");
 
 const { text, line } = blessed;
 

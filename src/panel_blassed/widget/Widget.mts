@@ -1,10 +1,12 @@
 /* eslint-disable prefer-const */
 /* eslint-disable @typescript-eslint/member-ordering */
-import blessed from "neo-blessed";
-import { Widgets } from "neo-blessed";
+import { Widgets } from "types/neo-blessed";
 import { Logger } from "../../common/Logger.mjs";
 import { Color } from "../../common/Color.mjs";
 import { sprintf } from "sprintf-js";
+import { CJSRequire } from "../../common/CommonJSRequire.mjs";
+
+const blessed = CJSRequire("neo-blessed");
 
 const box = blessed.box;
 

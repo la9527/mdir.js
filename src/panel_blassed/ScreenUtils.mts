@@ -1,6 +1,8 @@
-import * as blessed from "neo-blessed";
-import { charWidth } from "neo-blessed/lib/unicode.js";
 import { sprintf } from "sprintf-js";
+import { CJSRequire } from "../common/CommonJSRequire.mjs";
+
+const blessed = CJSRequire("neo-blessed");
+const { charWidth } = CJSRequire("neo-blessed/lib/unicode.js");
 
 export function screenPrintf( parent, y, x ) {
     const element = blessed.text({

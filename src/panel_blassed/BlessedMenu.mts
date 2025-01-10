@@ -1,5 +1,4 @@
-import blessed from "neo-blessed";
-import { Widgets } from "neo-blessed";
+import { Widgets } from "types/neo-blessed";
 import { strWidth } from "neo-blessed/lib/unicode.js";
 import { Color } from "../common/Color.mjs";
 import { ColorConfig } from "../config/ColorConfig.mjs";
@@ -9,7 +8,9 @@ import { KeyMapping, KeyMappingInfo, keyHumanReadable, RefreshType, IHelpService
 import { Logger } from "../common/Logger.mjs";
 import mainFrame from "./MainFrame.mjs";
 import { T } from "../common/Translation.mjs";
+import { CJSRequire } from "../common/CommonJSRequire.mjs";
 
+const blessed = CJSRequire("neo-blessed");
 const { text, line } = blessed;
 
 const log = Logger("blessed-menu");

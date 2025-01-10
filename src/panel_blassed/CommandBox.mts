@@ -1,5 +1,5 @@
 import { Widget } from "./widget/Widget.mjs";
-import { Widgets } from "neo-blessed";
+import { Widgets } from "types/neo-blessed";
 import unicode from "neo-blessed/lib/unicode.js";
 import * as os from "os";
 import * as path from "path";

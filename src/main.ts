@@ -47,8 +47,8 @@ import { osLocale } from "os-locale";
         .help()
         .argv;
 
-    if ( argv.lang ) {
-        await changeLanguage(argv.lang);
+    if ( argv["lang"] ) {
+        await changeLanguage(argv["lang"]);
     }
 
     stdout.write(colors.green(`
@@ -72,9 +72,9 @@ import { osLocale } from "os-locale";
         stdout.write( colors.gray("[") + colors.yellow(highlightText) + colors.gray("]") + "\n" );
     };
 
-    if ( typeof(argv.logfile) !== "undefined" ) {
+    if ( typeof(argv["logfile"]) !== "undefined" ) {
         (global as any).debug = true;
-        updateDebugFile( argv.logfile, typeof(argv.logsync) !== "undefined" );
+        updateDebugFile( argv["logfile"], typeof(argv["logsync"]) !== "undefined" );
         consoleMessage( " * Debug mode", (global as any).DEBUG_INFO.file );
         consoleMessage( " * Debug sync", (global as any).DEBUG_INFO.sync );
     }

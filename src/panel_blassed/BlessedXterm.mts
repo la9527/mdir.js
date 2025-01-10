@@ -2,8 +2,6 @@
 /* eslint-disable no-control-regex */
 import colors from "colors";
 import { Widget } from "./widget/Widget.mjs";
-import { IPty } from "node-pty-prebuilt-multiarch";
-import * as NodePTY from "node-pty-prebuilt-multiarch";
 import * as os from "os";
 import { Logger } from "../common/Logger.mjs";
 import { IBlessedView } from "./IBlessedView.mjs";
@@ -18,7 +16,10 @@ import { T } from "../common/Translation.mjs";
 import { SftpReader } from "../panel/sftp/SftpReader.mjs";
 import { IEvent, EventEmitter } from "./xterm/common/EventEmitter.mjs";
 import mainFrame from "./MainFrame.mjs";
+import { CJSRequire } from "../common/CommonJSRequire.mjs";
+import { IPty } from "node-pty-prebuilt-multiarch";
 
+const NodePTY = CJSRequire("node-pty-prebuilt-multiarch");
 const log = Logger("BlassedXTerm");
 
 interface IOSC1337 {

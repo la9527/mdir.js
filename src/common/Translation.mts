@@ -1,12 +1,10 @@
 /* eslint-disable prefer-spread */
 import i18n from "i18next";
 import I18nextCLILanguageDetector from "i18next-cli-language-detector";
+import { CJSRequire } from "./CommonJSRequire.mjs";
 
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-
-const en = require( "../translation/en.json" );
-const ko = require( "../translation/ko.json" );
+const en = CJSRequire("../translation/en.json");
+const ko = CJSRequire("../translation/ko.json");
 
 export async function i18nInit( defaultLang: string = null ) {
     await i18n.use(I18nextCLILanguageDetector as any).init({

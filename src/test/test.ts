@@ -1,10 +1,8 @@
 process.env.NODE_ENV = "test";
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import blessed from "neo-blessed";
-import { BlessedProgram } from "neo-blessed";
-
-const { box, text, colors, program } = blessed;
+import { BlessedProgram } from "types/neo-blessed";
+import { CJSRequire } from "../common/CommonJSRequire.mjs";
 
 import { Logger } from "../common/Logger.mjs";
 import { messageBox, MSG_BUTTON_TYPE } from "../panel_blassed/widget/MessageBox.mjs";
@@ -24,14 +22,18 @@ import { FileReader } from "../panel/FileReader.mjs";
 import { sprintf } from "sprintf-js";
 import i18n from "i18next";
 import I18nextCLILanguageDetector from "i18next-cli-language-detector";
-import en from "../translation/en.json";
-import ko from "../translation/ko.json";
-import { button } from "neo-blessed";
+import { button } from "types/neo-blessed";
 import { BlessedEditor } from "../panel_blassed/BlessedEditor.mjs";
 import { i18nInit, T, changeLanguage } from "../common/Translation.mjs";
 import { osLocale } from "os-locale";
 import { ConnectionEditor, IConnectionEditorOption } from "../panel_blassed/widget/ConnectionEditor.mjs";
 import { ConnectionManager } from "../panel_blassed/widget/ConnectionManager.mjs";
+
+const blessed = CJSRequire("neo-blessed");
+const en = CJSRequire("../translation/en.json");
+const ko = CJSRequire("../translation/ko.json");
+
+const { box, text, colors, program } = blessed;
 
 const log = Logger("TEST_MAIN");
 
@@ -111,6 +113,8 @@ screen.key("i", async () => {
 screen.key("t", async () => {
     (global as any).LOCALE = await osLocale();
     await i18nInit( (global as any).LOCALE.match( /^ko/ ) ? "ko" : undefined );
+
+    console.log( T("OK") );
 
     const connectionInfo: IConnectionEditorOption = {
         name: "테스트",

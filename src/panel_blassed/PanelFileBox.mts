@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Widgets } from "neo-blessed";
+import { Widgets } from "types/neo-blessed";
 import { strWidth } from "neo-blessed/lib/unicode.js";
 import { Widget } from "./widget/Widget.mjs";
 import { File } from "../common/File.mjs";

@@ -1,14 +1,15 @@
-/* eslint-disable prefer-const */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import blessed from "neo-blessed";
-const { box, colors } = blessed;
-import { Widgets, BlessedProgram } from "neo-blessed";
+import { Widgets, BlessedProgram } from "types/neo-blessed";
 import { Logger, updateDebugFile } from "../common/Logger.mjs";
 import { ImageWidget } from "../panel_blassed/widget/ImageBox.mjs";
 import { draw } from "../panel_blassed/widget/BlessedDraw.mjs";
 import { FileReader } from "../panel/FileReader.mjs";
 import { BlessedEditor } from "../panel_blassed/BlessedEditor.mjs";
 import { StringUtils, StringLineToken } from "../common/StringUtils.mjs";
+
+import { CJSRequire } from "../common/CommonJSRequire.mjs";
+
+const blessed = CJSRequire("neo-blessed");
+const { box, colors } = blessed;
 
 /*
 let text = "";

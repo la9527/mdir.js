@@ -31,9 +31,7 @@ import { inputBox } from "./widget/InputBox.mjs";
 import { Selection, ClipBoard } from "../panel/Selection.mjs";
 import { SftpReader, IConnectionInfo } from "../panel/sftp/SftpReader.mjs";
 
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const pkgjson = require( "../../package.json" );
+const pkgjson = await import( "../../package.json", { assert: { type: "json" }} );
 
 const log = Logger("MainFrame");
 
@@ -506,7 +504,7 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
         return new Promise( (resolve) => {
             setTimeout( async () => {
                 // eslint-disable-next-line @typescript-eslint/no-var-requires
-                const version = pkgjson.version;
+                const version = pkgjson.default.version;
                 await messageBox( {
                     parent: this.baseWidget,
                     title: "Mdir.js - v" + version,

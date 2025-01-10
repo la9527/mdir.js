@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
-import unicode from "neo-blessed/lib/unicode.js";
 import { createSupportsColor } from "supports-color";
+
+const unicode = await import("neo-blessed/lib/unicode.js");
 
 const angles = {
     "\u2518": true, // '┘'

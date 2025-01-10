@@ -1,6 +1,7 @@
+import { Widgets } from "types/neo-blessed";
+
 import { Widget } from "./Widget.mjs";
 import { widgetsEventListener } from "./WidgetsEventListener.mjs";
-import { Widgets } from "neo-blessed";
 import { strWidth } from "neo-blessed/lib/unicode.js";
 import { ColorConfig } from "../../config/ColorConfig.mjs";
 import { Logger } from "../../common/Logger.mjs";

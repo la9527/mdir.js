@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/member-ordering */
-import blessed from "neo-blessed";
 import path from "path";
-import { Widgets } from "neo-blessed";
+import { Widgets } from "types/neo-blessed";
 
 import { Panel } from "../panel/Panel.mjs";
 import { Widget } from "./widget/Widget.mjs";
@@ -20,6 +19,9 @@ import { T } from "../common/Translation.mjs";
 import { fileTypeFromFile } from "file-type";
 import mime from "mime-types";
 import Configure from "../config/Configure.mjs";
+import { CJSRequire } from "../common/CommonJSRequire.mjs";
+
+const blessed = CJSRequire("neo-blessed");
 
 const log = Logger("blessedpanel");
 

@@ -1,2 +1,4 @@
 #!/usr/bin/env node
-await import("../build/main.js");
+(async () => {
+    await import("../build/main.js");
+})();
