@@ -10,6 +10,7 @@
         "noImplicitReturns": true,
         "noImplicitThis": true,
         "noImplicitAny": false,
+        "isolatedModules": true,
         "strictNullChecks": false,
         "noUncheckedIndexedAccess": true,
         "esModuleInterop": true,

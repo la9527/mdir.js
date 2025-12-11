@@ -9,8 +9,8 @@
     "build": "NODE_ENV=development tsc -p tsconfig.json",
     "start": "NODE_ENV=development tsc -p tsconfig.json && node ./build/src/main.js",
     "debug": "tsc -p tsconfig.json && node --inspect-brk ./build/src/main.js",
-    "jest": "jest",
-    "test": "tsc -p tsconfig.json && node ./build/src/test/test.js",
+    "jest": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "test": "npm run jest",
     "testimage": "tsc -p tsconfig.json && node ./build/test/imagetest.mjs",
     "testeditor": "tsc -p tsconfig.json && node ./build/test/editortest.mjs",
     "archivetest": "tsc -p tsconfig.json && node ./build/test/archive.mjs",
@@ -118,6 +118,7 @@
     "jest-watch-typeahead": "2.2.2",
     "node-gyp": "^11.0.0",
     "pkg": "5.8.1",
+    "ts-jest": "^29.4.6",
     "tslib": "^2.8.1",
     "typescript": "^5.7.3"
   },

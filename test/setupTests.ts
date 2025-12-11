@@ -1,3 +1,5 @@
+import { jest } from "@jest/globals";
+
 global["__TEST__"] = true;
 global["__PRODUCT__"] = false;
 
