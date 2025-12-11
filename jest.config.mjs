@@ -30,7 +30,7 @@ const config = {
       }
     ],
     "^.+\\.(js|mjs)$": "<rootDir>/node_modules/babel-jest",
-    "^(?!.*\\.(ts|mts|js|mjs|json)$)": "<rootDir>/test/jest/fileTransform.cjs"
+    "^(?!.*\\.(ts|mts|js|mjs|json)$)": "<rootDir>/test/jest/fileTransform.mjs"
   },
   transformIgnorePatterns: [
     "[/\\\\]node_modules[/\\\\]"
@@ -49,4 +49,4 @@ const config = {
   ]
 };
 
-module.exports = config;
+export default config;
