@@ -16,7 +16,7 @@ LinM의 기능 대부분 재구현하였고, 현재는 더 발전되었습니다
 
 # 2. 필수 설치 프로그램
 
- - Node.js 10.0 이상 (https://nodejs.org/)
+ - Node.js 20 이상 (https://nodejs.org/)
  
 # 3. 테스트한 OS
 
@@ -32,7 +32,7 @@ LinM의 기능 대부분 재구현하였고, 현재는 더 발전되었습니다
 
 ### 1) 설치 방법
 
- - 공통적으로 https://nodejs.org/ 에서 node.js 16.x 이상 버전을 시스템에 설치합니다.
+ - 공통적으로 https://nodejs.org/ 에서 node.js 20.x 이상 버전을 시스템에 설치합니다.
   
  - Windows
 

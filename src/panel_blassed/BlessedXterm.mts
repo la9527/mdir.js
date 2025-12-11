@@ -17,9 +17,9 @@ import { SftpReader } from "../panel/sftp/SftpReader.mjs";
 import { IEvent, EventEmitter } from "./xterm/common/EventEmitter.mjs";
 import mainFrame from "./MainFrame.mjs";
 import { CJSRequire } from "../common/CommonJSRequire.mjs";
-import { IPty } from "node-pty-prebuilt-multiarch";
+import { IPty } from "node-pty";
 
-const NodePTY = CJSRequire("node-pty-prebuilt-multiarch");
+const NodePTY = CJSRequire("node-pty");
 const log = Logger("BlassedXTerm");
 
 interface IOSC1337 {
@@ -115,6 +115,10 @@ class SshPty implements IPty {
     }
 
     handleFlowControl: boolean;
+
+    clear(): void {
+        // SSH-backed PTY does not maintain scrollback buffer locally.
+    }
     
     private _onData = new EventEmitter<string>();
     public get onData(): IEvent<string> { return this._onData.event; }
@@ -433,7 +437,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             });
         });
 
-        this.pty.on( "data", (data) => {
+        (this.pty as any).on( "data", (data) => {
             if ( Buffer.isBuffer(data) ) {
                 this.parseOSC1337((data as Buffer).toString());
                 if( !this.outputBlock ) {
@@ -447,7 +451,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
             }
         });
 
-        this.pty.on( "exit", async (exit, signal) => {
+        (this.pty as any).on( "exit", async (exit, signal) => {
             log.error( "on exit !!! - [%d] [%s]", exit, signal );
             await this.fullscreenRecover();
             this.box.emit( "process_exit", exit, signal );
@@ -478,7 +482,7 @@ export class BlessedXterm extends Widget implements IBlessedView, IHelpService {
                         resolve();
                     }
                 };
-                this.pty?.on("data", detectShell);
+                (this.pty as any)?.on("data", detectShell);
                 this.pty?.write( writeText );
                 tm = setTimeout(() => {
                     (this.pty as any)?.removeListener( "data", detectShell );

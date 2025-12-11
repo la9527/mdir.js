@@ -3,6 +3,7 @@ import which from "which";
 import * as os from "os";
 import * as fs from "fs";
 import { Logger } from "../common/Logger.mjs";
+import { CJSRequire } from "../common/CommonJSRequire.mjs";
 import { BlessedPanel } from "./BlessedPanel.mjs";
 import { menuKeyMapping, KeyMappingInfo, 
     KeyMapping, RefreshType, Hint,  
@@ -31,7 +32,7 @@ import { inputBox } from "./widget/InputBox.mjs";
 import { Selection, ClipBoard } from "../panel/Selection.mjs";
 import { SftpReader, IConnectionInfo } from "../panel/sftp/SftpReader.mjs";
 
-const pkgjson = await import( "../../package.json", { assert: { type: "json" }} );
+const pkgjson = CJSRequire("../../package.json");
 
 const log = Logger("MainFrame");
 
@@ -504,7 +505,7 @@ export class MainFrame extends BaseMainFrame implements IHelpService {
         return new Promise( (resolve) => {
             setTimeout( async () => {
                 // eslint-disable-next-line @typescript-eslint/no-var-requires
-                const version = pkgjson.default.version;
+                const version = pkgjson.version;
                 await messageBox( {
                     parent: this.baseWidget,
                     title: "Mdir.js - v" + version,

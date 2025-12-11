@@ -38,7 +38,7 @@ For bug reports, comments and questions, please send to [GitHub Issues Site](htt
 
 ### 1) Dependencies
  - Common
-    - [Node.js](https://node.js) >= 16.x 
+     - [Node.js](https://nodejs.org) >= 20.x 
 
  - Windows
 

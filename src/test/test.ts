@@ -28,10 +28,12 @@ import { i18nInit, T, changeLanguage } from "../common/Translation.mjs";
 import { osLocale } from "os-locale";
 import { ConnectionEditor, IConnectionEditorOption } from "../panel_blassed/widget/ConnectionEditor.mjs";
 import { ConnectionManager } from "../panel_blassed/widget/ConnectionManager.mjs";
+import path from "path";
 
 const blessed = CJSRequire("neo-blessed");
-const en = CJSRequire("../translation/en.json");
-const ko = CJSRequire("../translation/ko.json");
+const translationDir = path.resolve(process.cwd(), "src/translation");
+const en = CJSRequire(path.join(translationDir, "en.json"));
+const ko = CJSRequire(path.join(translationDir, "ko.json"));
 
 const { box, text, colors, program } = blessed;
 

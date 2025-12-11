@@ -1,12 +1,10 @@
 import { IConfigure } from "./Configure.mjs";
+import { CJSRequire } from "../common/CommonJSRequire.mjs";
 
-import { createRequire } from "module";
-
-const pkgjson = await import( "../../package.json", { assert: { type: "json" }} );
+const pkgjson = CJSRequire("../../package.json");
 
 export const ConfigureDefault: IConfigure = {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    Version: pkgjson.default.version,
+    Version: pkgjson.version,
     Option: {
         supportBgColorTransparent: false
     },
