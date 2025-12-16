@@ -6,8 +6,8 @@ import { Reader } from "../../common/Reader.mjs";
 
 type ReaderDouble = {
     reader: Reader;
-    readdirMock: jest.Mock<Promise<File[]>, [File]>;
-    currentDirMock: jest.Mock<Promise<File>, []>;
+    readdirMock: jest.Mock<(dir: File) => Promise<File[]>>;
+    currentDirMock: jest.Mock<() => Promise<File>>;
 };
 
 const createFile = (fullname: string, overrides: Partial<File> = {}): File => {
@@ -20,8 +20,8 @@ const createFile = (fullname: string, overrides: Partial<File> = {}): File => {
 };
 
 const createReaderDouble = (currentDir: File, directoryMap: Record<string, File[]>): ReaderDouble => {
-    const readdirMock = jest.fn(async (dir: File) => directoryMap[dir.fullname] ?? []);
-    const currentDirMock = jest.fn().mockResolvedValue(currentDir);
+    const readdirMock = jest.fn<(dir: File) => Promise<File[]>>(async (dir: File) => directoryMap[dir.fullname] ?? []);
+    const currentDirMock = jest.fn<() => Promise<File>>().mockResolvedValue(currentDir);
     const reader = {
         currentDir: currentDirMock,
         readdir: readdirMock,
