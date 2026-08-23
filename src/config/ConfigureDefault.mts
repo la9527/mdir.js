@@ -47,9 +47,9 @@ export const ConfigureDefault: IConfigure = {
                 "aes128-gcm@openssh.com",
                 "aes256-gcm",
                 "aes256-gcm@openssh.com", 
-                "3des-cbc", 
-                "blowfish-cbc",
+                "3des-cbc",
                 /*
+                "blowfish-cbc", // removed from ssh2, throws "Unsupported algorithm"
                 "aes256-cbc",
                 "aes192-cbc",
                 "aes128-cbc",

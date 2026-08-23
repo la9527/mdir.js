@@ -191,12 +191,24 @@ export class SftpReader extends Reader {
                 timeout: Configure.instance().getOpensshOption("proxyDefaultTimeout"),
             };
         }
+        // The connection editor stores the private key as a file path,
+        // but ssh2 expects the key contents (string or Buffer).
+        let privateKey: string | Buffer = info.privateKey;
+        if ( privateKey && privateKey.indexOf("-----BEGIN") === -1 ) {
+            try {
+                privateKey = fs.readFileSync( privateKey, "utf8" );
+            } catch( e ) {
+                log.error( "Unable to read the private key file [%s]: %s", info.privateKey, e );
+                privateKey = null;
+            }
+        }
+
         return {
             host: info.host,
             port: info.port,
             username: info.username,
             password: info.password,
-            privateKey: info.privateKey,
+            privateKey: privateKey,
             algorithms: Configure.instance().getOpensshOption("algorithms"),
             keepaliveInterval: Configure.instance().getOpensshOption("keepaliveInterval"),
             keepaliveCountMax: Configure.instance().getOpensshOption("keepaliveCountMax"),
@@ -239,7 +251,8 @@ export class SftpReader extends Reader {
             
             const decryptOption = this.decryptConnectionInfo(option);
 
-            if ( !decryptOption.password || (decryptOption.proxyInfo && !decryptOption.proxyInfo.proxy.password) ) {
+            // A password is not required when a private key is supplied.
+            if ( (!decryptOption.password && !decryptOption.privateKey) || (decryptOption.proxyInfo && !decryptOption.proxyInfo.proxy.password) ) {
                 reject( T("Message.PasswordEmpty") );
                 return;
             }
@@ -307,7 +320,17 @@ export class SftpReader extends Reader {
             // log.debug("connect option : %j", option );
             log.info( "Client connect - [%s:%d] - [%s]", option.host, option.port || 22, option.username );
             this.option = option;
-            this.client.connect( decryptOption );
+            try {
+                this.client.connect( decryptOption );
+            } catch( e ) {
+                // ssh2 throws synchronously on invalid options
+                // (e.g. an unparsable key or an unsupported algorithm).
+                // Without this catch the promise never settles and the
+                // error becomes an unhandled rejection.
+                log.error( "Client connect error: %s", e );
+                this.client.removeListener("ready", onceReady);
+                reject( e );
+            }
         });
     }
 
