@@ -197,14 +197,20 @@ export class ConnectionManager extends Widget {
         const file = this.connectionListWidget.currentFile();
         const data = this.getJsonFileLoad(file);
         log.debug( "emit widget.connect %j", data );
+        // destroy() removes all listeners from the underlying box,
+        // so they must be captured before destroy and invoked after.
+        const listeners = this.box.listeners("widget.connect");
         this.destroy();
-        this.emit("widget.connect", data );
+        listeners.forEach( (listener: any) => listener(data) );
     }
 
     onClickJsoneditor() {
         const file = this.connectionListWidget.currentFile().clone();
+        // destroy() removes all listeners from the underlying box,
+        // so they must be captured before destroy and invoked after.
+        const listeners = this.box.listeners("widget.jsoneditor");
         this.destroy();
-        this.emit("widget.jsoneditor", file );
+        listeners.forEach( (listener: any) => listener(file) );
     }
 
     onClickInsert() {
