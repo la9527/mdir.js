@@ -651,10 +651,19 @@ export class SftpReader extends Reader {
 
                 rd.on("error", rejectFunc);
                 wr.on("error", rejectFunc);
-                wr.on("finish", () => {
-                    log.debug( "Copy to: %s %s => %s %s (%d / %d) - FINISH !!!", srcFile.fstype, srcFile.fullname, targetDir.fstype, targetDir.fullname, chunkCopyLength, srcFile.size );
+                let settled = false;
+                const finishFunc = ( evName: string ) => {
+                    if ( settled || rejectCalled ) {
+                        return;
+                    }
+                    settled = true;
+                    log.debug( "Copy to: %s %s => %s %s (%d / %d) - FINISH !!! (%s)", srcFile.fstype, srcFile.fullname, targetDir.fstype, targetDir.fullname, chunkCopyLength, srcFile.size, evName );
                     resolve();
-                });
+                };
+                // ssh2's SFTP WriteStream emits "close" and never "finish";
+                // fs write streams emit "finish" first. Accept either, once.
+                wr.on("finish", () => finishFunc("finish"));
+                wr.on("close", () => finishFunc("close"));
                 this.client.on("close", () => {
                     this.disconnect();
                     rejectFunc("connection close.");
